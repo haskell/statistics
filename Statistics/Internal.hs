@@ -11,19 +11,34 @@
 
 module Statistics.Internal
     (
-      huge
-    , sqrt_2
-    , sqrt_2_pi
+      m_huge
+    , m_1_sqrt_2
+    , m_2_sqrt_pi
+    , m_sqrt_2
+    , m_sqrt_2_pi
     ) where
 
-huge :: Double
-huge = 1e308
-{-# INLINE huge #-}
+-- | A very large number.
+m_huge :: Double
+m_huge = 1.797693e308
+{-# INLINE m_huge #-}
 
-sqrt_2 :: Double
-sqrt_2 = sqrt 2
-{-# INLINE sqrt_2 #-}
+-- | @sqrt 2@
+m_sqrt_2 :: Double
+m_sqrt_2 = 1.414213562373095145474621858739
+{-# INLINE m_sqrt_2 #-}
 
-sqrt_2_pi :: Double
-sqrt_2_pi = sqrt (2 * pi)
-{-# INLINE sqrt_2_pi #-}
+-- | @sqrt (2 * pi)@
+m_sqrt_2_pi :: Double
+m_sqrt_2_pi = 2.506628274631000241612355239340
+{-# INLINE m_sqrt_2_pi #-}
+
+-- | @2 / sqrt pi@
+m_2_sqrt_pi :: Double
+m_2_sqrt_pi = 1.128379167095512558560699289956
+{-# INLINE m_2_sqrt_pi #-}
+
+-- | @1 / sqrt 2@
+m_1_sqrt_2 :: Double
+m_1_sqrt_2 = 0.707106781186547461715008466854
+{-# INLINE m_1_sqrt_2 #-}
