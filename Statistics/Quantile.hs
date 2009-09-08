@@ -140,4 +140,3 @@ normalUnbiased = ContParam ta ta
 -- * Hyndman, R.J.; Fan, Y. (1996) Sample quantiles in statistical
 --   packages. /American Statistician/
 --   50(4):361&#8211;365. <http://www.jstor.org/stable/2684934>
-
