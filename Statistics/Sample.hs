@@ -108,7 +108,7 @@ varianceUnbiased = fini . robustVar
 {-# INLINE varianceUnbiased #-}
 
 -- | Standard deviation.  This is simply the square root of the
--- maximum likelihood estimate of the variance.  
+-- maximum likelihood estimate of the variance.
 stdDev :: Sample -> Double
 stdDev = sqrt . varianceUnbiased
 
@@ -149,7 +149,7 @@ fastVarianceUnbiased = fini . fastVar
 {-# INLINE fastVarianceUnbiased #-}
 
 -- | Standard deviation.  This is simply the square root of the
--- maximum likelihood estimate of the variance.  
+-- maximum likelihood estimate of the variance.
 fastStdDev :: Sample -> Double
 fastStdDev = sqrt . fastVariance
 {-# INLINE fastStdDev #-}

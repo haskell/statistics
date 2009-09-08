@@ -54,7 +54,7 @@ fromParams m v = assert (v > 0) $
                  , pdfDenom = m_sqrt_2_pi * sv
                  }
     where sv = sqrt v
-                   
+
 fromSample :: Sample -> NormalDistribution
 fromSample a = fromParams (S.mean a) (S.variance a)
 
