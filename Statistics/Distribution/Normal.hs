@@ -8,7 +8,7 @@ module Statistics.Distribution.Normal
 
 import Control.Exception (assert)
 import Data.Number.Erf (erfc)
-import Statistics.Internal (huge, sqrt_2, sqrt_2_pi)
+import Statistics.Internal (m_huge, m_sqrt_2, m_sqrt_2_pi)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 
@@ -28,8 +28,8 @@ standard :: NormalDistribution
 standard = NormalDistribution {
              mean = 0.0
            , variance = 1.0
-           , cdfDenom = sqrt_2
-           , pdfDenom = sqrt_2_pi
+           , cdfDenom = m_sqrt_2
+           , pdfDenom = m_sqrt_2_pi
            }
 
 fromParams :: Double -> Double -> NormalDistribution
@@ -37,8 +37,8 @@ fromParams m v = assert (v > 0) $
                  NormalDistribution {
                    mean = m
                  , variance = v
-                 , cdfDenom = sqrt_2 * sv
-                 , pdfDenom = sqrt_2_pi * sv
+                 , cdfDenom = m_sqrt_2 * sv
+                 , pdfDenom = m_sqrt_2_pi * sv
                  }
     where sv = sqrt v
                    
@@ -54,8 +54,8 @@ cumulative d x = erfc (-(x-mean d) / cdfDenom d) / 2
 
 inverse :: NormalDistribution -> Double -> Double
 inverse d p
-  | p == 0    = -huge
-  | p == 1    = huge
+  | p == 0    = -m_huge
+  | p == 1    = m_huge
   | p == 0.5  = mean d
   | otherwise = x * sqrt (variance d) + mean d
   where x     = D.findRoot standard p 0 (-100) 100
