@@ -87,9 +87,13 @@ choosePoints n h sample = Points . mapU f $ enumFromToU 0 n'
         n'      = n - 1
 
 -- | The convolution kernel.  Its parameters are as follows:
+--
 -- * Scaling factor, 1\//nh/
+--
 -- * Bandwidth, /h/
+--
 -- * A point at which to sample the input, /p/
+--
 -- * One sample value, /v/
 type Kernel =  Double
             -> Double
