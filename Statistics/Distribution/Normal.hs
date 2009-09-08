@@ -1,5 +1,5 @@
 -- |
--- Module    : Statistics.Normal
+-- Module    : Statistics.Distribution.Normal
 -- Copyright : (c) 2009 Bryan O'Sullivan
 -- License   : BSD3
 --
@@ -12,6 +12,7 @@
 module Statistics.Distribution.Normal
     (
       NormalDistribution
+    , mean
     , fromParams
     , fromSample
     , standard
