@@ -12,10 +12,15 @@
 module Statistics.Types
     (
       Sample
+    , Estimator
     , Weights
     ) where
 
 import Data.Array.Vector (UArr)
 
 type Sample = UArr Double
+
+-- | A function that estimates a property of a sample, such as 'mean'.
+type Estimator = Sample -> Double
+
 type Weights = UArr Double

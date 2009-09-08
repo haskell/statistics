@@ -20,6 +20,7 @@ library
     Statistics.Function
     Statistics.KernelDensity
     Statistics.Quantile
+    Statistics.Resampling
     Statistics.Resampling.Bootstrap
     Statistics.Sample
     Statistics.Types
