@@ -18,6 +18,7 @@ library
     Statistics.Distribution
     Statistics.Distribution.Normal
     Statistics.Function
+    Statistics.KernelDensity
     Statistics.Quantile
     Statistics.Sample
     Statistics.Types

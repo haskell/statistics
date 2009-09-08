@@ -12,7 +12,6 @@
 module Statistics.Types
     (
       Sample
-    , Sorted(..)
     , Weights
     ) where
 
@@ -20,6 +19,3 @@ import Data.Array.Vector (UArr)
 
 type Sample = UArr Double
 type Weights = UArr Double
-    
-newtype Sorted a = Sorted { unsort :: a }
-    deriving (Eq, Ord, Show)
