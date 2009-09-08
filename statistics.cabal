@@ -4,6 +4,7 @@ synopsis:       A library of statistical types, data, and functions.
 description:    A library of statistical types, data, and functions.
 license:        BSD3
 license-file:   LICENSE
+homepage:       http://darcs.serpentine.com/statistics
 author:         Bryan O'Sullivan <bos@serpentine.com>
 maintainer:     Bryan O'Sullivan <bos@serpentine.com>
 copyright:      2009 Bryan O'Sullivan
@@ -14,7 +15,6 @@ extra-source-files: README
 
 library
   exposed-modules:
-    Statistics.Constants
     Statistics.Distribution
     Statistics.Distribution.Normal
     Statistics.Function
@@ -22,8 +22,10 @@ library
     Statistics.Quantile
     Statistics.Sample
     Statistics.Types
+  other-modules:
+    Statistics.Constants
   build-depends:
-    base       < 5,
+    base < 5,
     erf,
     uvector >= 0.1.0.4,
     uvector-algorithms

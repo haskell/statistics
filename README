@@ -1,0 +1,20 @@
+Statistics: efficient, general purpose statistics
+-------------------------------------------------
+
+This package provides the Statistics module, a Haskell library for
+working with statistical data in a space- and time-efficient way.
+
+Where possible, we give citations and computational complexity
+estimates for the algorithms used.
+
+
+Source code
+-----------
+
+darcs get http://darcs.serpentine.com/statistics
+
+
+Authors
+-------
+
+Bryan O'Sullivan <bos@serpentine.com>
