@@ -82,7 +82,7 @@ continuousBy (ContParam a b) k q x =
       where r       = t - fromIntegral j
     eps             = 8.881784e-16
     n               = lengthU x
-    item m          = indexU sx $ bracket m
+    item            = indexU sx . bracket
     sx              = partialSort (bracket j + 1) x
     bracket m       = min (max m 0) (n - 1)
 {-# INLINE continuousBy #-}

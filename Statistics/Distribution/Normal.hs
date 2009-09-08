@@ -46,7 +46,7 @@ standard = NormalDistribution {
            }
 
 fromParams :: Double -> Double -> NormalDistribution
-fromParams m v = assert (v > 0) $
+fromParams m v = assert (v > 0)
                  NormalDistribution {
                    mean = m
                  , variance = v
