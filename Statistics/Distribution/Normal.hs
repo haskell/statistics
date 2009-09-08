@@ -1,3 +1,14 @@
+-- |
+-- Module    : Statistics.Normal
+-- Copyright : (c) 2009 Bryan O'Sullivan
+-- License   : BSD3
+--
+-- Maintainer  : bos@serpentine.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- The normal distribution.
+
 module Statistics.Distribution.Normal
     (
       NormalDistribution
@@ -8,7 +19,8 @@ module Statistics.Distribution.Normal
 
 import Control.Exception (assert)
 import Data.Number.Erf (erfc)
-import Statistics.Internal (m_huge, m_sqrt_2, m_sqrt_2_pi)
+import Statistics.Constants (m_huge, m_sqrt_2, m_sqrt_2_pi)
+import Statistics.Types (Sample)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 
@@ -42,7 +54,7 @@ fromParams m v = assert (v > 0) $
                  }
     where sv = sqrt v
                    
-fromSample :: S.Sample -> NormalDistribution
+fromSample :: Sample -> NormalDistribution
 fromSample a = fromParams (S.mean a) (S.variance a)
 
 probability :: NormalDistribution -> Double -> Double

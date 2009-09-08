@@ -14,14 +14,18 @@ extra-source-files: README
 
 library
   exposed-modules:
+    Statistics.Constants
     Statistics.Distribution
     Statistics.Distribution.Normal
-    Statistics.Internal
+    Statistics.Function
+    Statistics.Quantile
     Statistics.Sample
+    Statistics.Types
   build-depends:
     base       < 5,
     erf,
-    uvector >= 0.1.0.4
+    uvector >= 0.1.0.4,
+    uvector-algorithms
   if impl(ghc >= 6.10)
     build-depends:
       base >= 4
