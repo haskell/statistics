@@ -1,5 +1,5 @@
 -- |
--- Module    : Statistics.Internal
+-- Module    : Statistics.Constants
 -- Copyright : (c) 2009 Bryan O'Sullivan
 -- License   : BSD3
 --
@@ -7,9 +7,9 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Types and functions common to much statistics code.
+-- Constant values common to much statistics code.
 
-module Statistics.Internal
+module Statistics.Constants
     (
       m_huge
     , m_1_sqrt_2

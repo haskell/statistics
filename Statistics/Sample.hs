@@ -1,6 +1,6 @@
 -- |
 -- Module    : Statistics.Sample
--- Copyright : (c) 2008 Don Stewart
+-- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
@@ -12,13 +12,11 @@
 
 module Statistics.Sample
     (
-    -- * Types
-      Sample
-    , Weights
     -- * Statistics of location
-    , mean
+      mean
     , harmonicMean
     , geometricMean
+
     -- * Statistics of dispersion
     -- $variance
 
@@ -38,10 +36,8 @@ module Statistics.Sample
     -- $references
     ) where
 
-import Data.Array.Vector
-
-type Sample = UArr Double
-type Weights = UArr Double
+import Data.Array.Vector (foldlU)
+import Statistics.Types (Sample)
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
@@ -139,7 +135,7 @@ fastVar = foldlU go (T1 0 0 0)
 -- | Maximum likelihood estimate of a sample's variance.
 fastVariance :: Sample -> Double
 fastVariance = fini . fastVar
-  where fini (T1 n m s)
+  where fini (T1 n _m s)
           | n > 1     = s / fromIntegral n
           | otherwise = 0
 {-# INLINE fastVariance #-}
@@ -147,14 +143,14 @@ fastVariance = fini . fastVar
 -- | Unbiased estimate of a sample's variance.
 fastVarianceUnbiased :: Sample -> Double
 fastVarianceUnbiased = fini . fastVar
-  where fini (T1 n m s)
+  where fini (T1 n _m s)
           | n > 1     = s / fromIntegral (n - 1)
           | otherwise = 0
 {-# INLINE fastVarianceUnbiased #-}
 
 -- | Standard deviation.  This is simply the square root of the
 -- maximum likelihood estimate of the variance.  
-fastStdDev :: UArr Double -> Double
+fastStdDev :: Sample -> Double
 fastStdDev = sqrt . fastVariance
 {-# INLINE fastStdDev #-}
 
@@ -168,10 +164,6 @@ data T1 = T1 {-# UNPACK #-}!Int {-# UNPACK #-}!Double {-# UNPACK #-}!Double
 
 fstT :: T -> Double
 fstT (T a _) = a
-
--- this is a terrible name, and probably a bad place to be doing this
-quotT1 :: T1 -> Double
-quotT1 (T1 n _ m2) = m2 / (fromIntegral $ n - 2)
 
 {-
 
