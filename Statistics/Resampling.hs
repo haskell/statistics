@@ -24,10 +24,14 @@ import Data.Array.Vector.Algorithms.Intro (sort)
 import Statistics.Types (Estimator, Sample)
 import System.Random.Mersenne (MTGen, random)
 
+-- | A resample drawn randomly, with replacement, from a set of data
+-- points.
 newtype Resample = Resample {
       fromResample :: UArr Double
     } deriving (Eq, Show)
 
+-- | Resample a data set repeatedly, with replacement, computing each
+-- estimate over the resampled data.
 resample :: MTGen -> [Estimator] -> Int -> Sample -> IO [Resample]
 resample gen ests numResamples samples = do
   results <- unsafeSTToIO . mapM (const (newMU numResamples)) $ ests
@@ -38,15 +42,15 @@ resample gen ests numResamples samples = do
  where
   loop k ers | k >= numResamples = return ()
              | otherwise = do
-    r <- oneResample gen samples
+    re <- createU n $ \_ -> do
+            r <- random gen
+            return (indexU samples (abs r `mod` n))
     unsafeSTToIO . forM_ ers $ \(est,arr) ->
-        writeMU arr k (est (fromResample r))
+        writeMU arr k . est $ re
     loop (k+1) ers
-  oneResample gen values = fmap Resample . createU n $ \_ -> do
-      r <- random gen
-      return (indexU values (abs r `mod` n))
-    where n = lengthU values
+  n = lengthU samples
 
+-- | Create an array, using the given action to populate each element.
 createU :: (UA e) => Int -> (Int -> IO e) -> IO (UArr e)
 createU size itemAt = assert (size >= 0) $
     unsafeSTToIO (newMU size) >>= loop 0
