@@ -13,8 +13,11 @@ module Statistics.Resampling.Bootstrap
     (
       Estimate(..)
     , bootstrapBCA
+    -- * References
+    -- $references
     ) where
 
+import Control.Exception (assert)
 import Data.Array.Vector (foldlU, filterU, indexU, lengthU)
 import Statistics.Distribution.Normal hiding (mean)
 import Statistics.Distribution (cumulative, inverse)
@@ -22,30 +25,48 @@ import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
 
+-- | A point and interval estimate computed via an 'Estimator'.
 data Estimate = Estimate {
       estPoint           :: {-# UNPACK #-} !Double
+    -- ^ Point estimate.
     , estLowerBound      :: {-# UNPACK #-} !Double
+    -- ^ Lower bound of the estimate interval (i.e. the lower bound of
+    -- the confidence interval).
     , estUpperBound      :: {-# UNPACK #-} !Double
+    -- ^ Upper bound of the estimate interval (i.e. the upper bound of
+    -- the confidence interval).
     , estConfidenceLevel :: {-# UNPACK #-} !Double
+    -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Show)
+
+estimate :: Double -> Double -> Double -> Double -> Estimate
+estimate pt lb ub cl =
+    assert (lb <= ub) .
+    assert (cl > 0 && cl < 1) $
+    Estimate { estPoint = pt
+             , estLowerBound = lb
+             , estUpperBound = ub
+             , estConfidenceLevel = cl
+             }
 
 data T = {-# UNPACK #-} !Double :< {-# UNPACK #-} !Double
 infixl 2 :<
 
+-- | Bias-corrected accelerated (BCA) bootstrap. This adjusts for both
+-- bias and skewness in the resampled distribution.
 bootstrapBCA :: Double          -- ^ Confidence level
              -> Sample          -- ^ Sample data
              -> [Estimator]     -- ^ Estimators
              -> [Resample]      -- ^ Resampled data
              -> [Estimate]
-bootstrapBCA confidenceLevel sample = zipWith e
+bootstrapBCA confidenceLevel sample =
+    assert (confidenceLevel > 0 && confidenceLevel < 1)
+    zipWith e
   where
-    e est (Resample resample) =
-        Estimate {
-            estPoint = pt
-          , estLowerBound = indexU resample lo
-          , estUpperBound = indexU resample hi
-          , estConfidenceLevel = confidenceLevel
-          }
+    e est (Resample resample)
+      | lengthU sample == 1 = estimate pt pt pt confidenceLevel
+      | otherwise = 
+          estimate pt (indexU resample lo) (indexU resample hi) confidenceLevel
       where
         pt    = est sample
         lo    = max (cumn a1) 0
@@ -67,3 +88,8 @@ bootstrapBCA confidenceLevel sample = zipWith e
                           d2 = d * d
                 jackMean     = mean jack
         jack  = jackknife est sample
+
+-- $references
+--
+-- * Davison, A.C; Hinkley, D.V. (1997) Bootstrap methods and their
+--   application. <http://statwww.epfl.ch/davison/BMA/>
