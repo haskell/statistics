@@ -7,12 +7,13 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- The normal distribution.
+-- The normal distribution.  This is a continuous probability
+-- distribution that describes data that cluster around a mean.
 
 module Statistics.Distribution.Normal
     (
       NormalDistribution
-    , mean
+    -- * Constructors
     , fromParams
     , fromSample
     , standard
@@ -25,33 +26,40 @@ import Statistics.Types (Sample)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 
-data NormalDistribution = NormalDistribution {
+-- | The normal distribution.
+data NormalDistribution = ND {
       mean     :: {-# UNPACK #-} !Double
     , variance :: {-# UNPACK #-} !Double
-    , pdfDenom :: {-# UNPACK #-} !Double
-    , cdfDenom :: {-# UNPACK #-} !Double
-    } deriving (Eq, Ord, Read, Show)
+    , ndPdfDenom :: {-# UNPACK #-} !Double
+    , ndCdfDenom :: {-# UNPACK #-} !Double
+    } deriving (Eq, Read, Show)
 
 instance D.Distribution NormalDistribution where
     probability = probability
     cumulative  = cumulative
     inverse     = inverse
 
+instance D.Variance NormalDistribution where
+    variance = variance
+
+instance D.Mean NormalDistribution where
+    mean = mean
+
 standard :: NormalDistribution
-standard = NormalDistribution {
+standard = ND {
              mean = 0.0
            , variance = 1.0
-           , cdfDenom = m_sqrt_2
-           , pdfDenom = m_sqrt_2_pi
+           , ndPdfDenom = m_sqrt_2_pi
+           , ndCdfDenom = m_sqrt_2
            }
 
 fromParams :: Double -> Double -> NormalDistribution
 fromParams m v = assert (v > 0)
-                 NormalDistribution {
+                 ND {
                    mean = m
                  , variance = v
-                 , cdfDenom = m_sqrt_2 * sv
-                 , pdfDenom = m_sqrt_2_pi * sv
+                 , ndPdfDenom = m_sqrt_2_pi * sv
+                 , ndCdfDenom = m_sqrt_2 * sv
                  }
     where sv = sqrt v
 
@@ -59,11 +67,11 @@ fromSample :: Sample -> NormalDistribution
 fromSample a = fromParams (S.mean a) (S.variance a)
 
 probability :: NormalDistribution -> Double -> Double
-probability d x = exp (-xm * xm / (2 * variance d)) / pdfDenom d
+probability d x = exp (-xm * xm / (2 * variance d)) / ndPdfDenom d
     where xm = x - mean d
 
 cumulative :: NormalDistribution -> Double -> Double
-cumulative d x = erfc (-(x-mean d) / cdfDenom d) / 2
+cumulative d x = erfc (-(x-mean d) / ndCdfDenom d) / 2
 
 inverse :: NormalDistribution -> Double -> Double
 inverse d p

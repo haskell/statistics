@@ -13,6 +13,8 @@
 module Statistics.Distribution
     (
       Distribution(..)
+    , Mean(..)
+    , Variance(..)
     , findRoot
     ) where
 
@@ -29,6 +31,12 @@ class Distribution d where
     -- | Inverse of the cumulative distribution function.  The value
     -- @X@ for which @P(x<X)@.
     inverse     :: d -> Double -> Double
+
+class Distribution d => Mean d where
+    mean :: d -> Double
+
+class Mean d => Variance d where
+    variance :: d -> Double
 
 -- | Approximate the value of @X@ for which @P(x>X) == p@.
 --

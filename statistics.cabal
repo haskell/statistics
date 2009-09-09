@@ -16,6 +16,7 @@ extra-source-files: README
 library
   exposed-modules:
     Statistics.Distribution
+    Statistics.Distribution.Binomial
     Statistics.Distribution.Normal
     Statistics.Function
     Statistics.KernelDensity
