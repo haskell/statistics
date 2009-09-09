@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 -- |
 -- Module    : Statistics.Distribution.Binomial
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -24,6 +25,7 @@ module Statistics.Distribution.Binomial
 
 import Control.Exception (assert)
 import Data.Array.Vector
+import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 import Statistics.Function (choose)
 
@@ -33,7 +35,7 @@ data BinomialDistribution = BD {
     -- ^ Number of trials.
     , bdProbability :: {-# UNPACK #-} !Double
     -- ^ Probability.
-    } deriving (Eq, Read, Show)
+    } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution BinomialDistribution where
     probability = probability

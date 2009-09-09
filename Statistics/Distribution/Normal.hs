@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 -- |
 -- Module    : Statistics.Distribution.Normal
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -21,6 +22,7 @@ module Statistics.Distribution.Normal
 
 import Control.Exception (assert)
 import Data.Number.Erf (erfc)
+import Data.Typeable (Typeable)
 import Statistics.Constants (m_huge, m_sqrt_2, m_sqrt_2_pi)
 import Statistics.Types (Sample)
 import qualified Statistics.Distribution as D
@@ -32,7 +34,7 @@ data NormalDistribution = ND {
     , variance :: {-# UNPACK #-} !Double
     , ndPdfDenom :: {-# UNPACK #-} !Double
     , ndCdfDenom :: {-# UNPACK #-} !Double
-    } deriving (Eq, Read, Show)
+    } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution NormalDistribution where
     probability = probability
