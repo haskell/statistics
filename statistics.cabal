@@ -17,6 +17,7 @@ library
   exposed-modules:
     Statistics.Distribution
     Statistics.Distribution.Binomial
+    Statistics.Distribution.Exponential
     Statistics.Distribution.Normal
     Statistics.Function
     Statistics.KernelDensity
