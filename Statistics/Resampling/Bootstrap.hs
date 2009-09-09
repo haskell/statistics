@@ -19,7 +19,7 @@ module Statistics.Resampling.Bootstrap
 
 import Control.Exception (assert)
 import Data.Array.Vector (foldlU, filterU, indexU, lengthU)
-import Statistics.Distribution.Normal hiding (mean)
+import Statistics.Distribution.Normal
 import Statistics.Distribution (cumulative, inverse)
 import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
