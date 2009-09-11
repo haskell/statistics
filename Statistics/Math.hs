@@ -141,8 +141,8 @@ logGammaL x
 --   functions. /National Physical Laboratory Mathematical Tables 5/,
 --   Her Majesty's Stationery Office, London.
 --
--- * Lanczos C (1964) A precision approximation of the gamma function.
---   /SIAM Journal on Numerical Analysis B/
+-- * Lanczos, C. (1964) A precision approximation of the gamma
+--   function.  /SIAM Journal on Numerical Analysis B/
 --   1:86&#8211;96. <http://www.jstor.org/stable/2949767>
 --
 -- * Macleod, A.J. (1989) Algorithm AS 245: A robust and reliable
