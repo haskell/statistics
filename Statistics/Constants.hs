@@ -46,5 +46,5 @@ m_1_sqrt_2 = 0.7071067811865475244008443621048490392848359376884740365883
 
 -- | The smallest 'Double' larger than 1.
 m_epsilon :: Double
-m_epsilon = encodeFloat (significand+1) exponent - 1.0
-    where (significand,exponent) = decodeFloat (1.0::Double)
+m_epsilon = encodeFloat (signif+1) expo - 1.0
+    where (signif,expo) = decodeFloat (1.0::Double)

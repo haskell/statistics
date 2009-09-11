@@ -42,28 +42,29 @@ import Statistics.Types (Sample)
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
 mean :: Sample -> Double
-mean = fstT . foldlU k (T 0 0)
-    where
-        k (T m n) x = T m' n'
-            where m' = m + (x - m) / fromIntegral n'
-                  n' = n + 1
+mean = fini . foldlU go (T 0 0)
+  where
+    fini (T a _) = a
+    go (T m n) x = T m' n'
+        where m' = m + (x - m) / fromIntegral n'
+              n' = n + 1
 {-# INLINE mean #-}
 
 -- | Harmonic mean.  This algorithm performs a single pass over the
 -- sample.
 harmonicMean :: Sample -> Double
-harmonicMean xs = fromIntegral a / b
+harmonicMean = fini . foldlU go (T 0 0)
   where
-    T b a = foldlU k (T 0 0) xs
-    k (T b a) n = T (b + (1/n)) (a+1)
+    fini (T b a) = fromIntegral a / b
+    go (T x y) n = T (x + (1/n)) (y+1)
 {-# INLINE harmonicMean #-}
 
 -- | Geometric mean of a sample containing no negative values.
 geometricMean :: Sample -> Double
-geometricMean xs = p ** (1 / fromIntegral n)
+geometricMean = fini . foldlU go (T 1 0)
   where
-    T p n = foldlU k (T 1 0) xs
-    k (T p n) a = T (p * a) (n + 1)
+    fini (T p n) = p ** (1 / fromIntegral n)
+    go (T p n) a = T (p * a) (n + 1)
 {-# INLINE geometricMean #-}
 
 -- $variance
@@ -81,7 +82,7 @@ geometricMean xs = p ** (1 / fromIntegral n)
 -- subject to stream fusion.
 
 robustVar :: Sample -> T
-robustVar s = fini . foldlU go (T1 0 0 0) $ s
+robustVar samp = fini . foldlU go (T1 0 0 0) $ samp
   where
     go (T1 n s c) x = T1 n' s' c'
       where n' = n + 1
@@ -89,7 +90,7 @@ robustVar s = fini . foldlU go (T1 0 0 0) $ s
             c' = c + d
             d  = x - m
     fini (T1 n s c) = T (s - c ** (2 / fromIntegral n)) n
-    m = mean s
+    m = mean samp
 
 -- | Maximum likelihood estimate of a sample's variance.
 variance :: Sample -> Double
@@ -161,9 +162,6 @@ fastStdDev = sqrt . fastVariance
 data T = T {-# UNPACK #-}!Double {-# UNPACK #-}!Int
 
 data T1 = T1 {-# UNPACK #-}!Int {-# UNPACK #-}!Double {-# UNPACK #-}!Double
-
-fstT :: T -> Double
-fstT (T a _) = a
 
 {-
 
