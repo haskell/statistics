@@ -148,4 +148,4 @@ logGammaL x
 -- * Macleod, A.J. (1989) Algorithm AS 245: A robust and reliable
 --   algorithm for the logarithm of the gamma function.
 --   /Journal of the Royal Statistical Society, Series C (Applied Statistics)/
---   (38)2:397&#8211;402. <http://www.jstor.org/stable/2348078>
+--   38(2):397&#8211;402. <http://www.jstor.org/stable/2348078>
