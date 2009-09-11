@@ -21,6 +21,7 @@ library
     Statistics.Distribution.Normal
     Statistics.Function
     Statistics.KernelDensity
+    Statistics.Math
     Statistics.Quantile
     Statistics.Resampling
     Statistics.Resampling.Bootstrap
