@@ -8,71 +8,65 @@
 -- Stability   : experimental
 -- Portability : portable
 --
+-- Mathematical functions for statistics.
 
 module Statistics.Math
     (
-      logGamma
+      chebyshev
+    , choose
+    , logGamma
+    , logGammaL
+    -- * References
+    -- $references
     ) where
 
 import Data.Array.Vector
-import Statistics.Constants (m_epsilon, m_sqrt_2_pi)
+import Statistics.Constants (m_sqrt_2_pi)
+import Debug.Trace
 
-logGamma :: Double -> Double
-logGamma x
-    | x > 18    = let y | x > 1 / m_epsilon = 0
-                        | otherwise   = 1 / (x*x)
-                      z = ((-5.95238095238e-4 * y + 7.936500793651e-4) * y -
-                           2.7777777777778e-3) * y + 8.3333333333333e-2
-                  in (x - 0.5) * log x - x + log m_sqrt_2_pi + z / x
-    | x <= 0    = 1/0
-    | otherwise = chebyshev alng 15 (z*2-1) + k + y
-  where
-    z :*: y
-        | x > 4     = twiddle 3 (floor x - 1) 1
-        | x < 3     = n2 $ twiddle 2 (floor x) (-1)
-        | otherwise = x - 3 :*: 0
-    twiddle a b d   = z :*: (log . foldlU f 1 . enumFromThenToU a (a+d) $ b)
-        where f g i = g * (z + fromIntegral i)
-              z     = x - fromIntegral (floor x)
-    n2 (a :*: b)    = (a :*: -b)
-    k               = 0.9574186990510627
+data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
-data T = T {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
-
--- | Evaluate a series of Chebyshev polynomials.
-chebyshev :: UArr Double        -- ^ Coefficients of the polynomials.
-          -> Int                -- ^ Degree of the polynomial.
-          -> Double             -- ^ Parameter of each function.
+-- | Evaluate a series of Chebyshev polynomials. Uses Clenshaw's
+-- algorithm.
+chebyshev :: Double             -- ^ Parameter of each function.
+          -> UArr Double        -- ^ Coefficients of each polynomial
+          -- term, in increasing order.
           -> Double
-chebyshev a n x = fini . foldlU step (T 0 0 0) . enumFromThenToU n (n-1) $ 0
-    where step (T u v w) k = T (x2 * u - v + indexU a k) u v
-          fini (T u _ w)   = (u - w) / 2
+chebyshev x a = fini . foldlU step (C 0 0 0) .
+                enumFromThenToU (lengthU a - 1) (-1) $ 0
+    where step (C u v w) k = C (x2 * v - w + indexU a k) u v
+          fini (C u _ w)   = (u - w) / 2
           x2               = x * 2
 
-alng :: UArr Double
-alng = toU [  0.52854303698223459887
-           ,  0.54987644612141411418
-           ,  0.02073980061613665136
-           , -0.00056916770421543842
-           ,  0.00002324587210400169
-           , -0.00000113060758570393
-           ,  0.00000006065653098948
-           , -0.00000000346284357770
-           ,  0.00000000020624998806
-           , -0.00000000001266351116
-           ,  0.00000000000079531007
-           , -0.00000000000005082077
-           ,  0.00000000000000329187
-           , -0.00000000000000021556
-           ,  0.00000000000000001424
-           , -0.00000000000000000095
-           ]
+-- | The binomial coefficient.
+--
+-- > 7 `choose` 3 == 35
+choose :: Int -> Int -> Int
+n `choose` k
+    | k > n = 0
+    | otherwise = ceiling . foldlU go 1 . enumFromToU 1 $ k'
+    where go a i = a * (nk + j) / j
+              where j = fromIntegral i :: Double
+          k' | k > n `div` 2 = n - k
+             | otherwise     = k
+          nk = fromIntegral (n - k')
+{-# INLINE choose #-}
 
+-- Adapted from http://people.sc.fsu.edu/~burkardt/f_src/asa245/asa245.html
 
-lg2 :: Double -> Double
-lg2 x = r
+-- | Compute the logarithm of the gamma function, &#915;(/x/).  Uses
+-- Algorithm AS 245 by Macleod.
+--
+-- Gives an accuracy of about 10&#8211;12 significant decimal digits,
+-- except for small regions around /x/ = 1 and /x/ = 2, where the
+-- function goes to zero.  For more accutracy, use 'logGammaL'.
+--
+-- Returns positive infinity if the input is outside of the range
+-- (0 < /x/ &#8804; 1e305).
+logGamma :: Double -> Double
+logGamma x = r
   where
-    !r | x > 1e30 || x <= 0 = 1/0
+    !r | x <= 0  = 1/0
        | x < 1.5 = a + c *
                    ((((r1_4 * b + r1_3) * b + r1_2) * b + r1_1) * b + r1_0) /
                    ((((b + r1_8) * b + r1_7) * b + r1_6) * b + r1_5)
@@ -112,9 +106,45 @@ lg2 x = r
     r4_2 = 0.0692910599291889; r4_3 = 3.350343815022304
     r4_4 = 6.012459259764103
 
+data L = L {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+
+-- | Compute the logarithm of the gamma function, &#915;(/x/).  Uses a
+-- Lanczos approximation.
+--
+-- This function is slower than 'logGamma', but gives 14 or more
+-- significant decimal digits of accuracy, except around /x/ = 1 and
+-- /x/ = 2, where the function goes to zero.
+--
+-- Returns positive infinity if the input is outside of the range
+-- (0 < /x/ &#8804; 1e305).
+logGammaL :: Double -> Double
+logGammaL x
+    | x <= 0    = 1/0
+    | otherwise = fini . foldlU go (L 0 (x+7)) $ a
+    where fini (L l _) = log (l+a0) + log m_sqrt_2_pi - x65 + (x-0.5) * log x65
+          go (L l t) k = L (l + k / t) (t-1)
+          x65 = x + 6.5
+          a0  = 0.9999999999995183
+          a   = toU [ 0.1659470187408462e-06
+                    , 0.9934937113930748e-05
+                    , -0.1385710331296526
+                    , 12.50734324009056
+                    , -176.6150291498386
+                    , 771.3234287757674
+                    , -1259.139216722289
+                    , 676.5203681218835
+                    ]
+
 -- $references
 --
+-- * Clenshaw, C.W. (1962) Chebychev series for mathematical
+--   functions. /National Physical Laboratory Mathematical Tables 5/,
+--   Her Majesty's Stationery Office, London.
+--
+-- * Lanczos C (1964) A precision approximation of the gamma function.
+--   /SIAM Journal on Numerical Analysis B/ 1:86&#8211;96.
+--
 -- * Macleod, A.J. (1989) Algorithm AS 245: A robust and reliable
---   algorithm for the logarithm of the gamma function. /Journal of
---   the Royal Statistical Society, Series C (Applied Statistics)/
---   (38)2:397-402.
+--   algorithm for the logarithm of the gamma function.
+--   /Journal of the Royal Statistical Society, Series C (Applied Statistics)/
+--   (38)2:397&#8211;402. <http://www.jstor.org/stable/2348078>
