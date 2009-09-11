@@ -22,7 +22,6 @@ module Statistics.Math
 
 import Data.Array.Vector
 import Statistics.Constants (m_sqrt_2_pi)
-import Debug.Trace
 
 data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 

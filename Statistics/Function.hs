@@ -17,8 +17,8 @@ module Statistics.Function
     , partialSort
     ) where
 
-import Data.Array.Vector.Algorithms.Immutable (apply)
-import Data.Array.Vector ((:*:)(..), UA, UArr, enumFromToU, foldlU)
+import Data.Array.Vector.Algorithms.Combinators (apply)
+import Data.Array.Vector ((:*:)(..), UA, UArr, foldlU)
 import qualified Data.Array.Vector.Algorithms.Intro as I
 
 -- | Sort.
