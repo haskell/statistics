@@ -20,6 +20,7 @@ library
     Statistics.Distribution.Gamma
     Statistics.Distribution.Exponential
     Statistics.Distribution.Normal
+    Statistics.Distribution.Poisson
     Statistics.Function
     Statistics.KernelDensity
     Statistics.Math
