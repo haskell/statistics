@@ -11,7 +11,8 @@
 
 module Statistics.Constants
     (
-      m_huge
+      m_epsilon
+    , m_huge
     , m_1_sqrt_2
     , m_2_sqrt_pi
     , m_sqrt_2
@@ -42,3 +43,8 @@ m_2_sqrt_pi = 1.1283791670955125738961589031215451716881012586579977136881
 m_1_sqrt_2 :: Double
 m_1_sqrt_2 = 0.7071067811865475244008443621048490392848359376884740365883
 {-# INLINE m_1_sqrt_2 #-}
+
+-- | The smallest 'Double' larger than 1.
+m_epsilon :: Double
+m_epsilon = encodeFloat (significand+1) exponent - 1.0
+    where (significand,exponent) = decodeFloat (1.0::Double)
