@@ -18,6 +18,7 @@ library
     Statistics.Distribution
     Statistics.Distribution.Binomial
     Statistics.Distribution.Gamma
+    Statistics.Distribution.Geometric
     Statistics.Distribution.Exponential
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
