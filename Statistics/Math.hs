@@ -59,7 +59,7 @@ n `choose` k
 --
 -- Gives an accuracy of about 10&#8211;12 significant decimal digits,
 -- except for small regions around /x/ = 1 and /x/ = 2, where the
--- function goes to zero.  For more accutracy, use 'logGammaL'.
+-- function goes to zero.  For more accuracy, use 'logGammaL'.
 --
 -- Returns positive infinity if the input is outside of the range
 -- (0 < /x/ &#8804; 1e305).
@@ -137,12 +137,13 @@ logGammaL x
 
 -- $references
 --
--- * Clenshaw, C.W. (1962) Chebychev series for mathematical
+-- * Clenshaw, C.W. (1962) Chebyshev series for mathematical
 --   functions. /National Physical Laboratory Mathematical Tables 5/,
 --   Her Majesty's Stationery Office, London.
 --
 -- * Lanczos C (1964) A precision approximation of the gamma function.
---   /SIAM Journal on Numerical Analysis B/ 1:86&#8211;96.
+--   /SIAM Journal on Numerical Analysis B/
+--   1:86&#8211;96. <http://www.jstor.org/stable/2949767>
 --
 -- * Macleod, A.J. (1989) Algorithm AS 245: A robust and reliable
 --   algorithm for the logarithm of the gamma function.
