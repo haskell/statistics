@@ -57,12 +57,12 @@ n `choose` k
 -- | Compute the logarithm of the gamma function, &#915;(/x/).  Uses
 -- Algorithm AS 245 by Macleod.
 --
--- Gives an accuracy of about 10&#8211;12 significant decimal digits,
--- except for small regions around /x/ = 1 and /x/ = 2, where the
--- function goes to zero.  For more accuracy, use 'logGammaL'.
+-- Gives an accuracy of 10&#8211;12 significant decimal digits, except
+-- for small regions around /x/ = 1 and /x/ = 2, where the function
+-- goes to zero.  For greater accuracy, use 'logGammaL'.
 --
--- Returns positive infinity if the input is outside of the range
--- (0 < /x/ &#8804; 1e305).
+-- Returns &#8734; if the input is outside of the range (0 < /x/
+-- &#8804; 1e305).
 logGamma :: Double -> Double
 logGamma x = r
   where
@@ -115,8 +115,8 @@ data L = L {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- significant decimal digits of accuracy, except around /x/ = 1 and
 -- /x/ = 2, where the function goes to zero.
 --
--- Returns positive infinity if the input is outside of the range
--- (0 < /x/ &#8804; 1e305).
+-- Returns &#8734; if the input is outside of the range (0 < /x/
+-- &#8804; 1e305).
 logGammaL :: Double -> Double
 logGammaL x
     | x <= 0    = 1/0
