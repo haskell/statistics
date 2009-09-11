@@ -27,7 +27,7 @@ import Control.Exception (assert)
 import Data.Array.Vector
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
-import Statistics.Function (choose)
+import Statistics.Math (choose)
 
 -- | The binomial distribution.
 data BinomialDistribution = BD {
