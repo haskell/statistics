@@ -28,7 +28,7 @@ module Statistics.Distribution.Gamma
 
 import Data.Typeable (Typeable)
 import Statistics.Constants (m_huge)
-import Statistics.Math (logGamma)
+import Statistics.Math (incompleteGamma, logGamma)
 import qualified Statistics.Distribution as D
 
 -- | The gamma distribution.
@@ -55,7 +55,7 @@ probability (GD a l) x = x ** (a-1) * exp (-x/l) / (exp (logGamma a) * l ** a)
 {-# INLINE probability #-}
 
 cumulative :: GammaDistribution -> Double -> Double
-cumulative _d _x = undefined
+cumulative (GD a l) x = incompleteGamma a (x/l) / exp (logGamma a)
 {-# INLINE cumulative #-}
 
 inverse :: GammaDistribution -> Double -> Double

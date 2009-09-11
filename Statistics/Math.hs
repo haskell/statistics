@@ -12,8 +12,11 @@
 
 module Statistics.Math
     (
+    -- * Functions
       chebyshev
     , choose
+    -- ** The Gamma function
+    , incompleteGamma
     , logGamma
     , logGammaL
     -- * References
@@ -22,6 +25,8 @@ module Statistics.Math
 
 import Data.Array.Vector
 import Statistics.Constants (m_sqrt_2_pi)
+import Statistics.Distribution (cumulative)
+import Statistics.Distribution.Normal (standard)
 
 data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
@@ -50,6 +55,50 @@ n `choose` k
              | otherwise     = k
           nk = fromIntegral (n - k')
 {-# INLINE choose #-}
+
+-- | Compute the incomplete gamma integral function, &#947;(/s/,/x/).
+-- Uses Algorithm AS 239 by Shea.
+incompleteGamma :: Double
+                -> Double
+                -> Double
+incompleteGamma x p
+    | x < 0 || p <= 0 = 1/0
+    | x == 0          = 0
+    | p >= 1000       = norm (3 * sqrt p * ((x/p) ** (1/3) + 1/(9*p) - 1))
+    | x >= 1e8        = 0
+    | x <= 1 || x < p = let a = p * log x - x - logGamma (p + 1)
+                            g = a + log (pearson p 1 1)
+                        in if g > limit then exp g else 0
+    | otherwise       = let g = p * log x - x - logGamma p + log cf
+                        in if g > limit then 1 - exp g else 1
+  where
+    norm = cumulative standard
+    pearson !a !c !g
+        | c' <= tolerance = g'
+        | otherwise       = pearson a' c' g'
+        where a' = a + 1
+              c' = c * x / a'
+              g' = g + c'
+    cf = let a = 1 - p
+             b = a + x + 1
+             p3 = x + 1
+             p4 = x * b
+         in contFrac a b 0 1 x p3 p4 (p3/p4)
+    contFrac !a !b !c !p1 !p2 !p3 !p4 !g
+        | abs (g - rn) <= min tolerance (tolerance * rn) = g
+        | otherwise = contFrac a' b' c' (f p3) (f p4) (f p5) (f p6) rn
+        where a' = a + 1
+              b' = b + 2
+              c' = c + 1
+              an = a' * c'
+              p5 = b' * p3 - an * p1
+              p6 = b' * p4 - an * p2
+              rn = p5 / p6
+              f n | abs p5 > overflow = n / overflow
+                  | otherwise         = n
+    limit     = -88
+    tolerance = 1e-14
+    overflow  = 1e37
 
 -- Adapted from http://people.sc.fsu.edu/~burkardt/f_src/asa245/asa245.html
 
@@ -148,3 +197,7 @@ logGammaL x
 --   algorithm for the logarithm of the gamma function.
 --   /Journal of the Royal Statistical Society, Series C (Applied Statistics)/
 --   38(2):397&#8211;402. <http://www.jstor.org/stable/2348078>
+--
+-- * Shea, B. (1988) Algorithm AS 239: Chi-squared and incomplete
+--   gamma integral. /Applied Statistics/
+--   37(3):466&#8211;473. <http://www.jstor.org/stable/2347328>
