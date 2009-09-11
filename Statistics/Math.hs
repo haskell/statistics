@@ -58,8 +58,8 @@ n `choose` k
 
 -- | Compute the incomplete gamma integral function, &#947;(/s/,/x/).
 -- Uses Algorithm AS 239 by Shea.
-incompleteGamma :: Double
-                -> Double
+incompleteGamma :: Double       -- ^ /s/
+                -> Double       -- ^ /x/
                 -> Double
 incompleteGamma x p
     | x < 0 || p <= 0 = 1/0
@@ -112,21 +112,21 @@ incompleteGamma x p
 -- Returns &#8734; if the input is outside of the range (0 < /x/
 -- &#8804; 1e305).
 logGamma :: Double -> Double
-logGamma x = r
+logGamma x
+    | x <= 0    = 1/0
+    | x < 1.5   = a + c *
+                  ((((r1_4 * b + r1_3) * b + r1_2) * b + r1_1) * b + r1_0) /
+                  ((((b + r1_8) * b + r1_7) * b + r1_6) * b + r1_5)
+    | x < 4     = (x - 2) *
+                  ((((r2_4 * x + r2_3) * x + r2_2) * x + r2_1) * x + r2_0) /
+                  ((((x + r2_8) * x + r2_7) * x + r2_6) * x + r2_5)
+    | x < 12    = ((((r3_4 * x + r3_3) * x + r3_2) * x + r3_1) * x + r3_0) /
+                  ((((x + r3_8) * x + r3_7) * x + r3_6) * x + r3_5)
+    | x > 5.1e5 = k
+    | otherwise = k + x1 *
+                  ((r4_2 * x2 + r4_1) * x2 + r4_0) /
+                  ((x2 + r4_4) * x2 + r4_3)
   where
-    !r | x <= 0  = 1/0
-       | x < 1.5 = a + c *
-                   ((((r1_4 * b + r1_3) * b + r1_2) * b + r1_1) * b + r1_0) /
-                   ((((b + r1_8) * b + r1_7) * b + r1_6) * b + r1_5)
-        | x < 4   = (x - 2) *
-                    ((((r2_4 * x + r2_3) * x + r2_2) * x + r2_1) * x + r2_0) /
-                    ((((x + r2_8) * x + r2_7) * x + r2_6) * x + r2_5)
-        | x < 12  = ((((r3_4 * x + r3_3) * x + r3_2) * x + r3_1) * x + r3_0) /
-                    ((((x + r3_8) * x + r3_7) * x + r3_6) * x + r3_5)
-        | x > 5.1e5 = k
-        | otherwise = k + x1 *
-                      ((r4_2 * x2 + r4_1) * x2 + r4_0) /
-                      ((x2 + r4_4) * x2 + r4_3)
     a :*: b :*: c
         | x < 0.5   = -y :*: x + 1 :*: x
         | otherwise = 0  :*: x     :*: x - 1
