@@ -15,7 +15,7 @@ module Statistics.Math
     -- * Functions
       chebyshev
     , choose
-    -- ** The Gamma function
+    -- ** Gamma functions
     , incompleteGamma
     , logGamma
     , logGammaL
