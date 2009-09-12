@@ -15,6 +15,7 @@ module Statistics.Constants
     , m_huge
     , m_1_sqrt_2
     , m_2_sqrt_pi
+    , m_max_exp
     , m_sqrt_2
     , m_sqrt_2_pi
     ) where
@@ -23,6 +24,11 @@ module Statistics.Constants
 m_huge :: Double
 m_huge = 1.797693e308
 {-# INLINE m_huge #-}
+
+-- | The largest 'Int' /x/ such that @2**(x-1)@ is approximately
+-- representable as a 'Double'.
+m_max_exp :: Int
+m_max_exp = 1024
 
 -- | @sqrt 2@
 m_sqrt_2 :: Double
