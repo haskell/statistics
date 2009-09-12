@@ -15,11 +15,13 @@ extra-source-files: README
 
 library
   exposed-modules:
+    Statistics.Constants
     Statistics.Distribution
     Statistics.Distribution.Binomial
     Statistics.Distribution.Gamma
     Statistics.Distribution.Geometric
     Statistics.Distribution.Exponential
+    Statistics.Distribution.Hypergeometric
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
     Statistics.Function
@@ -30,8 +32,6 @@ library
     Statistics.Resampling.Bootstrap
     Statistics.Sample
     Statistics.Types
-  other-modules:
-    Statistics.Constants
   build-depends:
     base < 5,
     erf,

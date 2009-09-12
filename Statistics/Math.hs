@@ -15,6 +15,9 @@ module Statistics.Math
     -- * Functions
       chebyshev
     , choose
+    -- ** Factorial functions
+    , factorial
+    , logFactorial
     -- ** Gamma functions
     , incompleteGamma
     , logGamma
@@ -24,6 +27,7 @@ module Statistics.Math
     ) where
 
 import Data.Array.Vector
+import Data.Word (Word64)
 import Statistics.Constants (m_sqrt_2_pi)
 import Statistics.Distribution (cumulative)
 import Statistics.Distribution.Normal (standard)
@@ -55,6 +59,35 @@ n `choose` k
              | otherwise     = k
           nk = fromIntegral (n - k')
 {-# INLINE choose #-}
+
+data F = F {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
+
+-- | Compute the factorial function.  Returns &#8734; if the input is
+-- above 170.
+factorial :: Int -> Double
+factorial n
+    | n < 0     = error "Statistics.Math.factorial: negative input"
+    | n <= 1    = 0
+    | n <= 14   = fini . foldlU goLong (F 1 1) $ ns
+    | otherwise = foldlU goDouble 1 $ ns
+    where goDouble t k = t * fromIntegral k
+          goLong (F z x) _ = F (z * x') x'
+              where x' = x + 1
+          fini (F z _) = fromIntegral z
+          ns = enumFromToU 2 n
+{-# INLINE factorial #-}
+
+-- | Compute the natural logarithm of the factorial function.  Gives
+-- 16 decimal digits of precision.
+logFactorial :: Int -> Double
+logFactorial n
+    | n <= 14   = log (factorial n)
+    | otherwise = (x - 0.5) * log x - x + 9.1893853320467e-1 + z / x
+    where x = fromIntegral (n + 1)
+          y = 1 / (x * x)
+          z = ((-(5.95238095238e-4 * y) + 7.936500793651e-4) * y -
+               2.7777777777778e-3) * y + 8.3333333333333e-2
+{-# INLINE logFactorial #-}
 
 -- | Compute the incomplete gamma integral function, &#947;(/s/,/x/).
 -- Uses Algorithm AS 239 by Shea.
