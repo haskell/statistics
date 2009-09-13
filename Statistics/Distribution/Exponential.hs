@@ -19,6 +19,8 @@ module Statistics.Distribution.Exponential
     -- * Constructors
     , fromLambda
     , fromSample
+    -- * Accessors
+    , edLambda
     ) where
 
 import Data.Typeable (Typeable)
@@ -43,7 +45,7 @@ instance D.Variance ExponentialDistribution where
     {-# INLINE variance #-}
 
 instance D.Mean ExponentialDistribution where
-    mean = 1 / edLambda
+    mean (ED l) = 1 / l
     {-# INLINE mean #-}
 
 fromLambda :: Double            -- ^ &#955; (scale) parameter.
