@@ -38,7 +38,7 @@ module Statistics.Sample
     -- $references
     ) where
 
-import Data.Array.Vector (foldlU)
+import Data.Array.Vector (foldlU, lengthU)
 import Statistics.Types (Sample)
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
@@ -83,16 +83,16 @@ geometricMean = fini . foldlU go (T 1 0)
 -- Because of the need for two passes, these functions are /not/
 -- subject to stream fusion.
 
+data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+
 robustVar :: Sample -> T
-robustVar samp = fini . foldlU go (T1 0 0 0) $ samp
+robustVar samp = fini . foldlU go (V 0 0) $ samp
   where
-    go (T1 n s c) x = T1 n' s' c'
-      where n' = n + 1
-            s' = s + d * d
-            c' = c + d
-            d  = x - m
-    fini (T1 n s c) = T (s - c ** (2 / fromIntegral n)) n
-    m = mean samp
+    go (V s c) x = V (s + d * d) (c + d)
+        where d  = x - m
+    fini (V s c) = T (s - (c * c) / fromIntegral n) n
+    n            = lengthU samp
+    m            = mean samp
 
 -- | Maximum likelihood estimate of a sample's variance.
 variance :: Sample -> Double
