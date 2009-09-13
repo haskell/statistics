@@ -23,6 +23,7 @@ module Statistics.Quantile
       weightedAvg
     , ContParam(..)
     , continuousBy
+    , midspread
 
     -- * Parameters for the continuous sample method
     , cadpw
@@ -42,8 +43,8 @@ import Statistics.Constants (m_epsilon)
 import Statistics.Function (partialSort)
 import Statistics.Types (Sample)
 
--- | Estimate the /k/th /q/-quantile of a sample, using the weighted
--- average method.
+-- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
+-- using the weighted average method.
 weightedAvg :: Int              -- ^ /k/, the desired quantile.
             -> Int              -- ^ /q/, the number of quantiles.
             -> Sample           -- ^ /x/, the sample data.
@@ -66,10 +67,10 @@ weightedAvg k q x =
 -- | Parameters /a/ and /b/ to the 'continuousBy' function.
 data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
--- | Estimate the /k/th /q/-quantile of a sample /x/, using the
--- continuous sample method with the given parameters.  This is the
--- method used by most statistical software, such as R, Mathematica,
--- SPSS, and S.
+-- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample /x/,
+-- using the continuous sample method with the given parameters.  This
+-- is the method used by most statistical software, such as R,
+-- Mathematica, SPSS, and S.
 continuousBy :: ContParam       -- ^ Parameters /a/ and /b/.
              -> Int             -- ^ /k/, the desired quantile.
              -> Int             -- ^ /q/, the number of quantiles.
@@ -94,6 +95,38 @@ continuousBy (ContParam a b) k q x =
     sx              = partialSort (bracket j + 1) x
     bracket m       = min (max m 0) (n - 1)
 {-# INLINE continuousBy #-}
+
+-- | O(/n/ log /n/). Estimate the range between /q/-quantiles 1 and
+-- /q/-1 of a sample /x/, using the continuous sample method with the
+-- given parameters.
+--
+-- For instance, the interquartile range (IQR) can be estimated as
+-- follows:
+--
+-- > midspread medianUnbiased 4 (toU [1,1,2,2,3])
+-- > ==> 1.333333
+midspread :: ContParam       -- ^ Parameters /a/ and /b/.
+          -> Int             -- ^ /q/, the number of quantiles.
+          -> Sample          -- ^ /x/, the sample data.
+          -> Double
+midspread (ContParam a b) k x =
+    assert (allU (not . isNaN) x) .
+    assert (k > 0) $
+    quantile (1-frac) - quantile frac
+  where
+    quantile i        = (1-h i) * item (j i-1) + h i * item (j i)
+    j i               = floor (t i + eps) :: Int
+    t i               = a + i * (fromIntegral n + 1 - a - b)
+    h i | abs r < eps = 0
+        | otherwise   = r
+        where r       = t i - fromIntegral (j i)
+    eps               = m_epsilon * 4
+    n                 = lengthU x
+    item              = indexU sx . bracket
+    sx                = partialSort (bracket (j (1-frac)) + 1) x
+    bracket m         = min (max m 0) (n - 1)
+    frac              = 1 / fromIntegral k
+{-# INLINE midspread #-}
 
 -- | California Department of Public Works definition, /a/=0, /b/=1.
 -- Gives a linear interpolation of the empirical CDF.  This
