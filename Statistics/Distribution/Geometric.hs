@@ -8,10 +8,14 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- The Geometric distribution.  This is the discrete probability
--- distribution of a number of events occurring in a fixed interval if
--- these events occur with a known average rate, and occur
--- independently from each other within that interval.
+-- The Geometric distribution. This is the probability distribution of
+-- the number of Bernoulli trials needed to get one success, supported
+-- on the set [1,2..].
+--
+-- This distribution is sometimes referred to as the /shifted/
+-- geometric distribution, to distinguish it from a variant measuring
+-- the number of failures before the first success, defined over the
+-- set [0,1..].
 
 module Statistics.Distribution.Geometric
     (
