@@ -25,7 +25,8 @@ import Statistics.Types (Estimator, Sample)
 import System.Random.Mersenne (MTGen, random)
 
 -- | A resample drawn randomly, with replacement, from a set of data
--- points.
+-- points.  Distinct from a normal array to make it harder for your
+-- humble author's brain to go wrong.
 newtype Resample = Resample {
       fromResample :: UArr Double
     } deriving (Eq, Show)

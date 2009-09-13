@@ -62,8 +62,9 @@ n `choose` k
 
 data F = F {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
 
--- | Compute the factorial function.  Returns &#8734; if the input is
--- above 170.
+-- | Compute the factorial function /n/!.  Returns &#8734; if the
+-- input is above 170 (above which the result cannot be represented by
+-- a 64-bit 'Double').
 factorial :: Int -> Double
 factorial n
     | n < 0     = error "Statistics.Math.factorial: negative input"
@@ -89,7 +90,7 @@ logFactorial n
                2.7777777777778e-3) * y + 8.3333333333333e-2
 {-# INLINE logFactorial #-}
 
--- | Compute the incomplete gamma integral function, &#947;(/s/,/x/).
+-- | Compute the incomplete gamma integral function &#947;(/s/,/x/).
 -- Uses Algorithm AS 239 by Shea.
 incompleteGamma :: Double       -- ^ /s/
                 -> Double       -- ^ /x/
@@ -135,7 +136,7 @@ incompleteGamma x p
 
 -- Adapted from http://people.sc.fsu.edu/~burkardt/f_src/asa245/asa245.html
 
--- | Compute the logarithm of the gamma function, &#915;(/x/).  Uses
+-- | Compute the logarithm of the gamma function &#915;(/x/).  Uses
 -- Algorithm AS 245 by Macleod.
 --
 -- Gives an accuracy of 10&#8211;12 significant decimal digits, except

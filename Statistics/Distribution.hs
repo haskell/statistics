@@ -21,15 +21,15 @@ module Statistics.Distribution
 -- | The interface shared by all probability distributions.
 class Distribution d where
     -- | Probability density function. The probability that a
-    -- stochastic variable @x@ has the value @X@, i.e. @P(x=X)@.
+    -- stochastic variable /x/ has the value /X/, i.e. P(/x/=/X/).
     probability :: d -> Double -> Double
 
     -- | Cumulative distribution function.  The probability that a
-    -- stochastic variable @x@ is less than @X@, i.e. @P(x<X)@.
+    -- stochastic variable /x/ is less than /X/, i.e. P(/x/</X/).
     cumulative  :: d -> Double -> Double
 
     -- | Inverse of the cumulative distribution function.  The value
-    -- @X@ for which @P(x<X)@.
+    -- /X/ for which P(/x/</X/).
     inverse     :: d -> Double -> Double
 
 class Distribution d => Mean d where
@@ -38,14 +38,14 @@ class Distribution d => Mean d where
 class Mean d => Variance d where
     variance :: d -> Double
 
--- | Approximate the value of @X@ for which @P(x>X) == p@.
+-- | Approximate the value of /X/ for which P(/x/>/X/)=/p/.
 --
 -- This method uses a combination of Newton-Raphson iteration and
 -- bisection with the given guess as a starting point.  The upper and
 -- lower bounds specify the interval in which the probability
--- distribution reaches the value @p@.
+-- distribution reaches the value /p/.
 findRoot :: Distribution d => d
-         -> Double              -- ^ Probability @p@
+         -> Double              -- ^ Probability /p/
          -> Double              -- ^ Initial guess
          -> Double              -- ^ Lower bound on interval
          -> Double              -- ^ Upper bound on interval

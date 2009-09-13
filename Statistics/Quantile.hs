@@ -8,15 +8,20 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Functions for approximating quantiles.
+-- Functions for approximating quantiles, i.e. points taken at regular
+-- intervals from the cumulative distribution function of a random
+-- variable.
+--
+-- The number of quantiles is described below by the variable /q/, so
+-- with /q/=4, a 4-quantile (also known as a /quartile/) has 4
+-- intervals, and contains 5 points.  The parameter /k/ describes the
+-- desired point, where 0 &#8804; /k/ &#8804; /q/.
 
 module Statistics.Quantile
     (
-     -- * Types
-     ContParam(..)
-
     -- * Quantile estimation functions
-    , weightedAvg
+      weightedAvg
+    , ContParam(..)
     , continuousBy
 
     -- * Parameters for the continuous sample method
@@ -33,14 +38,15 @@ module Statistics.Quantile
 
 import Control.Exception (assert)
 import Data.Array.Vector (allU, indexU, lengthU)
+import Statistics.Constants (m_epsilon)
 import Statistics.Function (partialSort)
 import Statistics.Types (Sample)
 
--- | Use the weighted average method to estimate the @k@th
--- @q@-quantile of a sample.
-weightedAvg :: Int              -- ^ @k@, the desired quantile
-            -> Int              -- ^ @q@, the number of quantiles
-            -> Sample           -- ^ @x@, the sample data
+-- | Estimate the /k/th /q/-quantile of a sample, using the weighted
+-- average method.
+weightedAvg :: Int              -- ^ /k/, the desired quantile.
+            -> Int              -- ^ /q/, the number of quantiles.
+            -> Sample           -- ^ /x/, the sample data.
             -> Double
 weightedAvg k q x =
     assert (q >= 2) .
@@ -57,15 +63,17 @@ weightedAvg k q x =
     sx  = partialSort (j+2) x
 {-# INLINE weightedAvg #-}
 
--- | Parameters @a@ and @b@ to the 'quantileBy' function.
+-- | Parameters /a/ and /b/ to the 'continuousBy' function.
 data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
--- | Using the continuous sample method with the given parameters,
--- estimate the @k@th @q@-quantile of a sample @x@.
-continuousBy :: ContParam       -- ^ Parameters @a@ and @b@
-             -> Int             -- ^ @k@, the desired quantile
-             -> Int             -- ^ @q@, the number of quantiles
-             -> Sample          -- ^ @x@, the sample data
+-- | Estimate the /k/th /q/-quantile of a sample /x/, using the
+-- continuous sample method with the given parameters.  This is the
+-- method used by most statistical software, such as R, Mathematica,
+-- SPSS, and S.
+continuousBy :: ContParam       -- ^ Parameters /a/ and /b/.
+             -> Int             -- ^ /k/, the desired quantile.
+             -> Int             -- ^ /q/, the number of quantiles.
+             -> Sample          -- ^ /x/, the sample data.
              -> Double
 continuousBy (ContParam a b) k q x =
     assert (q >= 2) .
@@ -80,50 +88,51 @@ continuousBy (ContParam a b) k q x =
     h | abs r < eps = 0
       | otherwise   = r
       where r       = t - fromIntegral j
-    eps             = 8.881784e-16
+    eps             = m_epsilon * 4
     n               = lengthU x
     item            = indexU sx . bracket
     sx              = partialSort (bracket j + 1) x
     bracket m       = min (max m 0) (n - 1)
 {-# INLINE continuousBy #-}
 
--- | California Department of Public Works definition, @a=0,b=1@.
--- Gives a linear interpolation of the empirical CDF.
--- This corresponds to method 4 in R and Mathematica.
+-- | California Department of Public Works definition, /a/=0, /b/=1.
+-- Gives a linear interpolation of the empirical CDF.  This
+-- corresponds to method 4 in R and Mathematica.
 cadpw :: ContParam
 cadpw = ContParam 0 1
 {-# INLINE cadpw #-}
 
--- | Hazen's definition, @a=0.5,b=0.5@.  This is claimed to be popular
--- among hydrologists.  This corresponds to method 5 in R and
+-- | Hazen's definition, /a/=0.5, /b/=0.5.  This is claimed to be
+-- popular among hydrologists.  This corresponds to method 5 in R and
 -- Mathematica.
 hazen :: ContParam
 hazen = ContParam 0.5 0.5
 {-# INLINE hazen #-}
 
--- | SPSS definition, @a=0,b=0@, also known as Weibull's definition.
--- This corresponds to method 6 in R and Mathematica.
+-- | Definition used by the SPSS statistics application, with /a/=0,
+-- /b/=0 (also known as Weibull's definition).  This corresponds to
+-- method 6 in R and Mathematica.
 spss :: ContParam
 spss = ContParam 0 0
 {-# INLINE spss #-}
 
--- | S definition, @a=1,b=1@.  The interpolation points divide the
--- sample range into @n-1@ intervals.  This corresponds to method 7 in
--- R and Mathematica.
+-- | Definition used by the S statistics application, with /a/=1,
+-- /b/=1.  The interpolation points divide the sample range into @n-1@
+-- intervals.  This corresponds to method 7 in R and Mathematica.
 s :: ContParam
 s = ContParam 1 1
 {-# INLINE s #-}
 
--- | Median unbiased definition, @a=1/3,b=1/3@. The resulting quantile
--- estimates are approximately median unbiased regardless of the
--- distribution of @x@.  This corresponds to method 8 in R and
+-- | Median unbiased definition, /a/=1\/3, /b/=1\/3. The resulting
+-- quantile estimates are approximately median unbiased regardless of
+-- the distribution of /x/.  This corresponds to method 8 in R and
 -- Mathematica.
 medianUnbiased :: ContParam
 medianUnbiased = ContParam third third
     where third = 1/3
 {-# INLINE medianUnbiased #-}
 
--- | Normal unbiased definition, @a=3/8,b=3/8@.  An approximately
+-- | Normal unbiased definition, /a/=3\/8, /b/=3\/8.  An approximately
 -- unbiased estimate if the empirical distribution approximates the
 -- normal distribution.  This corresponds to method 9 in R and
 -- Mathematica.
