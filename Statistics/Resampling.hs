@@ -16,11 +16,11 @@ module Statistics.Resampling
     , resample
     ) where
 
-import Control.Exception (assert)
 import Control.Monad (forM_)
 import Control.Monad.ST (unsafeSTToIO)
 import Data.Array.Vector
 import Data.Array.Vector.Algorithms.Intro (sort)
+import Statistics.Function (createU)
 import Statistics.Types (Estimator, Sample)
 import System.Random.Mersenne (MTGen, random)
 
@@ -50,17 +50,6 @@ resample gen ests numResamples samples = do
         writeMU arr k . est $ re
     loop (k+1) ers
   n = lengthU samples
-
--- | Create an array, using the given action to populate each element.
-createU :: (UA e) => Int -> (Int -> IO e) -> IO (UArr e)
-createU size itemAt = assert (size >= 0) $
-    unsafeSTToIO (newMU size) >>= loop 0
-  where
-    loop k arr | k >= size = unsafeSTToIO (unsafeFreezeAllMU arr)
-               | otherwise = do
-      r <- itemAt k
-      unsafeSTToIO (writeMU arr k r)
-      loop (k+1) arr
 
 -- | Compute a statistical estimate repeatedly over a sample, each
 -- time omitting a successive element.

@@ -11,8 +11,8 @@
 
 module Statistics.Types
     (
-      Sample
-    , Estimator
+      Estimator
+    , Sample
     , Weights
     ) where
 
