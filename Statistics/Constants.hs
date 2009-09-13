@@ -22,7 +22,7 @@ module Statistics.Constants
 
 -- | A very large number.
 m_huge :: Double
-m_huge = 1.797693e308
+m_huge = 1.7976931348623157e308
 {-# INLINE m_huge #-}
 
 -- | The largest 'Int' /x/ such that 2**(/x/-1) is approximately
