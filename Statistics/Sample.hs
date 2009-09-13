@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeOperators #-}
 -- |
 -- Module    : Statistics.Sample
 -- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan
@@ -14,6 +15,9 @@ module Statistics.Sample
     (
     -- * Types
       Sample
+    -- * Descriptive functions
+    , range
+
     -- * Statistics of location
     , mean
     , harmonicMean
@@ -21,6 +25,10 @@ module Statistics.Sample
 
     -- * Statistics of dispersion
     -- $variance
+
+    -- ** Central moments
+    , centralMoment
+    , centralMoments
 
     -- ** Two-pass functions (numerically robust)
     -- $robust
@@ -38,8 +46,14 @@ module Statistics.Sample
     -- $references
     ) where
 
-import Data.Array.Vector (foldlU, lengthU)
+import Data.Array.Vector
+import Statistics.Function (minMax)
 import Statistics.Types (Sample)
+
+range :: Sample -> Double
+range s = hi - lo
+    where hi :*: lo = minMax s
+{-# INLINE range #-}
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
@@ -68,6 +82,30 @@ geometricMean = fini . foldlU go (T 1 0)
     fini (T p n) = p ** (1 / fromIntegral n)
     go (T p n) a = T (p * a) (n + 1)
 {-# INLINE geometricMean #-}
+
+-- | Compute the /k/th central moment of a sample.
+centralMoment :: Int -> Sample -> Double
+centralMoment a xs
+    | a < 0  = error "Statistics.Sample.centralMoment: negative input"
+    | a == 0 = 1
+    | a == 1 = 0
+    | otherwise = sumU (mapU go xs) / fromIntegral (lengthU xs)
+  where
+    go x = (x-m) ^ a
+    m    = mean xs
+{-# INLINE centralMoment #-}
+
+-- | Compute two central moments.
+centralMoments :: Int -> Int -> Sample -> Double :*: Double
+centralMoments a b xs
+    | a < 2 || b < 2 = centralMoment a xs :*: centralMoment b xs
+    | otherwise      = fini . foldlU go (V 0 0) $ xs
+  where go (V i j) x = V (i + d^a) (j + d^a)
+            where d  = x - m
+        fini (V i j) = i / n :*: j / n
+        m            = mean xs
+        n            = fromIntegral (lengthU xs)
+{-# INLINE centralMoments #-}
 
 -- $variance
 --
