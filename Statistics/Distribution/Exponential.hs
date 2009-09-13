@@ -8,10 +8,10 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- The exponential distribution.  This is the discrete probability
--- distribution of the number of successes in a sequence of /n/
--- independent yes\/no experiments, each of which yields success with
--- probability /p/.
+-- The exponential distribution.  This is the continunous probability
+-- distribution of the times between events in a poisson process, in
+-- which events occur continuously and independently at a constant
+-- average rate.
 
 module Statistics.Distribution.Exponential
     (
@@ -39,11 +39,11 @@ instance D.Distribution ExponentialDistribution where
     {-# INLINE inverse #-}
 
 instance D.Variance ExponentialDistribution where
-    variance (ED l) = l * l
+    variance (ED l) = 1 / (l * l)
     {-# INLINE variance #-}
 
 instance D.Mean ExponentialDistribution where
-    mean = edLambda
+    mean = 1 / edLambda
     {-# INLINE mean #-}
 
 fromLambda :: Double            -- ^ &#955; (scale) parameter.
