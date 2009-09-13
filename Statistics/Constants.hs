@@ -25,7 +25,7 @@ m_huge :: Double
 m_huge = 1.797693e308
 {-# INLINE m_huge #-}
 
--- | The largest 'Int' /x/ such that @2**(x-1)@ is approximately
+-- | The largest 'Int' /x/ such that 2**(/x/-1) is approximately
 -- representable as a 'Double'.
 m_max_exp :: Int
 m_max_exp = 1024

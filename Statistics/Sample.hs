@@ -12,8 +12,10 @@
 
 module Statistics.Sample
     (
+    -- * Types
+      Sample
     -- * Statistics of location
-      mean
+    , mean
     , harmonicMean
     , geometricMean
 

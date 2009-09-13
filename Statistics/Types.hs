@@ -18,9 +18,12 @@ module Statistics.Types
 
 import Data.Array.Vector (UArr)
 
+-- | Sample data.
 type Sample = UArr Double
 
--- | A function that estimates a property of a sample, such as 'mean'.
+-- | A function that estimates a property of a sample, such as its
+-- 'mean'.
 type Estimator = Sample -> Double
 
+-- | Weights for affecting the importance of elements of a sample.
 type Weights = UArr Double

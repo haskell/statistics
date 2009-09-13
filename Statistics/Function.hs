@@ -21,15 +21,15 @@ import Data.Array.Vector.Algorithms.Combinators (apply)
 import Data.Array.Vector ((:*:)(..), UA, UArr, foldlU)
 import qualified Data.Array.Vector.Algorithms.Intro as I
 
--- | Sort.
+-- | Sort an array.
 sort :: (UA e, Ord e) => UArr e -> UArr e
 sort = apply I.sort
 {-# INLINE sort #-}
 
--- | Partially sort, such that the least @k@ elements will be
+-- | Partially sort an array, such that the least /k/ elements will be
 -- at the front.
 partialSort :: (UA e, Ord e) =>
-               Int              -- ^ The number @k@ of least elements
+               Int              -- ^ The number /k/ of least elements.
             -> UArr e
             -> UArr e
 partialSort k = apply (\a -> I.partialSort a k)
