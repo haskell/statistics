@@ -45,7 +45,10 @@ library
     Statistics.Resampling
     Statistics.Resampling.Bootstrap
     Statistics.Sample
+    Statistics.Sample.Powers
     Statistics.Types
+  other-modules:
+    Statistics.Internal
   build-depends:
     base < 5,
     erf,
