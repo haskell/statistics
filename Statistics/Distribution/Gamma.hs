@@ -38,9 +38,9 @@ data GammaDistribution = GD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution GammaDistribution where
-    probability = probability
-    cumulative  = cumulative
-    inverse     = inverse
+    density    = density
+    cumulative = cumulative
+    inverse    = inverse
 
 instance D.Variance GammaDistribution where
     variance (GD a l) = a / (l * l)
@@ -50,9 +50,9 @@ instance D.Mean GammaDistribution where
     mean (GD a l) = a / l
     {-# INLINE mean #-}
 
-probability :: GammaDistribution -> Double -> Double
-probability (GD a l) x = x ** (a-1) * exp (-x/l) / (exp (logGamma a) * l ** a)
-{-# INLINE probability #-}
+density :: GammaDistribution -> Double -> Double
+density (GD a l) x = x ** (a-1) * exp (-x/l) / (exp (logGamma a) * l ** a)
+{-# INLINE density #-}
 
 cumulative :: GammaDistribution -> Double -> Double
 cumulative (GD a l) x = incompleteGamma a (x/l) / exp (logGamma a)

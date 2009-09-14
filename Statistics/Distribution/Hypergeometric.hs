@@ -41,9 +41,9 @@ data HypergeometricDistribution = HD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution HypergeometricDistribution where
-    probability = probability
-    cumulative  = cumulative
-    inverse     = inverse
+    density    = density
+    cumulative = cumulative
+    inverse    = inverse
 
 instance D.Variance HypergeometricDistribution where
     variance = variance
@@ -74,8 +74,8 @@ fromParams m l k =
     HD m l k
 {-# INLINE fromParams #-}
 
-probability :: HypergeometricDistribution -> Double -> Double
-probability (HD mi li ki) x
+density :: HypergeometricDistribution -> Double -> Double
+density (HD mi li ki) x
     | l <= 70    = (mi <> xi) * ((li - mi) <> (ki - xi)) / (li <> ki)
     | r > maxVal = 1/0
     | otherwise  = exp r
@@ -89,7 +89,7 @@ probability (HD mi li ki) x
     m = fromIntegral mi
     l = fromIntegral li
     k = fromIntegral ki
-{-# INLINE probability #-}
+{-# INLINE density #-}
 
 cumulative :: HypergeometricDistribution -> Double -> Double
 cumulative d@(HD m l k) x
@@ -99,7 +99,7 @@ cumulative d@(HD m l k) x
   where
     imin = max 0 (k - l + m)
     imax = min k m
-    r = sumU . mapU (probability d . fromIntegral) . enumFromToU imin . floor $ x
+    r = sumU . mapU (density d . fromIntegral) . enumFromToU imin . floor $ x
 {-# INLINE cumulative #-}
 
 inverse :: HypergeometricDistribution -> Double -> Double
