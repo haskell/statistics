@@ -40,7 +40,7 @@ data GammaDistribution = GD {
 instance D.Distribution GammaDistribution where
     density    = density
     cumulative = cumulative
-    inverse    = inverse
+    quantile   = quantile
 
 instance D.Variance GammaDistribution where
     variance (GD a l) = a / (l * l)
@@ -58,9 +58,9 @@ cumulative :: GammaDistribution -> Double -> Double
 cumulative (GD a l) x = incompleteGamma a (x/l) / exp (logGamma a)
 {-# INLINE cumulative #-}
 
-inverse :: GammaDistribution -> Double -> Double
-inverse d p
+quantile :: GammaDistribution -> Double -> Double
+quantile d p
   | p == 0    = -1/0
   | p == 1    = 1/0
   | otherwise = D.findRoot d p (gdShape d) 0 m_huge
-{-# INLINE inverse #-}
+{-# INLINE quantile #-}

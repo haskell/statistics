@@ -34,7 +34,7 @@ newtype PoissonDistribution = PD {
 instance D.Distribution PoissonDistribution where
     density    = density
     cumulative = cumulative
-    inverse    = inverse
+    quantile   = quantile
 
 instance D.Variance PoissonDistribution where
     variance = pdLambda
@@ -57,7 +57,7 @@ cumulative d = sumU . mapU (density d . fromIntegral) .
                enumFromToU (0::Int) . floor
 {-# INLINE cumulative #-}
 
-inverse :: PoissonDistribution -> Double -> Double
-inverse d p = fromIntegral . r $ D.findRoot d p (pdLambda d) 0 m_huge
+quantile :: PoissonDistribution -> Double -> Double
+quantile d p = fromIntegral . r $ D.findRoot d p (pdLambda d) 0 m_huge
     where r = round :: Double -> Int
-{-# INLINE inverse #-}
+{-# INLINE quantile #-}

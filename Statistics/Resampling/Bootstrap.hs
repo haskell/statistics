@@ -20,7 +20,7 @@ module Statistics.Resampling.Bootstrap
 import Control.Exception (assert)
 import Data.Array.Vector (foldlU, filterU, indexU, lengthU)
 import Statistics.Distribution.Normal
-import Statistics.Distribution (cumulative, inverse)
+import Statistics.Distribution (cumulative, quantile)
 import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
@@ -75,9 +75,9 @@ bootstrapBCA confidenceLevel sample =
         hi    = min (cumn a2) (ni - 1)
           where a2 = bias + b2 / (1 - accel * b2)
                 b2 = bias - z1
-        z1    = inverse standard ((1 - confidenceLevel) / 2)
+        z1    = quantile standard ((1 - confidenceLevel) / 2)
         cumn  = round . (*n) . cumulative standard
-        bias  = inverse standard (probN / n)
+        bias  = quantile standard (probN / n)
           where probN = fromIntegral . lengthU . filterU (<pt) $ resample
         ni    = lengthU resample
         n     = fromIntegral ni
