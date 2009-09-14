@@ -104,6 +104,9 @@ centralMoment a xs
 --
 -- This function performs two passes over the sample, so is not subject
 -- to stream fusion.
+--
+-- For samples containing many values very close to the mean, this
+-- function is subject to inaccuracy due to catastrophic cancellation.
 centralMoments :: Int -> Int -> Sample -> Double :*: Double
 centralMoments a b xs
     | a < 2 || b < 2 = centralMoment a xs :*: centralMoment b xs
