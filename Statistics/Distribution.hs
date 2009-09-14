@@ -26,11 +26,11 @@ class Distribution d where
 
     -- | Cumulative distribution function.  The probability that a
     -- random variable /X/ is less than /x/, i.e. P(/X/&#8804;/x/).
-    cumulative  :: d -> Double -> Double
+    cumulative :: d -> Double -> Double
 
     -- | Inverse of the cumulative distribution function.  The value
     -- /x/ for which P(/X/&#8804;/x/).
-    inverse     :: d -> Double -> Double
+    quantile :: d -> Double -> Double
 
 class Distribution d => Mean d where
     mean :: d -> Double

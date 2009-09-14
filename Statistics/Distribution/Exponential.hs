@@ -37,8 +37,8 @@ instance D.Distribution ExponentialDistribution where
     {-# INLINE density #-}
     cumulative (ED l) x = 1 - exp (-l * x)
     {-# INLINE cumulative #-}
-    inverse (ED l) p    = -log (1 - p) / l
-    {-# INLINE inverse #-}
+    quantile (ED l) p   = -log (1 - p) / l
+    {-# INLINE quantile #-}
 
 instance D.Variance ExponentialDistribution where
     variance (ED l) = 1 / (l * l)

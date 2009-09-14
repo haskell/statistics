@@ -37,7 +37,7 @@ newtype GeometricDistribution = GD {
 instance D.Distribution GeometricDistribution where
     density    = density
     cumulative = cumulative
-    inverse    = inverse
+    quantile   = quantile
 
 instance D.Variance GeometricDistribution where
     variance (GD s) = (1 - s) / (s * s)
@@ -60,6 +60,6 @@ cumulative :: GeometricDistribution -> Double -> Double
 cumulative (GD s) x = 1 - (1-s) ** x
 {-# INLINE cumulative #-}
 
-inverse :: GeometricDistribution -> Double -> Double
-inverse (GD s) p = log (1 - p) / log (1 - s)
-{-# INLINE inverse #-}
+quantile :: GeometricDistribution -> Double -> Double
+quantile (GD s) p = log (1 - p) / log (1 - s)
+{-# INLINE quantile #-}

@@ -39,7 +39,7 @@ data NormalDistribution = ND {
 instance D.Distribution NormalDistribution where
     density    = density
     cumulative = cumulative
-    inverse    = inverse
+    quantile   = quantile
 
 instance D.Variance NormalDistribution where
     variance = variance
@@ -75,8 +75,8 @@ density d x = exp (-xm * xm / (2 * variance d)) / ndPdfDenom d
 cumulative :: NormalDistribution -> Double -> Double
 cumulative d x = erfc (-(x-mean d) / ndCdfDenom d) / 2
 
-inverse :: NormalDistribution -> Double -> Double
-inverse d p
+quantile :: NormalDistribution -> Double -> Double
+quantile d p
   | p == 0    = -m_huge
   | p == 1    = m_huge
   | p == 0.5  = mean d

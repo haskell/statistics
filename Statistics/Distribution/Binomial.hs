@@ -40,7 +40,7 @@ data BinomialDistribution = BD {
 instance D.Distribution BinomialDistribution where
     density    = density
     cumulative = cumulative
-    inverse    = inverse
+    quantile   = quantile
 
 instance D.Variance BinomialDistribution where
     variance = variance
@@ -56,8 +56,8 @@ cumulative :: BinomialDistribution -> Double -> Double
 cumulative d =
     sumU . mapU (density d . fromIntegral) . enumFromToU (0::Int) . floor
 
-inverse :: BinomialDistribution -> Double -> Double
-inverse d@(BD n _p) p = D.findRoot d p (n'/2) 0 n'
+quantile :: BinomialDistribution -> Double -> Double
+quantile d@(BD n _p) p = D.findRoot d p (n'/2) 0 n'
     where n' = fromIntegral n
 
 mean :: BinomialDistribution -> Double

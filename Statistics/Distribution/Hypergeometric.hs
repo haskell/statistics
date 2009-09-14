@@ -43,7 +43,7 @@ data HypergeometricDistribution = HD {
 instance D.Distribution HypergeometricDistribution where
     density    = density
     cumulative = cumulative
-    inverse    = inverse
+    quantile   = quantile
 
 instance D.Variance HypergeometricDistribution where
     variance = variance
@@ -102,6 +102,6 @@ cumulative d@(HD m l k) x
     r = sumU . mapU (density d . fromIntegral) . enumFromToU imin . floor $ x
 {-# INLINE cumulative #-}
 
-inverse :: HypergeometricDistribution -> Double -> Double
-inverse = error "Statistics.Distribution.Hypergeometric.inverse: not yet implemented"
-{-# INLINE inverse #-}
+quantile :: HypergeometricDistribution -> Double -> Double
+quantile = error "Statistics.Distribution.Hypergeometric.quantile: not yet implemented"
+{-# INLINE quantile #-}
