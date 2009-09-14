@@ -12,8 +12,9 @@
 -- be computed efficiently in just a single pass over a sample, with
 -- that pass subject to stream fusion.
 --
--- The tradeoff is that the algorithms are less numerically robust
--- than their counterparts in the 'Statistics.Sample' module.
+-- The tradeoff is that some of these functions are less numerically
+-- robust than their counterparts in the 'Statistics.Sample' module.
+-- Where this is the case, the alternatives are noted.
 
 module Statistics.Sample.Powers
     (
@@ -25,6 +26,7 @@ module Statistics.Sample.Powers
     , powers
 
     -- * Descriptive functions
+    , order
     , count
     , sum
 
@@ -34,6 +36,7 @@ module Statistics.Sample.Powers
     -- * Statistics of dispersion
     , variance
     , stdDev
+    , varianceUnbiased
 
     -- * Functions over central moments
     , centralMoment
@@ -52,23 +55,22 @@ import Statistics.Math (choose)
 import Statistics.Types (Sample)
 import System.IO.Unsafe (unsafePerformIO)
 
-newtype Powers = Powers {
-      fromPowers :: UArr Double
-    } deriving (Eq, Read, Show)
+newtype Powers = Powers (UArr Double)
+    deriving (Eq, Read, Show)
 
 -- | O(/n/) Collect the /n/ simple powers of a sample.
 --
--- Various functions computed over a sample's simple powers require at
--- least a certain number (or /order/) of powers to be collected.
+-- Functions computed over a sample's simple powers require at least a
+-- certain number (or /order/) of powers to be collected.
 --
 -- * To compute the /k/th 'centralMoment', at least /k/ simple powers
 --   must be collected.
 --
 -- * For the 'variance', at least 2 simple powers are needed.
 --
--- * For 'skewness', at least 3 simple powers are needed.
+-- * For 'skewness', we need at least 3 simple powers.
 --
--- * For 'kurtosis', at least 4 simple powers are needed.
+-- * For 'kurtosis', at least 4 simple powers are required.
 --
 -- This function is subject to stream fusion.
 powers :: Int                   -- ^ /n/, the number of powers, where /n/ >= 2.
@@ -90,8 +92,7 @@ powers k
     l = k + 1
 {-# INLINE powers #-}
 
--- | Return the order (number) of simple powers collected from a
--- 'Sample'.
+-- | The order (number) of simple powers collected from a 'Sample'.
 order :: Powers -> Int
 order (Powers pa) = lengthU pa - 1
 {-# INLINE order #-}
@@ -115,7 +116,7 @@ centralMoment k p@(Powers pa)
 -- as the population variance, where the denominator is /n/.  This is
 -- the second central moment of the sample.
 --
--- This is less numerically stable than the variance function in the
+-- This is less numerically robust than the variance function in the
 -- 'Statistics.Sample' module, but the number is essentially free to
 -- compute if you have already collected a sample's simple powers.
 --
@@ -153,7 +154,7 @@ varianceUnbiased p@(Powers pa)
 --
 -- A sample with positive skew is said to be /right-skewed/.
 --
--- > skewness . powers 5 $ toU [1,2,3,4,100]
+-- > skewness . powers 3 $ toU [1,2,3,4,100]
 -- > ==> 1.4975367033335198
 --
 -- A sample's skewness is not defined if its 'variance' is zero.
@@ -165,8 +166,8 @@ skewness p = centralMoment 3 p * variance p ** (-1.5)
 
 -- | Compute the excess kurtosis of a sample.  This is a measure of
 -- the \"peakedness\" of its distribution.  A high kurtosis indicates
--- that more of the sample's variance is due to infrequent severe
--- deviations, rather than more frequent modest deviations.
+-- that the sample's variance is due more to infrequent severe
+-- deviations than to frequent modest deviations.
 --
 -- A sample's excess kurtosis is not defined if its 'variance' is
 -- zero.
@@ -177,21 +178,21 @@ kurtosis p = centralMoment 4 p / (v * v) - 3
     where v = variance p
 {-# INLINE kurtosis #-}
 
--- | Return the number of elements in the original 'Sample'.  This is
--- the sample's zeroth simple power.
+-- | The number of elements in the original 'Sample'.  This is the
+-- sample's zeroth simple power.
 count :: Powers -> Int
 count (Powers pa) = floor $ indexU pa 0
 {-# INLINE count #-}
 
--- | Return the sum of elements in the original 'Sample'.  This is
--- the sample's first simple power.
+-- | The sum of elements in the original 'Sample'.  This is the
+-- sample's first simple power.
 sum :: Powers -> Double
-sum p@(Powers pa) = indexU pa 1
+sum (Powers pa) = indexU pa 1
 {-# INLINE sum #-}
 
--- | Return the arithmetic mean of elements in the original 'Sample'.
+-- | The arithmetic mean of elements in the original 'Sample'.
 --
--- This is less numerically stable than the mean function in the
+-- This is less numerically robust than the mean function in the
 -- 'Statistics.Sample' module, but the number is essentially free to
 -- compute if you have already collected a sample's simple powers.
 mean :: Powers -> Double
@@ -202,6 +203,10 @@ mean p@(Powers pa)
 {-# INLINE mean #-}
 
 -- $references
+--
+-- * Besset, D.H. (2000) Elements of statistics.
+--   /Object-oriented implementation of numerical methods/
+--   pp. 311&#8211;331. <http://www.elsevier.com/wps/product/cws_home/677916>
 --
 -- * Anderson, G. (2009) Compute /k/th central moments in one
 --   pass. /quantblog/. <http://quantblog.wordpress.com/2009/02/07/compute-kth-central-moments-in-one-pass/>
