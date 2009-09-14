@@ -132,7 +132,8 @@ robustVar samp = fini . foldlU go (V 0 0) $ samp
     n            = lengthU samp
     m            = mean samp
 
--- | Maximum likelihood estimate of a sample's variance.
+-- | Maximum likelihood estimate of a sample's variance.  Also known
+-- as the population variance.
 variance :: Sample -> Double
 variance = fini . robustVar
   where fini (T v n)
@@ -140,7 +141,8 @@ variance = fini . robustVar
           | otherwise = 0
 {-# INLINE variance #-}
 
--- | Unbiased estimate of a sample's variance.
+-- | Unbiased estimate of a sample's variance.  Also known as the
+-- sample variance.
 varianceUnbiased :: Sample -> Double
 varianceUnbiased = fini . robustVar
   where fini (T v n)
