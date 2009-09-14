@@ -26,9 +26,11 @@ module Statistics.Sample
     -- * Statistics of dispersion
     -- $variance
 
-    -- ** Central moments
+    -- ** Functions over central moments
     , centralMoment
     , centralMoments
+    , skewness
+    , kurtosis
 
     -- ** Two-pass functions (numerically robust)
     -- $robust
@@ -84,6 +86,9 @@ geometricMean = fini . foldlU go (T 1 0)
 {-# INLINE geometricMean #-}
 
 -- | Compute the /k/th central moment of a sample.
+--
+-- This function performs two passes over the sample, so is not subject
+-- to stream fusion.
 centralMoment :: Int -> Sample -> Double
 centralMoment a xs
     | a < 0  = error "Statistics.Sample.centralMoment: negative input"
@@ -95,17 +100,59 @@ centralMoment a xs
     m    = mean xs
 {-# INLINE centralMoment #-}
 
--- | Compute two central moments.
+-- | Compute the /k/th and /j/th central moments of a sample.
+--
+-- This function performs two passes over the sample, so is not subject
+-- to stream fusion.
 centralMoments :: Int -> Int -> Sample -> Double :*: Double
 centralMoments a b xs
     | a < 2 || b < 2 = centralMoment a xs :*: centralMoment b xs
     | otherwise      = fini . foldlU go (V 0 0) $ xs
-  where go (V i j) x = V (i + d^a) (j + d^a)
+  where go (V i j) x = V (i + d^a) (j + d^b)
             where d  = x - m
         fini (V i j) = i / n :*: j / n
         m            = mean xs
         n            = fromIntegral (lengthU xs)
 {-# INLINE centralMoments #-}
+
+-- | Compute the skewness of a sample. This is a measure of the
+-- asymmetry of its distribution.
+--
+-- A sample with negative skew is said to be /left-skewed/.  Most of
+-- its mass is on the right of the distribution, with the tail on the
+-- left.
+--
+-- > skewness . powers 3 $ toU [1,100,101,102,103]
+-- > ==> -1.497681449918257
+--
+-- A sample with positive skew is said to be /right-skewed/.
+--
+-- > skewness . powers 5 $ toU [1,2,3,4,100]
+-- > ==> 1.4975367033335198
+--
+-- A sample's skewness is not defined if its 'variance' is zero.
+--
+-- This function performs two passes over the sample, so is not subject
+-- to stream fusion.
+skewness :: Sample -> Double
+skewness xs = c3 * c2 ** (-1.5)
+    where c3 :*: c2 = centralMoments 3 2 xs
+{-# INLINE skewness #-}
+
+-- | Compute the excess kurtosis of a sample.  This is a measure of
+-- the \"peakedness\" of its distribution.  A high kurtosis indicates
+-- that more of the sample's variance is due to infrequent severe
+-- deviations, rather than more frequent modest deviations.
+--
+-- A sample's excess kurtosis is not defined if its 'variance' is
+-- zero.
+--
+-- This function performs two passes over the sample, so is not subject
+-- to stream fusion.
+kurtosis :: Sample -> Double
+kurtosis xs = c4 / (c2 * c2) - 3
+    where c4 :*: c2 = centralMoments 4 2 xs
+{-# INLINE kurtosis #-}
 
 -- $variance
 --
