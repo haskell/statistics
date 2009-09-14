@@ -85,10 +85,14 @@ geometricMean = fini . foldlU go (T 1 0)
     go (T p n) a = T (p * a) (n + 1)
 {-# INLINE geometricMean #-}
 
--- | Compute the /k/th central moment of a sample.
+-- | Compute the /k/th central moment of a sample.  The central moment
+-- is also known as the moment about the mean.
 --
 -- This function performs two passes over the sample, so is not subject
 -- to stream fusion.
+--
+-- For samples containing many values very close to the mean, this
+-- function is subject to inaccuracy due to catastrophic cancellation.
 centralMoment :: Int -> Sample -> Double
 centralMoment a xs
     | a < 0  = error "Statistics.Sample.centralMoment: negative input"
@@ -125,18 +129,21 @@ centralMoments a b xs
 -- its mass is on the right of the distribution, with the tail on the
 -- left.
 --
--- > skewness . powers 3 $ toU [1,100,101,102,103]
+-- > skewness $ toU [1,100,101,102,103]
 -- > ==> -1.497681449918257
 --
 -- A sample with positive skew is said to be /right-skewed/.
 --
--- > skewness . powers 5 $ toU [1,2,3,4,100]
+-- > skewness $ toU [1,2,3,4,100]
 -- > ==> 1.4975367033335198
 --
 -- A sample's skewness is not defined if its 'variance' is zero.
 --
 -- This function performs two passes over the sample, so is not subject
 -- to stream fusion.
+--
+-- For samples containing many values very close to the mean, this
+-- function is subject to inaccuracy due to catastrophic cancellation.
 skewness :: Sample -> Double
 skewness xs = c3 * c2 ** (-1.5)
     where c3 :*: c2 = centralMoments 3 2 xs
@@ -152,6 +159,9 @@ skewness xs = c3 * c2 ** (-1.5)
 --
 -- This function performs two passes over the sample, so is not subject
 -- to stream fusion.
+--
+-- For samples containing many values very close to the mean, this
+-- function is subject to inaccuracy due to catastrophic cancellation.
 kurtosis :: Sample -> Double
 kurtosis xs = c4 / (c2 * c2) - 3
     where c4 :*: c2 = centralMoments 4 2 xs
