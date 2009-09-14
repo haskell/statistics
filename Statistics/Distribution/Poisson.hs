@@ -32,9 +32,9 @@ newtype PoissonDistribution = PD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution PoissonDistribution where
-    probability = probability
-    cumulative  = cumulative
-    inverse     = inverse
+    density    = density
+    cumulative = cumulative
+    inverse    = inverse
 
 instance D.Variance PoissonDistribution where
     variance = pdLambda
@@ -48,12 +48,12 @@ fromLambda :: Double -> PoissonDistribution
 fromLambda = PD
 {-# INLINE fromLambda #-}
 
-probability :: PoissonDistribution -> Double -> Double
-probability (PD l) x = exp (x * log l - l - logGamma x)
-{-# INLINE probability #-}
+density :: PoissonDistribution -> Double -> Double
+density (PD l) x = exp (x * log l - l - logGamma x)
+{-# INLINE density #-}
 
 cumulative :: PoissonDistribution -> Double -> Double
-cumulative d = sumU . mapU (probability d . fromIntegral) .
+cumulative d = sumU . mapU (density d . fromIntegral) .
                enumFromToU (0::Int) . floor
 {-# INLINE cumulative #-}
 

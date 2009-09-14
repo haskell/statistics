@@ -37,9 +37,9 @@ data NormalDistribution = ND {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution NormalDistribution where
-    probability = probability
-    cumulative  = cumulative
-    inverse     = inverse
+    density    = density
+    cumulative = cumulative
+    inverse    = inverse
 
 instance D.Variance NormalDistribution where
     variance = variance
@@ -68,8 +68,8 @@ fromParams m v = assert (v > 0)
 fromSample :: Sample -> NormalDistribution
 fromSample a = fromParams (S.mean a) (S.variance a)
 
-probability :: NormalDistribution -> Double -> Double
-probability d x = exp (-xm * xm / (2 * variance d)) / ndPdfDenom d
+density :: NormalDistribution -> Double -> Double
+density d x = exp (-xm * xm / (2 * variance d)) / ndPdfDenom d
     where xm = x - mean d
 
 cumulative :: NormalDistribution -> Double -> Double

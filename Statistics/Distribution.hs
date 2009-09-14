@@ -21,15 +21,15 @@ module Statistics.Distribution
 -- | The interface shared by all probability distributions.
 class Distribution d where
     -- | Probability density function. The probability that a
-    -- stochastic variable /x/ has the value /X/, i.e. P(/x/=/X/).
-    probability :: d -> Double -> Double
+    -- the random variable /X/ has the value /x/, i.e. P(/X/=/x/).
+    density :: d -> Double -> Double
 
     -- | Cumulative distribution function.  The probability that a
-    -- stochastic variable /x/ is less than /X/, i.e. P(/x/</X/).
+    -- random variable /X/ is less than /x/, i.e. P(/X/&#8804;/x/).
     cumulative  :: d -> Double -> Double
 
     -- | Inverse of the cumulative distribution function.  The value
-    -- /X/ for which P(/x/</X/).
+    -- /x/ for which P(/X/&#8804;/x/).
     inverse     :: d -> Double -> Double
 
 class Distribution d => Mean d where
@@ -61,7 +61,7 @@ findRoot d prob = loop 0 1
         err                   = cumulative d x - prob
         P lo' hi' | err < 0   = P x hi
                   | otherwise = P lo x
-        pdf                   = probability d x
+        pdf                   = density d x
         P dx' x' | pdf /= 0   = P (err / pdf) (x - dx)
                  | otherwise  = P dx x
         P dx'' x''

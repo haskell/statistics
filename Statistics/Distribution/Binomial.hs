@@ -38,9 +38,9 @@ data BinomialDistribution = BD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution BinomialDistribution where
-    probability = probability
+    density    = density
     cumulative = cumulative
-    inverse = inverse
+    inverse    = inverse
 
 instance D.Variance BinomialDistribution where
     variance = variance
@@ -48,13 +48,13 @@ instance D.Variance BinomialDistribution where
 instance D.Mean BinomialDistribution where
     mean = mean
 
-probability :: BinomialDistribution -> Double -> Double
-probability (BD n p) x =
+density :: BinomialDistribution -> Double -> Double
+density (BD n p) x =
     fromIntegral (n `choose` floor x) * p ** x * (1-p) ** (fromIntegral n-x)
 
 cumulative :: BinomialDistribution -> Double -> Double
 cumulative d =
-    sumU . mapU (probability d . fromIntegral) . enumFromToU (0::Int) . floor
+    sumU . mapU (density d . fromIntegral) . enumFromToU (0::Int) . floor
 
 inverse :: BinomialDistribution -> Double -> Double
 inverse d@(BD n _p) p = D.findRoot d p (n'/2) 0 n'
