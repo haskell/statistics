@@ -38,6 +38,8 @@ class Distribution d => Mean d where
 class Mean d => Variance d where
     variance :: d -> Double
 
+data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+
 -- | Approximate the value of /X/ for which P(/x/>/X/)=/p/.
 --
 -- This method uses a combination of Newton-Raphson iteration and
@@ -57,13 +59,13 @@ findRoot d prob = loop 0 1
       | otherwise                           = loop (i+1) dx'' x'' lo' hi'
       where
         err                   = cumulative d x - prob
-        (lo',hi') | err < 0   = (x, hi)
-                  | otherwise = (lo, x)
+        P lo' hi' | err < 0   = P x hi
+                  | otherwise = P lo x
         pdf                   = probability d x
-        (dx',x') | pdf /= 0   = (err / pdf, x - dx)
-                 | otherwise  = (dx, x)
-        (dx'',x'')
-            | x' < lo' || x' > hi' || pdf == 0 = (x'-x, (lo + hi) / 2)
-            | otherwise                        = (dx',  x')
+        P dx' x' | pdf /= 0   = P (err / pdf) (x - dx)
+                 | otherwise  = P dx x
+        P dx'' x''
+            | x' < lo' || x' > hi' || pdf == 0 = P (x'-x) ((lo + hi) / 2)
+            | otherwise                        = P dx' x'
     accuracy = 1e-15
     maxIters = 150
