@@ -206,7 +206,8 @@ mean p@(Powers pa)
 --
 -- * Besset, D.H. (2000) Elements of statistics.
 --   /Object-oriented implementation of numerical methods/
---   pp. 311&#8211;331. <http://www.elsevier.com/wps/product/cws_home/677916>
+--   ch. 9, pp. 311&#8211;331.
+--   <http://www.elsevier.com/wps/product/cws_home/677916>
 --
 -- * Anderson, G. (2009) Compute /k/th central moments in one
 --   pass. /quantblog/. <http://quantblog.wordpress.com/2009/02/07/compute-kth-central-moments-in-one-pass/>
