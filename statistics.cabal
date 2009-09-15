@@ -42,6 +42,7 @@ library
     Statistics.KernelDensity
     Statistics.Math
     Statistics.Quantile
+    Statistics.RandomVariate
     Statistics.Resampling
     Statistics.Resampling.Bootstrap
     Statistics.Sample
