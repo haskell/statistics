@@ -78,7 +78,8 @@ instance Variate Word32 where
     {-# INLINE uniform #-}
 
 instance Variate Word64 where
-    uniform = uniform2 wordsTo64Bit
+    uniform = uniform3
+    -- uniform = uniform2 wordsTo64Bit
     {-# INLINE uniform #-}
 
 wordsTo64Bit :: Integral a => Word32 -> Word32 -> a
@@ -188,6 +189,26 @@ uniform2 f (Gen q) = do
   writeMU q coff (fromIntegral (u `shiftR` 32))
   return $! f t32 u32
 {-# INLINE uniform2 #-}
+
+uniform3 :: Gen s -> ST s Word64
+uniform3 (Gen q) = do
+  let a = 809430660 :: Word64
+  i <- (fromIntegral . (.&. 255) . (+1)) `fmap` readMU q ioff
+  let j = (i + 1) .&. 255
+  c <- fromIntegral `fmap` readMU q coff
+  qi <- fromIntegral `fmap` readMU q i
+  qj <- fromIntegral `fmap` readMU q j
+  let t   = a * qi + c
+      t32 = fromIntegral t
+      c'  = t `shiftR` 32
+      u   = a * qj + c'
+      u32 = fromIntegral u
+  writeMU q i t32
+  writeMU q j u32
+  writeMU q ioff (fromIntegral j)
+  writeMU q coff (fromIntegral (u `shiftR` 32))
+  return $! wordsTo64Bit t32 u32
+{-# INLINE uniform3 #-}
 
 uniformMU :: UA e => (Word32 -> e) -> Gen s -> MUArr e s -> ST s ()
 uniformMU f (Gen q) mu = do
