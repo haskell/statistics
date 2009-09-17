@@ -91,13 +91,10 @@ instance Variate Bool where
         where f i = (i .&. 1) /= 0
     {-# INLINE uniform #-}
 
--- | 2**(-32)
-m_inv_32 :: Fractional t => t
-m_inv_32 = 2.3283064365386962890625e-10
-
 wordToFloat :: Word32 -> Float
 wordToFloat x = (fromIntegral i * m_inv_32) + 0.5 + m_inv_33
     where m_inv_33 = 1.16415321826934814453125e-10
+          m_inv_32 = 2.3283064365386962890625e-10
           i = fromIntegral x :: Int32
 {-# INLINE wordToFloat #-}
 
@@ -106,6 +103,7 @@ wordsToDouble x y = (fromIntegral a * m_inv_32 + (0.5 + m_inv_53) +
                     fromIntegral (b .&. 0xFFFFF) * m_inv_52) 
     where m_inv_52 = 2.220446049250313080847263336181640625e-16
           m_inv_53 = 1.1102230246251565404236316680908203125e-16
+          m_inv_32 = 2.3283064365386962890625e-10
           a = fromIntegral x :: Int32
           b = fromIntegral y :: Int32
 {-# INLINE wordsToDouble #-}
@@ -142,6 +140,7 @@ initialize seed = do
             where s | i >= fini = defaultSeed
                     | otherwise = seed
         fini = lengthU seed
+{-# INLINE initialize #-}
                                
 -- | Unchecked 64-bit left shift.
 shiftL :: Word64 -> Int -> Word64
@@ -154,7 +153,7 @@ shiftR (W64# x#) (I# i#) = W64# (x# `uncheckedShiftRL64#` i#)
 uniformWord32 :: Gen s -> ST s Word32
 uniformWord32 (Gen q) = do
   let a = 809430660 :: Word64
-  i <- (fromIntegral . (.&. 255) . succ) `fmap` readMU q ioff
+  i <- (fromIntegral . (.&. 255) . (+1)) `fmap` readMU q ioff
   c <- fromIntegral `fmap` readMU q coff
   qi <- fromIntegral `fmap` readMU q i
   let t   = a * qi + c
@@ -167,13 +166,13 @@ uniformWord32 (Gen q) = do
 uniform1 :: (Word32 -> a) -> Gen s -> ST s a
 uniform1 f gen = do
   i <- uniformWord32 gen
-  return $ f i
+  return $! f i
 {-# INLINE uniform1 #-}
 
 uniform2 :: (Word32 -> Word32 -> a) -> Gen s -> ST s a
 uniform2 f (Gen q) = do
   let a = 809430660 :: Word64
-  i <- (fromIntegral . (.&. 255) . succ) `fmap` readMU q ioff
+  i <- (fromIntegral . (.&. 255) . (+1)) `fmap` readMU q ioff
   let j = (i + 1) .&. 255
   c <- fromIntegral `fmap` readMU q coff
   qi <- fromIntegral `fmap` readMU q i
