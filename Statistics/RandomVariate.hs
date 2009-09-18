@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, CPP, MagicHash, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns, CPP, MagicHash, Rank2Types, ScopedTypeVariables #-}
 -- |
 -- Module    : Statistics.RandomVariate
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -8,7 +8,14 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Random variate generation.
+-- Pseudo-random variate generation.
+--
+-- The uniform PRNG uses Marsaglia's MWC256 (also known as MWC8222)
+-- multiply-with-carry generator, which has a period of 2^8222 and
+-- fares well in tests of randomness.
+--
+-- /Note/: This PRNG is not known to be cryptographically secure, so
+-- you should not use it for cryptographic operations.
 
 module Statistics.RandomVariate
     (
@@ -16,20 +23,35 @@ module Statistics.RandomVariate
     , Variate(..)
     , create
     , initialize
+    , uniformArray
+    , withTime
     ) where
 
 #if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
 #include "MachDeps.h"
 #endif
 
-import Control.Monad.ST -- (ST)
+import Control.Monad.ST (ST, runST)
 import Data.Array.Vector
 import Data.Bits ((.&.), (.|.))
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Word (Word, Word8, Word16, Word32, Word64)
 import GHC.Base (Int(I#))
 import GHC.Word (Word64(W64#), uncheckedShiftL64#, uncheckedShiftRL64#)
+import System.CPUTime (cpuTimePrecision, getCPUTime)
+import Data.Time.Clock.POSIX (getPOSIXTime)
+import Data.Ratio ((%), numerator)
 
+-- | Generate a single uniformly distributed random variate.  The
+-- range of values produced varies by type:
+--
+-- * For fixed-width integral types, the type's entire range is used.
+--
+-- * For floating point numbers, the range (0,1] is used. Zero is
+--   explicitly excluded, to allow variates to be used in statistical
+--   calculations that require non-zero values.
+--
+-- * The range of random 'Integer' values is the same as for 'Int'.
 class Variate a where
     uniform :: Gen s -> ST s a
 
@@ -65,7 +87,6 @@ instance Variate Word16 where
 
 instance Variate Word32 where
     uniform = uniformWord32
-    {-# INLINE uniform #-}
 
 instance Variate Word64 where
     uniform = f where f = uniform2 wordsTo64Bit
@@ -134,10 +155,21 @@ ioff, coff :: Int
 ioff = 256
 coff = 257
 
+-- | Create a generator for variates using a fixed seed.
 create :: ST s (Gen s)
 create = initialize defaultSeed
 {-# INLINE create #-}
 
+-- | Create a generator for variates using the given seed, of which up
+-- to 256 elements will be used.  For arrays of less than 256
+-- elements, part of the default seed will be used to finish
+-- initializing the generator's state.
+--
+-- Examples:
+--
+-- > initialize (singletonU 42)
+--
+-- > initialize (toU [4, 8, 15, 16, 23, 42])
 initialize :: UArr Word32 -> ST s (Gen s)
 initialize seed = do
     q <- newMU 258
@@ -153,6 +185,17 @@ initialize seed = do
         fini = lengthU seed
 {-# INLINE initialize #-}
                                
+-- | Using the current time as a seed, perform an action that uses
+-- a random variate generator.
+withTime :: (forall s. Gen s -> ST s a) -> IO a
+withTime act = do
+  c <- (numerator . (%cpuTimePrecision)) `fmap` getCPUTime
+  t <- toRational `fmap` getPOSIXTime
+  let n = fromIntegral (numerator t) :: Word64
+      l = fromIntegral n
+      h = fromIntegral (n `shiftR` 32)
+  return . runST $ initialize (toU [fromIntegral c,l,h]) >>= act
+
 -- | Unchecked 64-bit left shift.
 shiftL :: Word64 -> Int -> Word64
 shiftL (W64# x#) (I# i#) = W64# (x# `uncheckedShiftL64#` i#)
@@ -207,29 +250,16 @@ uniform2 f (Gen q) = do
   return $! f t32 u32
 {-# INLINE uniform2 #-}
 
-uniformMU :: UA e => (Word32 -> e) -> Gen s -> MUArr e s -> ST s ()
-uniformMU f (Gen q) mu = do
-    i <- readMU q ioff
-    c <- readMU q coff
-    loop 0 i c
+-- | Generate an array of pseudo-random variates.  This is not
+-- necessarily faster than invoking 'uniform' repeatedly in a loop,
+-- but it may be more convenient to use in some situations.
+uniformArray :: (UA a, Variate a) => Gen s -> Int -> ST s (UArr a)
+uniformArray gen n = newMU n >>= loop
   where
-    loop !k !j !c | k == n    = writeMU q ioff j >> writeMU q coff c
-                  | otherwise = do
-      let i = nextIndex j
-      qi <- fromIntegral `fmap` readMU q i
-      let t   = a * qi + fromIntegral c
-          t32 = fromIntegral t
-      writeMU q i t32
-      writeMU mu k (f t32)
-      loop (k+1) (fromIntegral i) (fromIntegral (t `shiftR` 32))
-    a = 809430660 :: Word64
-    n = lengthMU mu
-
-uniformU :: UA e => (Word32 -> e) -> Gen s -> Int -> ST s (UArr e)
-uniformU f gen n = do
-  mu <- newMU n
-  uniformMU f gen mu
-  unsafeFreezeAllMU mu
+    loop mu = go 0
+      where go !i | i >= n    = unsafeFreezeAllMU mu
+                  | otherwise = uniform gen >>= writeMU mu i >> go (i+1)
+{-# INLINE uniformArray #-}
 
 defaultSeed :: UArr Word32
 defaultSeed = toU [
