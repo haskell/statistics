@@ -31,6 +31,7 @@ module Statistics.RandomVariate
 #include "MachDeps.h"
 #endif
 
+import Control.Monad (ap)
 import Control.Monad.ST (ST, runST)
 import Data.Array.Vector
 import Data.Bits ((.&.), (.|.))
@@ -42,17 +43,20 @@ import System.CPUTime (cpuTimePrecision, getCPUTime)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Data.Ratio ((%), numerator)
 
--- | Generate a single uniformly distributed random variate.  The
--- range of values produced varies by type:
---
--- * For fixed-width integral types, the type's entire range is used.
---
--- * For floating point numbers, the range (0,1] is used. Zero is
---   explicitly excluded, to allow variates to be used in statistical
---   calculations that require non-zero values.
---
--- * The range of random 'Integer' values is the same as for 'Int'.
+-- | The class of types for which we can generate random variates.
 class Variate a where
+    -- | Generate a single uniformly distributed random variate.  The
+    -- range of values produced varies by type:
+    --
+    -- * For fixed-width integral types, the type's entire range is
+    --   used.
+    --
+    -- * For floating point numbers, the range (0,1] is used. Zero is
+    --   explicitly excluded, to allow variates to be used in
+    --   statistical calculations that require non-zero values.
+    --
+    -- * The range of random 'Integer' values is the same as for
+    --   'Int'.
     uniform :: Gen s -> ST s a
 
 -- Thanks to Duncan Coutts for finding the pattern below for
@@ -121,6 +125,20 @@ instance Variate Word where
     uniform = f where f = uniform2 wordsTo64Bit
                       {-# INLINE f #-}
 #endif
+
+instance (Variate a, Variate b) => Variate (a,b) where
+    uniform = f where f g = (,) `fmap` uniform g `ap` uniform g
+                      {-# INLINE f #-}
+
+instance (Variate a, Variate b, Variate c) => Variate (a,b,c) where
+    uniform = f where f g = (,,) `fmap` uniform g `ap` uniform g `ap` uniform g
+                      {-# INLINE f #-}
+
+instance (Variate a, Variate b, Variate c, Variate d) => Variate (a,b,c,d) where
+    uniform = f
+        where f g = (,,,) `fmap` uniform g `ap` uniform g `ap` uniform g
+                          `ap` uniform g
+              {-# INLINE f #-}
 
 wordsTo64Bit :: Integral a => Word32 -> Word32 -> a
 wordsTo64Bit a b =
