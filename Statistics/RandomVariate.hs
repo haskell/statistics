@@ -33,71 +33,86 @@ import GHC.Word (Word64(W64#), uncheckedShiftL64#, uncheckedShiftRL64#)
 class Variate a where
     uniform :: Gen s -> ST s a
 
-instance Variate Int where
-#if WORD_SIZE_IN_BITS < 64
-    uniform = uniform1 fromIntegral
-#else
-    uniform = uniform2 wordsTo64Bit
-#endif
-    {-# INLINE uniform #-}
+-- Thanks to Duncan Coutts for finding the pattern below for
+-- strong-arming GHC 6.10's inliner into behaving itself.  This makes
+-- a 2x difference to performance compared to the following:
+--
+-- > uniform = uniform1 fromIntegral
 
 instance Variate Int8 where
-    uniform = uniform1 fromIntegral
-    {-# INLINE uniform #-}
+    uniform = f where f = uniform1 fromIntegral
+                      {-# INLINE f #-}
 
 instance Variate Int16 where
-    uniform = uniform1 fromIntegral
-    {-# INLINE uniform #-}
+    uniform = f where f = uniform1 fromIntegral
+                      {-# INLINE f #-}
 
 instance Variate Int32 where
-    uniform = uniform1 fromIntegral
-    {-# INLINE uniform #-}
+    uniform = f where f = uniform1 fromIntegral
+                      {-# INLINE f #-}
 
 instance Variate Int64 where
-    uniform = uniform2 wordsTo64Bit
-    {-# INLINE uniform #-}
-
-instance Variate Word where
-#if WORD_SIZE_IN_BITS < 64
-    uniform = uniform1 fromIntegral
-#else
-    uniform = uniform2 wordsTo64Bit
-#endif
-    {-# INLINE uniform #-}
+    uniform = f where f = uniform2 wordsTo64Bit
+                      {-# INLINE f #-}
 
 instance Variate Word8 where
-    uniform = uniform1 fromIntegral
-    {-# INLINE uniform #-}
+    uniform = f where f = uniform1 fromIntegral
+                      {-# INLINE f #-}
 
 instance Variate Word16 where
-    uniform = uniform1 fromIntegral
-    {-# INLINE uniform #-}
+    uniform = f where f = uniform1 fromIntegral
+                      {-# INLINE f #-}
 
 instance Variate Word32 where
     uniform = uniformWord32
     {-# INLINE uniform #-}
 
 instance Variate Word64 where
-    uniform = uniform3
-    -- uniform = uniform2 wordsTo64Bit
-    {-# INLINE uniform #-}
+    uniform = f where f = uniform2 wordsTo64Bit
+                      {-# INLINE f #-}
+
+instance Variate Bool where
+    uniform = f where f = uniform1 wordToBool
+                      {-# INLINE f #-}
+
+instance Variate Float where
+    uniform = f where f = uniform1 wordToFloat
+                      {-# INLINE f #-}
+
+instance Variate Double where
+    uniform = f where f = uniform2 wordsToDouble
+                      {-# INLINE f #-}
+
+instance Variate Int where
+#if WORD_SIZE_IN_BITS < 64
+    uniform = f where f = uniform1 fromIntegral
+                      {-# INLINE f #-}
+#else
+    uniform = f where f = uniform2 wordsTo64Bit
+                      {-# INLINE f #-}
+#endif
+
+instance Variate Word where
+#if WORD_SIZE_IN_BITS < 64
+    uniform = f where f = uniform1 fromIntegral
+                      {-# INLINE f #-}
+#else
+    uniform = f where f = uniform2 wordsTo64Bit
+                      {-# INLINE f #-}    uniform = uniform2 wordsTo64Bit
+#endif
 
 wordsTo64Bit :: Integral a => Word32 -> Word32 -> a
 wordsTo64Bit a b =
     fromIntegral ((fromIntegral a `shiftL` 32) .|. fromIntegral b)
-{-# INLINE wordsTo64Bit #-}
 
-instance Variate Bool where
-    uniform = uniform1 f
-        where f i = (i .&. 1) /= 0
-    {-# INLINE uniform #-}
+wordToBool :: Word32 -> Bool
+wordToBool i = (i .&. 1) /= 0
 
 wordToFloat :: Word32 -> Float
 wordToFloat x = (fromIntegral i * m_inv_32) + 0.5 + m_inv_33
     where m_inv_33 = 1.16415321826934814453125e-10
           m_inv_32 = 2.3283064365386962890625e-10
           i = fromIntegral x :: Int32
-{-# INLINE wordToFloat #-}
 
 wordsToDouble :: Word32 -> Word32 -> Double
 wordsToDouble x y = (fromIntegral a * m_inv_32 + (0.5 + m_inv_53) +
@@ -107,15 +122,6 @@ wordsToDouble x y = (fromIntegral a * m_inv_32 + (0.5 + m_inv_53) +
           m_inv_32 = 2.3283064365386962890625e-10
           a = fromIntegral x :: Int32
           b = fromIntegral y :: Int32
-{-# INLINE wordsToDouble #-}
-
-instance Variate Float where
-    uniform = uniform1 wordToFloat
-    {-# INLINE uniform #-}
-
-instance Variate Double where
-    uniform = uniform2 wordsToDouble
-    {-# INLINE uniform #-}
 
 -- | State of the pseudo-random number generator.
 newtype Gen s = Gen (MUArr Word32 s)
@@ -189,26 +195,6 @@ uniform2 f (Gen q) = do
   writeMU q coff (fromIntegral (u `shiftR` 32))
   return $! f t32 u32
 {-# INLINE uniform2 #-}
-
-uniform3 :: Gen s -> ST s Word64
-uniform3 (Gen q) = do
-  let a = 809430660 :: Word64
-  i <- (fromIntegral . (.&. 255) . (+1)) `fmap` readMU q ioff
-  let j = (i + 1) .&. 255
-  c <- fromIntegral `fmap` readMU q coff
-  qi <- fromIntegral `fmap` readMU q i
-  qj <- fromIntegral `fmap` readMU q j
-  let t   = a * qi + c
-      t32 = fromIntegral t
-      c'  = t `shiftR` 32
-      u   = a * qj + c'
-      u32 = fromIntegral u
-  writeMU q i t32
-  writeMU q j u32
-  writeMU q ioff (fromIntegral j)
-  writeMU q coff (fromIntegral (u `shiftR` 32))
-  return $! wordsTo64Bit t32 u32
-{-# INLINE uniform3 #-}
 
 uniformMU :: UA e => (Word32 -> e) -> Gen s -> MUArr e s -> ST s ()
 uniformMU f (Gen q) mu = do
