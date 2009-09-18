@@ -55,8 +55,8 @@ import System.IO.Unsafe (unsafePerformIO)
 --
 -- The uniform PRNG uses Marsaglia's MWC256 (also known as MWC8222)
 -- multiply-with-carry generator, which has a period of 2^8222 and
--- fares well in tests of randomness.  It is extremely fast, between 2
--- and 3 times faster than the Mersenne Twister.
+-- fares well in tests of randomness.  It is also extremely fast,
+-- between 2 and 3 times faster than the Mersenne Twister.
 --
 -- /Note/: Marsaglia's PRNG is not known to be cryptographically
 -- secure, so you should not use it for cryptographic operations.
