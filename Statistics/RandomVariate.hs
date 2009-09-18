@@ -72,7 +72,7 @@ class Variate a where
     --   statistical calculations that require non-zero values
     --   (e.g. uses of the 'log' function).
     --
-    -- * The range of random 'Integer' values is the same as for
+    -- * The range of random 'Integer' variates is the same as for
     --   'Int'.
     uniform :: Gen s -> ST s a
 
@@ -128,20 +128,24 @@ instance Variate Double where
 instance Variate Int where
 #if WORD_SIZE_IN_BITS < 64
     uniform = f where f = uniform1 fromIntegral
-                      {-# INLINE f #-}
 #else
     uniform = f where f = uniform2 wordsTo64Bit
-                      {-# INLINE f #-}
 #endif
+                      {-# INLINE f #-}
 
 instance Variate Word where
 #if WORD_SIZE_IN_BITS < 64
     uniform = f where f = uniform1 fromIntegral
-                      {-# INLINE f #-}
 #else
     uniform = f where f = uniform2 wordsTo64Bit
-                      {-# INLINE f #-}
 #endif
+                      {-# INLINE f #-}
+
+instance Variate Integer where
+    uniform = f where f g = do
+                           u <- uniform g
+                           return $! fromIntegral (u :: Int)
+                      {-# INLINE f #-}
 
 instance (Variate a, Variate b) => Variate (a,b) where
     uniform = f where f g = (,) `fmap` uniform g `ap` uniform g
