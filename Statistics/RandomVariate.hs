@@ -24,24 +24,31 @@ module Statistics.RandomVariate
     , create
     , initialize
     , uniformArray
-    , withTime
+    , withSystemRandom
     ) where
 
 #if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
 #include "MachDeps.h"
 #endif
 
-import Control.Monad (ap)
+import Control.Exception (IOException, catch)
+import Control.Monad (ap, unless)
 import Control.Monad.ST (ST, runST)
 import Data.Array.Vector
 import Data.Bits ((.&.), (.|.))
+import Data.IORef (atomicModifyIORef, newIORef)
 import Data.Int (Int8, Int16, Int32, Int64)
+import Data.Ratio ((%), numerator)
+import Data.Time.Clock.POSIX (getPOSIXTime)
 import Data.Word (Word, Word8, Word16, Word32, Word64)
+import Foreign.Marshal.Alloc (allocaBytes)
+import Foreign.Marshal.Array (peekArray)
 import GHC.Base (Int(I#))
 import GHC.Word (Word64(W64#), uncheckedShiftL64#, uncheckedShiftRL64#)
+import Prelude hiding (catch)
 import System.CPUTime (cpuTimePrecision, getCPUTime)
-import Data.Time.Clock.POSIX (getPOSIXTime)
-import Data.Ratio ((%), numerator)
+import System.IO (IOMode(..), hGetBuf, hPutStrLn, stderr, withBinaryFile)
+import System.IO.Unsafe (unsafePerformIO)
 
 -- | The class of types for which we can generate random variates.
 class Variate a where
@@ -203,8 +210,9 @@ initialize seed = do
         fini = lengthU seed
 {-# INLINE initialize #-}
                                
--- | Using the current time as a seed, perform an action that uses
--- a random variate generator.
+-- | Using the current time as a seed, perform an action that uses a
+-- random variate generator.  This is a horrible fallback for Windows
+-- systems.
 withTime :: (forall s. Gen s -> ST s a) -> IO a
 withTime act = do
   c <- (numerator . (%cpuTimePrecision)) `fmap` getCPUTime
@@ -213,6 +221,27 @@ withTime act = do
       l = fromIntegral n
       h = fromIntegral (n `shiftR` 32)
   return . runST $ initialize (toU [fromIntegral c,l,h]) >>= act
+
+-- | Seed a PRNG with data from \"/dev/urandom\", then run the given
+-- action.
+withSystemRandom :: (forall s. Gen s -> ST s a) -> IO a
+withSystemRandom act = tryRandom `catch` \(_::IOException) -> do
+    seen <- atomicModifyIORef warned ((,) True)
+    unless seen $ do
+      hPutStrLn stderr ("Warning: Couldn't open " ++ show random)
+      hPutStrLn stderr ("Warning: using system clock for seed instead " ++
+                        "(quality is much lower)")
+    withTime act
+  where tryRandom = do
+          let nbytes = 1024
+          ws <- allocaBytes nbytes $ \buf -> do
+                  nread <- withBinaryFile random ReadMode $
+                           \h -> hGetBuf h buf nbytes
+                  peekArray (nread `div` 4) buf
+          return . runST $ initialize (toU ws) >>= act
+        random = "/dev/urandom"
+        warned = unsafePerformIO $ newIORef False
+        {-# NOINLINE warned #-}
 
 -- | Unchecked 64-bit left shift.
 shiftL :: Word64 -> Int -> Word64
