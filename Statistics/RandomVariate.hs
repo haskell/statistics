@@ -14,17 +14,24 @@
 -- multiply-with-carry generator, which has a period of 2^8222 and
 -- fares well in tests of randomness.
 --
--- /Note/: This PRNG is not known to be cryptographically secure, so
--- you should not use it for cryptographic operations.
+-- /Note/: Marsaglia's PRNG is not known to be cryptographically
+-- secure, so you should not use it for cryptographic operations.
 
 module Statistics.RandomVariate
     (
-     Gen
+    -- * Types
+      Gen
     , Variate(..)
+    -- * Other distributions
+    , normal
+    -- * Creation
     , create
     , initialize
-    , uniformArray
     , withSystemRandom
+    -- * Helper functions
+    , uniformArray
+    -- * References
+    -- $references
     ) where
 
 #if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
@@ -35,7 +42,7 @@ import Control.Exception (IOException, catch)
 import Control.Monad (ap, unless)
 import Control.Monad.ST (ST, runST)
 import Data.Array.Vector
-import Data.Bits ((.&.), (.|.))
+import Data.Bits ((.&.), (.|.), xor)
 import Data.IORef (atomicModifyIORef, newIORef)
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Ratio ((%), numerator)
@@ -60,7 +67,8 @@ class Variate a where
     --
     -- * For floating point numbers, the range (0,1] is used. Zero is
     --   explicitly excluded, to allow variates to be used in
-    --   statistical calculations that require non-zero values.
+    --   statistical calculations that require non-zero values
+    --   (e.g. uses of the 'log' function).
     --
     -- * The range of random 'Integer' values is the same as for
     --   'Int'.
@@ -195,6 +203,9 @@ create = initialize defaultSeed
 -- > initialize (singletonU 42)
 --
 -- > initialize (toU [4, 8, 15, 16, 23, 42])
+--
+-- /Note/: supplying a seed containing fewer than 256 elements may
+-- lead to less-than-desirable randomness.
 initialize :: UArr Word32 -> ST s (Gen s)
 initialize seed = do
     q <- newMU 258
@@ -217,13 +228,20 @@ withTime :: (forall s. Gen s -> ST s a) -> IO a
 withTime act = do
   c <- (numerator . (%cpuTimePrecision)) `fmap` getCPUTime
   t <- toRational `fmap` getPOSIXTime
-  let n = fromIntegral (numerator t) :: Word64
-      l = fromIntegral n
-      h = fromIntegral (n `shiftR` 32)
-  return . runST $ initialize (toU [fromIntegral c,l,h]) >>= act
+  let n    = fromIntegral (numerator t) :: Word64
+      l    = fromIntegral n
+      h    = fromIntegral (n `shiftR` 32)
+      seed = zipWithU xor defaultSeed . toU . take 256 . cycle $
+             [fromIntegral c,l,h]
+  return . runST $ initialize seed >>= act
 
--- | Seed a PRNG with data from \"/dev/urandom\", then run the given
--- action.
+-- | Seed a PRNG with data from the system's fast source of
+-- pseudo-random numbers (\"/dev/urandom\" on Unix-like systems), then
+-- run the given action.
+--
+-- /Note/: on Windows, this code does not yet use the Windows
+-- Cryptographic API as a source of random numbers, and generates much
+-- poorer sequences.
 withSystemRandom :: (forall s. Gen s -> ST s a) -> IO a
 withSystemRandom act = tryRandom `catch` \(_::IOException) -> do
     seen <- atomicModifyIORef warned ((,) True)
@@ -308,6 +326,49 @@ uniformArray gen n = newMU n >>= loop
                   | otherwise = uniform gen >>= writeMU mu i >> go (i+1)
 {-# INLINE uniformArray #-}
 
+-- | Generate a normally distributed random variate.
+--
+-- The implementation uses Doornik's modified ziggurat algorithm.
+-- Compared to the ziggurat algorithm usually used, this is slower,
+-- but generates higher-quality numbers that pass tests of randomness.
+normal :: Gen s -> ST s Double
+normal gen = loop
+  where
+    loop = do
+      u  <- (subtract 1 . (*2)) `fmap` uniform gen
+      ri <- uniform gen
+      let i  = fromIntegral ((ri :: Word32) .&. 127)
+          bi = indexU blocks i
+          bj = indexU blocks (i+1)
+      if abs u < indexU ratios i
+        then return $! u * bi
+        else if i == 0
+        then normalTail (u < 0)
+        else do
+          let x  = u * bi
+              xx = x * x
+              d  = exp (-0.5 * (bi * bi - xx))
+              e  = exp (-0.5 * (bj * bj - xx))
+          c <- uniform gen
+          if e + c * (d - e) < 1
+            then return x
+            else loop
+    blocks = let f = exp (-0.5 * r * r)
+             in (`snocU` 0) . consU (v/f) . consU r . unfoldU 126 go $ (r :*: f)
+      where
+        go (b :*: g) = JustS (h :*: (h :*: exp (-0.5 * h * h)))
+          where h    = sqrt (-2 * log (v / b + g))
+        v            = 9.91256303526217e-3
+    r                = 3.442619855899
+    ratios           = zipWithU (/) (tailU blocks) blocks
+    normalTail neg   = tailing
+      where tailing  = do
+              x <- ((/r) . log) `fmap` uniform gen
+              y <- log          `fmap` uniform gen
+              if y * (-2) < x * x
+                then tailing
+                else return $! if neg then x - r else r - x
+
 defaultSeed :: UArr Word32
 defaultSeed = toU [
   0x7042e8b3, 0x06f7f4c5, 0x789ea382, 0x6fb15ad8, 0x54f7a879, 0x0474b184,
@@ -353,3 +414,18 @@ defaultSeed = toU [
   0x4eb3782d, 0xc3f1e669, 0x61ff8d9e, 0x0909238d, 0xef406165, 0x09c1d762,
   0x705d184f, 0x188f2cc4, 0x9c5aa12a, 0xc7a5d70e, 0xbc78cb1b, 0x1d26ae62,
   0x23f96ae3, 0xd456bf32, 0xe4654f55, 0x31462bd8 ]
+
+-- $references
+--
+-- * Doornik, J.A. (2005) An improved ziggurat method to generate
+--   normal random samples. Mimeo, Nuffield College, University of
+--   Oxford.  <http://www.doornik.com/research/ziggurat.pdf>
+--
+-- * Doornik, J.A. (2007) Conversion of high-period random numbers to
+--   floating point.
+--   /ACM Transactions on Modeling and Computer Simulation/ 17(1).
+--   <http://www.doornik.com/research/randomdouble.pdf>
+--
+-- * Marsaglia, G. (2003) Seeds for random number generators.
+--   /Communications of the ACM/ 46(5):90&#8211;93.
+--   <http://doi.acm.org/10.1145/769800.769827>
