@@ -98,7 +98,7 @@ instance Variate Word where
                       {-# INLINE f #-}
 #else
     uniform = f where f = uniform2 wordsTo64Bit
-                      {-# INLINE f #-}    uniform = uniform2 wordsTo64Bit
+                      {-# INLINE f #-}
 #endif
 
 wordsTo64Bit :: Integral a => Word32 -> Word32 -> a
