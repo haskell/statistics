@@ -9,13 +9,6 @@
 -- Portability : portable
 --
 -- Pseudo-random variate generation.
---
--- The uniform PRNG uses Marsaglia's MWC256 (also known as MWC8222)
--- multiply-with-carry generator, which has a period of 2^8222 and
--- fares well in tests of randomness.
---
--- /Note/: Marsaglia's PRNG is not known to be cryptographically
--- secure, so you should not use it for cryptographic operations.
 
 module Statistics.RandomVariate
     (
@@ -57,7 +50,16 @@ import System.CPUTime (cpuTimePrecision, getCPUTime)
 import System.IO (IOMode(..), hGetBuf, hPutStrLn, stderr, withBinaryFile)
 import System.IO.Unsafe (unsafePerformIO)
 
--- | The class of types for which we can generate random variates.
+-- | The class of types for which we can generate uniformly
+-- distributed random variates.
+--
+-- The uniform PRNG uses Marsaglia's MWC256 (also known as MWC8222)
+-- multiply-with-carry generator, which has a period of 2^8222 and
+-- fares well in tests of randomness.  It is extremely fast, between 2
+-- and 3 times faster than the Mersenne Twister.
+--
+-- /Note/: Marsaglia's PRNG is not known to be cryptographically
+-- secure, so you should not use it for cryptographic operations.
 class Variate a where
     -- | Generate a single uniformly distributed random variate.  The
     -- range of values produced varies by type:
@@ -204,8 +206,9 @@ create = initialize defaultSeed
 --
 -- > initialize (toU [4, 8, 15, 16, 23, 42])
 --
--- /Note/: supplying a seed containing fewer than 256 elements may
--- lead to less-than-desirable randomness.
+-- If a seed contains fewer than 256 elements, it is first used
+-- verbatim, then its elements are 'xor'ed against elements of the
+-- default seed until 256 elements are reached.
 initialize :: UArr Word32 -> ST s (Gen s)
 initialize seed = do
     q <- newMU 258
@@ -215,9 +218,12 @@ initialize seed = do
     return (Gen q)
   where fill q = go 0 where
           go i | i == 256  = return ()
-               | otherwise = writeMU q i (indexU s i) >> go (i+1)
-            where s | i >= fini = defaultSeed
-                    | otherwise = seed
+               | otherwise = writeMU q i s >> go (i+1)
+            where s | i >= fini = if fini == 0
+                                  then indexU defaultSeed i
+                                  else indexU defaultSeed i `xor`
+                                       indexU seed (i `mod` fini)
+                    | otherwise = indexU seed i
         fini = lengthU seed
 {-# INLINE initialize #-}
                                
@@ -229,26 +235,24 @@ withTime act = do
   c <- (numerator . (%cpuTimePrecision)) `fmap` getCPUTime
   t <- toRational `fmap` getPOSIXTime
   let n    = fromIntegral (numerator t) :: Word64
-      l    = fromIntegral n
-      h    = fromIntegral (n `shiftR` 32)
-      seed = zipWithU xor defaultSeed . toU . take 256 . cycle $
-             [fromIntegral c,l,h]
-  return . runST $ initialize seed >>= act
+      seed = [fromIntegral c, fromIntegral n, fromIntegral (n `shiftR` 32)]
+  return . runST $ initialize (toU seed) >>= act
 
 -- | Seed a PRNG with data from the system's fast source of
--- pseudo-random numbers (\"/dev/urandom\" on Unix-like systems), then
--- run the given action.
+-- pseudo-random numbers (\"\/dev\/urandom\" on Unix-like systems),
+-- then run the given action.
 --
--- /Note/: on Windows, this code does not yet use the Windows
--- Cryptographic API as a source of random numbers, and generates much
--- poorer sequences.
+-- /Note/: on Windows, this code does not yet use the native
+-- Cryptographic API as a source of random numbers (it uses the system
+-- clock instead). As a result, the sequences it generates may not be
+-- highly independent.
 withSystemRandom :: (forall s. Gen s -> ST s a) -> IO a
 withSystemRandom act = tryRandom `catch` \(_::IOException) -> do
     seen <- atomicModifyIORef warned ((,) True)
     unless seen $ do
       hPutStrLn stderr ("Warning: Couldn't open " ++ show random)
       hPutStrLn stderr ("Warning: using system clock for seed instead " ++
-                        "(quality is much lower)")
+                        "(quality will be lower)")
     withTime act
   where tryRandom = do
           let nbytes = 1024
@@ -330,7 +334,8 @@ uniformArray gen n = newMU n >>= loop
 --
 -- The implementation uses Doornik's modified ziggurat algorithm.
 -- Compared to the ziggurat algorithm usually used, this is slower,
--- but generates higher-quality numbers that pass tests of randomness.
+-- but generates more independent variates that pass stringent tests
+-- of randomness.
 normal :: Gen s -> ST s Double
 normal gen = loop
   where
@@ -429,3 +434,8 @@ defaultSeed = toU [
 -- * Marsaglia, G. (2003) Seeds for random number generators.
 --   /Communications of the ACM/ 46(5):90&#8211;93.
 --   <http://doi.acm.org/10.1145/769800.769827>
+--
+-- * Thomas, D.B.; Leong, P.G.W.; Luk, W.; Villasenor, J.D.
+--   (2007). Gaussian random number generators.
+--   /ACM Computing Surveys/ 39(4).
+--   <http://www.cse.cuhk.edu.hk/~phwl/mt/public/archives/papers/grng_acmcs07.pdf>
