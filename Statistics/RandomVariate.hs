@@ -104,15 +104,18 @@ instance Variate Word where
 wordsTo64Bit :: Integral a => Word32 -> Word32 -> a
 wordsTo64Bit a b =
     fromIntegral ((fromIntegral a `shiftL` 32) .|. fromIntegral b)
+{-# INLINE wordsTo64Bit #-}
 
 wordToBool :: Word32 -> Bool
 wordToBool i = (i .&. 1) /= 0
+{-# INLINE wordToBool #-}
 
 wordToFloat :: Word32 -> Float
 wordToFloat x = (fromIntegral i * m_inv_32) + 0.5 + m_inv_33
     where m_inv_33 = 1.16415321826934814453125e-10
           m_inv_32 = 2.3283064365386962890625e-10
           i = fromIntegral x :: Int32
+{-# INLINE wordToFloat #-}
 
 wordsToDouble :: Word32 -> Word32 -> Double
 wordsToDouble x y = (fromIntegral a * m_inv_32 + (0.5 + m_inv_53) +
@@ -122,6 +125,7 @@ wordsToDouble x y = (fromIntegral a * m_inv_32 + (0.5 + m_inv_53) +
           m_inv_32 = 2.3283064365386962890625e-10
           a = fromIntegral x :: Int32
           b = fromIntegral y :: Int32
+{-# INLINE wordsToDouble #-}
 
 -- | State of the pseudo-random number generator.
 newtype Gen s = Gen (MUArr Word32 s)
