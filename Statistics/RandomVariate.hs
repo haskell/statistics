@@ -161,10 +161,16 @@ shiftL (W64# x#) (I# i#) = W64# (x# `uncheckedShiftL64#` i#)
 shiftR :: Word64 -> Int -> Word64
 shiftR (W64# x#) (I# i#) = W64# (x# `uncheckedShiftRL64#` i#)
 
+-- | Compute the next index into the state pool.  This is simply
+-- addition modulo 256.
+nextIndex :: Integral a => a -> Int
+nextIndex i = fromIntegral j
+    where j = fromIntegral (i+1) :: Word8
+
 uniformWord32 :: Gen s -> ST s Word32
 uniformWord32 (Gen q) = do
   let a = 809430660 :: Word64
-  i <- (fromIntegral . (.&. 255) . (+1)) `fmap` readMU q ioff
+  i <- nextIndex `fmap` readMU q ioff
   c <- fromIntegral `fmap` readMU q coff
   qi <- fromIntegral `fmap` readMU q i
   let t   = a * qi + c
@@ -173,6 +179,7 @@ uniformWord32 (Gen q) = do
   writeMU q ioff (fromIntegral i)
   writeMU q coff (fromIntegral (t `shiftR` 32))
   return t32
+{-# INLINE uniformWord32 #-}
 
 uniform1 :: (Word32 -> a) -> Gen s -> ST s a
 uniform1 f gen = do
@@ -183,8 +190,8 @@ uniform1 f gen = do
 uniform2 :: (Word32 -> Word32 -> a) -> Gen s -> ST s a
 uniform2 f (Gen q) = do
   let a = 809430660 :: Word64
-  i <- (fromIntegral . (.&. 255) . (+1)) `fmap` readMU q ioff
-  let j = (i + 1) .&. 255
+  i <- nextIndex `fmap` readMU q ioff
+  let j = nextIndex i
   c <- fromIntegral `fmap` readMU q coff
   qi <- fromIntegral `fmap` readMU q i
   qj <- fromIntegral `fmap` readMU q j
@@ -208,7 +215,7 @@ uniformMU f (Gen q) mu = do
   where
     loop !k !j !c | k == n    = writeMU q ioff j >> writeMU q coff c
                   | otherwise = do
-      let i = fromIntegral ((j+1) .&. 255)
+      let i = nextIndex j
       qi <- fromIntegral `fmap` readMU q i
       let t   = a * qi + fromIntegral c
           t32 = fromIntegral t
