@@ -14,6 +14,7 @@ module Statistics.RandomVariate
     (
     -- * Types
       Gen
+    , Seed
     , Variate(..)
     -- * Other distributions
     , normal
@@ -21,6 +22,9 @@ module Statistics.RandomVariate
     , create
     , initialize
     , withSystemRandom
+    -- * State management
+    , save
+    , restore
     -- * Helper functions
     , uniformArray
     -- * References
@@ -74,6 +78,10 @@ class Variate a where
     --
     -- * The range of random 'Integer' variates is the same as for
     --   'Int'.
+    --
+    -- To generate a 'Float' variate with a range of [0,1), subtract
+    -- 2**(-33).  To do the same with 'Double' variates, subtract
+    -- 2**(-53).
     uniform :: Gen s -> ST s a
 
 -- Thanks to Duncan Coutts for finding the pattern below for
@@ -171,20 +179,20 @@ wordToBool i = (i .&. 1) /= 0
 {-# INLINE wordToBool #-}
 
 wordToFloat :: Word32 -> Float
-wordToFloat x = (fromIntegral i * m_inv_32) + 0.5 + m_inv_33
+wordToFloat x      = (fromIntegral i * m_inv_32) + 0.5 + m_inv_33
     where m_inv_33 = 1.16415321826934814453125e-10
           m_inv_32 = 2.3283064365386962890625e-10
-          i = fromIntegral x :: Int32
+          i        = fromIntegral x :: Int32
 {-# INLINE wordToFloat #-}
 
 wordsToDouble :: Word32 -> Word32 -> Double
-wordsToDouble x y = (fromIntegral a * m_inv_32 + (0.5 + m_inv_53) +
-                    fromIntegral (b .&. 0xFFFFF) * m_inv_52) 
+wordsToDouble x y  = (fromIntegral a * m_inv_32 + (0.5 + m_inv_53) +
+                     fromIntegral (b .&. 0xFFFFF) * m_inv_52) 
     where m_inv_52 = 2.220446049250313080847263336181640625e-16
           m_inv_53 = 1.1102230246251565404236316680908203125e-16
           m_inv_32 = 2.3283064365386962890625e-10
-          a = fromIntegral x :: Int32
-          b = fromIntegral y :: Int32
+          a        = fromIntegral x :: Int32
+          b        = fromIntegral y :: Int32
 {-# INLINE wordsToDouble #-}
 
 -- | State of the pseudo-random number generator.
@@ -231,6 +239,24 @@ initialize seed = do
         fini = lengthU seed
 {-# INLINE initialize #-}
                                
+-- | An immutable snapshot of the state of a 'Gen'.
+newtype Seed = Seed (UArr Word32)
+    deriving (Eq, Read, Show)
+
+-- | Save the state of a 'Gen', for later use by 'restore'.
+save :: Gen s -> ST s Seed
+save (Gen q) = Seed `fmap` unsafeFreezeAllMU q
+{-# INLINE save #-}
+
+-- | Create a new 'Gen' that mirrors the state of a saved 'Seed'.
+restore :: Seed -> ST s (Gen s)
+restore (Seed s) = newMU n >>= fill
+  where fill q = go 0 where
+          go !i | i >= n    = return (Gen q)
+                | otherwise = writeMU q i (indexU s i) >> go (i+1)
+        n = lengthU s
+{-# INLINE restore #-}
+  
 -- | Using the current time as a seed, perform an action that uses a
 -- random variate generator.  This is a horrible fallback for Windows
 -- systems.
