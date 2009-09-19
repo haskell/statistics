@@ -65,7 +65,8 @@ findRoot d prob = loop 0 1
         P dx' x' | pdf /= 0   = P (err / pdf) (x - dx)
                  | otherwise  = P dx x
         P dx'' x''
-            | x' < lo' || x' > hi' || pdf == 0 = P (x'-x) ((lo + hi) / 2)
+            | x' < lo' || x' > hi' || pdf == 0 = let y = (lo' + hi') / 2
+                                                 in  P (y-x) y
             | otherwise                        = P dx' x'
     accuracy = 1e-15
     maxIters = 150
