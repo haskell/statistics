@@ -17,12 +17,12 @@ module Statistics.Resampling
     ) where
 
 import Control.Monad (forM_)
-import Control.Monad.ST (unsafeSTToIO)
+import Control.Monad.ST (ST)
 import Data.Array.Vector
 import Data.Array.Vector.Algorithms.Intro (sort)
 import Statistics.Function (createU)
+import Statistics.RandomVariate (Gen, uniform)
 import Statistics.Types (Estimator, Sample)
-import System.Random.Mersenne (MTGen, random)
 
 -- | A resample drawn randomly, with replacement, from a set of data
 -- points.  Distinct from a normal array to make it harder for your
@@ -33,20 +33,19 @@ newtype Resample = Resample {
 
 -- | Resample a data set repeatedly, with replacement, computing each
 -- estimate over the resampled data.
-resample :: MTGen -> [Estimator] -> Int -> Sample -> IO [Resample]
+resample :: Gen s -> [Estimator] -> Int -> Sample -> ST s [Resample]
 resample gen ests numResamples samples = do
-  results <- unsafeSTToIO . mapM (const (newMU numResamples)) $ ests
+  results <- mapM (const (newMU numResamples)) $ ests
   loop 0 (zip ests results)
-  unsafeSTToIO $ do
-    mapM_ sort results
-    mapM (fmap Resample . unsafeFreezeAllMU) results
+  mapM_ sort results
+  mapM (fmap Resample . unsafeFreezeAllMU) results
  where
   loop k ers | k >= numResamples = return ()
              | otherwise = do
     re <- createU n $ \_ -> do
-            r <- random gen
+            r <- uniform gen
             return (indexU samples (abs r `mod` n))
-    unsafeSTToIO . forM_ ers $ \(est,arr) ->
+    forM_ ers $ \(est,arr) ->
         writeMU arr k . est $ re
     loop (k+1) ers
   n = lengthU samples
