@@ -1,8 +1,9 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 
-static unsigned int state[256] = {
+static uint32_t state[256] = {
   0x7042e8b3, 0x06f7f4c5, 0x789ea382, 0x6fb15ad8, 0x54f7a879, 0x0474b184,
   0xb3f8f692, 0x4114ea35, 0xb6af0230, 0xebb457d2, 0x47693630, 0x15bc0433,
   0x2e1e5b18, 0xbe91129c, 0xcc0815a0, 0xb1260436, 0xd6f605b1, 0xeaadd777,
@@ -48,19 +49,19 @@ static unsigned int state[256] = {
   0x23f96ae3, 0xd456bf32, 0xe4654f55, 0x31462bd8
 };
 
-static inline double now()
+static double now(void)
 {
   struct timeval t;
   gettimeofday(&t, NULL);
   return t.tv_sec + t.tv_usec / 1e6;
 }
 
-unsigned int mwc8222(void)
+uint32_t mwc8222_32(void)
 {
-  static const unsigned long long a = 809430660;
-  static unsigned int c = 362436;
-  static unsigned char i = 255;
-  unsigned long long t;
+  static const uint64_t a = 809430660;
+  static uint32_t c = 362436;
+  static uint8_t i = 255;
+  uint64_t t;
 
   i += 1;
 
@@ -70,20 +71,61 @@ unsigned int mwc8222(void)
   return t;
 }
 
+double mwc8222_d(void)
+{
+  static const double m_inv_52 = 2.220446049250313080847263336181640625e-16;
+  static const double m_inv_53 = 1.1102230246251565404236316680908203125e-16;
+  static const double m_inv_32 = 2.3283064365386962890625e-10;
+
+  int32_t a, b;
+
+  a = mwc8222_32();
+  b = mwc8222_32();
+
+  return a * m_inv_32 + (0.5 + m_inv_53) + (b & 0xfffff) * m_inv_52;
+}
+
+uint64_t mwc8222_64(void)
+{
+  uint32_t a, b;
+
+  a = mwc8222_32();
+  b = mwc8222_32();
+
+  return (((uint64_t) a) << 32) | b;
+}
+
 int main(int argc, char **argv)
 {
   int n = (argc > 1 ? atoi(argv[1]) : 300) * 1000000;
-  unsigned int t = 0, i;
   double s, e;
-
+  uint32_t i;
+  
   s = now();
 
-  for (i = 0; i < n; i++)
-    t += mwc8222();
+  static const int kind = 0;
+  
+  if (kind == 0) {
+    uint32_t t = 0;
+    for (i = 0; i < n; i++)
+      t += mwc8222_32();
+    printf("uint32_t: %u\n", t);
+  }
+  else if (kind == 1) {
+    uint64_t t = 0;
+    for (i = 0; i < n; i++)
+      t += mwc8222_64();
+    printf("uint64_t: %u\n", t);
+  }
+  else if (kind == 2) {
+    double t = 0;
+    for (i = 0; i < n; i++)
+      t += mwc8222_d();
+    printf("double: %g\n", t);
+  }
 
   e = now();
 
-  printf("result: %u\n", t);
   printf("time: %f (%f M/sec)\n", e-s, n/1e6/(e-s));
   return 0;
 }
