@@ -21,9 +21,9 @@ time act = do
   e <- ret `seq` getTime
   return (e-s, ret)
 
-count = 100 * 1000000
+count = 250 * 1000000
 
-type T = Double
+type T = Word32
 
 --summ :: [T] -> T
 --summ = foldl' (+) 0
