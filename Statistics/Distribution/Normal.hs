@@ -23,7 +23,7 @@ module Statistics.Distribution.Normal
 import Control.Exception (assert)
 import Data.Number.Erf (erfc)
 import Data.Typeable (Typeable)
-import Statistics.Constants (m_huge, m_sqrt_2, m_sqrt_2_pi)
+import Statistics.Constants (m_sqrt_2, m_sqrt_2_pi)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 
@@ -76,8 +76,10 @@ cumulative d x = erfc (-(x-mean d) / ndCdfDenom d) / 2
 
 quantile :: NormalDistribution -> Double -> Double
 quantile d p
-  | p == 0    = -m_huge
-  | p == 1    = m_huge
-  | p == 0.5  = mean d
-  | otherwise = x * sqrt (variance d) + mean d
-  where x     = D.findRoot standard p 0 (-100) 100
+  | p < 0 || p > 1 = inf/inf
+  | p == 0         = -inf
+  | p == 1         = inf
+  | p == 0.5       = mean d
+  | otherwise      = x * sqrt (variance d) + mean d
+  where x          = D.findRoot standard p 0 (-100) 100
+        inf        = 1/0
