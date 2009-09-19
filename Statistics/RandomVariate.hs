@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns, CPP, MagicHash, Rank2Types, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns, CPP, DeriveDataTypeable, MagicHash, Rank2Types,
+    ScopedTypeVariables #-}
 -- |
 -- Module    : Statistics.RandomVariate
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -44,6 +45,7 @@ import Data.IORef (atomicModifyIORef, newIORef)
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Ratio ((%), numerator)
 import Data.Time.Clock.POSIX (getPOSIXTime)
+import Data.Typeable (Typeable)
 import Data.Word (Word, Word8, Word16, Word32, Word64)
 import Foreign.Marshal.Alloc (allocaBytes)
 import Foreign.Marshal.Array (peekArray)
@@ -241,7 +243,7 @@ initialize seed = do
                                
 -- | An immutable snapshot of the state of a 'Gen'.
 newtype Seed = Seed (UArr Word32)
-    deriving (Eq, Read, Show)
+    deriving (Eq, Read, Show, Typeable)
 
 -- | Save the state of a 'Gen', for later use by 'restore'.
 save :: Gen s -> ST s Seed
