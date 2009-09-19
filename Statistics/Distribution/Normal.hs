@@ -24,7 +24,6 @@ import Control.Exception (assert)
 import Data.Number.Erf (erfc)
 import Data.Typeable (Typeable)
 import Statistics.Constants (m_huge, m_sqrt_2, m_sqrt_2_pi)
-import Statistics.Types (Sample)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 
@@ -65,7 +64,7 @@ fromParams m v = assert (v > 0)
                  }
     where sv = sqrt v
 
-fromSample :: Sample -> NormalDistribution
+fromSample :: S.Sample -> NormalDistribution
 fromSample a = fromParams (S.mean a) (S.variance a)
 
 density :: NormalDistribution -> Double -> Double
