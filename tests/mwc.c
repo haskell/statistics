@@ -55,7 +55,7 @@ static inline double now()
   return t.tv_sec + t.tv_usec / 1e6;
 }
 
-static inline unsigned int mwc8222(void)
+unsigned int mwc8222(void)
 {
   static const unsigned long long a = 809430660;
   static unsigned int c = 362436;
@@ -72,7 +72,7 @@ static inline unsigned int mwc8222(void)
 
 int main(int argc, char **argv)
 {
-  int n = (argc > 1 ? atoi(argv[1]) : 100) * 1000000;
+  int n = (argc > 1 ? atoi(argv[1]) : 300) * 1000000;
   unsigned int t = 0, i;
   double s, e;
 
