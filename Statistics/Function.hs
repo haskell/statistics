@@ -15,11 +15,13 @@ module Statistics.Function
       minMax
     , sort
     , partialSort
+    -- * Array setup
     , createU
+    , createIO
     ) where
 
 import Control.Exception (assert)
-import Control.Monad.ST (ST)
+import Control.Monad.ST (ST, unsafeIOToST, unsafeSTToIO)
 import Data.Array.Vector.Algorithms.Combinators (apply)
 import Data.Array.Vector
 import qualified Data.Array.Vector.Algorithms.Intro as I
@@ -48,7 +50,8 @@ minMax = fini . foldlU go (MM (1/0) (-1/0))
     fini (MM lo hi) = lo :*: hi
 {-# INLINE minMax #-}
 
--- | Create an array, using the given action to populate each element.
+-- | Create an array, using the given 'ST' action to populate each
+-- element.
 createU :: (UA e) => forall s. Int -> (Int -> ST s e) -> ST s (UArr e)
 createU size itemAt = assert (size >= 0) $
     newMU size >>= loop 0
@@ -58,3 +61,11 @@ createU size itemAt = assert (size >= 0) $
       r <- itemAt k
       writeMU arr k r
       loop (k+1) arr
+{-# INLINE createU #-}
+
+-- | Create an array, using the given 'IO' action to populate each
+-- element.
+createIO :: (UA e) => Int -> (Int -> IO e) -> IO (UArr e)
+createIO size itemAt =
+    unsafeSTToIO $ createU size (unsafeIOToST . itemAt)
+{-# INLINE createIO #-}
