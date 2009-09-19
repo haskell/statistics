@@ -15,6 +15,8 @@ description:
   .
   Computing with sample data: quantile estimation, kernel density
   estimation, bootstrap methods, and autocorrelation analysis.
+  .
+  Random variate generation under several different distributions.
 license:        BSD3
 license-file:   LICENSE
 homepage:       http://darcs.serpentine.com/statistics
