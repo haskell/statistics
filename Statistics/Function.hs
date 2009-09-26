@@ -15,6 +15,7 @@ module Statistics.Function
       minMax
     , sort
     , partialSort
+    , indices
     -- * Array setup
     , createU
     , createIO
@@ -39,6 +40,11 @@ partialSort :: (UA e, Ord e) =>
             -> UArr e
 partialSort k = apply (\a -> I.partialSort a k)
 {-# INLINE partialSort #-}
+
+-- | Return the indices of an array.
+indices :: (UA a) => UArr a -> UArr Int
+indices a = enumFromToU 0 (lengthU a - 1)
+{-# INLINE indices #-}
 
 data MM = MM {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
