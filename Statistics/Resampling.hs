@@ -20,7 +20,7 @@ import Control.Monad (forM_)
 import Control.Monad.ST (ST)
 import Data.Array.Vector
 import Data.Array.Vector.Algorithms.Intro (sort)
-import Statistics.Function (createU)
+import Statistics.Function (createU, indices)
 import Statistics.RandomVariate (Gen, uniform)
 import Statistics.Types (Estimator, Sample)
 
@@ -53,7 +53,7 @@ resample gen ests numResamples samples = do
 -- | Compute a statistical estimate repeatedly over a sample, each
 -- time omitting a successive element.
 jackknife :: Estimator -> Sample -> UArr Double
-jackknife est sample = mapU f . enumFromToU 0 . subtract 1 . lengthU $ sample
+jackknife est sample = mapU f . indices $ sample
     where f i = est (dropAt i sample)
 {-# INLINE jackknife #-}
 
