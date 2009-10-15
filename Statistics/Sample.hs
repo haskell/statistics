@@ -54,7 +54,7 @@ import Statistics.Types (Sample)
 
 range :: Sample -> Double
 range s = hi - lo
-    where hi :*: lo = minMax s
+    where lo :*: hi = minMax s
 {-# INLINE range #-}
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
