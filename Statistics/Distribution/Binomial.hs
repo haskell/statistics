@@ -56,6 +56,30 @@ density (BD n p) x
     | isIntegral x = (n `choose` floor x) * p ** x * (1-p) ** (fromIntegral n-x)
     | otherwise    = integralError "density"
 
+data T3 = T3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+
+density2 :: BinomialDistribution -> Double -> Double
+density2 (BD n p) x
+    | not (isIntegral x) = integralError "density"
+    | n == 0 = 1
+    | x < 0 || x > n' = 0
+    | n <= 50 = sign * p'' ** x' * (n `choose` fx) * q'' ** fromIntegral nx
+    | otherwise = sign * exp (x' * log p'' + nx' * log q'' + logFactorial n - logFactorial nx - logFactorial fx)
+  where sign = oddX * oddNX
+        (x',p',q') | x > n' / 2 = (n'-x, q, p)
+                   | otherwise  = (x,    p, q)
+        oddX | p' < 0 && odd fx     = -1
+             | otherwise = 1
+        oddNX | q' < 0 && odd nx    = -1
+              | otherwise = 1
+        p'' = abs p'
+        q'' = abs q'
+        q = 1 - p
+        nx = n - fx
+        nx' = fromIntegral nx
+        fx = floor x'
+        n' = fromIntegral n
+
 cumulative :: BinomialDistribution -> Double -> Double
 cumulative d x
   | isIntegral x = sumU . mapU (density d . fromIntegral) . enumFromToU (0::Int) . floor $ x
