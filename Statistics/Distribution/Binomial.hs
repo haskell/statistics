@@ -71,7 +71,7 @@ quantile :: BinomialDistribution -> Double -> Double
 quantile d@(BD n p) prob
     | isNaN prob = prob
     | p == 1     = n'
-    | n' < 1e5   = search y z 1
+    | otherwise   = search y z 1
   where q  = 1 - p
         n' = fromIntegral n
         µ  = n' * p
