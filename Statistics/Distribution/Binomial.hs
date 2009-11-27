@@ -25,6 +25,7 @@ module Statistics.Distribution.Binomial
 
 import Control.Exception (assert)
 import Data.Array.Vector
+import Data.Int (Int64)
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 import Statistics.Math (choose)
@@ -57,8 +58,9 @@ cumulative d =
     sumU . mapU (density d . fromIntegral) . enumFromToU (0::Int) . floor
 
 quantile :: BinomialDistribution -> Double -> Double
-quantile d@(BD n _p) p = D.findRoot d p (n'/2) 0 n'
-    where n' = fromIntegral n
+quantile d@(BD n _p) p = fromIntegral . r64 $ D.findRoot d p (n'/2) 0 n'
+    where n'  = fromIntegral n
+          r64 = round :: Double -> Int64
 
 mean :: BinomialDistribution -> Double
 mean (BD n p) = fromIntegral n * p
