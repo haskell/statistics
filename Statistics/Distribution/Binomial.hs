@@ -51,8 +51,9 @@ instance D.Mean BinomialDistribution where
     mean = mean
 
 density :: BinomialDistribution -> Double -> Double
-density (BD n p) x =
-    (n `choose` floor x) * p ** x * (1-p) ** (fromIntegral n-x)
+density (BD n p) x
+    | isIntegral x = (n `choose` floor x) * p ** x * (1-p) ** (fromIntegral n-x)
+    | otherwise    = integralError "density"
 
 cumulative :: BinomialDistribution -> Double -> Double
 cumulative d x
