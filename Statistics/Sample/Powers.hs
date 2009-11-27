@@ -107,7 +107,7 @@ centralMoment k p@(Powers pa)
     | k == 0    = 1
     | otherwise = (/n) . sumU . mapU go . indexedU . takeU (k+1) $ pa
   where
-    go (i :*: e) = fromIntegral (k `choose` i) * ((-m) ^ (k-i)) * e
+    go (i :*: e) = (k `choose` i) * ((-m) ^ (k-i)) * e
     n = indexU pa 0
     m = mean p
 {-# INLINE centralMoment #-}

@@ -49,15 +49,17 @@ chebyshev x a = fini . foldlU step (C 0 0 0) .
 -- | The binomial coefficient.
 --
 -- > 7 `choose` 3 == 35
-choose :: Int -> Int -> Int
+choose :: Int -> Int -> Double
 n `choose` k
-    | k > n = 0
-    | otherwise = ceiling . foldlU go 1 . enumFromToU 1 $ k'
+    | k > n     = 0
+    | k < 30    = foldlU go 1 . enumFromToU 1 $ k'
+    | otherwise = exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
     where go a i = a * (nk + j) / j
               where j = fromIntegral i :: Double
           k' | k > n `div` 2 = n - k
              | otherwise     = k
           nk = fromIntegral (n - k')
+          lg = logGamma . fromIntegral
 {-# INLINE choose #-}
 
 data F = F {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
