@@ -80,7 +80,7 @@ density (HD mi li ki) x
     | r > maxVal = 1/0
     | otherwise  = exp r
   where
-    a <> b = fromIntegral (a `choose` b)
+    a <> b = a `choose` b
     r = f m + f (l-m) - f l - f xi - f (k-xi) + f k -
         f (m-xi) - f (l-m-k+xi) + f (l-k)
     f = logFactorial
