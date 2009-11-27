@@ -29,7 +29,8 @@ import Data.Int (Int64)
 import Data.Typeable (Typeable)
 import Statistics.Constants (m_epsilon)
 import qualified Statistics.Distribution as D
-import Statistics.Math (choose)
+import Statistics.Distribution.Normal (standard)
+import Statistics.Math (choose, logFactorial)
 
 -- | The binomial distribution.
 data BinomialDistribution = BD {
@@ -67,9 +68,30 @@ floorf :: Double -> Double
 floorf = fromIntegral . (floor :: Double -> Int64)
 
 quantile :: BinomialDistribution -> Double -> Double
-quantile d@(BD n _p) p = fromIntegral . r64 $ D.findRoot d p (n'/2) 0 n'
-    where n'  = fromIntegral n
-          r64 = round :: Double -> Int64
+quantile d@(BD n p) prob
+    | isNaN prob = prob
+    | p == 1     = n'
+    | n' < 1e5   = search y z 1
+  where q  = 1 - p
+        n' = fromIntegral n
+        µ  = n' * p
+        σ  = sqrt (n' * p * q)
+        γ  = (q - p) / σ
+        y  = n' `min` floorf (µ + σ * (d + γ * (d * d - 1) / 6) + 0.5)
+          where d = D.quantile standard prob
+        z  = cumulative d y
+        search y z dy | z >= prob' = left y
+                      | otherwise  = right y
+          where
+            prob' = prob * (1 - 64 * m_epsilon)
+            left y | y == 0 || z < prob' = y
+                   | otherwise           = left (max 0 y')
+                where z  = cumulative d y'
+                      y' = y - dy
+            right y | y' >= n' || z >= prob' = y'
+                    | otherwise              = right y'
+                where z  = cumulative d y'
+                      y' = y + dy
 
 mean :: BinomialDistribution -> Double
 mean (BD n p) = fromIntegral n * p
