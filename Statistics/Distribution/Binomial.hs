@@ -27,6 +27,7 @@ import Control.Exception (assert)
 import Data.Array.Vector
 import Data.Int (Int64)
 import Data.Typeable (Typeable)
+import Statistics.Constants (m_epsilon)
 import qualified Statistics.Distribution as D
 import Statistics.Math (choose)
 
@@ -54,8 +55,15 @@ density (BD n p) x =
     (n `choose` floor x) * p ** x * (1-p) ** (fromIntegral n-x)
 
 cumulative :: BinomialDistribution -> Double -> Double
-cumulative d =
-    sumU . mapU (density d . fromIntegral) . enumFromToU (0::Int) . floor
+cumulative d x
+  | isIntegral x = sumU . mapU (density d . fromIntegral) . enumFromToU (0::Int) . floor $ x
+  | otherwise    = integralError "cumulative"
+
+isIntegral :: Double -> Bool
+isIntegral x = x == floorf x
+
+floorf :: Double -> Double
+floorf = fromIntegral . (floor :: Double -> Int64)
 
 quantile :: BinomialDistribution -> Double -> Double
 quantile d@(BD n _p) p = fromIntegral . r64 $ D.findRoot d p (n'/2) 0 n'
@@ -78,3 +86,7 @@ binomial n p =
     assert (p > 0 && p < 1) $
     BD n p
 {-# INLINE binomial #-}
+
+integralError :: String -> a
+integralError f = error ("Statistics.Distribution.Binomial." ++ f ++
+                         ": non-integer-valued input")
