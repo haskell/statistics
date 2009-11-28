@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.3.6
+version:        0.4.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -65,6 +65,6 @@ library
   -- gather extensive profiling data for now
   ghc-prof-options: -auto-all
 
-  ghc-options: -Wall -funbox-strict-fields -O2 -fvia-C
+  ghc-options: -Wall -funbox-strict-fields
   if impl(ghc >= 6.8)
     ghc-options: -fwarn-tabs
