@@ -53,8 +53,26 @@ instance D.Mean BinomialDistribution where
 
 density :: BinomialDistribution -> Double -> Double
 density (BD n p) x
-    | isIntegral x = (n `choose` floor x) * p ** x * (1-p) ** (fromIntegral n-x)
-    | otherwise    = integralError "density"
+    | not (isIntegral x) = integralError "density"
+    | n == 0             = 1
+    | x < 0 || x > n'    = 0
+    | n <= 50 || x < 2   = sign * p'' ** x' * (n `choose` fx) * q'' ** nx'
+    | otherwise          = sign * exp (x' * log p'' + nx' * log q'' + lf)
+  where sign = oddX * oddNX
+        (x',p',q') | x > n' / 2 = (n'-x, q, p)
+                   | otherwise  = (x,    p, q)
+        oddX | p' < 0 && odd fx     = -1
+             | otherwise            = 1
+        oddNX | q' < 0 && odd nx    = -1
+              | otherwise           = 1
+        p'' = abs p'
+        q'' = abs q'
+        q   = 1 - p
+        nx  = n - fx
+        nx' = fromIntegral nx
+        fx  = floor x'
+        n'  = fromIntegral n
+        lf  = logFactorial n - logFactorial nx - logFactorial fx
 
 cumulative :: BinomialDistribution -> Double -> Double
 cumulative d x
