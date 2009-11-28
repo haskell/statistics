@@ -71,27 +71,33 @@ quantile :: BinomialDistribution -> Double -> Double
 quantile d@(BD n p) prob
     | isNaN prob = prob
     | p == 1     = n'
-    | otherwise   = search y z 1
+    | n' < 1e5   = fst (search 1 y z)
+    | otherwise  = let dy = floorf (n' / 1000)
+                   in  narrow dy (search dy y z)
   where q  = 1 - p
         n' = fromIntegral n
-        µ  = n' * p
-        σ  = sqrt (n' * p * q)
-        γ  = (q - p) / σ
         y  = n' `min` floorf (µ + σ * (d + γ * (d * d - 1) / 6) + 0.5)
-          where d = D.quantile standard prob
+          where µ  = n' * p
+                σ  = sqrt (n' * p * q)
+                d = D.quantile standard prob
+                γ  = (q - p) / σ
         z  = cumulative d y
-        search y z dy | z >= prob' = left y
+        search dy y z | z >= prob' = left y z
                       | otherwise  = right y
           where
             prob' = prob * (1 - 64 * m_epsilon)
-            left y | y == 0 || z < prob' = y
-                   | otherwise           = left (max 0 y')
+            left y oldZ | y == 0 || z < prob' = (y, oldZ)
+                        | otherwise           = left (max 0 y') z
                 where z  = cumulative d y'
                       y' = y - dy
-            right y | y' >= n' || z >= prob' = y'
+            right y | y' >= n' || z >= prob' = (y', z)
                     | otherwise              = right y'
                 where z  = cumulative d y'
                       y' = y + dy
+        narrow dy (y,z)
+            | dy <= 1 || dy' <= n'/1e15 = y
+            | otherwise                 = narrow dy' (search dy y z)
+            where dy' = floorf (dy / 100)
 
 mean :: BinomialDistribution -> Double
 mean (BD n p) = fromIntegral n * p
