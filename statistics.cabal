@@ -55,6 +55,7 @@ library
   build-depends:
     base < 5,
     erf,
+    mwc-random,
     time,
     uvector >= 0.1.0.4,
     uvector-algorithms >= 0.2
