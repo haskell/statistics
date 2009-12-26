@@ -21,7 +21,7 @@ import Control.Monad.ST (ST)
 import Data.Array.Vector
 import Data.Array.Vector.Algorithms.Intro (sort)
 import Statistics.Function (createU, indices)
-import Statistics.RandomVariate (Gen, uniform)
+import System.Random.MWC (Gen, uniform)
 import Statistics.Types (Estimator, Sample)
 
 -- | A resample drawn randomly, with replacement, from a set of data
