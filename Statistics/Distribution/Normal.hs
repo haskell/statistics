@@ -46,6 +46,7 @@ instance D.Variance NormalDistribution where
 instance D.Mean NormalDistribution where
     mean = mean
 
+-- | Standard normal distribution with mean equal to 0 and variance equal to 1
 standard :: NormalDistribution
 standard = ND {
              mean = 0.0
@@ -54,7 +55,10 @@ standard = ND {
            , ndCdfDenom = m_sqrt_2
            }
 
-fromParams :: Double -> Double -> NormalDistribution
+-- | Create normal distribution from parameters
+fromParams :: Double            -- ^ Mean of distribution
+           -> Double            -- ^ Variance of distribution
+           -> NormalDistribution
 fromParams m v = assert (v > 0)
                  ND {
                    mean = m
@@ -64,6 +68,9 @@ fromParams m v = assert (v > 0)
                  }
     where sv = sqrt v
 
+-- | Create distribution using parameters estimated from
+--   sample. Variance is estimated using maximum likelihood method
+--   (biased estimation).
 fromSample :: S.Sample -> NormalDistribution
 fromSample a = fromParams (S.mean a) (S.variance a)
 
