@@ -28,7 +28,7 @@ module Statistics.Distribution.Hypergeometric
     ) where
 
 import Control.Exception (assert)
-import Data.Array.Vector
+import qualified Data.Vector.Unboxed as U
 import Data.Typeable (Typeable)
 import Statistics.Math (choose, logFactorial)
 import Statistics.Constants (m_max_exp)
@@ -99,7 +99,7 @@ cumulative d@(HD m l k) x
   where
     imin = max 0 (k - l + m)
     imax = min k m
-    r = sumU . mapU (density d . fromIntegral) . enumFromToU imin . floor $ x
+    r = U.sum . U.map (density d . fromIntegral) . U.enumFromTo imin . floor $ x
 {-# INLINE cumulative #-}
 
 quantile :: HypergeometricDistribution -> Double -> Double
