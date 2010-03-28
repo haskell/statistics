@@ -16,14 +16,14 @@ module Statistics.Types
     , Weights
     ) where
 
-import Data.Array.Vector (UArr)
+import qualified Data.Vector.Unboxed as U (Vector)
 
 -- | Sample data.
-type Sample = UArr Double
+type Sample = U.Vector Double
 
 -- | A function that estimates a property of a sample, such as its
 -- 'mean'.
 type Estimator = Sample -> Double
 
 -- | Weights for affecting the importance of elements of a sample.
-type Weights = UArr Double
+type Weights = U.Vector Double

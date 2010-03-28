@@ -16,31 +16,31 @@ module Statistics.Autocorrelation
     , autocorrelation
     ) where
 
-import Data.Array.Vector
+import qualified Data.Vector.Unboxed as U
 import Statistics.Sample (Sample, mean)
 
 -- | Compute the autocovariance of a sample, i.e. the covariance of
 -- the sample against a shifted version of itself.
-autocovariance :: Sample -> UArr Double
-autocovariance a = mapU f . enumFromToU 0 $ l-2
+autocovariance :: Sample -> U.Vector Double
+autocovariance a = U.map f . U.enumFromTo 0 $ l-2
   where
-    f k = sumU (zipWithU (*) (takeU (l-k) c) (sliceU c k (l-k)))
+    f k = U.sum (U.zipWith (*) (U.take (l-k) c) (U.slice k (l-k) c))
           / fromIntegral l
-    c   = mapU (subtract (mean a)) a
-    l   = lengthU a
+    c   = U.map (subtract (mean a)) a
+    l   = U.length a
 
 -- | Compute the autocorrelation function of a sample, and the upper
 -- and lower bounds of confidence intervals for each element.
 --
 -- /Note/: The calculation of the 95% confidence interval assumes a
 -- stationary Gaussian process.
-autocorrelation :: Sample -> (UArr Double, UArr Double, UArr Double)
+autocorrelation :: Sample -> (U.Vector Double, U.Vector Double, U.Vector Double)
 autocorrelation a = (r, ci (-), ci (+))
   where
-    r           = mapU (/ headU c) c
+    r           = U.map (/ U.head c) c
       where c   = autocovariance a
-    dllse       = mapU f . scanl1U (+) . mapU square $ r
+    dllse       = U.map f . U.scanl1 (+) . U.map square $ r
       where f v = 1.96 * sqrt ((v * 2 + 1) / l)
-    l           = fromIntegral (lengthU a)
-    ci f        = consU 1 . tailU . mapU (f (-1/l)) $ dllse
+    l           = fromIntegral (U.length a)
+    ci f        = U.cons 1 . U.tail . U.map (f (-1/l)) $ dllse
     square x    = x * x

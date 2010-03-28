@@ -57,8 +57,8 @@ library
     erf,
     mwc-random,
     time,
-    uvector >= 0.1.0.4,
-    uvector-algorithms >= 0.2
+    vector,
+    vector-algorithms
   if impl(ghc >= 6.10)
     build-depends:
       base >= 4

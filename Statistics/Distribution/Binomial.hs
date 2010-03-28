@@ -24,7 +24,7 @@ module Statistics.Distribution.Binomial
     ) where
 
 import Control.Exception (assert)
-import Data.Array.Vector
+import qualified Data.Vector.Unboxed as U
 import Data.Int (Int64)
 import Data.Typeable (Typeable)
 import Statistics.Constants (m_epsilon)
@@ -76,7 +76,7 @@ density (BD n p) x
 
 cumulative :: BinomialDistribution -> Double -> Double
 cumulative d x
-  | isIntegral x = sumU . mapU (density d . fromIntegral) . enumFromToU (0::Int) . floor $ x
+  | isIntegral x = U.sum . U.map (density d . fromIntegral) . U.enumFromTo (0::Int) . floor $ x
   | otherwise    = integralError "cumulative"
 
 isIntegral :: Double -> Bool

@@ -26,7 +26,8 @@ module Statistics.Math
     -- $references
     ) where
 
-import Data.Array.Vector
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed ((!))
 import Data.Word (Word64)
 import Statistics.Constants (m_sqrt_2_pi)
 import Statistics.Distribution (cumulative)
@@ -37,12 +38,12 @@ data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- | Evaluate a series of Chebyshev polynomials. Uses Clenshaw's
 -- algorithm.
 chebyshev :: Double             -- ^ Parameter of each function.
-          -> UArr Double        -- ^ Coefficients of each polynomial
+          -> U.Vector Double    -- ^ Coefficients of each polynomial
           -- term, in increasing order.
           -> Double
-chebyshev x a = fini . foldlU step (C 0 0 0) .
-                enumFromThenToU (lengthU a - 1) (-1) $ 0
-    where step (C u v w) k = C (x2 * v - w + indexU a k) u v
+chebyshev x a = fini . U.foldl step (C 0 0 0) .
+                U.enumFromThenTo (U.length a - 1) (-1) $ 0
+    where step (C u v w) k = C (x2 * v - w + (a ! k)) u v
           fini (C u _ w)   = (u - w) / 2
           x2               = x * 2
 
@@ -52,7 +53,7 @@ chebyshev x a = fini . foldlU step (C 0 0 0) .
 choose :: Int -> Int -> Double
 n `choose` k
     | k > n     = 0
-    | k < 30    = foldlU go 1 . enumFromToU 1 $ k'
+    | k < 30    = U.foldl go 1 . U.enumFromTo 1 $ k'
     | otherwise = exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
     where go a i = a * (nk + j) / j
               where j = fromIntegral i :: Double
@@ -71,13 +72,13 @@ factorial :: Int -> Double
 factorial n
     | n < 0     = error "Statistics.Math.factorial: negative input"
     | n <= 1    = 0
-    | n <= 14   = fini . foldlU goLong (F 1 1) $ ns
-    | otherwise = foldlU goDouble 1 $ ns
+    | n <= 14   = fini . U.foldl goLong (F 1 1) $ ns
+    | otherwise = U.foldl goDouble 1 $ ns
     where goDouble t k = t * fromIntegral k
           goLong (F z x) _ = F (z * x') x'
               where x' = x + 1
           fini (F z _) = fromIntegral z
-          ns = enumFromToU 2 n
+          ns = U.enumFromTo 2 n
 {-# INLINE factorial #-}
 
 -- | Compute the natural logarithm of the factorial function.  Gives
@@ -163,9 +164,9 @@ logGamma x
                   ((r4_2 * x2 + r4_1) * x2 + r4_0) /
                   ((x2 + r4_4) * x2 + r4_3)
   where
-    a :*: b :*: c
-        | x < 0.5   = -y :*: x + 1 :*: x
-        | otherwise = 0  :*: x     :*: x - 1
+    (a , b , c)
+        | x < 0.5   = (-y , x + 1 , x)
+        | otherwise = (0  , x     , x - 1)
 
     y      = log x
     k      = x * (y-1) - 0.5 * y + alr2pi
@@ -204,20 +205,20 @@ data L = L {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 logGammaL :: Double -> Double
 logGammaL x
     | x <= 0    = 1/0
-    | otherwise = fini . foldlU go (L 0 (x+7)) $ a
+    | otherwise = fini . U.foldl go (L 0 (x+7)) $ a
     where fini (L l _) = log (l+a0) + log m_sqrt_2_pi - x65 + (x-0.5) * log x65
           go (L l t) k = L (l + k / t) (t-1)
           x65 = x + 6.5
           a0  = 0.9999999999995183
-          a   = toU [ 0.1659470187408462e-06
-                    , 0.9934937113930748e-05
-                    , -0.1385710331296526
-                    , 12.50734324009056
-                    , -176.6150291498386
-                    , 771.3234287757674
-                    , -1259.139216722289
-                    , 676.5203681218835
-                    ]
+          a   = U.fromList [ 0.1659470187408462e-06
+                           , 0.9934937113930748e-05
+                           , -0.1385710331296526
+                           , 12.50734324009056
+                           , -176.6150291498386
+                           , 771.3234287757674
+                           , -1259.139216722289
+                           , 676.5203681218835
+                           ]
 
 -- $references
 --

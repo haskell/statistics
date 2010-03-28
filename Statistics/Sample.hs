@@ -48,19 +48,19 @@ module Statistics.Sample
     -- $references
     ) where
 
-import Data.Array.Vector
+import qualified Data.Vector.Unboxed as U
 import Statistics.Function (minMax)
 import Statistics.Types (Sample)
 
 range :: Sample -> Double
 range s = hi - lo
-    where lo :*: hi = minMax s
+    where (lo , hi) = minMax s
 {-# INLINE range #-}
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
 mean :: Sample -> Double
-mean = fini . foldlU go (T 0 0)
+mean = fini . U.foldl go (T 0 0)
   where
     fini (T a _) = a
     go (T m n) x = T m' n'
@@ -71,7 +71,7 @@ mean = fini . foldlU go (T 0 0)
 -- | Harmonic mean.  This algorithm performs a single pass over the
 -- sample.
 harmonicMean :: Sample -> Double
-harmonicMean = fini . foldlU go (T 0 0)
+harmonicMean = fini . U.foldl go (T 0 0)
   where
     fini (T b a) = fromIntegral a / b
     go (T x y) n = T (x + (1/n)) (y+1)
@@ -79,7 +79,7 @@ harmonicMean = fini . foldlU go (T 0 0)
 
 -- | Geometric mean of a sample containing no negative values.
 geometricMean :: Sample -> Double
-geometricMean = fini . foldlU go (T 1 0)
+geometricMean = fini . U.foldl go (T 1 0)
   where
     fini (T p n) = p ** (1 / fromIntegral n)
     go (T p n) a = T (p * a) (n + 1)
@@ -98,7 +98,7 @@ centralMoment a xs
     | a < 0  = error "Statistics.Sample.centralMoment: negative input"
     | a == 0 = 1
     | a == 1 = 0
-    | otherwise = sumU (mapU go xs) / fromIntegral (lengthU xs)
+    | otherwise = U.sum (U.map go xs) / fromIntegral (U.length xs)
   where
     go x = (x-m) ^ a
     m    = mean xs
@@ -111,15 +111,15 @@ centralMoment a xs
 --
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
-centralMoments :: Int -> Int -> Sample -> Double :*: Double
+centralMoments :: Int -> Int -> Sample -> (Double, Double)
 centralMoments a b xs
-    | a < 2 || b < 2 = centralMoment a xs :*: centralMoment b xs
-    | otherwise      = fini . foldlU go (V 0 0) $ xs
+    | a < 2 || b < 2 = (centralMoment a xs , centralMoment b xs)
+    | otherwise      = fini . U.foldl go (V 0 0) $ xs
   where go (V i j) x = V (i + d^a) (j + d^b)
             where d  = x - m
-        fini (V i j) = i / n :*: j / n
+        fini (V i j) = (i / n , j / n)
         m            = mean xs
-        n            = fromIntegral (lengthU xs)
+        n            = fromIntegral (U.length xs)
 {-# INLINE centralMoments #-}
 
 -- | Compute the skewness of a sample. This is a measure of the
@@ -129,12 +129,12 @@ centralMoments a b xs
 -- its mass is on the right of the distribution, with the tail on the
 -- left.
 --
--- > skewness $ toU [1,100,101,102,103]
+-- > skewness $ U.to [1,100,101,102,103]
 -- > ==> -1.497681449918257
 --
 -- A sample with positive skew is said to be /right-skewed/.
 --
--- > skewness $ toU [1,2,3,4,100]
+-- > skewness $ U.to [1,2,3,4,100]
 -- > ==> 1.4975367033335198
 --
 -- A sample's skewness is not defined if its 'variance' is zero.
@@ -146,7 +146,7 @@ centralMoments a b xs
 -- function is subject to inaccuracy due to catastrophic cancellation.
 skewness :: Sample -> Double
 skewness xs = c3 * c2 ** (-1.5)
-    where c3 :*: c2 = centralMoments 3 2 xs
+    where (c3 , c2) = centralMoments 3 2 xs
 {-# INLINE skewness #-}
 
 -- | Compute the excess kurtosis of a sample.  This is a measure of
@@ -164,7 +164,7 @@ skewness xs = c3 * c2 ** (-1.5)
 -- function is subject to inaccuracy due to catastrophic cancellation.
 kurtosis :: Sample -> Double
 kurtosis xs = c4 / (c2 * c2) - 3
-    where c4 :*: c2 = centralMoments 4 2 xs
+    where (c4 , c2) = centralMoments 4 2 xs
 {-# INLINE kurtosis #-}
 
 -- $variance
@@ -184,12 +184,12 @@ kurtosis xs = c4 / (c2 * c2) - 3
 data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
 robustVar :: Sample -> T
-robustVar samp = fini . foldlU go (V 0 0) $ samp
+robustVar samp = fini . U.foldl go (V 0 0) $ samp
   where
     go (V s c) x = V (s + d * d) (c + d)
         where d  = x - m
     fini (V s c) = T (s - (c * c) / fromIntegral n) n
-    n            = lengthU samp
+    n            = U.length samp
     m            = mean samp
 
 -- | Maximum likelihood estimate of a sample's variance.  Also known
@@ -227,7 +227,7 @@ stdDev = sqrt . varianceUnbiased
 -- catastrophic cancellation.
 
 fastVar :: Sample -> T1
-fastVar = foldlU go (T1 0 0 0)
+fastVar = U.foldl go (T1 0 0 0)
   where
     go (T1 n m s) x = T1 n' m' s'
       where n' = n + 1

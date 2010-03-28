@@ -38,7 +38,8 @@ module Statistics.Quantile
     ) where
 
 import Control.Exception (assert)
-import Data.Array.Vector (allU, indexU, lengthU)
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed ((!))
 import Statistics.Constants (m_epsilon)
 import Statistics.Function (partialSort)
 import Statistics.Types (Sample)
@@ -53,14 +54,14 @@ weightedAvg k q x =
     assert (q >= 2) .
     assert (k >= 0) .
     assert (k < q) .
-    assert (allU (not . isNaN) x) $
+    assert (U.all (not . isNaN) x) $
     xj + g * (xj1 - xj)
   where
     j   = floor idx
-    idx = fromIntegral (lengthU x - 1) * fromIntegral k / fromIntegral q
+    idx = fromIntegral (U.length x - 1) * fromIntegral k / fromIntegral q
     g   = idx - fromIntegral j
-    xj  = indexU sx j
-    xj1 = indexU sx (j+1)
+    xj  = sx ! j
+    xj1 = sx ! (j+1)
     sx  = partialSort (j+2) x
 {-# INLINE weightedAvg #-}
 
@@ -80,7 +81,7 @@ continuousBy (ContParam a b) k q x =
     assert (q >= 2) .
     assert (k >= 0) .
     assert (k <= q) .
-    assert (allU (not . isNaN) x) $
+    assert (U.all (not . isNaN) x) $
     (1-h) * item (j-1) + h * item j
   where
     j               = floor (t + eps)
@@ -90,8 +91,8 @@ continuousBy (ContParam a b) k q x =
       | otherwise   = r
       where r       = t - fromIntegral j
     eps             = m_epsilon * 4
-    n               = lengthU x
-    item            = indexU sx . bracket
+    n               = U.length x
+    item            = (sx !) . bracket
     sx              = partialSort (bracket j + 1) x
     bracket m       = min (max m 0) (n - 1)
 {-# INLINE continuousBy #-}
@@ -103,14 +104,14 @@ continuousBy (ContParam a b) k q x =
 -- For instance, the interquartile range (IQR) can be estimated as
 -- follows:
 --
--- > midspread medianUnbiased 4 (toU [1,1,2,2,3])
+-- > midspread medianUnbiased 4 (U.to [1,1,2,2,3])
 -- > ==> 1.333333
 midspread :: ContParam       -- ^ Parameters /a/ and /b/.
           -> Int             -- ^ /q/, the number of quantiles.
           -> Sample          -- ^ /x/, the sample data.
           -> Double
 midspread (ContParam a b) k x =
-    assert (allU (not . isNaN) x) .
+    assert (U.all (not . isNaN) x) .
     assert (k > 0) $
     quantile (1-frac) - quantile frac
   where
@@ -121,8 +122,8 @@ midspread (ContParam a b) k x =
         | otherwise   = r
         where r       = t i - fromIntegral (j i)
     eps               = m_epsilon * 4
-    n                 = lengthU x
-    item              = indexU sx . bracket
+    n                 = U.length x
+    item              = (sx !) . bracket
     sx                = partialSort (bracket (j (1-frac)) + 1) x
     bracket m         = min (max m 0) (n - 1)
     frac              = 1 / fromIntegral k

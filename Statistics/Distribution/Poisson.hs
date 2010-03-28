@@ -21,8 +21,8 @@ module Statistics.Distribution.Poisson
     -- , fromSample
     ) where
 
-import Data.Array.Vector
 import Data.Typeable (Typeable)
+import qualified Data.Vector.Unboxed as U
 import qualified Statistics.Distribution as D
 import Statistics.Constants (m_huge)
 import Statistics.Math (logGamma)
@@ -53,8 +53,8 @@ density (PD l) x = exp (x * log l - l - logGamma x)
 {-# INLINE density #-}
 
 cumulative :: PoissonDistribution -> Double -> Double
-cumulative d = sumU . mapU (density d . fromIntegral) .
-               enumFromToU (0::Int) . floor
+cumulative d = U.sum . U.map (density d . fromIntegral) .
+               U.enumFromTo (0::Int) . floor
 {-# INLINE cumulative #-}
 
 quantile :: PoissonDistribution -> Double -> Double

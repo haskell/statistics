@@ -48,15 +48,18 @@ module Statistics.Sample.Powers
     ) where
 
 import Control.Monad.ST (unsafeSTToIO)
-import Data.Array.Vector
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as MU
+import Data.Vector.Generic (unsafeFreeze)
+import Data.Vector.Unboxed ((!))
 import Prelude hiding (sum)
 import Statistics.Internal (inlinePerformIO)
 import Statistics.Math (choose)
 import Statistics.Types (Sample)
 import System.IO.Unsafe (unsafePerformIO)
 
-newtype Powers = Powers (UArr Double)
-    deriving (Eq, Read, Show)
+newtype Powers = Powers (U.Vector Double)
+    deriving (Eq, Show)
 
 -- | O(/n/) Collect the /n/ simple powers of a sample.
 --
@@ -78,24 +81,28 @@ powers :: Int                   -- ^ /n/, the number of powers, where /n/ >= 2.
        -> Powers
 powers k
     | k < 2     = error "Statistics.Sample.powers: too few powers"
-    | otherwise = fini . foldlU go (unsafePerformIO . unsafeSTToIO $ create)
+    | otherwise = fini . U.foldl go (unsafePerformIO . unsafeSTToIO $ create)
   where
     go ms x = inlinePerformIO . unsafeSTToIO $ loop 0 1
         where loop !i !xk | i == l = return ms
                           | otherwise = do
-                readMU ms i >>= writeMU ms i . (+ xk)
+                MU.read ms i >>= MU.write ms i . (+ xk)
                 loop (i+1) (xk*x)
-    fini = Powers . unsafePerformIO . unsafeSTToIO . unsafeFreezeAllMU
-    create = newMU l >>= fill 0
+    fini = Powers . unsafePerformIO . unsafeSTToIO . unsafeFreeze
+    create = MU.new l >>= fill 0
         where fill !i ms | i == l    = return ms
-                         | otherwise = writeMU ms i 0 >> fill (i+1) ms
+                         | otherwise = MU.write ms i 0 >> fill (i+1) ms
     l = k + 1
 {-# INLINE powers #-}
 
 -- | The order (number) of simple powers collected from a 'Sample'.
 order :: Powers -> Int
-order (Powers pa) = lengthU pa - 1
+order (Powers pa) = U.length pa - 1
 {-# INLINE order #-}
+
+-- Reimplementation of indexed
+indexed :: U.Unbox e => U.Vector e -> U.Vector (Int,e)
+indexed a = U.zip (U.enumFromN 0 (U.length a)) a
 
 -- | Compute the /k/th central moment of a 'Sample'.  The central
 -- moment is also known as the moment about the mean.
@@ -105,10 +112,10 @@ centralMoment k p@(Powers pa)
                   error ("Statistics.Sample.Powers.centralMoment: "
                          ++ "invalid argument")
     | k == 0    = 1
-    | otherwise = (/n) . sumU . mapU go . indexedU . takeU (k+1) $ pa
+    | otherwise = (/n) . U.sum . U.map go . indexed . U.take (k+1) $ pa
   where
-    go (i :*: e) = (k `choose` i) * ((-m) ^ (k-i)) * e
-    n = indexU pa 0
+    go (i , e) = (k `choose` i) * ((-m) ^ (k-i)) * e
+    n = U.head pa
     m = mean p
 {-# INLINE centralMoment #-}
 
@@ -139,7 +146,7 @@ varianceUnbiased :: Powers -> Double
 varianceUnbiased p@(Powers pa)
     | n > 1     = variance p * n / (n-1)
     | otherwise = 0
-  where n = indexU pa 0
+  where n = U.head pa
 {-# INLINE varianceUnbiased #-}
 
 -- | Compute the skewness of a sample. This is a measure of the
@@ -149,12 +156,12 @@ varianceUnbiased p@(Powers pa)
 -- its mass is on the right of the distribution, with the tail on the
 -- left.
 --
--- > skewness . powers 3 $ toU [1,100,101,102,103]
+-- > skewness . powers 3 $ U.to [1,100,101,102,103]
 -- > ==> -1.497681449918257
 --
 -- A sample with positive skew is said to be /right-skewed/.
 --
--- > skewness . powers 3 $ toU [1,2,3,4,100]
+-- > skewness . powers 3 $ U.to [1,2,3,4,100]
 -- > ==> 1.4975367033335198
 --
 -- A sample's skewness is not defined if its 'variance' is zero.
@@ -181,13 +188,13 @@ kurtosis p = centralMoment 4 p / (v * v) - 3
 -- | The number of elements in the original 'Sample'.  This is the
 -- sample's zeroth simple power.
 count :: Powers -> Int
-count (Powers pa) = floor $ indexU pa 0
+count (Powers pa) = floor $ U.head pa
 {-# INLINE count #-}
 
 -- | The sum of elements in the original 'Sample'.  This is the
 -- sample's first simple power.
 sum :: Powers -> Double
-sum (Powers pa) = indexU pa 1
+sum (Powers pa) = pa ! 1
 {-# INLINE sum #-}
 
 -- | The arithmetic mean of elements in the original 'Sample'.
@@ -199,7 +206,7 @@ mean :: Powers -> Double
 mean p@(Powers pa)
     | n == 0    = 0
     | otherwise = sum p / n
-    where n     = indexU pa 0
+    where n     = U.head pa
 {-# INLINE mean #-}
 
 -- $references

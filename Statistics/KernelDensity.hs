@@ -37,7 +37,7 @@ module Statistics.KernelDensity
     , simplePDF
     ) where
 
-import Data.Array.Vector ((:*:)(..), UArr, enumFromToU, lengthU, mapU, sumU)
+import qualified Data.Vector.Unboxed as U
 import Statistics.Function (minMax)
 import Statistics.Sample (stdDev)
 import Statistics.Constants (m_1_sqrt_2, m_2_sqrt_pi)
@@ -45,7 +45,7 @@ import Statistics.Types (Sample)
 
 -- | Points from the range of a 'Sample'.
 newtype Points = Points {
-      fromPoints :: UArr Double
+      fromPoints :: U.Vector Double
     } deriving (Eq, Show)
 
 -- | Bandwidth estimator for an Epanechnikov kernel.
@@ -64,7 +64,7 @@ type Bandwidth = Double
 bandwidth :: (Double -> Bandwidth)
           -> Sample
           -> Bandwidth
-bandwidth kern values = stdDev values * kern (fromIntegral $ lengthU values)
+bandwidth kern values = stdDev values * kern (fromIntegral $ U.length values)
 
 -- | Choose a uniform range of points at which to estimate a sample's
 -- probability density function.
@@ -78,13 +78,13 @@ choosePoints :: Int             -- ^ Number of points to select, /n/
              -> Double          -- ^ Sample bandwidth, /h/
              -> Sample          -- ^ Input data
              -> Points
-choosePoints n h sample = Points . mapU f $ enumFromToU 0 n'
-  where lo      = a - h
-        hi      = z + h
-        a :*: z = minMax sample
-        d       = (hi - lo) / fromIntegral n'
-        f i     = lo + fromIntegral i * d
-        n'      = n - 1
+choosePoints n h sample = Points . U.map f $ U.enumFromTo 0 n'
+  where lo     = a - h
+        hi     = z + h
+        (a, z) = minMax sample
+        d      = (hi - lo) / fromIntegral n'
+        f i    = lo + fromIntegral i * d
+        n'     = n - 1
 
 -- | The convolution kernel.  Its parameters are as follows:
 --
@@ -120,14 +120,14 @@ estimatePDF :: Kernel           -- ^ Kernel function
             -> Bandwidth        -- ^ Bandwidth, /h/
             -> Sample           -- ^ Sample data
             -> Points           -- ^ Points at which to estimate
-            -> UArr Double
+            -> U.Vector Double
 estimatePDF kernel h sample
     | n < 2     = errorShort "estimatePDF"
-    | otherwise = mapU k . fromPoints
+    | otherwise = U.map k . fromPoints
   where
-    k p = sumU . mapU (kernel f h p) $ sample
+    k p = U.sum . U.map (kernel f h p) $ sample
     f   = 1 / (h * fromIntegral n)
-    n   = lengthU sample
+    n   = U.length sample
 {-# INLINE estimatePDF #-}
 
 -- | A helper for creating a simple kernel density estimation function
@@ -137,7 +137,7 @@ simplePDF :: (Double -> Double) -- ^ Bandwidth function
           -> Double             -- ^ Bandwidth scaling factor (3 for a Gaussian kernel, 1 for all others)
           -> Int                -- ^ Number of points at which to estimate
           -> Sample             -- ^ Sample data
-          -> (Points, UArr Double)
+          -> (Points, U.Vector Double)
 simplePDF fbw fpdf k numPoints sample =
     (points, estimatePDF fpdf bw sample points)
   where points = choosePoints numPoints (bw*k) sample
@@ -149,7 +149,7 @@ simplePDF fbw fpdf k numPoints sample =
 -- function was estimated, and the estimates at those points.
 epanechnikovPDF :: Int          -- ^ Number of points at which to estimate
                 -> Sample
-                -> (Points, UArr Double)
+                -> (Points, U.Vector Double)
 epanechnikovPDF = simplePDF epanechnikovBW epanechnikovKernel 1
 
 -- | Simple Gaussian kernel density estimator.  Returns the uniformly
@@ -157,7 +157,7 @@ epanechnikovPDF = simplePDF epanechnikovBW epanechnikovKernel 1
 -- was estimated, and the estimates at those points.
 gaussianPDF :: Int              -- ^ Number of points at which to estimate
             -> Sample
-            -> (Points, UArr Double)
+            -> (Points, U.Vector Double)
 gaussianPDF = simplePDF gaussianBW gaussianKernel 3
 
 errorShort :: String -> a
