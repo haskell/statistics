@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.5.0.0
+version:        0.5.1.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -22,7 +22,7 @@ license-file:   LICENSE
 homepage:       http://darcs.serpentine.com/statistics
 author:         Bryan O'Sullivan <bos@serpentine.com>
 maintainer:     Bryan O'Sullivan <bos@serpentine.com>
-copyright:      2009 Bryan O'Sullivan
+copyright:      2009, 2010 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
 cabal-version:  >= 1.2
@@ -56,6 +56,7 @@ library
     base < 5,
     erf,
     mwc-random >= 0.5.0.0,
+    primitive,
     time,
     vector >= 0.5,
     vector-algorithms >= 0.3
