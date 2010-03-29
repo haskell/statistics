@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns, TypeOperators #-}
 -- |
 -- Module    : Statistics.Sample.Powers
--- Copyright : (c) 2009 Bryan O'Sullivan
+-- Copyright : (c) 2009, 2010 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
@@ -47,12 +47,12 @@ module Statistics.Sample.Powers
     -- $references
     ) where
 
-import Control.Monad.ST (unsafeSTToIO)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU
 import Data.Vector.Generic (unsafeFreeze)
 import Data.Vector.Unboxed ((!))
 import Prelude hiding (sum)
+import Statistics.Function (indexed)
 import Statistics.Internal (inlinePerformIO)
 import Statistics.Math (choose)
 import Statistics.Types (Sample)
@@ -81,14 +81,14 @@ powers :: Int                   -- ^ /n/, the number of powers, where /n/ >= 2.
        -> Powers
 powers k
     | k < 2     = error "Statistics.Sample.powers: too few powers"
-    | otherwise = fini . U.foldl go (unsafePerformIO . unsafeSTToIO $ create)
+    | otherwise = fini . U.foldl go (unsafePerformIO $ create)
   where
-    go ms x = inlinePerformIO . unsafeSTToIO $ loop 0 1
+    go ms x = inlinePerformIO $ loop 0 1
         where loop !i !xk | i == l = return ms
                           | otherwise = do
                 MU.read ms i >>= MU.write ms i . (+ xk)
                 loop (i+1) (xk*x)
-    fini = Powers . unsafePerformIO . unsafeSTToIO . unsafeFreeze
+    fini = Powers . unsafePerformIO . unsafeFreeze
     create = MU.new l >>= fill 0
         where fill !i ms | i == l    = return ms
                          | otherwise = MU.write ms i 0 >> fill (i+1) ms
@@ -99,10 +99,6 @@ powers k
 order :: Powers -> Int
 order (Powers pa) = U.length pa - 1
 {-# INLINE order #-}
-
--- Reimplementation of indexed
-indexed :: U.Unbox e => U.Vector e -> U.Vector (Int,e)
-indexed a = U.zip (U.enumFromN 0 (U.length a)) a
 
 -- | Compute the /k/th central moment of a 'Sample'.  The central
 -- moment is also known as the moment about the mean.

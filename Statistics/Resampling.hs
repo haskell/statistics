@@ -1,6 +1,6 @@
 -- |
 -- Module    : Statistics.Resampling
--- Copyright : (c) 2009 Bryan O'Sullivan
+-- Copyright : (c) 2009, 2010 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
@@ -16,14 +16,14 @@ module Statistics.Resampling
     , resample
     ) where
 
-import Control.Monad (forM_)
-import Control.Monad.ST (ST)
+import Control.Monad (forM_, liftM)
+import Control.Monad.Primitive (PrimMonad, PrimState)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU
 import Data.Vector.Unboxed ((!))
 import Data.Vector.Generic (unsafeFreeze)
 import Data.Vector.Algorithms.Intro (sort)
-import Statistics.Function (createU, indices)
+import Statistics.Function (create, indexed, indices)
 import System.Random.MWC (Gen, uniform)
 import Statistics.Types (Estimator, Sample)
 
@@ -36,16 +36,16 @@ newtype Resample = Resample {
 
 -- | Resample a data set repeatedly, with replacement, computing each
 -- estimate over the resampled data.
-resample :: Gen s -> [Estimator] -> Int -> Sample -> ST s [Resample]
+resample :: (PrimMonad m) => Gen (PrimState m) -> [Estimator] -> Int -> Sample -> m [Resample]
 resample gen ests numResamples samples = do
   results <- mapM (const (MU.new numResamples)) $ ests
   loop 0 (zip ests results)
   mapM_ sort results
-  mapM (fmap Resample . unsafeFreeze) results
+  mapM (liftM Resample . unsafeFreeze) results
  where
   loop k ers | k >= numResamples = return ()
              | otherwise = do
-    re <- createU n $ \_ -> do
+    re <- create n $ \_ -> do
             r <- uniform gen
             return (samples ! (abs r `mod` n))
     forM_ ers $ \(est,arr) ->
@@ -59,10 +59,6 @@ jackknife :: Estimator -> Sample -> U.Vector Double
 jackknife est sample = U.map f . indices $ sample
     where f i = est (dropAt i sample)
 {-# INLINE jackknife #-}
-
--- Reimplementation of indexed
-indexed :: U.Unbox e => U.Vector e -> U.Vector (Int,e)
-indexed a = U.zip (U.enumFromN 0 (U.length a)) a
 
 -- | Drop the /k/th element of a vector.
 dropAt :: U.Unbox e => Int -> U.Vector e -> U.Vector e
