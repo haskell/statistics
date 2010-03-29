@@ -37,11 +37,11 @@ module Statistics.KernelDensity
     , simplePDF
     ) where
 
-import qualified Data.Vector.Unboxed as U
+import Statistics.Constants (m_1_sqrt_2, m_2_sqrt_pi)
 import Statistics.Function (minMax)
 import Statistics.Sample (stdDev)
-import Statistics.Constants (m_1_sqrt_2, m_2_sqrt_pi)
 import Statistics.Types (Sample)
+import qualified Data.Vector.Unboxed as U
 
 -- | Points from the range of a 'Sample'.
 newtype Points = Points {

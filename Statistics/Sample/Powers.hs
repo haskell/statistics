@@ -47,8 +47,6 @@ module Statistics.Sample.Powers
     -- $references
     ) where
 
-import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Unboxed.Mutable as MU
 import Data.Vector.Generic (unsafeFreeze)
 import Data.Vector.Unboxed ((!))
 import Prelude hiding (sum)
@@ -57,6 +55,8 @@ import Statistics.Internal (inlinePerformIO)
 import Statistics.Math (choose)
 import Statistics.Types (Sample)
 import System.IO.Unsafe (unsafePerformIO)
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as MU
 
 newtype Powers = Powers (U.Vector Double)
     deriving (Eq, Show)

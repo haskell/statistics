@@ -38,11 +38,11 @@ module Statistics.Quantile
     ) where
 
 import Control.Exception (assert)
-import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed ((!))
 import Statistics.Constants (m_epsilon)
 import Statistics.Function (partialSort)
 import Statistics.Types (Sample)
+import qualified Data.Vector.Unboxed as U
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
 -- using the weighted average method.

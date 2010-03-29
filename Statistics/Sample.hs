@@ -50,9 +50,9 @@ module Statistics.Sample
     -- $references
     ) where
 
-import qualified Data.Vector.Unboxed as U
 import Statistics.Function (minMax)
 import Statistics.Types (Sample,WeightedSample)
+import qualified Data.Vector.Unboxed as U
 
 
 range :: Sample -> Double

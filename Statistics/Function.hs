@@ -24,10 +24,10 @@ module Statistics.Function
 import Control.Exception (assert)
 import Control.Monad.Primitive (PrimMonad)
 import Data.Vector.Algorithms.Combinators (apply)
-import qualified Data.Vector.Unboxed as U
 import Data.Vector.Generic (unsafeFreeze)
-import qualified Data.Vector.Unboxed.Mutable  as MU
 import qualified Data.Vector.Algorithms.Intro as I
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable  as MU
 
 -- | Sort a vector.
 sort :: (U.Unbox e, Ord e) => U.Vector e -> U.Vector e

@@ -18,14 +18,14 @@ module Statistics.Resampling
 
 import Control.Monad (forM_, liftM)
 import Control.Monad.Primitive (PrimMonad, PrimState)
+import Data.Vector.Algorithms.Intro (sort)
+import Data.Vector.Generic (unsafeFreeze)
+import Data.Vector.Unboxed ((!))
+import Statistics.Function (create, indexed, indices)
+import Statistics.Types (Estimator, Sample)
+import System.Random.MWC (Gen, uniform)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU
-import Data.Vector.Unboxed ((!))
-import Data.Vector.Generic (unsafeFreeze)
-import Data.Vector.Algorithms.Intro (sort)
-import Statistics.Function (create, indexed, indices)
-import System.Random.MWC (Gen, uniform)
-import Statistics.Types (Estimator, Sample)
 
 -- | A resample drawn randomly, with replacement, from a set of data
 -- points.  Distinct from a normal array to make it harder for your

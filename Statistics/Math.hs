@@ -26,12 +26,12 @@ module Statistics.Math
     -- $references
     ) where
 
-import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed ((!))
 import Data.Word (Word64)
 import Statistics.Constants (m_sqrt_2_pi)
 import Statistics.Distribution (cumulative)
 import Statistics.Distribution.Normal (standard)
+import qualified Data.Vector.Unboxed as U
 
 data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
