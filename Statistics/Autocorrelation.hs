@@ -16,8 +16,8 @@ module Statistics.Autocorrelation
     , autocorrelation
     ) where
 
-import qualified Data.Vector.Unboxed as U
 import Statistics.Sample (Sample, mean)
+import qualified Data.Vector.Unboxed as U
 
 -- | Compute the autocovariance of a sample, i.e. the covariance of
 -- the sample against a shifted version of itself.

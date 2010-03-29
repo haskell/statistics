@@ -18,13 +18,13 @@ module Statistics.Resampling.Bootstrap
     ) where
 
 import Control.Exception (assert)
-import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed ((!))
-import Statistics.Distribution.Normal
 import Statistics.Distribution (cumulative, quantile)
+import Statistics.Distribution.Normal
 import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
+import qualified Data.Vector.Unboxed as U
 
 -- | A point and interval estimate computed via an 'Estimator'.
 data Estimate = Estimate {
