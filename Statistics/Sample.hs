@@ -20,6 +20,7 @@ module Statistics.Sample
 
     -- * Statistics of location
     , mean
+    , meanWeighted
     , harmonicMean
     , geometricMean
 
@@ -50,7 +51,8 @@ module Statistics.Sample
 
 import qualified Data.Vector.Unboxed as U
 import Statistics.Function (minMax)
-import Statistics.Types (Sample)
+import Statistics.Types (Sample,WeightedSample)
+
 
 range :: Sample -> Double
 range s = hi - lo
@@ -67,6 +69,17 @@ mean = fini . U.foldl go (T 0 0)
         where m' = m + (x - m) / fromIntegral n'
               n' = n + 1
 {-# INLINE mean #-}
+
+-- | Arithmetic mean for weighted sample. It uses algorithm analogous
+--   to one in 'mean'
+meanWeighted :: WeightedSample -> Double
+meanWeighted = fini . U.foldl go (V 0 0)
+    where
+      fini (V a _) = a
+      go (V m w) (x,xw) = V m' w'
+          where m' = m + xw * (x - m) / w'
+                w' = w + xw
+{-# INLINE meanWeighted #-}
 
 -- | Harmonic mean.  This algorithm performs a single pass over the
 -- sample.
