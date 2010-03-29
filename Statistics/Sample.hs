@@ -196,31 +196,32 @@ kurtosis xs = c4 / (c2 * c2) - 3
 
 data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
-robustVar :: Sample -> T
-robustVar samp = fini . U.foldl go (V 0 0) $ samp
-  where
-    go (V s c) x = V (s + d * d) (c + d)
-        where d  = x - m
-    fini (V s c) = T (s - (c * c) / fromIntegral n) n
-    n            = U.length samp
-    m            = mean samp
+sqr :: Double -> Double
+sqr x = x * x
+
+robustSumVar :: Sample -> Double
+robustSumVar samp = U.sum . U.map (sqr . subtract m) $ samp
+    where
+      m = mean samp
 
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.
 variance :: Sample -> Double
-variance = fini . robustVar
-  where fini (T v n)
-          | n > 1     = v / fromIntegral n
-          | otherwise = 0
+variance samp
+    | n > 1     = robustSumVar samp / fromIntegral n
+    | otherwise = 0
+    where
+      n = U.length samp
 {-# INLINE variance #-}
 
 -- | Unbiased estimate of a sample's variance.  Also known as the
 -- sample variance, where the denominator is /n/-1.
 varianceUnbiased :: Sample -> Double
-varianceUnbiased = fini . robustVar
-  where fini (T v n)
-          | n > 1     = v / fromIntegral (n-1)
-          | otherwise = 0
+varianceUnbiased samp
+    | n > 1     = robustSumVar samp / fromIntegral (n-1)
+    | otherwise = 0
+    where
+      n = U.length samp
 {-# INLINE varianceUnbiased #-}
 
 -- | Standard deviation.  This is simply the square root of the
