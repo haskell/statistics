@@ -38,6 +38,7 @@ module Statistics.Sample
     , variance
     , varianceUnbiased
     , stdDev
+    , varianceWeighted
 
     -- ** Single-pass functions (faster, less safe)
     -- $cancellation
@@ -228,6 +229,23 @@ varianceUnbiased samp
 -- maximum likelihood estimate of the variance.
 stdDev :: Sample -> Double
 stdDev = sqrt . varianceUnbiased
+
+
+robustSumVarWeighted :: WeightedSample -> V
+robustSumVarWeighted samp = U.foldl go (V 0 0) samp
+    where
+      go (V s w) (x,xw) = V (s + xw*d*d) (w + xw)
+          where d = x - m
+      m = meanWeighted samp
+
+-- | Weighted variance. This is biased estimation.
+varianceWeighted :: WeightedSample -> Double
+varianceWeighted samp
+    | U.length samp > 1 = fini $ robustSumVarWeighted samp
+    | otherwise         = 0
+    where
+      fini (V s w) = s / w
+{-# INLINE varianceWeighted #-}
 
 -- $cancellation
 --
