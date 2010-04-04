@@ -227,7 +227,7 @@ varianceUnbiased samp
 {-# INLINE varianceUnbiased #-}
 
 -- | Standard deviation.  This is simply the square root of the
--- maximum likelihood estimate of the variance.
+-- unbiased estimate of the variance.
 stdDev :: Sample -> Double
 stdDev = sqrt . varianceUnbiased
 
