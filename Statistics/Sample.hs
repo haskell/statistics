@@ -78,7 +78,8 @@ meanWeighted = fini . U.foldl go (V 0 0)
     where
       fini (V a _) = a
       go (V m w) (x,xw) = V m' w'
-          where m' = m + xw * (x - m) / w'
+          where m' | w' == 0   = 0
+                   | otherwise = m + xw * (x - m) / w'
                 w' = w + xw
 {-# INLINE meanWeighted #-}
 
