@@ -33,19 +33,18 @@ import Statistics.Distribution (cumulative)
 import Statistics.Distribution.Normal (standard)
 import qualified Data.Vector.Unboxed as U
 
-data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
 -- | Evaluate a series of Chebyshev polynomials. Uses Clenshaw's
 -- algorithm.
 chebyshev :: Double             -- ^ Parameter of each function.
           -> U.Vector Double    -- ^ Coefficients of each polynomial
-          -- term, in increasing order.
+                                --   term, in increasing order.
           -> Double
-chebyshev x a = fini . U.foldl step (C 0 0 0) .
-                U.enumFromThenTo (U.length a - 1) (-1) $ 0
-    where step (C u v w) k = C (x2 * v - w + (a ! k)) u v
-          fini (C u _ w)   = (u - w) / 2
-          x2               = x * 2
+chebyshev x a = fini . U.foldl step (C 0 0) $ U.enumFromStepN (U.length a - 1) (-1) (U.length a - 1)
+    where step (C b1 b2) k = C ((a ! k) + x2 * b1 - b2) b1
+          fini (C b1 b2)   = (a ! 0) + x * b1 - b2
+          x2                 = x * 2
 
 -- | The binomial coefficient.
 --
