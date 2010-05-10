@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Sample
 -- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan
@@ -52,18 +52,18 @@ module Statistics.Sample
 
 import Statistics.Function (minMax)
 import Statistics.Types (Sample,WeightedSample)
-import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic as G
 
 
-range :: Sample -> Double
+range :: (G.Vector v Double) => v Double -> Double
 range s = hi - lo
     where (lo , hi) = minMax s
 {-# INLINE range #-}
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
-mean :: Sample -> Double
-mean = fini . U.foldl' go (T 0 0)
+mean :: (G.Vector v Double) => v Double -> Double
+mean = fini . G.foldl' go (T 0 0)
   where
     fini (T a _) = a
     go (T m n) x = T m' n'
@@ -73,8 +73,8 @@ mean = fini . U.foldl' go (T 0 0)
 
 -- | Arithmetic mean for weighted sample. It uses algorithm analogous
 --   to one in 'mean'
-meanWeighted :: WeightedSample -> Double
-meanWeighted = fini . U.foldl' go (V 0 0)
+meanWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
+meanWeighted = fini . G.foldl' go (V 0 0)
     where
       fini (V a _) = a
       go (V m w) (x,xw) = V m' w'
@@ -85,16 +85,16 @@ meanWeighted = fini . U.foldl' go (V 0 0)
 
 -- | Harmonic mean.  This algorithm performs a single pass over the
 -- sample.
-harmonicMean :: Sample -> Double
-harmonicMean = fini . U.foldl' go (T 0 0)
+harmonicMean :: (G.Vector v Double) => v Double -> Double
+harmonicMean = fini . G.foldl' go (T 0 0)
   where
     fini (T b a) = fromIntegral a / b
     go (T x y) n = T (x + (1/n)) (y+1)
 {-# INLINE harmonicMean #-}
 
 -- | Geometric mean of a sample containing no negative values.
-geometricMean :: Sample -> Double
-geometricMean = fini . U.foldl' go (T 1 0)
+geometricMean :: (G.Vector v Double) => v Double -> Double
+geometricMean = fini . G.foldl' go (T 1 0)
   where
     fini (T p n) = p ** (1 / fromIntegral n)
     go (T p n) a = T (p * a) (n + 1)
@@ -108,12 +108,12 @@ geometricMean = fini . U.foldl' go (T 1 0)
 --
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
-centralMoment :: Int -> Sample -> Double
+centralMoment :: (G.Vector v Double) => Int -> v Double -> Double
 centralMoment a xs
     | a < 0  = error "Statistics.Sample.centralMoment: negative input"
     | a == 0 = 1
     | a == 1 = 0
-    | otherwise = U.sum (U.map go xs) / fromIntegral (U.length xs)
+    | otherwise = G.sum (G.map go xs) / fromIntegral (G.length xs)
   where
     go x = (x-m) ^ a
     m    = mean xs
@@ -126,15 +126,15 @@ centralMoment a xs
 --
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
-centralMoments :: Int -> Int -> Sample -> (Double, Double)
+centralMoments :: (G.Vector v Double) => Int -> Int -> v Double -> (Double, Double)
 centralMoments a b xs
     | a < 2 || b < 2 = (centralMoment a xs , centralMoment b xs)
-    | otherwise      = fini . U.foldl' go (V 0 0) $ xs
+    | otherwise      = fini . G.foldl' go (V 0 0) $ xs
   where go (V i j) x = V (i + d^a) (j + d^b)
             where d  = x - m
         fini (V i j) = (i / n , j / n)
         m            = mean xs
-        n            = fromIntegral (U.length xs)
+        n            = fromIntegral (G.length xs)
 {-# INLINE centralMoments #-}
 
 -- | Compute the skewness of a sample. This is a measure of the
@@ -159,7 +159,7 @@ centralMoments a b xs
 --
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
-skewness :: Sample -> Double
+skewness :: (G.Vector v Double) => v Double -> Double
 skewness xs = c3 * c2 ** (-1.5)
     where (c3 , c2) = centralMoments 3 2 xs
 {-# INLINE skewness #-}
@@ -177,7 +177,7 @@ skewness xs = c3 * c2 ** (-1.5)
 --
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
-kurtosis :: Sample -> Double
+kurtosis :: (G.Vector v Double) => v Double -> Double
 kurtosis xs = c4 / (c2 * c2) - 3
     where (c4 , c2) = centralMoments 4 2 xs
 {-# INLINE kurtosis #-}
@@ -201,48 +201,48 @@ data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 sqr :: Double -> Double
 sqr x = x * x
 
-robustSumVar :: Sample -> Double
-robustSumVar samp = U.sum . U.map (sqr . subtract m) $ samp
+robustSumVar :: (G.Vector v Double) => v Double -> Double
+robustSumVar samp = G.sum . G.map (sqr . subtract m) $ samp
     where
       m = mean samp
 
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.
-variance :: Sample -> Double
+variance :: (G.Vector v Double) => v Double -> Double
 variance samp
     | n > 1     = robustSumVar samp / fromIntegral n
     | otherwise = 0
     where
-      n = U.length samp
+      n = G.length samp
 {-# INLINE variance #-}
 
 -- | Unbiased estimate of a sample's variance.  Also known as the
 -- sample variance, where the denominator is /n/-1.
-varianceUnbiased :: Sample -> Double
+varianceUnbiased :: (G.Vector v Double) => v Double -> Double
 varianceUnbiased samp
     | n > 1     = robustSumVar samp / fromIntegral (n-1)
     | otherwise = 0
     where
-      n = U.length samp
+      n = G.length samp
 {-# INLINE varianceUnbiased #-}
 
 -- | Standard deviation.  This is simply the square root of the
 -- unbiased estimate of the variance.
-stdDev :: Sample -> Double
+stdDev :: (G.Vector v Double) => v Double -> Double
 stdDev = sqrt . varianceUnbiased
 
 
-robustSumVarWeighted :: WeightedSample -> V
-robustSumVarWeighted samp = U.foldl' go (V 0 0) samp
+robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> V
+robustSumVarWeighted samp = G.foldl' go (V 0 0) samp
     where
       go (V s w) (x,xw) = V (s + xw*d*d) (w + xw)
           where d = x - m
       m = meanWeighted samp
 
 -- | Weighted variance. This is biased estimation.
-varianceWeighted :: WeightedSample -> Double
+varianceWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
 varianceWeighted samp
-    | U.length samp > 1 = fini $ robustSumVarWeighted samp
+    | G.length samp > 1 = fini $ robustSumVarWeighted samp
     | otherwise         = 0
     where
       fini (V s w) = s / w
@@ -259,8 +259,8 @@ varianceWeighted samp
 -- mean, Knuth's algorithm gives inaccurate results due to
 -- catastrophic cancellation.
 
-fastVar :: Sample -> T1
-fastVar = U.foldl' go (T1 0 0 0)
+fastVar :: (G.Vector v Double) => v Double -> T1
+fastVar = G.foldl' go (T1 0 0 0)
   where
     go (T1 n m s) x = T1 n' m' s'
       where n' = n + 1
@@ -269,7 +269,7 @@ fastVar = U.foldl' go (T1 0 0 0)
             d  = x - m
 
 -- | Maximum likelihood estimate of a sample's variance.
-fastVariance :: Sample -> Double
+fastVariance :: (G.Vector v Double) => v Double -> Double
 fastVariance = fini . fastVar
   where fini (T1 n _m s)
           | n > 1     = s / fromIntegral n
@@ -277,7 +277,7 @@ fastVariance = fini . fastVar
 {-# INLINE fastVariance #-}
 
 -- | Unbiased estimate of a sample's variance.
-fastVarianceUnbiased :: Sample -> Double
+fastVarianceUnbiased :: (G.Vector v Double) => v Double -> Double
 fastVarianceUnbiased = fini . fastVar
   where fini (T1 n _m s)
           | n > 1     = s / fromIntegral (n - 1)
@@ -286,7 +286,7 @@ fastVarianceUnbiased = fini . fastVar
 
 -- | Standard deviation.  This is simply the square root of the
 -- maximum likelihood estimate of the variance.
-fastStdDev :: Sample -> Double
+fastStdDev :: (G.Vector v Double) => v Double -> Double
 fastStdDev = sqrt . fastVariance
 {-# INLINE fastStdDev #-}
 
