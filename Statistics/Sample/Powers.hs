@@ -81,7 +81,7 @@ powers :: Int                   -- ^ /n/, the number of powers, where /n/ >= 2.
        -> Powers
 powers k
     | k < 2     = error "Statistics.Sample.powers: too few powers"
-    | otherwise = fini . U.foldl go (unsafePerformIO $ create)
+    | otherwise = fini . U.foldl' go (unsafePerformIO $ create)
   where
     go ms x = inlinePerformIO $ loop 0 1
         where loop !i !xk | i == l = return ms

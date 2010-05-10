@@ -57,7 +57,7 @@ data MM = MM {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
 -- | Compute the minimum and maximum of a vector in one pass.
 minMax :: U.Vector Double -> (Double , Double)
-minMax = fini . U.foldl go (MM (1/0) (-1/0))
+minMax = fini . U.foldl' go (MM (1/0) (-1/0))
   where
     go (MM lo hi) k = MM (min lo k) (max hi k)
     fini (MM lo hi) = (lo, hi)

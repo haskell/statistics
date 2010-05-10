@@ -63,7 +63,7 @@ range s = hi - lo
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
 mean :: Sample -> Double
-mean = fini . U.foldl go (T 0 0)
+mean = fini . U.foldl' go (T 0 0)
   where
     fini (T a _) = a
     go (T m n) x = T m' n'
@@ -74,7 +74,7 @@ mean = fini . U.foldl go (T 0 0)
 -- | Arithmetic mean for weighted sample. It uses algorithm analogous
 --   to one in 'mean'
 meanWeighted :: WeightedSample -> Double
-meanWeighted = fini . U.foldl go (V 0 0)
+meanWeighted = fini . U.foldl' go (V 0 0)
     where
       fini (V a _) = a
       go (V m w) (x,xw) = V m' w'
@@ -86,7 +86,7 @@ meanWeighted = fini . U.foldl go (V 0 0)
 -- | Harmonic mean.  This algorithm performs a single pass over the
 -- sample.
 harmonicMean :: Sample -> Double
-harmonicMean = fini . U.foldl go (T 0 0)
+harmonicMean = fini . U.foldl' go (T 0 0)
   where
     fini (T b a) = fromIntegral a / b
     go (T x y) n = T (x + (1/n)) (y+1)
@@ -94,7 +94,7 @@ harmonicMean = fini . U.foldl go (T 0 0)
 
 -- | Geometric mean of a sample containing no negative values.
 geometricMean :: Sample -> Double
-geometricMean = fini . U.foldl go (T 1 0)
+geometricMean = fini . U.foldl' go (T 1 0)
   where
     fini (T p n) = p ** (1 / fromIntegral n)
     go (T p n) a = T (p * a) (n + 1)
@@ -129,7 +129,7 @@ centralMoment a xs
 centralMoments :: Int -> Int -> Sample -> (Double, Double)
 centralMoments a b xs
     | a < 2 || b < 2 = (centralMoment a xs , centralMoment b xs)
-    | otherwise      = fini . U.foldl go (V 0 0) $ xs
+    | otherwise      = fini . U.foldl' go (V 0 0) $ xs
   where go (V i j) x = V (i + d^a) (j + d^b)
             where d  = x - m
         fini (V i j) = (i / n , j / n)
@@ -233,7 +233,7 @@ stdDev = sqrt . varianceUnbiased
 
 
 robustSumVarWeighted :: WeightedSample -> V
-robustSumVarWeighted samp = U.foldl go (V 0 0) samp
+robustSumVarWeighted samp = U.foldl' go (V 0 0) samp
     where
       go (V s w) (x,xw) = V (s + xw*d*d) (w + xw)
           where d = x - m
@@ -260,7 +260,7 @@ varianceWeighted samp
 -- catastrophic cancellation.
 
 fastVar :: Sample -> T1
-fastVar = U.foldl go (T1 0 0 0)
+fastVar = U.foldl' go (T1 0 0 0)
   where
     go (T1 n m s) x = T1 n' m' s'
       where n' = n + 1
