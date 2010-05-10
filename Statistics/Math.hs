@@ -41,7 +41,7 @@ chebyshev :: Double             -- ^ Parameter of each function.
           -> U.Vector Double    -- ^ Coefficients of each polynomial
                                 --   term, in increasing order.
           -> Double
-chebyshev x a = fini . U.foldl step (C 0 0) $ U.enumFromStepN (U.length a - 1) (-1) (U.length a - 1)
+chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (U.length a - 1) (-1) (U.length a - 1)
     where step (C b1 b2) k = C ((a ! k) + x2 * b1 - b2) b1
           fini (C b1 b2)   = (a ! 0) + x * b1 - b2
           x2                 = x * 2
@@ -52,7 +52,7 @@ chebyshev x a = fini . U.foldl step (C 0 0) $ U.enumFromStepN (U.length a - 1) (
 choose :: Int -> Int -> Double
 n `choose` k
     | k > n     = 0
-    | k < 30    = U.foldl go 1 . U.enumFromTo 1 $ k'
+    | k < 30    = U.foldl' go 1 . U.enumFromTo 1 $ k'
     | otherwise = exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
     where go a i = a * (nk + j) / j
               where j = fromIntegral i :: Double
@@ -71,8 +71,8 @@ factorial :: Int -> Double
 factorial n
     | n < 0     = error "Statistics.Math.factorial: negative input"
     | n <= 1    = 0
-    | n <= 14   = fini . U.foldl goLong (F 1 1) $ ns
-    | otherwise = U.foldl goDouble 1 $ ns
+    | n <= 14   = fini . U.foldl' goLong (F 1 1) $ ns
+    | otherwise = U.foldl' goDouble 1 $ ns
     where goDouble t k = t * fromIntegral k
           goLong (F z x) _ = F (z * x') x'
               where x' = x + 1
@@ -204,7 +204,7 @@ data L = L {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 logGammaL :: Double -> Double
 logGammaL x
     | x <= 0    = 1/0
-    | otherwise = fini . U.foldl go (L 0 (x+7)) $ a
+    | otherwise = fini . U.foldl' go (L 0 (x+7)) $ a
     where fini (L l _) = log (l+a0) + log m_sqrt_2_pi - x65 + (x-0.5) * log x65
           go (L l t) k = L (l + k / t) (t-1)
           x65 = x + 6.5
