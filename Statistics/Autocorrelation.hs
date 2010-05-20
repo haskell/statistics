@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Autocorrelation
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -16,31 +17,31 @@ module Statistics.Autocorrelation
     , autocorrelation
     ) where
 
-import Statistics.Sample (Sample, mean)
-import qualified Data.Vector.Unboxed as U
+import Statistics.Sample (mean)
+import qualified Data.Vector.Generic as G
 
 -- | Compute the autocovariance of a sample, i.e. the covariance of
 -- the sample against a shifted version of itself.
-autocovariance :: Sample -> U.Vector Double
-autocovariance a = U.map f . U.enumFromTo 0 $ l-2
+autocovariance :: (G.Vector v Double, G.Vector v Int) => v Double -> v Double
+autocovariance a = G.map f . G.enumFromTo 0 $ l-2
   where
-    f k = U.sum (U.zipWith (*) (U.take (l-k) c) (U.slice k (l-k) c))
+    f k = G.sum (G.zipWith (*) (G.take (l-k) c) (G.slice k (l-k) c))
           / fromIntegral l
-    c   = U.map (subtract (mean a)) a
-    l   = U.length a
+    c   = G.map (subtract (mean a)) a
+    l   = G.length a
 
 -- | Compute the autocorrelation function of a sample, and the upper
 -- and lower bounds of confidence intervals for each element.
 --
 -- /Note/: The calculation of the 95% confidence interval assumes a
 -- stationary Gaussian process.
-autocorrelation :: Sample -> (U.Vector Double, U.Vector Double, U.Vector Double)
+autocorrelation :: (G.Vector v Double, G.Vector v Int) => v Double -> (v Double, v Double, v Double)
 autocorrelation a = (r, ci (-), ci (+))
   where
-    r           = U.map (/ U.head c) c
+    r           = G.map (/ G.head c) c
       where c   = autocovariance a
-    dllse       = U.map f . U.scanl1 (+) . U.map square $ r
+    dllse       = G.map f . G.scanl1 (+) . G.map square $ r
       where f v = 1.96 * sqrt ((v * 2 + 1) / l)
-    l           = fromIntegral (U.length a)
-    ci f        = U.cons 1 . U.tail . U.map (f (-1/l)) $ dllse
+    l           = fromIntegral (G.length a)
+    ci f        = G.cons 1 . G.tail . G.map (f (-1/l)) $ dllse
     square x    = x * x
