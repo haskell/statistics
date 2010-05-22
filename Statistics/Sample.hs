@@ -54,6 +54,8 @@ import Statistics.Function (minMax)
 import Statistics.Types (Sample,WeightedSample)
 import qualified Data.Vector.Generic as G
 
+-- Operator ^ will be overriden
+import Prelude hiding ((^))
 
 range :: (G.Vector v Double) => v Double -> Double
 range s = hi - lo
@@ -205,6 +207,7 @@ robustSumVar :: (G.Vector v Double) => v Double -> Double
 robustSumVar samp = G.sum . G.map (sqr . subtract m) $ samp
     where
       m = mean samp
+{-# INLINE robustSumVar #-}
 
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.
@@ -230,7 +233,7 @@ varianceUnbiased samp
 -- unbiased estimate of the variance.
 stdDev :: (G.Vector v Double) => v Double -> Double
 stdDev = sqrt . varianceUnbiased
-
+{-# INLINE stdDev #-}
 
 robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> V
 robustSumVarWeighted samp = G.foldl' go (V 0 0) samp
@@ -238,6 +241,7 @@ robustSumVarWeighted samp = G.foldl' go (V 0 0) samp
       go (V s w) (x,xw) = V (s + xw*d*d) (w + xw)
           where d = x - m
       m = meanWeighted samp
+{-# INLINE robustSumVarWeighted #-}
 
 -- | Weighted variance. This is biased estimation.
 varianceWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
@@ -292,6 +296,12 @@ fastStdDev = sqrt . fastVariance
 
 ------------------------------------------------------------------------
 -- Helper code. Monomorphic unpacked accumulators.
+
+-- (^) operator from Prelude is just slow.
+(^) :: Double -> Int -> Double
+x ^ 1 = x
+x ^ n = x * (x ^ (n-1))
+{-# INLINE (^) #-}
 
 -- don't support polymorphism, as we can't get unboxed returns if we use it.
 data T = T {-# UNPACK #-}!Double {-# UNPACK #-}!Int
