@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE BangPatterns     #-}
 -- |
 -- Module    : Statistics.Sample.Powers
 -- Copyright : (c) 2009, 2010 Bryan O'Sullivan
@@ -19,8 +20,7 @@
 module Statistics.Sample.Powers
     (
     -- * Types
-      Sample
-    , Powers
+      Powers
 
     -- * Constructor
     , powers
@@ -53,9 +53,9 @@ import Prelude hiding (sum)
 import Statistics.Function (indexed)
 import Statistics.Internal (inlinePerformIO)
 import Statistics.Math (choose)
-import Statistics.Types (Sample)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed.Mutable as MU
 
 newtype Powers = Powers (U.Vector Double)
@@ -76,12 +76,13 @@ newtype Powers = Powers (U.Vector Double)
 -- * For 'kurtosis', at least 4 simple powers are required.
 --
 -- This function is subject to stream fusion.
-powers :: Int                   -- ^ /n/, the number of powers, where /n/ >= 2.
-       -> Sample
+powers :: G.Vector v Double =>
+          Int                   -- ^ /n/, the number of powers, where /n/ >= 2.
+       -> v Double
        -> Powers
 powers k
     | k < 2     = error "Statistics.Sample.powers: too few powers"
-    | otherwise = fini . U.foldl' go (unsafePerformIO $ create)
+    | otherwise = fini . G.foldl' go (unsafePerformIO $ MU.newWith l 0)
   where
     go ms x = inlinePerformIO $ loop 0 1
         where loop !i !xk | i == l = return ms
@@ -89,18 +90,15 @@ powers k
                 MU.read ms i >>= MU.write ms i . (+ xk)
                 loop (i+1) (xk*x)
     fini = Powers . unsafePerformIO . unsafeFreeze
-    create = MU.new l >>= fill 0
-        where fill !i ms | i == l    = return ms
-                         | otherwise = MU.write ms i 0 >> fill (i+1) ms
-    l = k + 1
+    l    = k + 1
 {-# INLINE powers #-}
 
--- | The order (number) of simple powers collected from a 'Sample'.
+-- | The order (number) of simple powers collected from a 'sample'.
 order :: Powers -> Int
 order (Powers pa) = U.length pa - 1
 {-# INLINE order #-}
 
--- | Compute the /k/th central moment of a 'Sample'.  The central
+-- | Compute the /k/th central moment of a sample.  The central
 -- moment is also known as the moment about the mean.
 centralMoment :: Int -> Powers -> Double
 centralMoment k p@(Powers pa)
