@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns     #-}
+{-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Math
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -26,25 +27,28 @@ module Statistics.Math
     -- $references
     ) where
 
-import Data.Vector.Unboxed ((!))
+import Data.Vector.Generic ((!))
 import Data.Word (Word64)
 import Statistics.Constants (m_sqrt_2_pi)
 import Statistics.Distribution (cumulative)
 import Statistics.Distribution.Normal (standard)
 import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic as G
 
 data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
 -- | Evaluate a series of Chebyshev polynomials. Uses Clenshaw's
 -- algorithm.
-chebyshev :: Double             -- ^ Parameter of each function.
-          -> U.Vector Double    -- ^ Coefficients of each polynomial
-                                --   term, in increasing order.
+chebyshev :: (G.Vector v Double) =>
+             Double      -- ^ Parameter of each function.
+          -> v Double    -- ^ Coefficients of each polynomial term, in increasing order.
           -> Double
-chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (U.length a - 1) (-1) (U.length a - 1)
+chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (len - 1) (-1) (len - 1)
     where step (C b1 b2) k = C ((a ! k) + x2 * b1 - b2) b1
           fini (C b1 b2)   = (a ! 0) + x * b1 - b2
-          x2                 = x * 2
+          x2               = x * 2
+          len              = G.length a
+{-# INLINE chebyshev #-}
 
 -- | The binomial coefficient.
 --
