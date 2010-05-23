@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Quantile
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -38,27 +38,27 @@ module Statistics.Quantile
     ) where
 
 import Control.Exception (assert)
-import Data.Vector.Unboxed ((!))
+import Data.Vector.Generic ((!))
 import Statistics.Constants (m_epsilon)
 import Statistics.Function (partialSort)
-import Statistics.Types (Sample)
-import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic as G
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
 -- using the weighted average method.
-weightedAvg :: Int              -- ^ /k/, the desired quantile.
-            -> Int              -- ^ /q/, the number of quantiles.
-            -> Sample           -- ^ /x/, the sample data.
+weightedAvg :: G.Vector v Double => 
+               Int        -- ^ /k/, the desired quantile.
+            -> Int        -- ^ /q/, the number of quantiles.
+            -> v Double   -- ^ /x/, the sample data.
             -> Double
 weightedAvg k q x =
     assert (q >= 2) .
     assert (k >= 0) .
     assert (k < q) .
-    assert (U.all (not . isNaN) x) $
+    assert (G.all (not . isNaN) x) $
     xj + g * (xj1 - xj)
   where
     j   = floor idx
-    idx = fromIntegral (U.length x - 1) * fromIntegral k / fromIntegral q
+    idx = fromIntegral (G.length x - 1) * fromIntegral k / fromIntegral q
     g   = idx - fromIntegral j
     xj  = sx ! j
     xj1 = sx ! (j+1)
@@ -72,16 +72,17 @@ data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- using the continuous sample method with the given parameters.  This
 -- is the method used by most statistical software, such as R,
 -- Mathematica, SPSS, and S.
-continuousBy :: ContParam       -- ^ Parameters /a/ and /b/.
-             -> Int             -- ^ /k/, the desired quantile.
-             -> Int             -- ^ /q/, the number of quantiles.
-             -> Sample          -- ^ /x/, the sample data.
+continuousBy :: G.Vector v Double =>
+                ContParam  -- ^ Parameters /a/ and /b/.
+             -> Int        -- ^ /k/, the desired quantile.
+             -> Int        -- ^ /q/, the number of quantiles.
+             -> v Double   -- ^ /x/, the sample data.
              -> Double
 continuousBy (ContParam a b) k q x =
     assert (q >= 2) .
     assert (k >= 0) .
     assert (k <= q) .
-    assert (U.all (not . isNaN) x) $
+    assert (G.all (not . isNaN) x) $
     (1-h) * item (j-1) + h * item j
   where
     j               = floor (t + eps)
@@ -91,7 +92,7 @@ continuousBy (ContParam a b) k q x =
       | otherwise   = r
       where r       = t - fromIntegral j
     eps             = m_epsilon * 4
-    n               = U.length x
+    n               = G.length x
     item            = (sx !) . bracket
     sx              = partialSort (bracket j + 1) x
     bracket m       = min (max m 0) (n - 1)
@@ -104,14 +105,15 @@ continuousBy (ContParam a b) k q x =
 -- For instance, the interquartile range (IQR) can be estimated as
 -- follows:
 --
--- > midspread medianUnbiased 4 (U.to [1,1,2,2,3])
+-- > midspread medianUnbiased 4 (U.fromList [1,1,2,2,3])
 -- > ==> 1.333333
-midspread :: ContParam       -- ^ Parameters /a/ and /b/.
-          -> Int             -- ^ /q/, the number of quantiles.
-          -> Sample          -- ^ /x/, the sample data.
+midspread :: G.Vector v Double =>
+             ContParam  -- ^ Parameters /a/ and /b/.
+          -> Int        -- ^ /q/, the number of quantiles.
+          -> v Double   -- ^ /x/, the sample data.
           -> Double
 midspread (ContParam a b) k x =
-    assert (U.all (not . isNaN) x) .
+    assert (G.all (not . isNaN) x) .
     assert (k > 0) $
     quantile (1-frac) - quantile frac
   where
@@ -122,7 +124,7 @@ midspread (ContParam a b) k x =
         | otherwise   = r
         where r       = t i - fromIntegral (j i)
     eps               = m_epsilon * 4
-    n                 = U.length x
+    n                 = G.length x
     item              = (sx !) . bracket
     sx                = partialSort (bracket (j (1-frac)) + 1) x
     bracket m         = min (max m 0) (n - 1)
