@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.KernelDensity
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -42,6 +43,7 @@ import Statistics.Function (minMax)
 import Statistics.Sample (stdDev)
 import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic as G
 
 -- | Points from the range of a 'Sample'.
 newtype Points = Points {
@@ -61,10 +63,11 @@ type Bandwidth = Double
 
 -- | Compute the optimal bandwidth from the observed data for the given
 -- kernel.
-bandwidth :: (Double -> Bandwidth)
-          -> Sample
+bandwidth :: G.Vector v Double =>
+             (Double -> Bandwidth)
+          -> v Double
           -> Bandwidth
-bandwidth kern values = stdDev values * kern (fromIntegral $ U.length values)
+bandwidth kern values = stdDev values * kern (fromIntegral $ G.length values)
 
 -- | Choose a uniform range of points at which to estimate a sample's
 -- probability density function.
@@ -74,9 +77,10 @@ bandwidth kern values = stdDev values * kern (fromIntegral $ U.length values)
 --
 -- If this function is passed an empty vector, it returns values of
 -- positive and negative infinity.
-choosePoints :: Int             -- ^ Number of points to select, /n/
+choosePoints :: G.Vector v Double =>
+                Int             -- ^ Number of points to select, /n/
              -> Double          -- ^ Sample bandwidth, /h/
-             -> Sample          -- ^ Input data
+             -> v Double        -- ^ Input data
              -> Points
 choosePoints n h sample = Points . U.map f $ U.enumFromTo 0 n'
   where lo     = a - h
@@ -116,27 +120,29 @@ gaussianKernel f h p v = exp (-0.5 * u * u) * g
 
 -- | Kernel density estimator, providing a non-parametric way of
 -- estimating the PDF of a random variable.
-estimatePDF :: Kernel           -- ^ Kernel function
+estimatePDF :: G.Vector v Double =>
+               Kernel           -- ^ Kernel function
             -> Bandwidth        -- ^ Bandwidth, /h/
-            -> Sample           -- ^ Sample data
+            -> v Double         -- ^ Sample data
             -> Points           -- ^ Points at which to estimate
             -> U.Vector Double
 estimatePDF kernel h sample
     | n < 2     = errorShort "estimatePDF"
     | otherwise = U.map k . fromPoints
   where
-    k p = U.sum . U.map (kernel f h p) $ sample
+    k p = G.sum . G.map (kernel f h p) $ sample
     f   = 1 / (h * fromIntegral n)
-    n   = U.length sample
+    n   = G.length sample
 {-# INLINE estimatePDF #-}
 
 -- | A helper for creating a simple kernel density estimation function
 -- with automatically chosen bandwidth and estimation points.
-simplePDF :: (Double -> Double) -- ^ Bandwidth function
+simplePDF :: G.Vector v Double =>
+             (Double -> Double) -- ^ Bandwidth function
           -> Kernel             -- ^ Kernel function
           -> Double             -- ^ Bandwidth scaling factor (3 for a Gaussian kernel, 1 for all others)
           -> Int                -- ^ Number of points at which to estimate
-          -> Sample             -- ^ Sample data
+          -> v Double           -- ^ sample data
           -> (Points, U.Vector Double)
 simplePDF fbw fpdf k numPoints sample =
     (points, estimatePDF fpdf bw sample points)
