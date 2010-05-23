@@ -15,6 +15,7 @@ module Statistics.Sample
     (
     -- * Types
       Sample
+    , WeightedSample
     -- * Descriptive functions
     , range
 
