@@ -41,7 +41,6 @@ module Statistics.KernelDensity
 import Statistics.Constants (m_1_sqrt_2, m_2_sqrt_pi)
 import Statistics.Function (minMax)
 import Statistics.Sample (stdDev)
-import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
@@ -153,16 +152,18 @@ simplePDF fbw fpdf k numPoints sample =
 -- | Simple Epanechnikov kernel density estimator.  Returns the
 -- uniformly spaced points from the sample range at which the density
 -- function was estimated, and the estimates at those points.
-epanechnikovPDF :: Int          -- ^ Number of points at which to estimate
-                -> Sample
+epanechnikovPDF :: G.Vector v Double =>
+                   Int          -- ^ Number of points at which to estimate
+                -> v Double     -- ^ Data sampleple
                 -> (Points, U.Vector Double)
 epanechnikovPDF = simplePDF epanechnikovBW epanechnikovKernel 1
 
 -- | Simple Gaussian kernel density estimator.  Returns the uniformly
 -- spaced points from the sample range at which the density function
 -- was estimated, and the estimates at those points.
-gaussianPDF :: Int              -- ^ Number of points at which to estimate
-            -> Sample
+gaussianPDF :: G.Vector v Double =>
+               Int              -- ^ Number of points at which to estimate
+            -> v Double         -- ^ Data sample
             -> (Points, U.Vector Double)
 gaussianPDF = simplePDF gaussianBW gaussianKernel 3
 
