@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, TypeOperators #-}
+{-# LANGUAGE BangPatterns #-}
 -- |
 -- Module    : Statistics.Sample.Powers
 -- Copyright : (c) 2009, 2010 Bryan O'Sullivan
