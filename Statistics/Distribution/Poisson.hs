@@ -55,7 +55,7 @@ density (PD l) x
     | l >= 3 && x >= l * 100  = 0
     | x >= max 1 l * 200      = 0
     | l < 20 && x <= 100      = exp (-l) * l ** x / factorial (floor x)
-    | otherwise               = x * log l - logGamma (x + 1) - l
+    | otherwise               = exp (x * log l - logGamma (x + 1) - l)
 {-# INLINE density #-}
 
 cumulative :: PoissonDistribution -> Double -> Double
