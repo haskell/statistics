@@ -154,7 +154,7 @@ simplePDF fbw fpdf k numPoints sample =
 -- function was estimated, and the estimates at those points.
 epanechnikovPDF :: G.Vector v Double =>
                    Int          -- ^ Number of points at which to estimate
-                -> v Double     -- ^ Data sampleple
+                -> v Double     -- ^ Data sample
                 -> (Points, U.Vector Double)
 epanechnikovPDF = simplePDF epanechnikovBW epanechnikovKernel 1
 
