@@ -25,7 +25,7 @@ import Data.Typeable (Typeable)
 import qualified Data.Vector.Unboxed as U
 import qualified Statistics.Distribution as D
 import Statistics.Constants (m_huge)
-import Statistics.Math (logGamma)
+import Statistics.Math (factorial, logGamma)
 
 newtype PoissonDistribution = PD {
       pdLambda :: Double
@@ -49,7 +49,13 @@ fromLambda = PD
 {-# INLINE fromLambda #-}
 
 density :: PoissonDistribution -> Double -> Double
-density (PD l) x = exp (x * log l - l - logGamma x)
+density (PD l) x
+    | x < 0                   = 0
+    | l >= 100 && x >= l * 10 = 0
+    | l >= 3 && x >= l * 100  = 0
+    | x >= max 1 l * 200      = 0
+    | l < 20 && x <= 100      = exp (-l) * l ** x / factorial (floor x)
+    | otherwise               = x * log l - logGamma (x + 1) - l
 {-# INLINE density #-}
 
 cumulative :: PoissonDistribution -> Double -> Double
