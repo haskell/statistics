@@ -73,7 +73,7 @@ data F = F {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
 factorial :: Int -> Double
 factorial n
     | n < 0     = error "Statistics.Math.factorial: negative input"
-    | n <= 1    = 0
+    | n <= 1    = 1
     | n <= 14   = fini . U.foldl' goLong (F 1 1) $ ns
     | otherwise = U.foldl' goDouble 1 $ ns
     where goDouble t k = t * fromIntegral k
