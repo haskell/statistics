@@ -2,6 +2,7 @@ import Control.Applicative
 import qualified Data.Vector.Unboxed as U
 import qualified Test.QuickCheck as QC
 
+import Statistics.Constants (m_epsilon)
 import Statistics.Math
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
@@ -94,13 +95,18 @@ cdfMonotonityCheck :: (Distribution d, QC.Arbitrary d) => CDFMonotonityCheck d
 cdfMonotonityCheck (d,x1,x2) = 
   cumulative d (min x1 x2) <= cumulative d (max x1 x2)
 
+-- Check tht CDF is in [0,1+16ε] range. 16ε is to accect roundoff
+-- errors. 16 is arbitrary value.
+--
+-- ATTENTION! remove checks for roundoff errors in the S.Distribution
+-- before runnning test
 type CDFSanityCheck d = (d,Double) -> Bool
 cdfSanityCheck :: (Distribution d, QC.Arbitrary d) => CDFSanityCheck d
-cdfSanityCheck (d,x) = c >= 0 && c <= 1 where c = cumulative d x
+cdfSanityCheck (d,x) = c >= 0 && c <= (1 + 16*m_epsilon) where c = cumulative d x
                                               
 type PDFSanityCheck d = (d,Double) -> Bool
 pdfSanityCheck :: (ContDistr d, QC.Arbitrary d) => PDFSanityCheck d
-pdfSanityCheck (d,x) = c >= 0 && c <= 1 where c = cumulative d x
+pdfSanityCheck (d,x) = density d x >= 0
 
 
 -- | Tests for distributions
