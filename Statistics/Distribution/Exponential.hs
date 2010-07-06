@@ -33,14 +33,11 @@ newtype ExponentialDistribution = ED {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution ExponentialDistribution where
-    cumulative (ED l) x = 1 - exp (-l * x)
-    {-# INLINE cumulative #-}
+    cumulative = cumulative
 
 instance D.ContDistr ExponentialDistribution where
-    density (ED l) x    = l * exp (-l * x)
-    {-# INLINE density #-}
-    quantile (ED l) p   = -log (1 - p) / l
-    {-# INLINE quantile #-}
+    density  = density
+    quantile = quantile
 
 instance D.Variance ExponentialDistribution where
     variance (ED l) = 1 / (l * l)
@@ -49,6 +46,20 @@ instance D.Variance ExponentialDistribution where
 instance D.Mean ExponentialDistribution where
     mean (ED l) = 1 / l
     {-# INLINE mean #-}
+
+cumulative :: ExponentialDistribution -> Double -> Double
+cumulative (ED l) x | x < 0     = 0
+                    | otherwise = 1 - exp (-l * x)
+{-# INLINE cumulative #-}
+
+density :: ExponentialDistribution -> Double -> Double
+density (ED l) x | x < 0     = 0
+                 | otherwise = l * exp (-l * x)
+{-# INLINE density #-}
+
+quantile :: ExponentialDistribution -> Double -> Double
+quantile (ED l) p = -log (1 - p) / l
+{-# INLINE quantile #-}
 
 fromLambda :: Double            -- ^ &#955; (scale) parameter.
            -> ExponentialDistribution
