@@ -41,9 +41,10 @@ data HypergeometricDistribution = HD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution HypergeometricDistribution where
-    density    = density
-    cumulative = cumulative
-    quantile   = quantile
+    cumulative = D.cdfFromProbability
+
+instance D.DiscreteDistr HypergeometricDistribution where
+    probability = probability
 
 instance D.Variance HypergeometricDistribution where
     variance = variance
@@ -74,34 +75,8 @@ fromParams m l k =
     HD m l k
 {-# INLINE fromParams #-}
 
-density :: HypergeometricDistribution -> Double -> Double
-density (HD mi li ki) x
-    | l <= 70    = (mi <> xi) * ((li - mi) <> (ki - xi)) / (li <> ki)
-    | r > maxVal = 1/0
-    | otherwise  = exp r
-  where
-    a <> b = a `choose` b
-    r = f m + f (l-m) - f l - f xi - f (k-xi) + f k -
-        f (m-xi) - f (l-m-k+xi) + f (l-k)
-    f = logFactorial
-    maxVal = fromIntegral (m_max_exp - 1) * log 2
-    xi = floor x
-    m = fromIntegral mi
-    l = fromIntegral li
-    k = fromIntegral ki
-{-# INLINE density #-}
-
-cumulative :: HypergeometricDistribution -> Double -> Double
-cumulative d@(HD m l k) x
-    | x < fromIntegral imin  = 0
-    | x >= fromIntegral imax = 1
-    | otherwise = min r 1
-  where
-    imin = max 0 (k - l + m)
-    imax = min k m
-    r = U.sum . U.map (density d . fromIntegral) . U.enumFromTo imin . floor $ x
-{-# INLINE cumulative #-}
-
-quantile :: HypergeometricDistribution -> Double -> Double
-quantile = error "Statistics.Distribution.Hypergeometric.quantile: not yet implemented"
-{-# INLINE quantile #-}
+-- Naive implementation
+probability :: HypergeometricDistribution -> Int -> Double
+probability (HD mi li ki) n =
+   choose mi n * choose (li - mi) (ki - n) / choose li ki
+{-# INLINE probability #-}
