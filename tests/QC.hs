@@ -90,16 +90,37 @@ instance QC.Arbitrary PoissonDistribution where
 
 -- CDF must be non-decreasing
 type CDFMonotonityCheck d = (d,Double,Double) -> Bool
-
 cdfMonotonityCheck :: (Distribution d, QC.Arbitrary d) => CDFMonotonityCheck d
 cdfMonotonityCheck (d,x1,x2) = 
   cumulative d (min x1 x2) <= cumulative d (max x1 x2)
+
+type CDFSanityCheck d = (d,Double) -> Bool
+cdfSanityCheck :: (Distribution d, QC.Arbitrary d) => CDFSanityCheck d
+cdfSanityCheck (d,x) = c >= 0 && c <= 1 where c = cumulative d x
+                                              
+type PDFSanityCheck d = (d,Double) -> Bool
+pdfSanityCheck :: (ContDistr d, QC.Arbitrary d) => PDFSanityCheck d
+pdfSanityCheck (d,x) = c >= 0 && c <= 1 where c = cumulative d x
 
 
 -- | Tests for distributions
 testDistr :: [(String, IO ())]
 testDistr = 
-  [ ("==== CDF monotonity checks ====", return ())
+  [ ("==== CDF sanity checks ====", return ())
+  , ("Binomial",       p (cdfSanityCheck :: CDFSanityCheck BinomialDistribution))
+  , ("Exponential",    p (cdfSanityCheck :: CDFSanityCheck ExponentialDistribution))
+  -- , ("Gamma",          cdfSanityCheck :: CDFSanityCheck Gamma)
+  , ("Geometric",      p (cdfSanityCheck :: CDFSanityCheck GeometricDistribution))
+  , ("Hypergeometric", p (cdfSanityCheck :: CDFSanityCheck HypergeometricDistribution))
+  , ("Normal",         p (cdfSanityCheck :: CDFSanityCheck NormalDistribution))
+  , ("Poisson",        p (cdfSanityCheck :: CDFSanityCheck PoissonDistribution))
+
+  , ("==== PDF sanity checks ====", return ())
+  , ("Exponential",    p (pdfSanityCheck :: PDFSanityCheck ExponentialDistribution))
+  -- , ("Gamma",          pdfSanityCheck :: PDFSanityCheck Gamma)
+  , ("Normal",         p (pdfSanityCheck :: PDFSanityCheck NormalDistribution))
+    
+  , ("==== CDF monotonity checks ====", return ())
   , ("Binomial",       p (cdfMonotonityCheck :: CDFMonotonityCheck BinomialDistribution))
   , ("Exponential",    p (cdfMonotonityCheck :: CDFMonotonityCheck ExponentialDistribution))
   -- , ("Gamma",          cdfMonotonityCheck :: CDFMonotonityCheck Gamma)
@@ -119,3 +140,6 @@ testAll :: [(String, IO())]
 testAll = concat [ testChebyshev
                  , testDistr
                  ]
+
+main :: IO ()
+main = runTests testAll
