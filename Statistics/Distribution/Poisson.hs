@@ -18,23 +18,23 @@ module Statistics.Distribution.Poisson
       PoissonDistribution
     -- * Constructors
     , fromLambda
-    -- , fromSample
     ) where
 
 import Data.Typeable (Typeable)
-import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed     as U
 import qualified Statistics.Distribution as D
-import Statistics.Constants (m_huge)
-import Statistics.Math (factorial, logGamma)
+import Statistics.Math (logGamma, factorial)
 
 newtype PoissonDistribution = PD {
       pdLambda :: Double
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution PoissonDistribution where
-    density    = density
-    cumulative = cumulative
-    quantile   = quantile
+    cumulative  = D.cdfFromProbability
+    {-# INLINE cumulative #-}
+
+instance D.DiscreteDistr PoissonDistribution where
+    probability = probability
 
 instance D.Variance PoissonDistribution where
     variance = pdLambda
@@ -48,22 +48,11 @@ fromLambda :: Double -> PoissonDistribution
 fromLambda = PD
 {-# INLINE fromLambda #-}
 
-density :: PoissonDistribution -> Double -> Double
-density (PD l) x
-    | x < 0                   = 0
-    | l >= 100 && x >= l * 10 = 0
-    | l >= 3 && x >= l * 100  = 0
-    | x >= max 1 l * 200      = 0
-    | l < 20 && x <= 100      = exp (-l) * l ** x / factorial (floor x)
-    | otherwise               = exp (x * log l - logGamma (x + 1) - l)
-{-# INLINE density #-}
-
-cumulative :: PoissonDistribution -> Double -> Double
-cumulative d = U.sum . U.map (density d . fromIntegral) .
-               U.enumFromTo (0::Int) . floor
-{-# INLINE cumulative #-}
-
-quantile :: PoissonDistribution -> Double -> Double
-quantile d p = fromIntegral . r $ D.findRoot d p (pdLambda d) 0 m_huge
-    where r = round :: Double -> Int
-{-# INLINE quantile #-}
+probability :: PoissonDistribution -> Int -> Double
+probability (PD l) n
+  | n < 0                   = 0
+  | l < 20 && n <= 100      = exp (-l) * l ** x / factorial n
+  | otherwise               = exp (x * log l - logGamma (x + 1) - l)
+    where
+      x = fromIntegral n
+{-# INLINE probability #-}

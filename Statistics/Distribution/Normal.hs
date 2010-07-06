@@ -29,15 +29,17 @@ import qualified Statistics.Sample as S
 
 -- | The normal distribution.
 data NormalDistribution = ND {
-      mean     :: {-# UNPACK #-} !Double
-    , variance :: {-# UNPACK #-} !Double
+      mean       :: {-# UNPACK #-} !Double
+    , variance   :: {-# UNPACK #-} !Double
     , ndPdfDenom :: {-# UNPACK #-} !Double
     , ndCdfDenom :: {-# UNPACK #-} !Double
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution NormalDistribution where
-    density    = density
     cumulative = cumulative
+
+instance D.ContDistr NormalDistribution where
+    density    = density
     quantile   = quantile
 
 instance D.Variance NormalDistribution where
@@ -48,24 +50,22 @@ instance D.Mean NormalDistribution where
 
 -- | Standard normal distribution with mean equal to 0 and variance equal to 1
 standard :: NormalDistribution
-standard = ND {
-             mean = 0.0
-           , variance = 1.0
-           , ndPdfDenom = m_sqrt_2_pi
-           , ndCdfDenom = m_sqrt_2
-           }
+standard = ND { mean = 0.0
+              , variance = 1.0
+              , ndPdfDenom = m_sqrt_2_pi
+              , ndCdfDenom = m_sqrt_2
+              }
 
 -- | Create normal distribution from parameters
 fromParams :: Double            -- ^ Mean of distribution
            -> Double            -- ^ Variance of distribution
            -> NormalDistribution
 fromParams m v = assert (v > 0)
-                 ND {
-                   mean = m
-                 , variance = v
-                 , ndPdfDenom = m_sqrt_2_pi * sv
-                 , ndCdfDenom = m_sqrt_2 * sv
-                 }
+                 ND { mean = m
+                    , variance = v
+                    , ndPdfDenom = m_sqrt_2_pi * sv
+                    , ndCdfDenom = m_sqrt_2 * sv
+                    }
     where sv = sqrt v
 
 -- | Create distribution using parameters estimated from

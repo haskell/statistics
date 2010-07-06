@@ -38,8 +38,10 @@ data GammaDistribution = GD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution GammaDistribution where
-    density    = density
     cumulative = cumulative
+
+instance D.ContDistr GammaDistribution where
+    density    = density
     quantile   = quantile
 
 instance D.Variance GammaDistribution where

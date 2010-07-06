@@ -35,9 +35,10 @@ newtype GeometricDistribution = GD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution GeometricDistribution where
-    density    = density
     cumulative = cumulative
-    quantile   = quantile
+
+instance D.DiscreteDistr GeometricDistribution where
+    probability = probability
 
 instance D.Variance GeometricDistribution where
     variance (GD s) = (1 - s) / (s * s)
@@ -52,14 +53,11 @@ fromSuccess x = assert (x >= 0 && x <= 1)
                 GD x
 {-# INLINE fromSuccess #-}
 
-density :: GeometricDistribution -> Double -> Double
-density (GD s) x = s * (1-s) ** (x-1)
-{-# INLINE density #-}
+probability :: GeometricDistribution -> Int -> Double
+probability (GD s) n = s * (1-s) ** (fromIntegral n - 1)
+{-# INLINE probability #-}
 
 cumulative :: GeometricDistribution -> Double -> Double
-cumulative (GD s) x = 1 - (1-s) ** x
+cumulative (GD s) x | x < 0     = 0
+                    | otherwise = 1 - (1-s) ^ (floor x)
 {-# INLINE cumulative #-}
-
-quantile :: GeometricDistribution -> Double -> Double
-quantile (GD s) p = log (1 - p) / log (1 - s)
-{-# INLINE quantile #-}

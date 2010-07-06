@@ -8,35 +8,59 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Types and functions common to many probability distributions.
+-- Types classes for probability distrubutions
 
 module Statistics.Distribution
     (
+      -- * Type classes
       Distribution(..)
+    , DiscreteDistr(..)
+    , ContDistr(..)
     , Mean(..)
     , Variance(..)
+      -- * Helper functions
     , findRoot
+    , cdfFromProbability
     ) where
 
--- | The interface shared by all probability distributions.
-class Distribution d where
-    -- | Probability density function. The probability that a
-    -- the random variable /X/ has the value /x/, i.e. P(/X/=/x/).
-    density :: d -> Double -> Double
+import qualified Data.Vector.Unboxed as U
 
+-- | Type class common to all distributions. Only c.d.f. could be
+-- defined for both discrete and continous distributions.
+class Distribution d where
     -- | Cumulative distribution function.  The probability that a
-    -- random variable /X/ is less than /x/, i.e. P(/X/&#8804;/x/).
+    -- random variable /X/ is less or equal than /x/,
+    -- i.e. P(/X/&#8804;/x/). 
     cumulative :: d -> Double -> Double
 
-    -- | Inverse of the cumulative distribution function.  The value
-    -- /x/ for which P(/X/&#8804;/x/).
+
+-- | Discrete probability distribution.
+class Distribution  d => DiscreteDistr d where
+    -- | Probability of n-th outcome.
+    probability :: d -> Int -> Double
+
+
+-- | Continuous probability distributuion
+class Distribution d => ContDistr d where
+    -- | Probability density function. Probability that random
+    -- variable /X/ lies in the infinitesimal interval
+    -- [/x/,/x+/&#948;/x/) equal to /density(x)/&#8901;&#948;/x/
+    density :: d -> Double -> Double
+
+    -- | Inverse of the cumulative distribution function. The value
+    -- /x/ for which P(/X/&#8804;/x/) = /p/.
     quantile :: d -> Double -> Double
 
+
+-- | Type class for distributions with mean.
 class Distribution d => Mean d where
     mean :: d -> Double
 
+
+-- | Type class for distributions with variance.
 class Mean d => Variance d where
     variance :: d -> Double
+
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
@@ -46,7 +70,8 @@ data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- bisection with the given guess as a starting point.  The upper and
 -- lower bounds specify the interval in which the probability
 -- distribution reaches the value /p/.
-findRoot :: Distribution d => d
+findRoot :: ContDistr d => 
+            d                   -- ^ Distribution
          -> Double              -- ^ Probability /p/
          -> Double              -- ^ Initial guess
          -> Double              -- ^ Lower bound on interval
@@ -70,3 +95,8 @@ findRoot d prob = loop 0 1
             | otherwise                        = P dx' x'
     accuracy = 1e-15
     maxIters = 150
+
+-- | Construct c.d.f. for discrete distribution. It just sums probabilities from /0/ to /floor x/.
+cdfFromProbability :: DiscreteDistr d => d -> Double -> Double
+cdfFromProbability d = U.sum . U.map (probability d) . U.enumFromTo 0 . floor
+{-# INLINE cdfFromProbability #-}

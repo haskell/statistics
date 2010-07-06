@@ -33,10 +33,12 @@ newtype ExponentialDistribution = ED {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution ExponentialDistribution where
-    density (ED l) x    = l * exp (-l * x)
-    {-# INLINE density #-}
     cumulative (ED l) x = 1 - exp (-l * x)
     {-# INLINE cumulative #-}
+
+instance D.ContDistr ExponentialDistribution where
+    density (ED l) x    = l * exp (-l * x)
+    {-# INLINE density #-}
     quantile (ED l) p   = -log (1 - p) / l
     {-# INLINE quantile #-}
 
