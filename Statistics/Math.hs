@@ -50,20 +50,19 @@ chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (len - 1) (-1) (l
           len              = G.length a
 {-# INLINE chebyshev #-}
 
--- | The binomial coefficient.
+-- | The binomial coefficient. This function could be slow for large
+-- /n/ and /k/. It could be useful to use some kind of approximation.
 --
 -- > 7 `choose` 3 == 35
 choose :: Int -> Int -> Double
 n `choose` k
     | k > n     = 0
-    | k < 30    = U.foldl' go 1 . U.enumFromTo 1 $ k'
-    | otherwise = exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
+    | otherwise = U.foldl' go 1 . U.enumFromTo 1 $ k'
     where go a i = a * (nk + j) / j
               where j = fromIntegral i :: Double
           k' | k > n `div` 2 = n - k
              | otherwise     = k
           nk = fromIntegral (n - k')
-          lg = logGamma . fromIntegral
 {-# INLINE choose #-}
 
 data F = F {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
