@@ -41,7 +41,7 @@ data HypergeometricDistribution = HD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution HypergeometricDistribution where
-    cumulative = D.cdfFromProbability
+    cumulative d x = D.sumProbabilities d 0 (floor x)
 
 instance D.DiscreteDistr HypergeometricDistribution where
     probability = probability

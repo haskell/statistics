@@ -20,7 +20,7 @@ module Statistics.Distribution
     , Variance(..)
       -- * Helper functions
     , findRoot
-    , cdfFromProbability
+    , sumProbabilities
     ) where
 
 import qualified Data.Vector.Unboxed as U
@@ -96,11 +96,10 @@ findRoot d prob = loop 0 1
     accuracy = 1e-15
     maxIters = 150
 
--- | Construct c.d.f. for discrete distribution. It just sums
--- probabilities from /0/ to /floor x/.
-cdfFromProbability :: DiscreteDistr d => d -> Double -> Double
-cdfFromProbability d =
+-- | Sum probabilities in inclusive interval.
+sumProbabilities :: DiscreteDistr d => d -> Int -> Int -> Double
+sumProbabilities d low hi =
   -- Return value is forced to be less than 1 to guard againist roundoff errors. 
   -- ATTENTION! this check should be removed for testing or it could mask bugs.
-  min 1 . U.sum . U.map (probability d) . U.enumFromTo 0 . floor
-{-# INLINE cdfFromProbability #-}
+  min 1 . U.sum . U.map (probability d) $ U.enumFromTo low hi
+{-# INLINE sumProbabilities #-}

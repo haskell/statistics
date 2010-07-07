@@ -30,7 +30,7 @@ newtype PoissonDistribution = PD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution PoissonDistribution where
-    cumulative  = D.cdfFromProbability
+    cumulative d x = D.sumProbabilities d 0 (floor x)
     {-# INLINE cumulative #-}
 
 instance D.DiscreteDistr PoissonDistribution where
