@@ -33,6 +33,16 @@ p = QC.quickCheck
 runTests :: [(String, IO ())] -> IO ()
 runTests = mapM_ $ \(name, test) -> putStrLn (" * " ++ name) >> test
 
+-- Double in [0,1] range
+newtype OI = OI Double deriving Show
+instance QC.Arbitrary OI where
+  arbitrary = OI <$> QC.choose (0,1)
+
+-- Double in [0,100] range
+newtype ReasonablyPositive = ReasonablyPositive Double deriving Show
+instance QC.Arbitrary ReasonablyPositive where
+  arbitrary = ReasonablyPositive <$> QC.choose (0,100)
+
 ----------------------------------------------------------------
 -- Chebyshev 
 ----------------------------------------------------------------
@@ -73,19 +83,13 @@ testChebyshev =
 -- Special functions
 ----------------------------------------------------------------
 
-newtype OI = OI Double deriving Show
-instance QC.Arbitrary OI where
-  arbitrary = OI <$> QC.choose (0,1)
-
-newtype ReasonablyPositive = ReasonablyPositive Double deriving Show
-instance QC.Arbitrary ReasonablyPositive where
-  arbitrary = ReasonablyPositive <$> QC.choose (0,100)
-
+-- Γ(x+1) = x·Γ(x)
 gammaErr :: (Double -> Double) -> Double -> Double
 gammaErr logG x = let g1 = logG x
                       g2 = logG (x+1)
                   in (g2 - g1 - log x)
 
+-- Check for error
 gammaTest :: (Double -> Double) -> Double -> ReasonablyPositive -> Bool
 gammaTest logG ε (ReasonablyPositive x) = abs (gammaErr logG x) < ε
 
@@ -123,7 +127,7 @@ cdfMonotonityCheck :: (Distribution d, QC.Arbitrary d) => CDFMonotonityCheck d
 cdfMonotonityCheck (d,x1,x2) = 
   cumulative d (min x1 x2) <= cumulative d (max x1 x2)
 
--- Check tht CDF is in [0,1+16ε] range. 16ε is to accect roundoff
+-- Check tht CDF is in [0,1+16ε] range. 16ε is to accept roundoff
 -- errors. 16 is arbitrary value.
 --
 -- ATTENTION! remove checks for roundoff errors in the S.Distribution
