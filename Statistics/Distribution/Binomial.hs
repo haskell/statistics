@@ -24,13 +24,9 @@ module Statistics.Distribution.Binomial
     ) where
 
 import Control.Exception (assert)
-import qualified Data.Vector.Unboxed as U
-import Data.Int (Int64)
 import Data.Typeable (Typeable)
-import Statistics.Constants (m_epsilon)
 import qualified Statistics.Distribution as D
-import Statistics.Distribution.Normal (standard)
-import Statistics.Math (choose, logFactorial)
+import Statistics.Math (choose)
 
 -- | The binomial distribution.
 data BinomialDistribution = BD {
@@ -63,7 +59,7 @@ probability (BD n p) k
 
 -- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
-cumulative d@(BD n p) x
+cumulative d@(BD n _) x
   | k <  0    = 0
   | k >= n    = 1
   | k <  m    = D.sumProbabilities d 0 k

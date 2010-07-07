@@ -17,16 +17,17 @@ module Statistics.Distribution.Poisson
     (
       PoissonDistribution
     -- * Constructors
-    , fromLambda
+    , poisson
+    -- * Accessors
+    , poissonLambda
     ) where
 
 import Data.Typeable (Typeable)
-import qualified Data.Vector.Unboxed     as U
 import qualified Statistics.Distribution as D
 import Statistics.Math (logGamma, factorial)
 
 newtype PoissonDistribution = PD {
-      pdLambda :: Double
+      poissonLambda :: Double
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution PoissonDistribution where
@@ -37,16 +38,17 @@ instance D.DiscreteDistr PoissonDistribution where
     probability = probability
 
 instance D.Variance PoissonDistribution where
-    variance = pdLambda
+    variance = poissonLambda
     {-# INLINE variance #-}
 
 instance D.Mean PoissonDistribution where
-    mean = pdLambda
+    mean = poissonLambda
     {-# INLINE mean #-}
 
-fromLambda :: Double -> PoissonDistribution
-fromLambda = PD
-{-# INLINE fromLambda #-}
+-- | Create po
+poisson :: Double -> PoissonDistribution
+poisson = PD
+{-# INLINE poisson #-}
 
 probability :: PoissonDistribution -> Int -> Double
 probability (PD l) n

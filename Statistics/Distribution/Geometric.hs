@@ -21,9 +21,9 @@ module Statistics.Distribution.Geometric
     (
       GeometricDistribution
     -- * Constructors
-    , fromSuccess
+    , geometric
     -- ** Accessors
-    , pdSuccess
+    , gdSuccess
     ) where
 
 import Control.Exception (assert)
@@ -31,7 +31,7 @@ import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 
 newtype GeometricDistribution = GD {
-      pdSuccess :: Double
+      gdSuccess :: Double
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution GeometricDistribution where
@@ -48,10 +48,12 @@ instance D.Mean GeometricDistribution where
     mean (GD s) = 1 / s
     {-# INLINE mean #-}
 
-fromSuccess :: Double -> GeometricDistribution
-fromSuccess x = assert (x >= 0 && x <= 1)
-                GD x
-{-# INLINE fromSuccess #-}
+-- | Create geometric distribution
+geometric :: Double                -- ^ Success rate
+          -> GeometricDistribution
+geometric x = assert (x >= 0 && x <= 1)
+              GD x
+{-# INLINE geometric #-}
 
 probability :: GeometricDistribution -> Int -> Double
 probability (GD s) n | n < 1     = 0
