@@ -1,6 +1,7 @@
 import Control.Applicative
 import qualified Data.Vector.Unboxed as U
 import qualified Test.QuickCheck as QC
+import Test.QuickCheck.Modifiers (Positive(..))
 
 import Statistics.Constants (m_epsilon)
 import Statistics.Math
@@ -67,6 +68,33 @@ testChebyshev =
                            (chebyshev x $ U.fromList [a0,a1,a2,a3,a4])))
     ]
     where frac x = (x - fromIntegral (floor x)) * 2 - 1
+
+----------------------------------------------------------------
+-- Special functions
+----------------------------------------------------------------
+
+newtype OI = OI Double deriving Show
+instance QC.Arbitrary OI where
+  arbitrary = OI <$> QC.choose (0,1)
+
+newtype ReasonablyPositive = ReasonablyPositive Double deriving Show
+instance QC.Arbitrary ReasonablyPositive where
+  arbitrary = ReasonablyPositive <$> QC.choose (0,100)
+
+gammaErr :: (Double -> Double) -> Double -> Double
+gammaErr logG x = let g1 = logG x
+                      g2 = logG (x+1)
+                  in (g2 - g1 - log x)
+
+gammaTest :: (Double -> Double) -> Double -> ReasonablyPositive -> Bool
+gammaTest logG ε (ReasonablyPositive x) = abs (gammaErr logG x) < ε
+
+testSpecFun :: [(String,IO ())]
+testSpecFun = 
+  [ ("==== Special function ====", return ())
+  , ( "gamma",  p $ gammaTest logGamma  3e-8)
+  , ( "gammaL", p $ gammaTest logGammaL 2e-13)
+  ]
 
 ----------------------------------------------------------------
 -- Tests for probabilites distributions
@@ -144,6 +172,7 @@ testDistr =
 -- | Complete list of tests
 testAll :: [(String, IO())]
 testAll = concat [ testChebyshev
+                 , testSpecFun
                  , testDistr
                  ]
 
