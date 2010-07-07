@@ -79,7 +79,7 @@ density d x = exp (-xm * xm / (2 * variance d)) / ndPdfDenom d
     where xm = x - mean d
 
 cumulative :: NormalDistribution -> Double -> Double
-cumulative d x = erfc (-(x-mean d) / ndCdfDenom d) / 2
+cumulative d x = erfc ((mean d - x) / ndCdfDenom d) / 2
 
 quantile :: NormalDistribution -> Double -> Double
 quantile d p
