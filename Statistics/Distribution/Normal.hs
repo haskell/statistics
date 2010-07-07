@@ -50,8 +50,8 @@ instance D.Mean NormalDistribution where
 
 -- | Standard normal distribution with mean equal to 0 and variance equal to 1
 standard :: NormalDistribution
-standard = ND { mean = 0.0
-              , variance = 1.0
+standard = ND { mean       = 0.0
+              , variance   = 1.0
               , ndPdfDenom = m_sqrt_2_pi
               , ndCdfDenom = m_sqrt_2
               }
@@ -61,8 +61,8 @@ fromParams :: Double            -- ^ Mean of distribution
            -> Double            -- ^ Variance of distribution
            -> NormalDistribution
 fromParams m v = assert (v > 0)
-                 ND { mean = m
-                    , variance = v
+                 ND { mean       = m
+                    , variance   = v
                     , ndPdfDenom = m_sqrt_2_pi * sv
                     , ndCdfDenom = m_sqrt_2 * sv
                     }
