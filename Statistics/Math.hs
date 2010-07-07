@@ -95,8 +95,9 @@ logFactorial n
                2.7777777777778e-3) * y + 8.3333333333333e-2
 {-# INLINE logFactorial #-}
 
--- | Compute the incomplete gamma integral function &#947;(/s/,/x/).
--- Uses Algorithm AS 239 by Shea.
+-- | Compute the normalized lower incomplete gamma function
+-- &#947;(/s/,/x/). Normalization means that
+-- &#947;(&#8734;,/x/)=1. Uses Algorithm AS 239 by Shea.
 incompleteGamma :: Double       -- ^ /s/
                 -> Double       -- ^ /x/
                 -> Double
@@ -104,7 +105,7 @@ incompleteGamma x p
     | x < 0 || p <= 0 = 1/0
     | x == 0          = 0
     | p >= 1000       = norm (3 * sqrt p * ((x/p) ** (1/3) + 1/(9*p) - 1))
-    | x >= 1e8        = 0
+    | x >= 1e8        = 1
     | x <= 1 || x < p = let a = p * log x - x - logGamma (p + 1)
                             g = a + log (pearson p 1 1)
                         in if g > limit then exp g else 0
