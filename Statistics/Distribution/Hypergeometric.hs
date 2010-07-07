@@ -28,9 +28,8 @@ module Statistics.Distribution.Hypergeometric
     ) where
 
 import Control.Exception (assert)
-import qualified Data.Vector.Unboxed as U
 import Data.Typeable (Typeable)
-import Statistics.Math (choose, logFactorial)
+import Statistics.Math (choose)
 import Statistics.Constants (m_max_exp)
 import qualified Statistics.Distribution as D
 

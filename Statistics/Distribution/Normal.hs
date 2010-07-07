@@ -15,8 +15,8 @@ module Statistics.Distribution.Normal
     (
       NormalDistribution
     -- * Constructors
-    , fromParams
-    , fromSample
+    , normalDistr
+    , normalFromSample
     , standard
     ) where
 
@@ -57,10 +57,10 @@ standard = ND { mean       = 0.0
               }
 
 -- | Create normal distribution from parameters
-fromParams :: Double            -- ^ Mean of distribution
-           -> Double            -- ^ Variance of distribution
-           -> NormalDistribution
-fromParams m v = assert (v > 0)
+normalDistr :: Double            -- ^ Mean of distribution
+            -> Double            -- ^ Variance of distribution
+            -> NormalDistribution
+normalDistr m v = assert (v > 0)
                  ND { mean       = m
                     , variance   = v
                     , ndPdfDenom = m_sqrt_2_pi * sv
@@ -71,8 +71,8 @@ fromParams m v = assert (v > 0)
 -- | Create distribution using parameters estimated from
 --   sample. Variance is estimated using maximum likelihood method
 --   (biased estimation).
-fromSample :: S.Sample -> NormalDistribution
-fromSample a = fromParams (S.mean a) (S.variance a)
+normalFromSample :: S.Sample -> NormalDistribution
+normalFromSample a = normalDistr (S.mean a) (S.variance a)
 
 density :: NormalDistribution -> Double -> Double
 density d x = exp (-xm * xm / (2 * variance d)) / ndPdfDenom d

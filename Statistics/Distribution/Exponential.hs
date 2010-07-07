@@ -17,8 +17,8 @@ module Statistics.Distribution.Exponential
     (
       ExponentialDistribution
     -- * Constructors
-    , fromLambda
-    , fromSample
+    , exponential
+    , exponentialFromSample
     -- * Accessors
     , edLambda
     ) where
@@ -61,11 +61,14 @@ quantile :: ExponentialDistribution -> Double -> Double
 quantile (ED l) p = -log (1 - p) / l
 {-# INLINE quantile #-}
 
-fromLambda :: Double            -- ^ &#955; (scale) parameter.
-           -> ExponentialDistribution
-fromLambda = ED
-{-# INLINE fromLambda #-}
+-- | Create exponential distribution
+exponential :: Double            -- ^ &#955; (scale) parameter.
+            -> ExponentialDistribution
+exponential = ED
+{-# INLINE exponential #-}
 
-fromSample :: Sample -> ExponentialDistribution
-fromSample = ED . S.mean
-{-# INLINE fromSample #-}
+-- | Create exponential distribution from sample. No tests are made to
+-- check whether it really exponential
+exponentialFromSample :: Sample -> ExponentialDistribution
+exponentialFromSample = ED . S.mean
+{-# INLINE exponentialFromSample #-}
