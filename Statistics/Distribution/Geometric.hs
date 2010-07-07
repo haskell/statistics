@@ -54,10 +54,11 @@ fromSuccess x = assert (x >= 0 && x <= 1)
 {-# INLINE fromSuccess #-}
 
 probability :: GeometricDistribution -> Int -> Double
-probability (GD s) n = s * (1-s) ** (fromIntegral n - 1)
+probability (GD s) n | n < 1     = 0
+                     | otherwise = s * (1-s) ** (fromIntegral n - 1)
 {-# INLINE probability #-}
 
 cumulative :: GeometricDistribution -> Double -> Double
-cumulative (GD s) x | x < 0     = 0
-                    | otherwise = 1 - (1-s) ^ (floor x)
+cumulative (GD s) x | x < 1     = 0
+                    | otherwise = 1 - (1-s) ^ (floor x :: Int)
 {-# INLINE cumulative #-}
