@@ -44,7 +44,7 @@ instance QC.Arbitrary ReasonablyPositive where
   arbitrary = ReasonablyPositive <$> QC.choose (0,100)
 
 ----------------------------------------------------------------
--- Chebyshev 
+-- Chebyshev
 ----------------------------------------------------------------
 
 -- | Chebyshev polynomials
@@ -94,7 +94,7 @@ gammaTest :: (Double -> Double) -> Double -> ReasonablyPositive -> Bool
 gammaTest logG ε (ReasonablyPositive x) = abs (gammaErr logG x) < ε
 
 testSpecFun :: [(String,IO ())]
-testSpecFun = 
+testSpecFun =
   [ ("==== Special function ====", return ())
   , ( "gamma",  p $ gammaTest logGamma  3e-8)
   , ( "gammaL", p $ gammaTest logGammaL 2e-13)
@@ -103,7 +103,7 @@ testSpecFun =
 ----------------------------------------------------------------
 -- Tests for probabilites distributions
 ----------------------------------------------------------------
-          
+
 -- Arbitrary instances for ditributions
 instance QC.Arbitrary BinomialDistribution where
   arbitrary = binomial <$> QC.choose (1,100) <*> QC.choose (0,1)
@@ -124,7 +124,7 @@ instance QC.Arbitrary PoissonDistribution where
 -- CDF must be non-decreasing
 type CDFMonotonityCheck d = (d,Double,Double) -> Bool
 cdfMonotonityCheck :: (Distribution d, QC.Arbitrary d) => CDFMonotonityCheck d
-cdfMonotonityCheck (d,x1,x2) = 
+cdfMonotonityCheck (d,x1,x2) =
   cumulative d (min x1 x2) <= cumulative d (max x1 x2)
 
 -- Check tht CDF is in [0,1+16ε] range. 16ε is to accept roundoff
@@ -135,15 +135,18 @@ cdfMonotonityCheck (d,x1,x2) =
 type CDFSanityCheck d = (d,Double) -> Bool
 cdfSanityCheck :: (Distribution d, QC.Arbitrary d) => CDFSanityCheck d
 cdfSanityCheck (d,x) = c >= 0 && c <= (1 + 16*m_epsilon) where c = cumulative d x
-                                              
+
 type PDFSanityCheck d = (d,Double) -> Bool
 pdfSanityCheck :: (ContDistr d, QC.Arbitrary d) => PDFSanityCheck d
 pdfSanityCheck (d,x) = density d x >= 0
 
+type ProbSanityCheck d = (d,Int) -> Bool
+probSanityCheck :: (DiscreteDistr d, QC.Arbitrary d) => ProbSanityCheck d
+probSanityCheck (d,x) = p >=0 && p <= 1 where p = probability d x
 
 -- | Tests for distributions
 testDistr :: [(String, IO ())]
-testDistr = 
+testDistr =
   [ ("==== CDF sanity checks ====", return ())
   , ("Binomial",       p (cdfSanityCheck :: CDFSanityCheck BinomialDistribution))
   , ("Exponential",    p (cdfSanityCheck :: CDFSanityCheck ExponentialDistribution))
@@ -153,11 +156,6 @@ testDistr =
   , ("Normal",         p (cdfSanityCheck :: CDFSanityCheck NormalDistribution))
   , ("Poisson",        p (cdfSanityCheck :: CDFSanityCheck PoissonDistribution))
 
-  , ("==== PDF sanity checks ====", return ())
-  , ("Exponential",    p (pdfSanityCheck :: PDFSanityCheck ExponentialDistribution))
-  -- , ("Gamma",          pdfSanityCheck :: PDFSanityCheck Gamma)
-  , ("Normal",         p (pdfSanityCheck :: PDFSanityCheck NormalDistribution))
-    
   , ("==== CDF monotonity checks ====", return ())
   , ("Binomial",       p (cdfMonotonityCheck :: CDFMonotonityCheck BinomialDistribution))
   , ("Exponential",    p (cdfMonotonityCheck :: CDFMonotonityCheck ExponentialDistribution))
@@ -166,11 +164,24 @@ testDistr =
   , ("Hypergeometric", p (cdfMonotonityCheck :: CDFMonotonityCheck HypergeometricDistribution))
   , ("Normal",         p (cdfMonotonityCheck :: CDFMonotonityCheck NormalDistribution))
   , ("Poisson",        p (cdfMonotonityCheck :: CDFMonotonityCheck PoissonDistribution))
+
+  , ("==== PDF sanity checks ====", return ())
+  , ("Exponential",    p (pdfSanityCheck :: PDFSanityCheck ExponentialDistribution))
+  -- , ("Gamma",          pdfSanityCheck :: PDFSanityCheck Gamma)
+  , ("Normal",         p (pdfSanityCheck :: PDFSanityCheck NormalDistribution))
+
+  , ("==== Probability sanity check ====", return ())
+  , ("Binomial",       p (probSanityCheck :: ProbSanityCheck BinomialDistribution))
+  -- , ("Gamma",          probSanityCheck :: ProbSanityCheck Gamma)
+  , ("Geometric",      p (probSanityCheck :: ProbSanityCheck GeometricDistribution))
+  , ("Hypergeometric", p (probSanityCheck :: ProbSanityCheck HypergeometricDistribution))
+  , ("Poisson",        p (probSanityCheck :: ProbSanityCheck PoissonDistribution))
+
   ]
 
 
 ----------------------------------------------------------------
--- 
+--
 ----------------------------------------------------------------
 
 -- | Complete list of tests
