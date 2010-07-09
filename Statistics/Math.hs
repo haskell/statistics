@@ -14,22 +14,28 @@
 module Statistics.Math
     (
     -- * Functions
-      chebyshev
-    , choose
-    -- ** Factorial functions
+      choose
+    -- ** Chebyshev polynomials
+    , chebyshev
+    -- ** Logarithm
+    , log1p
+    -- ** Factorial
     , factorial
     , logFactorial
-    -- ** Gamma functions
+    -- ** Gamma
     , incompleteGamma
     , logGamma
     , logGammaL
+    , logGammaCorrection
+    -- ** Beta
+    , logBeta
     -- * References
     -- $references
     ) where
 
 import Data.Vector.Generic ((!))
 import Data.Word (Word64)
-import Statistics.Constants (m_sqrt_2_pi)
+import Statistics.Constants (m_epsilon, m_sqrt_2_pi, m_ln_sqrt_2_pi)
 import Statistics.Distribution (cumulative)
 import Statistics.Distribution.Normal (standard)
 import qualified Data.Vector.Unboxed as U
@@ -50,6 +56,25 @@ chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (len - 1) (-1) (l
           len              = G.length a
 {-# INLINE chebyshev #-}
 
+data CB = CB {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+
+-- Evaluate a series of Chebyshev polynomials. Uses Broucke's
+-- adaptation of Clenshaw's aapproach.
+--
+-- This implementation omits the final division by 2 added by Broucke,
+-- so that the results may be compared to 'chebyshev' above.
+chebyshevBroucke :: (G.Vector v Double) =>
+        Double -> v Double -> Double
+chebyshevBroucke x a
+  | n < 1 || n > 1000 = 0/0
+  | x < -1.1 || x > 1.1 = 0/0
+  | otherwise = fini . U.foldl' step (CH 0 0 0) $ U.enumFromStepN (n - 1) (-1) n
+ where
+  step (CH b0 b1 b2) k = CH (x2 * b1 - b2 + (a ! k)) b0 b1
+  fini (CH b0 _ b2)    = b0 - b2
+  n                    = G.length a
+  x2                   = x * 2
+
 -- | The binomial coefficient. This function could be slow for large
 -- /n/ and /k/. It could be useful to use some kind of approximation.
 --
@@ -57,12 +82,15 @@ chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (len - 1) (-1) (l
 choose :: Int -> Int -> Double
 n `choose` k
     | k > n     = 0
-    | otherwise = U.foldl' go 1 . U.enumFromTo 1 $ k'
+    | k < 30    = U.foldl' go 1 . U.enumFromTo 1 $ k'
+    | otherwise = exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
     where go a i = a * (nk + j) / j
               where j = fromIntegral i :: Double
-          k' | k > n `div` 2 = n - k
-             | otherwise     = k
+          k' | n_k < k   = n_k
+             | otherwise = k
+             where n_k   = n - k
           nk = fromIntegral (n - k')
+          lg = logGamma . fromIntegral
 {-# INLINE choose #-}
 
 data F = F {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
@@ -223,8 +251,111 @@ logGammaL x
                            , 676.5203681218835
                            ]
 
+-- | Compute the log gamma correction factor for @x@ &#8805; 10.  This
+-- correction factor is suitable for an alternate (but less
+-- numerically accurate) definition of 'logGamma':
+--
+-- >lgg x = 0.5 * log(2*pi) + (x-0.5) * log x - x + logGammaCorrection x
+logGammaCorrection :: Double -> Double
+logGammaCorrection x
+    | x < 10    = 0/0
+    | x < big   = chebyshev (t * t * 2 - 1) coeffs / (x * 2)
+    | otherwise = 1 / (x * 12)
+  where
+    big    = 94906265.62425156
+    t      = 10 / x
+    coeffs = U.fromList [
+               0.1666389480451863247205729650822e+0,
+              -0.1384948176067563840732986059135e-4,
+               0.9810825646924729426157171547487e-8,
+              -0.1809129475572494194263306266719e-10,
+               0.6221098041892605227126015543416e-13,
+              -0.3399615005417721944303330599666e-15
+             ]
+
+-- | Compute the natural logarithm of the beta function.
+logBeta :: Double -> Double -> Double
+logBeta a b
+    | p < 0     = 0/0
+    | p == 0    = 1/0
+    | p >= 10   = log q * (-0.5) + m_ln_sqrt_2_pi + logGammaCorrection p + c +
+                  (p - 0.5) * log ppq + q * log1p(-ppq)
+    | q >= 10   = logGamma p + c + p - p * log pq + (q - 0.5) * log1p(-ppq)
+    | otherwise = logGamma p + logGamma q - logGamma pq
+    where
+      p   = min a b
+      q   = max a b
+      ppq = p / pq
+      pq  = p + q
+      c   = logGammaCorrection q - logGammaCorrection pq
+
+-- | Compute the natural logarithm of 1 + @x@.  This is accurate even
+-- for values of @x@ near zero, where use of @log(1+x)@ would lose
+-- precision.
+log1p :: Double -> Double
+log1p x
+    | x == 0               = 0
+    | x == -1              = -1/0
+    | x < -1               = 0/0
+    | x' < m_epsilon * 0.5 = x
+    | (x >= 0 && x < 1e-8) || (x >= -1e-9 && x < 0)
+                           = x * (1 - x * 0.5)
+    | x' < 0.375           = x * (1 - x * chebyshev (x / 0.375) coeffs * 0.5)
+    | otherwise            = log (1 + x)
+  where
+    x' = abs x
+    coeffs = U.fromList [
+               0.10378693562743769800686267719098e+1,
+              -0.13364301504908918098766041553133e+0,
+               0.19408249135520563357926199374750e-1,
+              -0.30107551127535777690376537776592e-2,
+               0.48694614797154850090456366509137e-3,
+              -0.81054881893175356066809943008622e-4,
+               0.13778847799559524782938251496059e-4,
+              -0.23802210894358970251369992914935e-5,
+               0.41640416213865183476391859901989e-6,
+              -0.73595828378075994984266837031998e-7,
+               0.13117611876241674949152294345011e-7,
+              -0.23546709317742425136696092330175e-8,
+               0.42522773276034997775638052962567e-9,
+              -0.77190894134840796826108107493300e-10,
+               0.14075746481359069909215356472191e-10,
+              -0.25769072058024680627537078627584e-11,
+               0.47342406666294421849154395005938e-12,
+              -0.87249012674742641745301263292675e-13,
+               0.16124614902740551465739833119115e-13,
+              -0.29875652015665773006710792416815e-14,
+               0.55480701209082887983041321697279e-15,
+              -0.10324619158271569595141333961932e-15,
+               0.19250239203049851177878503244868e-16,
+              -0.35955073465265150011189707844266e-17,
+               0.67264542537876857892194574226773e-18,
+              -0.12602624168735219252082425637546e-18,
+               0.23644884408606210044916158955519e-19,
+              -0.44419377050807936898878389179733e-20,
+               0.83546594464034259016241293994666e-21,
+              -0.15731559416479562574899253521066e-21,
+               0.29653128740247422686154369706666e-22,
+              -0.55949583481815947292156013226666e-23,
+               0.10566354268835681048187284138666e-23,
+              -0.19972483680670204548314999466666e-24,
+               0.37782977818839361421049855999999e-25,
+              -0.71531586889081740345038165333333e-26,
+               0.13552488463674213646502024533333e-26,
+              -0.25694673048487567430079829333333e-27,
+               0.48747756066216949076459519999999e-28,
+              -0.92542112530849715321132373333333e-29,
+               0.17578597841760239233269760000000e-29,
+              -0.33410026677731010351377066666666e-30,
+               0.63533936180236187354180266666666e-31
+             ]
+
 -- $references
 --
+-- * Broucke, R. (1973) Algorithm 446: Ten subroutines for the
+--   manipulation of Chebyshev series. /Communications of the ACM/
+--   16(4):254&#8211;256.  <http://doi.acm.org/10.1145/362003.362037>
+
 -- * Clenshaw, C.W. (1962) Chebyshev series for mathematical
 --   functions. /National Physical Laboratory Mathematical Tables 5/,
 --   Her Majesty's Stationery Office, London.
