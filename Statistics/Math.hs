@@ -17,6 +17,7 @@ module Statistics.Math
       choose
     -- ** Chebyshev polynomials
     , chebyshev
+    , chebyshevBroucke
     -- ** Logarithm
     , log1p
     -- ** Factorial
@@ -33,6 +34,7 @@ module Statistics.Math
     -- $references
     ) where
 
+import Data.Int (Int64)
 import Data.Vector.Generic ((!))
 import Data.Word (Word64)
 import Statistics.Constants (m_epsilon, m_sqrt_2_pi, m_ln_sqrt_2_pi)
@@ -43,8 +45,7 @@ import qualified Data.Vector.Generic as G
 
 data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
--- | Evaluate a series of Chebyshev polynomials. Uses Clenshaw's
--- algorithm.
+-- | Evaluate a Chebyshev polynomial. Uses Clenshaw's algorithm.
 chebyshev :: (G.Vector v Double) =>
              Double      -- ^ Parameter of each function.
           -> v Double    -- ^ Coefficients of each polynomial term, in increasing order.
@@ -56,23 +57,50 @@ chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (len - 1) (-1) (l
           len              = G.length a
 {-# INLINE chebyshev #-}
 
--- | The binomial coefficient. This function could be slow for large
--- /n/ and /k/. It could be useful to use some kind of approximation.
+data CH = CH {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+
+-- Evaluate a Chebyshev polynomial. Uses Broucke's adaptation of
+-- Clenshaw's approach.
+chebyshevBroucke :: (G.Vector v Double) =>
+             Double      -- ^ Parameter of each function.
+          -> v Double    -- ^ Coefficients of each polynomial term, in increasing order.
+          -> Double
+chebyshevBroucke x = fini . G.foldr' step (CH 0 0 0)
+    where step a (CH b0 b1 _) = CH (x2 * b0 - b1 + a) b0 b1
+          fini   (CH b0 _ b2) = (b0 - b2) * 0.5
+          x2                  = x * 2
+{-# INLINE chebyshevBroucke #-}
+
+-- | Quickly compute the natural logarithm of /n/ @`choose`@ /k/, with
+-- no checking.
+logChooseFast :: Double -> Double -> Double
+logChooseFast n k = -log (n + 1) - logBeta (n - k + 1) (k + 1)
+
+-- | Compute the binomial coefficient /n/ @\``choose`\`@ /k/. For values
+-- of /k/ > 30, this uses an approximation for performance reasons.
+--
+-- Example:
 --
 -- > 7 `choose` 3 == 35
 choose :: Int -> Int -> Double
 n `choose` k
-    | k > n     = 0
-    | k < 30    = U.foldl' go 1 . U.enumFromTo 1 $ k'
-    | otherwise = exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
-    where go a i = a * (nk + j) / j
-              where j = fromIntegral i :: Double
-          k' | n_k < k   = n_k
-             | otherwise = k
-             where n_k   = n - k
-          nk = fromIntegral (n - k')
-          lg = logGamma . fromIntegral
-{-# INLINE choose #-}
+    | k > n          = 0
+    | k < 30         = U.foldl' go 1 . U.enumFromTo 1 $ k'
+    | approx < max64 = fromIntegral . round64 $ approx
+    | otherwise      = approx
+  where
+    approx         = exp $ logChooseFast (fromIntegral n) (fromIntegral k)
+                  -- Less numerically stable:
+                  -- exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
+                  --   where lg = logGamma . fromIntegral
+    go a i         = a * (nk + j) / j
+        where j    = fromIntegral i :: Double
+    k' | n_k < k   = n_k
+       | otherwise = k
+       where n_k   = n - k
+    nk             = fromIntegral (n - k')
+    max64          = fromIntegral (maxBound :: Int64)
+    round64 x      = round x :: Int64
 
 data F = F {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
 
@@ -240,7 +268,7 @@ logGammaL x
 logGammaCorrection :: Double -> Double
 logGammaCorrection x
     | x < 10    = 0/0
-    | x < big   = chebyshev (t * t * 2 - 1) coeffs / (x * 2)
+    | x < big   = chebyshevBroucke (t * t * 2 - 1) coeffs / x
     | otherwise = 1 / (x * 12)
   where
     big    = 94906265.62425156
@@ -251,7 +279,8 @@ logGammaCorrection x
                0.9810825646924729426157171547487e-8,
               -0.1809129475572494194263306266719e-10,
                0.6221098041892605227126015543416e-13,
-              -0.3399615005417721944303330599666e-15
+              -0.3399615005417721944303330599666e-15,
+               0.2683181998482698748957538846666e-17
              ]
 
 -- | Compute the natural logarithm of the beta function.
@@ -281,7 +310,7 @@ log1p x
     | x' < m_epsilon * 0.5 = x
     | (x >= 0 && x < 1e-8) || (x >= -1e-9 && x < 0)
                            = x * (1 - x * 0.5)
-    | x' < 0.375           = x * (1 - x * chebyshev (x / 0.375) coeffs * 0.5)
+    | x' < 0.375           = x * (1 - x * chebyshevBroucke (x / 0.375) coeffs)
     | otherwise            = log (1 + x)
   where
     x' = abs x
