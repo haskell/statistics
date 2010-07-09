@@ -16,6 +16,7 @@ module Statistics.Math
     -- * Functions
       choose
     -- ** Chebyshev polynomials
+    -- $chebyshev
     , chebyshev
     , chebyshevBroucke
     -- ** Logarithm
@@ -35,7 +36,6 @@ module Statistics.Math
     ) where
 
 import Data.Int (Int64)
-import Data.Vector.Generic ((!))
 import Data.Word (Word64)
 import Statistics.Constants (m_epsilon, m_sqrt_2_pi, m_ln_sqrt_2_pi)
 import Statistics.Distribution (cumulative)
@@ -43,32 +43,42 @@ import Statistics.Distribution.Normal (standard)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
+-- $chebyshev
+--
+-- A Chebyshev polynomial of the first kind is defined by the
+-- following recurrence:
+--
+-- > t 0 _ = 1
+-- > t 1 x = x
+-- > t n x = 2 * x * t (n-1) x - t (n-2) x
+
 data C = C {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
--- | Evaluate a Chebyshev polynomial. Uses Clenshaw's algorithm.
+-- | Evaluate a Chebyshev polynomial of the first kind. Uses
+-- Clenshaw's algorithm.
 chebyshev :: (G.Vector v Double) =>
              Double      -- ^ Parameter of each function.
           -> v Double    -- ^ Coefficients of each polynomial term, in increasing order.
           -> Double
-chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (len - 1) (-1) (len - 1)
-    where step (C b1 b2) k = C ((a ! k) + x2 * b1 - b2) b1
-          fini (C b1 b2)   = (a ! 0) + x * b1 - b2
+chebyshev x a = fini . G.foldr' step (C 0 0) . G.tail $ a
+    where step k (C b0 b1) = C (k + x2 * b0 - b1) b0
+          fini   (C b0 b1) = G.head a + x * b0 - b1
           x2               = x * 2
-          len              = G.length a
 {-# INLINE chebyshev #-}
 
-data CH = CH {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+data B = B {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
--- Evaluate a Chebyshev polynomial. Uses Broucke's adaptation of
--- Clenshaw's approach.
+-- | Evaluate a Chebyshev polynomial of the first kind. Uses Broucke's
+-- ECHEB algorithm, and his convention for coefficient handling, and so
+-- gives different results than 'chebyshev' for the same inputs.
 chebyshevBroucke :: (G.Vector v Double) =>
              Double      -- ^ Parameter of each function.
           -> v Double    -- ^ Coefficients of each polynomial term, in increasing order.
           -> Double
-chebyshevBroucke x = fini . G.foldr' step (CH 0 0 0)
-    where step a (CH b0 b1 _) = CH (x2 * b0 - b1 + a) b0 b1
-          fini   (CH b0 _ b2) = (b0 - b2) * 0.5
-          x2                  = x * 2
+chebyshevBroucke x = fini . G.foldr' step (B 0 0 0)
+    where step k (B b0 b1 _) = B (k + x2 * b0 - b1) b0 b1
+          fini   (B b0 _ b2) = (b0 - b2) * 0.5
+          x2                 = x * 2
 {-# INLINE chebyshevBroucke #-}
 
 -- | Quickly compute the natural logarithm of /n/ @`choose`@ /k/, with
@@ -118,7 +128,6 @@ factorial n
               where x' = x + 1
           fini (F z _) = fromIntegral z
           ns = U.enumFromTo 2 n
-{-# INLINE factorial #-}
 
 -- | Compute the natural logarithm of the factorial function.  Gives
 -- 16 decimal digits of precision.
@@ -130,7 +139,6 @@ logFactorial n
           y = 1 / (x * x)
           z = ((-(5.95238095238e-4 * y) + 7.936500793651e-4) * y -
                2.7777777777778e-3) * y + 8.3333333333333e-2
-{-# INLINE logFactorial #-}
 
 -- | Compute the normalized lower incomplete gamma function
 -- &#947;(/s/,/x/). Normalization means that
@@ -336,28 +344,7 @@ log1p x
                0.16124614902740551465739833119115e-13,
               -0.29875652015665773006710792416815e-14,
                0.55480701209082887983041321697279e-15,
-              -0.10324619158271569595141333961932e-15,
-               0.19250239203049851177878503244868e-16,
-              -0.35955073465265150011189707844266e-17,
-               0.67264542537876857892194574226773e-18,
-              -0.12602624168735219252082425637546e-18,
-               0.23644884408606210044916158955519e-19,
-              -0.44419377050807936898878389179733e-20,
-               0.83546594464034259016241293994666e-21,
-              -0.15731559416479562574899253521066e-21,
-               0.29653128740247422686154369706666e-22,
-              -0.55949583481815947292156013226666e-23,
-               0.10566354268835681048187284138666e-23,
-              -0.19972483680670204548314999466666e-24,
-               0.37782977818839361421049855999999e-25,
-              -0.71531586889081740345038165333333e-26,
-               0.13552488463674213646502024533333e-26,
-              -0.25694673048487567430079829333333e-27,
-               0.48747756066216949076459519999999e-28,
-              -0.92542112530849715321132373333333e-29,
-               0.17578597841760239233269760000000e-29,
-              -0.33410026677731010351377066666666e-30,
-               0.63533936180236187354180266666666e-31
+              -0.10324619158271569595141333961932e-15
              ]
 
 -- $references
@@ -365,7 +352,7 @@ log1p x
 -- * Broucke, R. (1973) Algorithm 446: Ten subroutines for the
 --   manipulation of Chebyshev series. /Communications of the ACM/
 --   16(4):254&#8211;256.  <http://doi.acm.org/10.1145/362003.362037>
-
+--
 -- * Clenshaw, C.W. (1962) Chebyshev series for mathematical
 --   functions. /National Physical Laboratory Mathematical Tables 5/,
 --   Her Majesty's Stationery Office, London.
