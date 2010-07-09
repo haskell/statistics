@@ -56,25 +56,6 @@ chebyshev x a = fini . U.foldl' step (C 0 0) $ U.enumFromStepN (len - 1) (-1) (l
           len              = G.length a
 {-# INLINE chebyshev #-}
 
-data CB = CB {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
-
--- Evaluate a series of Chebyshev polynomials. Uses Broucke's
--- adaptation of Clenshaw's aapproach.
---
--- This implementation omits the final division by 2 added by Broucke,
--- so that the results may be compared to 'chebyshev' above.
-chebyshevBroucke :: (G.Vector v Double) =>
-        Double -> v Double -> Double
-chebyshevBroucke x a
-  | n < 1 || n > 1000 = 0/0
-  | x < -1.1 || x > 1.1 = 0/0
-  | otherwise = fini . U.foldl' step (CH 0 0 0) $ U.enumFromStepN (n - 1) (-1) n
- where
-  step (CH b0 b1 b2) k = CH (x2 * b1 - b2 + (a ! k)) b0 b1
-  fini (CH b0 _ b2)    = b0 - b2
-  n                    = G.length a
-  x2                   = x * 2
-
 -- | The binomial coefficient. This function could be slow for large
 -- /n/ and /k/. It could be useful to use some kind of approximation.
 --
