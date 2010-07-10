@@ -58,8 +58,8 @@ allTests = TestList [
       all (< 1e-9) $ map logGammaErr [3..100000]
   , TestCase $ assertBool "logGammaL is expected to be precise at 1e-15 level" $
       all (< 1e-15) $ map logGammaErr [3..100000]
-  -- , TestCase $ assertBool "choose is expected to precise at 1e-14 level" $
-      -- all (< 1e-14) [chooseErr n k | n <- [0..1000], k <- [0..n]]
+  , TestCase $ assertBool "choose is expected to precise at 1e-7 level" $
+      all (< 1e-7) [chooseErr n k | n <- [0..1000], k <- [0..n]]
   ]
 
 main :: IO ()
