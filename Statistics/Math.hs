@@ -15,29 +15,29 @@ module Statistics.Math
     (
     -- * Functions
       choose
+    -- ** Beta function
+    , logBeta
     -- ** Chebyshev polynomials
     -- $chebyshev
     , chebyshev
     , chebyshevBroucke
-    -- ** Logarithm
-    , log1p
     -- ** Factorial
     , factorial
     , logFactorial
-    -- ** Gamma
+    -- ** Gamma function
     , incompleteGamma
     , logGamma
     , logGammaL
-    , logGammaCorrection
-    -- ** Beta
-    , logBeta
+    -- ** Logarithm
+    , log1p
     -- * References
     -- $references
     ) where
 
 import Data.Int (Int64)
 import Data.Word (Word64)
-import Statistics.Constants (m_epsilon, m_sqrt_2_pi, m_ln_sqrt_2_pi)
+import Statistics.Constants (m_epsilon, m_sqrt_2_pi, m_ln_sqrt_2_pi, m_NaN,
+                             m_neg_inf, m_pos_inf)
 import Statistics.Distribution (cumulative)
 import Statistics.Distribution.Normal (standard)
 import qualified Data.Vector.Unboxed as U
@@ -147,7 +147,7 @@ incompleteGamma :: Double       -- ^ /s/
                 -> Double       -- ^ /x/
                 -> Double
 incompleteGamma x p
-    | x < 0 || p <= 0 = 1/0
+    | x < 0 || p <= 0 = m_pos_inf
     | x == 0          = 0
     | p >= 1000       = norm (3 * sqrt p * ((x/p) ** (1/3) + 1/(9*p) - 1))
     | x >= 1e8        = 1
@@ -198,7 +198,7 @@ incompleteGamma x p
 -- &#8804; 1e305).
 logGamma :: Double -> Double
 logGamma x
-    | x <= 0    = 1/0
+    | x <= 0    = m_pos_inf
     | x < 1.5   = a + c *
                   ((((r1_4 * b + r1_3) * b + r1_2) * b + r1_1) * b + r1_0) /
                   ((((b + r1_8) * b + r1_7) * b + r1_6) * b + r1_5)
@@ -252,7 +252,7 @@ data L = L {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- &#8804; 1e305).
 logGammaL :: Double -> Double
 logGammaL x
-    | x <= 0    = 1/0
+    | x <= 0    = m_pos_inf
     | otherwise = fini . U.foldl' go (L 0 (x+7)) $ a
     where fini (L l _) = log (l+a0) + log m_sqrt_2_pi - x65 + (x-0.5) * log x65
           go (L l t) k = L (l + k / t) (t-1)
@@ -275,7 +275,7 @@ logGammaL x
 -- >lgg x = 0.5 * log(2*pi) + (x-0.5) * log x - x + logGammaCorrection x
 logGammaCorrection :: Double -> Double
 logGammaCorrection x
-    | x < 10    = 0/0
+    | x < 10    = m_NaN
     | x < big   = chebyshevBroucke (t * t * 2 - 1) coeffs / x
     | otherwise = 1 / (x * 12)
   where
@@ -294,8 +294,8 @@ logGammaCorrection x
 -- | Compute the natural logarithm of the beta function.
 logBeta :: Double -> Double -> Double
 logBeta a b
-    | p < 0     = 0/0
-    | p == 0    = 1/0
+    | p < 0     = m_NaN
+    | p == 0    = m_pos_inf
     | p >= 10   = log q * (-0.5) + m_ln_sqrt_2_pi + logGammaCorrection p + c +
                   (p - 0.5) * log ppq + q * log1p(-ppq)
     | q >= 10   = logGamma p + c + p - p * log pq + (q - 0.5) * log1p(-ppq)
@@ -313,8 +313,8 @@ logBeta a b
 log1p :: Double -> Double
 log1p x
     | x == 0               = 0
-    | x == -1              = -1/0
-    | x < -1               = 0/0
+    | x == -1              = m_neg_inf
+    | x < -1               = m_NaN
     | x' < m_epsilon * 0.5 = x
     | (x >= 0 && x < 1e-8) || (x >= -1e-9 && x < 0)
                            = x * (1 - x * 0.5)
