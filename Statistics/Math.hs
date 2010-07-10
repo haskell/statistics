@@ -86,8 +86,11 @@ chebyshevBroucke x = fini . G.foldr' step (B 0 0 0)
 logChooseFast :: Double -> Double -> Double
 logChooseFast n k = -log (n + 1) - logBeta (n - k + 1) (k + 1)
 
--- | Compute the binomial coefficient /n/ @\``choose`\`@ /k/. For values
--- of /k/ > 30, this uses an approximation for performance reasons.
+-- | Compute the binomial coefficient /n/ @\``choose`\`@ /k/. For
+-- values of /k/ > 30, this uses an approximation for performance
+-- reasons.  The approximation is accurate to 7 decimal places in the
+-- worst case, but is typically accurate to 9 decimal places or
+-- better.
 --
 -- Example:
 --
