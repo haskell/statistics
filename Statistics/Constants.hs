@@ -19,6 +19,9 @@ module Statistics.Constants
     , m_max_exp
     , m_sqrt_2
     , m_sqrt_2_pi
+    , m_pos_inf
+    , m_neg_inf
+    , m_NaN
     ) where
 
 -- | A very large number.
@@ -56,7 +59,22 @@ m_epsilon :: Double
 m_epsilon = encodeFloat (signif+1) expo - 1.0
     where (signif,expo) = decodeFloat (1.0::Double)
 
--- | @log(2*pi) / 2@
+-- | @log(sqrt((2*pi)) / 2@
 m_ln_sqrt_2_pi :: Double
-m_ln_sqrt_2_pi = 0.918938533204672741780329736406
+m_ln_sqrt_2_pi = 0.9189385332046727417803297364056176398613974736377834128171
 {-# INLINE m_ln_sqrt_2_pi #-}
+
+-- | Positive infinity.
+m_pos_inf :: Double
+m_pos_inf = 1/0
+{-# INLINE m_pos_inf #-}
+
+-- | Negative infinity.
+m_neg_inf :: Double
+m_neg_inf = -1/0
+{-# INLINE m_neg_inf #-}
+
+-- | Not a number.
+m_NaN :: Double
+m_NaN = 0/0
+{-# INLINE m_NaN #-}
