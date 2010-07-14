@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.6.0.1
+version:        0.6.0.2
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -54,7 +54,7 @@ library
   build-depends:
     base < 5,
     erf,
-    mwc-random >= 0.5.1.4,
+    mwc-random >= 0.7.0.0,
     primitive >= 0.3,
     time,
     vector >= 0.6.0.2,
