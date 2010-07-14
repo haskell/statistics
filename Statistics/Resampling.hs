@@ -52,6 +52,7 @@ resample gen ests numResamples samples = do
         MU.write arr k . est $ re
     loop (k+1) ers
   n = U.length samples
+{-# INLINE resample #-}
 
 -- | Compute a statistical estimate repeatedly over a sample, each
 -- time omitting a successive element.
