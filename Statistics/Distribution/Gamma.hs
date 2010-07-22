@@ -55,11 +55,15 @@ instance D.Mean GammaDistribution where
     {-# INLINE mean #-}
 
 density :: GammaDistribution -> Double -> Double
-density (GD a l) x = x ** (a-1) * exp (-x/l) / (exp (logGamma a) * l ** a)
+density (GD a l) x
+  | x <= 0    = 0
+  | otherwise = x ** (a-1) * exp (-x/l) / (exp (logGamma a) * l ** a)
 {-# INLINE density #-}
 
 cumulative :: GammaDistribution -> Double -> Double
-cumulative (GD a l) x = incompleteGamma a (x/l) / exp (logGamma a)
+cumulative (GD k l) x
+  | x <= 0    = 0
+  | otherwise = incompleteGamma k (x/l)
 {-# INLINE cumulative #-}
 
 quantile :: GammaDistribution -> Double -> Double
