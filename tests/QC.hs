@@ -134,7 +134,7 @@ instance QC.Arbitrary GeometricDistribution where
   arbitrary = geometric <$> QC.choose (0,1)
 instance QC.Arbitrary HypergeometricDistribution where
   arbitrary = do l <- QC.choose (1,20)
-                 m <- QC.choose (1,l)
+                 m <- QC.choose (0,l)
                  k <- QC.choose (1,l)
                  return $ hypergeometric m l k
 instance QC.Arbitrary NormalDistribution where
