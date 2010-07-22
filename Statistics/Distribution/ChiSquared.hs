@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 -- |
--- Module    : Statistics.Distribution.Normal
--- Copyright : (c) 2009 Bryan O'Sullivan
+-- Module    : Statistics.Distribution.ChiSquared
+-- Copyright : (c) 2010 Alexey Khudyakov
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
