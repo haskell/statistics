@@ -14,11 +14,6 @@ import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Normal
 import Statistics.Distribution.Poisson
 
-import qualified Statistics.Distribution.Exponential    as Exp
-import qualified Statistics.Distribution.Hypergeometric as Hyper
-import qualified Statistics.Distribution.Normal         as Normal
-import qualified Statistics.Distribution.Poisson        as Poisson
-
 ----------------------------------------------------------------
 -- Helpers
 ----------------------------------------------------------------
@@ -108,24 +103,25 @@ testSpecFun =
 instance QC.Arbitrary BinomialDistribution where
   arbitrary = binomial <$> QC.choose (1,100) <*> QC.choose (0,1)
 instance QC.Arbitrary ExponentialDistribution where
-  arbitrary = Exp.fromLambda <$> QC.choose (0,100)
+  arbitrary = exponential <$> QC.choose (0,100)
+instance QC.Arbitrary GammaDistribution where
+  arbitrary = gammaDistr <$> QC.choose (0.1,10) <*> QC.choose (0.1,10)
 instance QC.Arbitrary GeometricDistribution where
-  arbitrary = fromSuccess <$> QC.choose (0,1)
+  arbitrary = geometric <$> QC.choose (0,1)
 instance QC.Arbitrary HypergeometricDistribution where
   arbitrary = do l <- QC.choose (1,20)
                  m <- QC.choose (1,l)
                  k <- QC.choose (1,l)
-                 return $ Hyper.fromParams m l k
+                 return $ hypergeometric m l k
 instance QC.Arbitrary NormalDistribution where
-  arbitrary = Normal.fromParams <$> QC.choose (-100,100) <*> QC.choose (1e-3, 1e3)
+  arbitrary = normalDistr <$> QC.choose (-100,100) <*> QC.choose (1e-3, 1e3)
 instance QC.Arbitrary PoissonDistribution where
-  arbitrary = Poisson.fromLambda <$> QC.choose (0,1)
+  arbitrary = poisson <$> QC.choose (0,1)
 
 -- CDF must be non-decreasing
-type CDFMonotonityCheck d = (d,Double,Double) -> Bool
+type CDFMonotonityCheck d = d -> Double -> Double -> Bool
 cdfMonotonityCheck :: (Distribution d, QC.Arbitrary d) => CDFMonotonityCheck d
-cdfMonotonityCheck (d,x1,x2) =
-  cumulative d (min x1 x2) <= cumulative d (max x1 x2)
+cdfMonotonityCheck d = monotonityCheck (cumulative d)
 
 -- Check tht CDF is in [0,1+16ε] range. 16ε is to accept roundoff
 -- errors. 16 is arbitrary value.
@@ -150,7 +146,7 @@ testDistr =
   [ ("==== CDF sanity checks ====", return ())
   , ("Binomial",       p (cdfSanityCheck :: CDFSanityCheck BinomialDistribution))
   , ("Exponential",    p (cdfSanityCheck :: CDFSanityCheck ExponentialDistribution))
-  -- , ("Gamma",          cdfSanityCheck :: CDFSanityCheck Gamma)
+  , ("Gamma",          p (cdfSanityCheck :: CDFSanityCheck GammaDistribution))
   , ("Geometric",      p (cdfSanityCheck :: CDFSanityCheck GeometricDistribution))
   , ("Hypergeometric", p (cdfSanityCheck :: CDFSanityCheck HypergeometricDistribution))
   , ("Normal",         p (cdfSanityCheck :: CDFSanityCheck NormalDistribution))
@@ -159,7 +155,7 @@ testDistr =
   , ("==== CDF monotonity checks ====", return ())
   , ("Binomial",       p (cdfMonotonityCheck :: CDFMonotonityCheck BinomialDistribution))
   , ("Exponential",    p (cdfMonotonityCheck :: CDFMonotonityCheck ExponentialDistribution))
-  -- , ("Gamma",          cdfMonotonityCheck :: CDFMonotonityCheck Gamma)
+  , ("Gamma",          p (cdfMonotonityCheck :: CDFMonotonityCheck GammaDistribution))
   , ("Geometric",      p (cdfMonotonityCheck :: CDFMonotonityCheck GeometricDistribution))
   , ("Hypergeometric", p (cdfMonotonityCheck :: CDFMonotonityCheck HypergeometricDistribution))
   , ("Normal",         p (cdfMonotonityCheck :: CDFMonotonityCheck NormalDistribution))
@@ -167,12 +163,11 @@ testDistr =
 
   , ("==== PDF sanity checks ====", return ())
   , ("Exponential",    p (pdfSanityCheck :: PDFSanityCheck ExponentialDistribution))
-  -- , ("Gamma",          pdfSanityCheck :: PDFSanityCheck Gamma)
+  , ("Gamma",          p (pdfSanityCheck :: PDFSanityCheck GammaDistribution))
   , ("Normal",         p (pdfSanityCheck :: PDFSanityCheck NormalDistribution))
 
   , ("==== Probability sanity check ====", return ())
   , ("Binomial",       p (probSanityCheck :: ProbSanityCheck BinomialDistribution))
-  -- , ("Gamma",          probSanityCheck :: ProbSanityCheck Gamma)
   , ("Geometric",      p (probSanityCheck :: ProbSanityCheck GeometricDistribution))
   , ("Hypergeometric", p (probSanityCheck :: ProbSanityCheck HypergeometricDistribution))
   , ("Poisson",        p (probSanityCheck :: ProbSanityCheck PoissonDistribution))
