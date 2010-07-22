@@ -59,20 +59,20 @@ ch4 x = 8*x^4 - 8*x^2 + 1
 testChebyshev :: [(String,IO ())]
 testChebyshev =
     [ ("==== Checbyshev polynomials ====", return ())
-    , ("Deg. 0", p (\(a0,y) ->
+    , ("Deg. 0", p (\a0 y ->
                      let x = frac y
                      in eq (ch0 x * a0) (chebyshev x $ U.fromList [a0])))
-    , ("Deg. 1", p (\(a0,a1,y) ->
+    , ("Deg. 1", p (\a0 a1 y ->
                      let x = frac y
                      in eq (a0*ch0 x + a1*ch1 x) (chebyshev x $ U.fromList [a0,a1])))
-    , ("Deg. 2", p (\(a0,a1,a2,y) ->
+    , ("Deg. 2", p (\a0 a1 a2 y ->
                      let x = frac y
                      in eq (a0*ch0 x + a1*ch1 x + a2*ch2 x) (chebyshev x $ U.fromList [a0,a1,a2])))
-    , ("Deg. 3", p (\((a0,a1,a2),a3,y) ->
+    , ("Deg. 3", p (\a0 a1 a2 a3 y ->
                      let x = frac y
                      in eq (a0*ch0 x + a1*ch1 x + a2*ch2 x + a3*ch3 x)
                            (chebyshev x $ U.fromList [a0,a1,a2,a3])))
-    , ("Deg. 4", p (\((a0,a1,a2),a3,a4,y) ->
+    , ("Deg. 4", p (\a0 a1 a2 a3 a4 y ->
                      let x = frac y
                      in eq (a0*ch0 x + a1*ch1 x + a2*ch2 x + a3*ch3 x + a4*ch4 x)
                            (chebyshev x $ U.fromList [a0,a1,a2,a3,a4])))
