@@ -78,6 +78,25 @@ testChebyshev =
 -- Special functions
 ----------------------------------------------------------------
 
+-- Check that function is monotonically increasing
+monotonityCheck :: (Double -> Double) -> Double -> Double -> Bool
+monotonityCheck f x1 x2 = f (min x1 x2) <= f (max x1 x2)
+
+-- Check that function reach limit at positive infinity
+limitAtInfinityCheck :: (Double -> Double) -- Function
+                     -> (Double,Double)    -- Limit value and precision
+                     -> (Double,Int)       -- Starting point and maximum number of iterations
+                     -> Bool
+limitAtInfinityCheck f (lim,ε) (x0,n) = length (dropWhile (not . atLimit) values) > 1
+  where
+    values    = take n . map f $ iterate (*2) x0
+    atLimit x = abs(lim - x) <= ε
+
+-- γ(1,x) = 1 - exp(-x)
+-- Since Γ(1) = 1 normalization doesn't make any difference
+incompleteGammaAt1Check :: Double -> Bool
+incompleteGammaAt1Check x = (abs $ (incompleteGamma 1 x) - (1 - exp(-x))) < 1e-12
+
 -- Γ(x+1) = x·Γ(x)
 gammaErr :: (Double -> Double) -> Double -> Double
 gammaErr logG x = let g1 = logG x
@@ -91,8 +110,13 @@ gammaTest logG ε (ReasonablyPositive x) = abs (gammaErr logG x) < ε
 testSpecFun :: [(String,IO ())]
 testSpecFun =
   [ ("==== Special function ====", return ())
-  , ( "gamma",  p $ gammaTest logGamma  3e-8)
+  , ( "gamma",  p $ gammaTest logGamma  3e-8 )
   , ( "gammaL", p $ gammaTest logGammaL 2e-13)
+  , ( "incompleteGamma increasing"
+    , p (\(Positive s) (Positive x1) (Positive x2) -> monotonityCheck (incompleteGamma s) x1 x2))
+  , ( "incompleteGamma limit at +∞"
+    , p (\(Positive s) -> limitAtInfinityCheck (incompleteGamma s) (1.0,0.0) (s,100)))
+  , ( "γ(1,x) = 1 - exp(-x)", p (\(Positive x) -> incompleteGammaAt1Check x))
   ]
 
 ----------------------------------------------------------------
