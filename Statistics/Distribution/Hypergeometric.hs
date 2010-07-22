@@ -20,7 +20,7 @@ module Statistics.Distribution.Hypergeometric
     (
       HypergeometricDistribution
     -- * Constructors
-    , fromParams
+    , hypergeometric
     -- ** Accessors
     , hdM
     , hdL
@@ -63,16 +63,16 @@ mean :: HypergeometricDistribution -> Double
 mean (HD m l k) = fromIntegral k * fromIntegral m / fromIntegral l
 {-# INLINE mean #-}
 
-fromParams :: Int               -- ^ /m/
-           -> Int               -- ^ /l/
-           -> Int               -- ^ /k/
-           -> HypergeometricDistribution
-fromParams m l k =
+hypergeometric :: Int               -- ^ /m/
+               -> Int               -- ^ /l/
+               -> Int               -- ^ /k/
+               -> HypergeometricDistribution
+hypergeometric m l k =
     assert (m > 0 && m <= l) .
     assert (l > 0) .
     assert (k > 0 && k <= l) $
     HD m l k
-{-# INLINE fromParams #-}
+{-# INLINE hypergeometric #-}
 
 -- Naive implementation
 probability :: HypergeometricDistribution -> Int -> Double
