@@ -7,6 +7,7 @@ import Statistics.Constants (m_epsilon,m_pos_inf)
 import Statistics.Math
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
+import Statistics.Distribution.ChiSquared
 import Statistics.Distribution.Exponential
 import Statistics.Distribution.Gamma
 import Statistics.Distribution.Geometric
@@ -141,6 +142,8 @@ instance QC.Arbitrary NormalDistribution where
   arbitrary = normalDistr <$> QC.choose (-100,100) <*> QC.choose (1e-3, 1e3)
 instance QC.Arbitrary PoissonDistribution where
   arbitrary = poisson <$> QC.choose (0,1)
+instance QC.Arbitrary ChiSquared where
+  arbitrary = chiSquared <$> QC.choose (1,100)
 
 -- CDF must be non-decreasing
 type CDFMonotonityCheck d = d -> Double -> Double -> Bool
@@ -169,6 +172,7 @@ testDistr :: [(String, IO ())]
 testDistr =
   [ ("==== CDF sanity checks ====", return ())
   , ("Binomial",       p (cdfSanityCheck :: CDFSanityCheck BinomialDistribution))
+  , ("ChiSquared",     p (cdfSanityCheck :: CDFSanityCheck ChiSquared))
   , ("Exponential",    p (cdfSanityCheck :: CDFSanityCheck ExponentialDistribution))
   , ("Gamma",          p (cdfSanityCheck :: CDFSanityCheck GammaDistribution))
   , ("Geometric",      p (cdfSanityCheck :: CDFSanityCheck GeometricDistribution))
@@ -178,6 +182,7 @@ testDistr =
 
   , ("==== CDF monotonity checks ====", return ())
   , ("Binomial",       p (cdfMonotonityCheck :: CDFMonotonityCheck BinomialDistribution))
+  , ("ChiSquared",     p (cdfMonotonityCheck :: CDFMonotonityCheck ChiSquared))
   , ("Exponential",    p (cdfMonotonityCheck :: CDFMonotonityCheck ExponentialDistribution))
   , ("Gamma",          p (cdfMonotonityCheck :: CDFMonotonityCheck GammaDistribution))
   , ("Geometric",      p (cdfMonotonityCheck :: CDFMonotonityCheck GeometricDistribution))
@@ -189,6 +194,7 @@ testDistr =
   , ("Exponential",    p (pdfSanityCheck :: PDFSanityCheck ExponentialDistribution))
   , ("Gamma",          p (pdfSanityCheck :: PDFSanityCheck GammaDistribution))
   , ("Normal",         p (pdfSanityCheck :: PDFSanityCheck NormalDistribution))
+  , ("ChiSquared",     p (pdfSanityCheck :: PDFSanityCheck ChiSquared))
 
   , ("==== Probability sanity check ====", return ())
   , ("Binomial",       p (probSanityCheck :: ProbSanityCheck BinomialDistribution))

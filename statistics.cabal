@@ -34,6 +34,7 @@ library
     Statistics.Constants
     Statistics.Distribution
     Statistics.Distribution.Binomial
+    Statistics.Distribution.ChiSquared
     Statistics.Distribution.Gamma
     Statistics.Distribution.Geometric
     Statistics.Distribution.Exponential
