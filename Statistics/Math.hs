@@ -97,20 +97,18 @@ logChooseFast n k = -log (n + 1) - logBeta (n - k + 1) (k + 1)
 -- > 7 `choose` 3 == 35
 choose :: Int -> Int -> Double
 n `choose` k
-    | k > n          = 0
-    | k < 30         = U.foldl' go 1 . U.enumFromTo 1 $ k'
+    | k  > n         = 0
+    | k' < 50        = U.foldl' go 1 . U.enumFromTo 1 $ k'
     | approx < max64 = fromIntegral . round64 $ approx
     | otherwise      = approx
   where
-    approx         = exp $ logChooseFast (fromIntegral n) (fromIntegral k)
+    k'             = min k (n-k)
+    approx         = exp $ logChooseFast (fromIntegral n) (fromIntegral k')
                   -- Less numerically stable:
                   -- exp $ lg (n+1) - lg (k+1) - lg (n-k+1)
                   --   where lg = logGamma . fromIntegral
     go a i         = a * (nk + j) / j
         where j    = fromIntegral i :: Double
-    k' | n_k < k   = n_k
-       | otherwise = k
-       where n_k   = n - k
     nk             = fromIntegral (n - k')
     max64          = fromIntegral (maxBound :: Int64)
     round64 x      = round x :: Int64
