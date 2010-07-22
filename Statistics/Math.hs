@@ -143,11 +143,11 @@ logFactorial n
 
 -- | Compute the normalized lower incomplete gamma function
 -- &#947;(/s/,/x/). Normalization means that
--- &#947;(&#8734;,/x/)=1. Uses Algorithm AS 239 by Shea.
+-- &#947;(/s/,&#8734;)=1. Uses Algorithm AS 239 by Shea.
 incompleteGamma :: Double       -- ^ /s/
                 -> Double       -- ^ /x/
                 -> Double
-incompleteGamma x p
+incompleteGamma p x
     | x < 0 || p <= 0 = m_pos_inf
     | x == 0          = 0
     | p >= 1000       = norm (3 * sqrt p * ((x/p) ** (1/3) + 1/(9*p) - 1))
