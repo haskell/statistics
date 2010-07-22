@@ -3,7 +3,7 @@ import qualified Data.Vector.Unboxed as U
 import qualified Test.QuickCheck as QC
 import Test.QuickCheck.Modifiers (Positive(..))
 
-import Statistics.Constants (m_epsilon)
+import Statistics.Constants (m_epsilon,m_pos_inf)
 import Statistics.Math
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
@@ -158,7 +158,7 @@ cdfSanityCheck (d,x) = c >= 0 && c <= (1 + 16*m_epsilon) where c = cumulative d 
 
 type PDFSanityCheck d = (d,Double) -> Bool
 pdfSanityCheck :: (ContDistr d, QC.Arbitrary d) => PDFSanityCheck d
-pdfSanityCheck (d,x) = density d x >= 0
+pdfSanityCheck (d,x) = p >= 0 && p < m_pos_inf where p = density d x
 
 type ProbSanityCheck d = (d,Int) -> Bool
 probSanityCheck :: (DiscreteDistr d, QC.Arbitrary d) => ProbSanityCheck d
