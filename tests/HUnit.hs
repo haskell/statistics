@@ -2,18 +2,23 @@ import Control.Applicative
 import Data.List
 import Test.HUnit
 
+import qualified Data.Vector as V
 import Statistics.Math
 import Debug.Trace
 
 
--- Exact albeit slow implementation of choose
-choose' :: Integer -> Integer -> Integer
-choose' n k = factorial' n `div` (factorial' k * factorial' (n-k))
+-- Lookup table for fact factorial calculation. It has fixed size
+-- which is bad but it's OK for this particular case
+factorial_table :: V.Vector Integer
+factorial_table = V.generate 2000 (\n -> product [1..fromIntegral n])
 
 -- Exact implementation of factorial
 factorial' :: Integer -> Integer
-factorial' n = product [1..n]
+factorial' n = factorial_table V.! fromIntegral n
 
+-- Exact albeit slow implementation of choose
+choose' :: Integer -> Integer -> Integer
+choose' n k = factorial' n `div` (factorial' k * factorial' (n-k))
 
 -- Error in determination of factorial
 factorialErr :: Integer -> Double
