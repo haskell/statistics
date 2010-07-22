@@ -18,9 +18,7 @@ module Statistics.Distribution.Gamma
     (
       GammaDistribution
     -- * Constructors
-    --, fromParams
-    --, fromSample
-    --, standard
+    , gammaDistr
     -- * Accessors
     , gdShape
     , gdScale
@@ -36,6 +34,10 @@ data GammaDistribution = GD {
       gdShape :: {-# UNPACK #-} !Double -- ^ Shape parameter, /k/.
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
     } deriving (Eq, Read, Show, Typeable)
+
+gammaDistr :: Double -> Double -> GammaDistribution
+gammaDistr = GD
+{-# INLINE gammaDistr #-}
 
 instance D.Distribution GammaDistribution where
     cumulative = cumulative
