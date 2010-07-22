@@ -75,7 +75,7 @@ allTests = TestList [
   , TestCase $ assertBool "logBeta is expected to be precise at 1e-10 level" $
       all (< 3e-8) $ logBetaErr <$> [0.1,0.2 .. 100] <*> [0.1,0.2 .. 100]
   , TestCase $ assertBool "choose is expected to precise at 1e-7 level" $
-      all (< 1e-7) [chooseErr n k | n <- [0..1000], k <- [0..n]]
+      all (< 1e-12) [chooseErr n k | n <- [0..1000], k <- [0..n]]
   ]
 
 main :: IO ()
