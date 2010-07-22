@@ -1,0 +1,80 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+-- |
+-- Module    : Statistics.Distribution.Normal
+-- Copyright : (c) 2009 Bryan O'Sullivan
+-- License   : BSD3
+--
+-- Maintainer  : bos@serpentine.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- The chi-squared distribution. This is a continuous probability
+-- distribution of sum of squares of k independent standard normal
+-- distributions. It's commonly used in statistical tests
+module Statistics.Distribution.ChiSquared (
+          ChiSquared
+        -- Constructors
+        , chiSquared
+        , chiSquaredNDF
+        ) where
+
+import Data.Typeable (Typeable)
+import Statistics.Constants (m_huge)
+import Statistics.Math (incompleteGamma,logGamma)
+
+import qualified Statistics.Distribution as D
+
+
+-- | Chi-squared distribution
+newtype ChiSquared = ChiSquared Int
+                     deriving (Show,Typeable)
+
+-- | Get number of degrees of freedom
+chiSquaredNDF :: ChiSquared -> Int
+chiSquaredNDF (ChiSquared ndf) = ndf
+{-# INLINE chiSquaredNDF #-}
+
+-- | Construct chi-squared distribution. Number of degrees of free
+chiSquared :: Int -> ChiSquared
+chiSquared x = ChiSquared x
+{-# INLINE chiSquared #-}
+
+instance D.Distribution ChiSquared where
+  cumulative = cumulative
+
+instance D.ContDistr ChiSquared where
+  density  = density
+  quantile = quantile
+
+instance D.Mean ChiSquared where
+    mean (ChiSquared ndf) = fromIntegral ndf
+    {-# INLINE mean #-}
+
+instance D.Variance ChiSquared where
+    variance (ChiSquared ndf) = fromIntegral (2*ndf)
+    {-# INLINE variance #-}
+
+cumulative :: ChiSquared -> Double -> Double
+cumulative chi x
+  | x <= 0    = 0
+  | otherwise = incompleteGamma (ndf/2) (x/2)
+  where
+    ndf = fromIntegral $ chiSquaredNDF chi
+{-# INLINE cumulative #-}
+
+density :: ChiSquared -> Double -> Double
+density chi x
+  | x <= 0    = 0
+  | otherwise = exp $ log x * (ndf2 - 1) - x2 - logGamma ndf2 - log 2 * ndf2
+  where
+    ndf  = fromIntegral $ chiSquaredNDF chi
+    ndf2 = ndf/2
+    x2   = x/2
+{-# INLINE density #-}
+
+quantile :: ChiSquared -> Double -> Double
+quantile d@(ChiSquared ndf) p
+  | p == 0    = -1/0
+  | p == 1    = 1/0
+  | otherwise = D.findRoot d p (fromIntegral ndf) 0 m_huge
+{-# INLINE quantile #-}
