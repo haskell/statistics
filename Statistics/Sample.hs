@@ -38,6 +38,8 @@ module Statistics.Sample
     -- $robust
     , variance
     , varianceUnbiased
+    , meanVariance
+    , meanVarianceUnb
     , stdDev
     , varianceWeighted
 
@@ -204,17 +206,15 @@ data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 sqr :: Double -> Double
 sqr x = x * x
 
-robustSumVar :: (G.Vector v Double) => v Double -> Double
-robustSumVar samp = G.sum . G.map (sqr . subtract m) $ samp
-    where
-      m = mean samp
+robustSumVar :: (G.Vector v Double) => Double -> v Double -> Double
+robustSumVar m samp = G.sum . G.map (sqr . subtract m) $ samp
 {-# INLINE robustSumVar #-}
 
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.
 variance :: (G.Vector v Double) => v Double -> Double
 variance samp
-    | n > 1     = robustSumVar samp / fromIntegral n
+    | n > 1     = robustSumVar (mean samp) samp / fromIntegral n
     | otherwise = 0
     where
       n = G.length samp
@@ -224,11 +224,35 @@ variance samp
 -- sample variance, where the denominator is /n/-1.
 varianceUnbiased :: (G.Vector v Double) => v Double -> Double
 varianceUnbiased samp
-    | n > 1     = robustSumVar samp / fromIntegral (n-1)
+    | n > 1     = robustSumVar (mean samp) samp / fromIntegral (n-1)
     | otherwise = 0
     where
       n = G.length samp
 {-# INLINE varianceUnbiased #-}
+
+-- | Calculate mean and maximum likelihood estimate of variance. This
+-- function should be used if both mean and variance are required
+-- since it will calculate mean only once.
+meanVariance ::  (G.Vector v Double) => v Double -> (Double,Double)
+meanVariance samp
+  | n > 1     = (m, robustSumVar m samp / fromIntegral n)
+  | otherwise = (m, 0)
+    where
+      n = G.length samp
+      m = mean samp
+{-# INLINE meanVariance #-}
+
+-- | Calculate mean and unbiased estimate of variance. This
+-- function should be used if both mean and variance are required
+-- since it will calculate mean only once.
+meanVarianceUnb ::  (G.Vector v Double) => v Double -> (Double,Double)
+meanVarianceUnb samp
+  | n > 1     = (m, robustSumVar m samp / fromIntegral (n-1))
+  | otherwise = (m, 0)
+    where
+      n = G.length samp
+      m = mean samp
+{-# INLINE meanVarianceUnb #-}
 
 -- | Standard deviation.  This is simply the square root of the
 -- unbiased estimate of the variance.
