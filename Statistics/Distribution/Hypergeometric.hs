@@ -68,7 +68,7 @@ hypergeometric :: Int               -- ^ /m/
                -> Int               -- ^ /k/
                -> HypergeometricDistribution
 hypergeometric m l k =
-    assert (m > 0 && m <= l) .
+    assert (m >= 0 && m <= l) .
     assert (l > 0) .
     assert (k > 0 && k <= l) $
     HD m l k
@@ -76,6 +76,8 @@ hypergeometric m l k =
 
 -- Naive implementation
 probability :: HypergeometricDistribution -> Int -> Double
-probability (HD mi li ki) n =
-   choose mi n * choose (li - mi) (ki - n) / choose li ki
+probability (HD mi li ki) n
+  | n < max 0 (mi+ki-li) || n > min mi ki = 0
+  | otherwise =
+      choose mi n * choose (li - mi) (ki - n) / choose li ki
 {-# INLINE probability #-}
