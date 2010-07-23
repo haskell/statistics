@@ -30,7 +30,6 @@ module Statistics.Distribution.Hypergeometric
 import Control.Exception (assert)
 import Data.Typeable (Typeable)
 import Statistics.Math (choose)
-import Statistics.Constants (m_max_exp)
 import qualified Statistics.Distribution as D
 
 data HypergeometricDistribution = HD {
