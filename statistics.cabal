@@ -49,6 +49,7 @@ library
     Statistics.Resampling.Bootstrap
     Statistics.Sample
     Statistics.Sample.Powers
+    Statistics.Test.NonParametric
     Statistics.Types
   other-modules:
     Statistics.Internal
