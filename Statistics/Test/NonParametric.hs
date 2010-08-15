@@ -107,21 +107,24 @@ wilcoxonSignificant :: Bool -- ^ Perform one-tailed test (see description above)
                     -> Int  -- ^ The sample size from which the (T+,T-) values were derived.
                     -> Double -- ^ The p-value at which to test (e.g. 0.05)
                     -> (Double, Double) -- ^ The (T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
-                    -> Bool -- ^ True if the test is significant.
+                    -> Maybe Bool -- ^ Just True if the test is significant, Just
+                                  -- False if it is not, and Nothing if the sample
+                                  -- was too small to make a decision.
 wilcoxonSignificant oneTail sampleSize p (tPlus, tMinus)
   -- According to my nearest book (Understanding Research Methods and Statistics
   -- by Gary W. Heiman, p590), to check that the first sample is bigger you must
   -- use the absolute value of T- for a one-tailed check:
-  | oneTail = abs tMinus <= fromIntegral (wilcoxonCriticalValue sampleSize p)
+  | oneTail = ((abs tMinus <=) . fromIntegral) `fmap` wilcoxonCriticalValue sampleSize p
   -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
-  | otherwise = t <= fromIntegral (wilcoxonCriticalValue sampleSize (p/2))
+  | otherwise = ((t <=) . fromIntegral) `fmap` wilcoxonCriticalValue sampleSize (p/2)
   where
     t = min (abs tPlus) (abs tMinus)
 
 -- | Obtains the critical value of T to compare against, given a sample size
 -- and a p-value (significance level).  Your T value must be less than or
 -- equal to the return of this function in order for the test to work out
--- significant.
+-- significant.  If there is a Nothing return, the sample size is too small to
+-- make a decision.
 --
 -- 'wilcoxonSignificant' tests the return value of 'wilcoxonMatchedPairSignedRank'
 -- for you, so you should use 'wilcoxonSignificant' for determining test results.
@@ -136,9 +139,13 @@ wilcoxonSignificant oneTail sampleSize p (tPlus, tMinus)
 -- (Mitic claims) the values obtained by this function will be the correct ones.
 wilcoxonCriticalValue :: Int -- ^ The sample size
                       -> Double -- ^ The p-value (e.g. 0.05) for which you want the critical value.
-                      -> Int -- ^ The critical value (of T).
+                      -> Maybe Int -- ^ The critical value (of T), or Nothing if
+                                   -- the sample is too small to make a decision.
 wilcoxonCriticalValue sampleSize p
-  = fromMaybe maxBound critical
+  = case critical of
+      Just n | n < 0 -> Nothing
+             | otherwise -> Just n
+      Nothing -> Just maxBound -- shouldn't happen: beyond end of list
   where
     m = (2 ** fromIntegral sampleSize) * p
     critical = subtract 1 `fmap` findIndex (> m) (summedCoefficients sampleSize)
