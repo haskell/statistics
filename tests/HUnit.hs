@@ -66,17 +66,17 @@ wilcoxonTests = zipWith test [0..] testData ++
   [TestCase $ assertBool "Sig 16, 35" (to4dp 0.0467 $ wilcoxonSignificance 16 35)
   ,TestCase $ assertBool "Sig 16, 36" (to4dp 0.0523 $ wilcoxonSignificance 16 36)
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.05"
-    [2,3,5,8,10,13,17,21,25,30,35]
-    [wilcoxonCriticalValue x 0.05 | x <- [6..16]]
+    [2,3,5,8,10,13,17,21,25,30,35,41,47,53,60,67,75,83,91,100,110,119]
+    [wilcoxonCriticalValue x 0.05 | x <- [6..27]]
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.025"
-    [0,2,3,5,8,10,13,17,21,25,29]
-    [wilcoxonCriticalValue x 0.025 | x <- [6..16]]
+    [0,2,3,5,8,10,13,17,21,25,29,34,40,46,52,58,65,73,81,89,98,107]
+    [wilcoxonCriticalValue x 0.025 | x <- [6..27]]
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.01"
-    [0,1,3,5,7,9,12,15,19,23]
-    [wilcoxonCriticalValue x 0.01 | x <- [7..16]]
+    [0,1,3,5,7,9,12,15,19,23,27,32,37,43,49,55,62,69,76,84,92]
+    [wilcoxonCriticalValue x 0.01 | x <- [7..27]]
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.005"
-    [0,1,3,5,7,9,12,15,19]
-    [wilcoxonCriticalValue x 0.005 | x <- [8..16]]
+    [0,1,3,5,7,9,12,15,19,23,27,32,37,42,48,54,61,68,75,83]
+    [wilcoxonCriticalValue x 0.005 | x <- [8..27]]
   ]
   where
     test n (a, b, c) = TestCase $ assertEqual ("Wilcoxon " ++ show n) c (wilcoxonMatchedPairSignedRank (U.fromList a) (U.fromList b))
