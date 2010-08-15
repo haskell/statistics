@@ -114,7 +114,7 @@ wilcoxonSignificant oneTail sampleSize p (tPlus, tMinus)
   -- use the absolute value of T- for a one-tailed check:
   | oneTail = abs tMinus <= fromIntegral (wilcoxonCriticalValue sampleSize p)
   -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
-  | otherwise = t <= fromIntegral (wilcoxonCriticalValue sampleSize p)
+  | otherwise = t <= fromIntegral (wilcoxonCriticalValue sampleSize (p/2))
   where
     t = min (abs tPlus) (abs tMinus)
 
