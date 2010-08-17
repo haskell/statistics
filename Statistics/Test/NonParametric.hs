@@ -12,6 +12,8 @@
 module Statistics.Test.NonParametric
   (-- Wilcoxon rank sum test
   wilcoxonRankSums,
+  -- * Mann-Whitney U test
+  mannWhitneyU,
    -- * Wilcoxon signed-rank matched-pair test
    -- This test is the non-parametric equivalent to the paired t-test
   wilcoxonMatchedPairSignedRank, wilcoxonSignificant, wilcoxonSignificance, wilcoxonCriticalValue) where
@@ -21,7 +23,7 @@ import Data.Function (on)
 import Data.List (findIndex, groupBy, partition, sortBy)
 import Data.Maybe (fromMaybe)
 import Data.Ord (comparing)
-import Data.Vector.Unboxed as U (toList, zipWith)
+import qualified Data.Vector.Unboxed as U (length, toList, zipWith)
 
 import Statistics.Types (Sample)
 
@@ -43,6 +45,17 @@ wilcoxonRankSums xs1 xs2
         -- Ranks are merged by assigning them all the average of their ranks:
         rank = sum (map fst xs) / fromIntegral (length xs)
 
+
+-- Returns (U_1, U_2)
+mannWhitneyU :: Sample -> Sample -> (Double, Double)
+mannWhitneyU xs1 xs2
+  = (fst summedRanks - (n1*(n1 + 1))/2
+    ,snd summedRanks - (n2*(n2 + 1))/2)
+  where
+    n1 = fromIntegral $ U.length xs1
+    n2 = fromIntegral $ U.length xs2
+    
+    summedRanks = wilcoxonRankSums xs1 xs2
 -- | The Wilcoxon matched-pairs signed-rank test.
 --
 -- The value returned is the pair (T+, T-).  T+ is the sum of positive ranks (the
