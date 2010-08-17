@@ -59,6 +59,26 @@ logBetaErr p q = (lb' - lb) / max 1 (abs lb')
     lb  = logBeta p q
     lb' = logGammaL p + logGammaL q - logGammaL (p+q)
 
+mannWhitneyTests :: [Test]
+mannWhitneyTests = zipWith test [0..] testData
+  where
+    test n (a, b, c) = TestCase $ assertEqual ("Mann-Whitney U " ++ show n) c (mannWhitneyU (U.fromList a) (U.fromList b))
+    
+    -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
+    testData :: [([Double], [Double], (Double, Double))]
+    testData = [([3,4,2,6,2,5]
+                ,[9,7,5,10,6,8]
+                ,(2, 34))
+               ,([19,22,16,29,24]
+                ,[20,11,17,12]
+                ,(17, 3))
+               ,([126,148,85,61,179,93,45,189,85,93]
+                ,[194,128,69,135,171,149,89,248,79,137]
+                ,(35,65))
+               ,([1,7,8,9,10,11]
+                ,[2,3,4,5,6,12]
+                ,(25,11))
+               ]
 
 wilcoxonSumTests :: [Test]
 wilcoxonSumTests = zipWith test [0..] testData
@@ -123,7 +143,7 @@ wilcoxonPairTests = zipWith test [0..] testData ++
 
 -- These tests may take a while to run
 allTests :: Test
-allTests = TestList $ wilcoxonPairTests ++ wilcoxonSumTests ++ [
+allTests = TestList $ mannWhitneyTests ++ wilcoxonPairTests ++ wilcoxonSumTests ++ [
     TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
       all (< 1e-15) $ map factorialErr [0..170]
   , TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
