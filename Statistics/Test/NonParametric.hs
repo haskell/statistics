@@ -13,18 +13,21 @@ module Statistics.Test.NonParametric
   (-- Wilcoxon rank sum test
   wilcoxonRankSums,
   -- * Mann-Whitney U test
-  mannWhitneyU,
+  mannWhitneyU, mannWhitneyUCriticalValue, mannWhitneyUSignificant,
    -- * Wilcoxon signed-rank matched-pair test
    -- This test is the non-parametric equivalent to the paired t-test
   wilcoxonMatchedPairSignedRank, wilcoxonSignificant, wilcoxonSignificance, wilcoxonCriticalValue) where
 
+import Control.Applicative ((<$>))
 import Control.Arrow ((***))
 import Data.Function (on)
 import Data.List (findIndex, groupBy, partition, sortBy)
-import Data.Maybe (fromMaybe)
 import Data.Ord (comparing)
 import qualified Data.Vector.Unboxed as U (length, toList, zipWith)
 
+import Statistics.Distribution (quantile)
+import Statistics.Distribution.Normal (standard)
+import Statistics.Math (choose)
 import Statistics.Types (Sample)
 
 -- | The Wilcoxon Rank Sums Test.
@@ -81,6 +84,109 @@ mannWhitneyU xs1 xs2
     n2 = fromIntegral $ U.length xs2
     
     summedRanks = wilcoxonRankSums xs1 xs2
+
+-- | Calculates the critical value of Mann-Whitney U for the given sample
+-- sizes and significance level.
+--
+-- This function returns the exact calculated value of U for all sample sizes;
+-- it does not use the normal approximation at all.  Above sample size 20 it is
+-- generally recommended to use the normal approximation instead, but this function
+-- will calculate the higher critical values if you need them.
+--
+-- The algorithm to generate these values is a faster, memoised version of the
+-- simple unoptimised generating function given in section 2 of \"The Mann Whitney
+-- Wilcoxon Distribution Using Linked Lists\", Cheung and Klotz, Statistica Sinica
+-- 7 (1997), <http://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n316.pdf>.
+mannWhitneyUCriticalValue :: (Int, Int) -- ^ The sample size
+                      -> Double -- ^ The p-value (e.g. 0.05) for which you want the critical value.
+                      -> Maybe Int -- ^ The critical value (of U).
+mannWhitneyUCriticalValue (m, n) p
+  | p' <= 1 = Nothing
+  | m < 1 || n < 1 = Nothing
+  | otherwise = findIndex (>= p') $ let
+     firstHalf = map fromIntegral $ take (((m*n)+1)`div`2) $ tail $ alookup !! (m+n-2) !! (min m n - 1)
+       {- Original: [fromIntegral $ a k (m+n) (min m n) | k <- [1..m*n]] -}
+     secondHalf
+       | even (m*n) = reverse firstHalf
+       | otherwise = tail $ reverse firstHalf
+     in firstHalf ++ map (mnCn -) secondHalf
+  where
+    mnCn = (m+n) `choose` n
+    p' = mnCn * p
+
+{- Original function, without memoisation, from Cheung and Klotz:
+a :: Int -> Int -> Int -> Int
+a u bigN m
+      | u < 0 = 0
+      | u >= (m * smalln) = floor $ fromIntegral bigN `choose` fromIntegral m
+      | m == 1 || smalln == 1 = u + 1
+      | otherwise = a u (bigN - 1) m
+                  + a (u - smalln) (bigN - 1) (m-1)
+  where smalln = bigN - m
+-}
+
+-- Memoised version of the original a function, above.
+-- 
+-- outer list is indexed by big N - 2
+-- inner list by m (we know m < bigN)
+-- innermost list by u
+--
+-- So: (alookup ! (bigN - 2) ! m ! u) == a u bigN m
+alookup :: [[[Int]]]
+alookup = gen 2 [1 : repeat 2]
+  where
+    gen bigN predBigNList
+       = let bigNlist = [ let limit = round $ fromIntegral bigN `choose` fromIntegral m
+                          in [amemoed u m | u <- [0..m*(bigN-m)]] ++ repeat limit
+                        | m <- [1..(bigN-1)]] -- has bigN-1 elements
+         in bigNlist : gen (bigN+1) bigNlist
+      where
+        amemoed :: Int -> Int -> Int
+        amemoed u m
+          | m == 1 || smalln == 1 = u + 1
+          | otherwise = let (predmList : mList : _) = drop (m-2) predBigNList -- m-2 because starts at 1
+                        -- We know that predBigNList has bigN - 2 elements
+                        -- (and we know that smalln > 1 therefore bigN > m + 1)
+                        -- So bigN - 2 >= m, i.e. predBigNList must have at least m elements
+                        -- elements, so dropping (m-2) must leave at least 2
+                        in (mList !! u) + (if u < smalln then 0 else predmList !! (u - smalln))
+          where smalln = bigN - m
+
+-- | Calculates whether the Mann Whitney U test is significant.
+--
+-- If both sample sizes are less than or equal to 20, the exact U critical value
+-- (as calculated by 'mannWhitneyUCriticalValue') is used.  If either sample is
+-- larger than 20, the normal approximation is used instead.
+--
+-- If you use a one-tailed test, the test indicates whether the first sample is
+-- significantly larger than the second.  If you want the opposite, simply reverse
+-- the order in both the sample size and the (U_1, U_2) pairs.
+mannWhitneyUSignificant :: Bool -- ^ Perform one-tailed test (see description above).
+                    -> (Int, Int)  -- ^ The sample size from which the (U_1,U_2) values were derived.
+                    -> Double -- ^ The p-value at which to test (e.g. 0.05)
+                    -> (Double, Double) -- ^ The (U_1, U_2) values from 'mannWhitneyU'.
+                    -> Maybe Bool -- ^ Just True if the test is significant, Just
+                                  -- False if it is not, and Nothing if the sample
+                                  -- was too small to make a decision.
+mannWhitneyUSignificant oneTail (in1, in2) p (u1, u2)
+  | in1 > 20 || in2 > 20 --Use normal approximation
+--     = (n1*(n1+1))/2 - u1 - (n1*(n1+n2))/2
+--     = (n1*(n1+1))/2 - (-2*u1 + n1*(n1+n2))/2
+--     = (n1*(n1+1) - 2*u1 + n1*(n1+n2))/2
+--     = (n1*(2*n1 + n2 + 1) - 2*u1)/2
+       = let num = (n1*(2*n1 + n2 + 1)) / 2 - u1
+             denom = sqrt $ n1*n2*(n1 + n2 + 1) / 12
+             z = num / denom
+             zcrit = quantile standard (1 - if oneTail then p else p/2)
+         in Just $ (if oneTail then z else abs z) > zcrit
+  | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) p
+                   return $ if oneTail
+                              then u2 <= crit
+                              else min u1 u2 <= crit
+  where
+    n1 = fromIntegral in1
+    n2 = fromIntegral in2
+
 -- | The Wilcoxon matched-pairs signed-rank test.
 --
 -- The value returned is the pair (T+, T-).  T+ is the sum of positive ranks (the
