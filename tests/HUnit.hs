@@ -115,20 +115,20 @@ wilcoxonSumTests = zipWith test [0..] testData
 wilcoxonPairTests :: [Test]
 wilcoxonPairTests = zipWith test [0..] testData ++
   -- Taken from the Mitic paper:
-  [TestCase $ assertBool "Sig 16, 35" (to4dp 0.0467 $ wilcoxonSignificance 16 35)
-  ,TestCase $ assertBool "Sig 16, 36" (to4dp 0.0523 $ wilcoxonSignificance 16 36)
+  [TestCase $ assertBool "Sig 16, 35" (to4dp 0.0467 $ wilcoxonMatchedPairSignificance 16 35)
+  ,TestCase $ assertBool "Sig 16, 36" (to4dp 0.0523 $ wilcoxonMatchedPairSignificance 16 36)
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.05"
     (replicate 4 Nothing ++ map Just [0,2,3,5,8,10,13,17,21,25,30,35,41,47,53,60,67,75,83,91,100,110,119])
-    [wilcoxonCriticalValue x 0.05 | x <- [1..27]]
+    [wilcoxonMatchedPairCriticalValue x 0.05 | x <- [1..27]]
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.025"
     (replicate 5 Nothing ++ map Just [0,2,3,5,8,10,13,17,21,25,29,34,40,46,52,58,65,73,81,89,98,107])
-    [wilcoxonCriticalValue x 0.025 | x <- [1..27]]
+    [wilcoxonMatchedPairCriticalValue x 0.025 | x <- [1..27]]
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.01"
     (replicate 6 Nothing ++ map Just [0,1,3,5,7,9,12,15,19,23,27,32,37,43,49,55,62,69,76,84,92])
-    [wilcoxonCriticalValue x 0.01 | x <- [1..27]]
+    [wilcoxonMatchedPairCriticalValue x 0.01 | x <- [1..27]]
   ,TestCase $ assertEqual "Wilcoxon critical values, p=0.005"
     (replicate 7 Nothing ++ map Just [0,1,3,5,7,9,12,15,19,23,27,32,37,42,48,54,61,68,75,83])
-    [wilcoxonCriticalValue x 0.005 | x <- [1..27]]
+    [wilcoxonMatchedPairCriticalValue x 0.005 | x <- [1..27]]
   ]
   where
     test n (a, b, c) = TestCase $ assertEqual ("Wilcoxon Paired " ++ show n) c (wilcoxonMatchedPairSignedRank (U.fromList a) (U.fromList b))
@@ -161,7 +161,7 @@ wilcoxonPairTests = zipWith test [0..] testData ++
 
 -- These tests may take a while to run
 allTests :: Test
-allTests = TestList $ mannWhitneyTests ++ wilcoxonPairTests ++ wilcoxonSumTests ++ [
+allTests = TestList $ mannWhitneyTests ++ wilcoxonPairTests ++ wilcoxonSumTests  {- ++ [
     TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
       all (< 1e-15) $ map factorialErr [0..170]
   , TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
@@ -174,7 +174,7 @@ allTests = TestList $ mannWhitneyTests ++ wilcoxonPairTests ++ wilcoxonSumTests 
       all (< 3e-8) $ logBetaErr <$> [0.1,0.2 .. 100] <*> [0.1,0.2 .. 100]
   , TestCase $ assertBool "choose is expected to precise at 1e-7 level" $
       all (< 1e-12) [chooseErr n k | n <- [0..1000], k <- [0..n]]
-  ]
+  ] -}
 
 main :: IO ()
 main = print =<< runTestTT allTests

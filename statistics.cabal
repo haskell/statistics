@@ -7,7 +7,7 @@ description:
   robustness, and use of good algorithms.  Where possible, we provide
   references to the statistical literature.
   .
-  The library's facilities can be divided into three broad categories:
+  The library's facilities can be divided into four broad categories:
   .
   Working with widely used discrete and continuous probability
   distributions.  (There are dozens of exotic distributions in use; we
@@ -17,6 +17,8 @@ description:
   estimation, bootstrap methods, and autocorrelation analysis.
   .
   Random variate generation under several different distributions.
+  .
+  Common statistical tests for significant differences between samples.
 license:        BSD3
 license-file:   LICENSE
 homepage:       http://darcs.serpentine.com/statistics
