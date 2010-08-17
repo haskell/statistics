@@ -10,7 +10,9 @@
 -- Functions for performing non-parametric tests (i.e. tests without an assumption
 -- of underlying distribution).
 module Statistics.Test.NonParametric
-  (-- * Wilcoxon signed-rank matched-pair test
+  (-- Wilcoxon rank sum test
+  wilcoxonRankSums,
+   -- * Wilcoxon signed-rank matched-pair test
    -- This test is the non-parametric equivalent to the paired t-test
   wilcoxonMatchedPairSignedRank, wilcoxonSignificant, wilcoxonSignificance, wilcoxonCriticalValue) where
 
@@ -22,6 +24,24 @@ import Data.Ord (comparing)
 import Data.Vector.Unboxed as U (toList, zipWith)
 
 import Statistics.Types (Sample)
+
+-- Returns (W_1, W_2)
+wilcoxonRankSums :: Sample -> Sample -> (Double, Double)
+wilcoxonRankSums xs1 xs2
+  = ((sum . map fst) *** (sum . map fst)) . -- sum the ranks per group
+    partition snd . -- split them back into left and right
+    concatMap mergeRanks . -- merge the ranks of duplicates
+    groupBy ((==) `on` (snd . snd)) . -- group duplicate values
+    zip [1..] . -- give them ranks (duplicates receive different ranks here)
+    sortBy (comparing snd) $ -- sort by their values
+    zip (repeat True) (U.toList xs1) ++ zip (repeat False) (U.toList xs2)
+      -- Tag each sample with an identifier before we merge them
+  where
+    mergeRanks :: [(AbsoluteRank, (Bool, Double))] -> [(AbsoluteRank, Bool)]
+    mergeRanks xs = zip (repeat rank) (map (fst . snd) xs)
+      where
+        -- Ranks are merged by assigning them all the average of their ranks:
+        rank = sum (map (snd . snd) xs) / fromIntegral (length xs)
 
 -- | The Wilcoxon matched-pairs signed-rank test.
 --
