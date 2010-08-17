@@ -41,7 +41,7 @@ wilcoxonRankSums xs1 xs2
     mergeRanks xs = zip (repeat rank) (map (fst . snd) xs)
       where
         -- Ranks are merged by assigning them all the average of their ranks:
-        rank = sum (map (snd . snd) xs) / fromIntegral (length xs)
+        rank = sum (map fst xs) / fromIntegral (length xs)
 
 -- | The Wilcoxon matched-pairs signed-rank test.
 --
