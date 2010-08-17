@@ -60,24 +60,42 @@ logBetaErr p q = (lb' - lb) / max 1 (abs lb')
     lb' = logGammaL p + logGammaL q - logGammaL (p+q)
 
 mannWhitneyTests :: [Test]
-mannWhitneyTests = zipWith test [0..] testData
+mannWhitneyTests = zipWith test [0..] testData ++ 
+  [TestCase $ assertEqual "Mann-Whitney U Critical Values, m=1"
+    (replicate (20*3) Nothing)
+    [mannWhitneyUCriticalValue (1,x) p | x <- [1..20], p <- [0.005,0.01,0.025]]
+  ,TestCase $ assertEqual "Mann-Whitney U Critical Values, m=2, p=0.025"
+    (replicate 7 Nothing ++ map Just [0,0,0,0,1,1,1,1,1,2,2,2,2])
+    [mannWhitneyUCriticalValue (2,x) 0.025 | x <- [1..20]]
+  ,TestCase $ assertEqual "Mann-Whitney U Critical Values, m=6, p=0.05"
+    (replicate 1 Nothing ++ map Just [0, 2,3,5,7,8,10,12,14,16,17,19,21,23,25,26,28,30,32])
+    [mannWhitneyUCriticalValue (6,x) 0.05 | x <- [1..20]]
+  ,TestCase $ assertEqual "Mann-Whitney U Critical Values, m=20, p=0.025"
+    (replicate 1 Nothing ++ map Just [2,8,14,20,27,34,41,48,55,62,69,76,83,90,98,105,112,119,127])
+    [mannWhitneyUCriticalValue (20,x) 0.025 | x <- [1..20]]
+  ]
   where
-    test n (a, b, c) = TestCase $ assertEqual ("Mann-Whitney U " ++ show n) c (mannWhitneyU (U.fromList a) (U.fromList b))
-    
+    test n (a, b, c, d)
+      = TestCase $ do assertEqual ("Mann-Whitney U " ++ show n) c us
+                      assertEqual ("Mann-Whitney U Sig" ++ show n)
+                        d $ mannWhitneyUSignificant False (length a, length b) 0.05 us
+      where
+        us = mannWhitneyU (U.fromList a) (U.fromList b)
+                        
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
-    testData :: [([Double], [Double], (Double, Double))]
+    testData :: [([Double], [Double], (Double, Double), Maybe Bool)]
     testData = [([3,4,2,6,2,5]
                 ,[9,7,5,10,6,8]
-                ,(2, 34))
+                ,(2, 34), Just True)
+               ,([540,480,600,590,605]
+                ,[760,890,1105,595,940]
+                ,(2, 23), Just True)
                ,([19,22,16,29,24]
                 ,[20,11,17,12]
-                ,(17, 3))
+                ,(17, 3), Just False)
                ,([126,148,85,61,179,93,45,189,85,93]
                 ,[194,128,69,135,171,149,89,248,79,137]
-                ,(35,65))
-               ,([1,7,8,9,10,11]
-                ,[2,3,4,5,6,12]
-                ,(25,11))
+                ,(35,65), Just False)
                ]
 
 wilcoxonSumTests :: [Test]
