@@ -60,6 +60,20 @@ logBetaErr p q = (lb' - lb) / max 1 (abs lb')
     lb' = logGammaL p + logGammaL q - logGammaL (p+q)
 
 
+wilcoxonSumTests :: [Test]
+wilcoxonSumTests = zipWith test [0..] testData
+  where
+    test n (a, b, c) = TestCase $ assertEqual ("Wilcoxon Sum " ++ show n) c (wilcoxonRankSums (U.fromList a) (U.fromList b))
+    
+    -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
+    testData :: [([Double], [Double], (Double, Double))]
+    testData = [([8.50,9.48,8.65,8.16,8.83,7.76,8.63]
+                ,[8.27,8.20,8.25,8.14,9.00,8.10,7.20,8.32,7.70]
+                ,(75, 61))
+               ,([0.45,0.50,0.61,0.63,0.75,0.85,0.93]
+                ,[0.44,0.45,0.52,0.53,0.56,0.58,0.58,0.65,0.79]
+                ,(71.5, 64.5))]
+
 wilcoxonPairTests :: [Test]
 wilcoxonPairTests = zipWith test [0..] testData ++
   -- Taken from the Mitic paper:
@@ -109,7 +123,7 @@ wilcoxonPairTests = zipWith test [0..] testData ++
 
 -- These tests may take a while to run
 allTests :: Test
-allTests = TestList $ wilcoxonPairTests ++ [
+allTests = TestList $ wilcoxonPairTests ++ wilcoxonSumTests ++ [
     TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
       all (< 1e-15) $ map factorialErr [0..170]
   , TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
