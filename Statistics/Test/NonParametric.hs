@@ -10,13 +10,12 @@
 -- Functions for performing non-parametric tests (i.e. tests without an assumption
 -- of underlying distribution).
 module Statistics.Test.NonParametric
-  (-- Wilcoxon rank sum test
-  wilcoxonRankSums,
-  -- * Mann-Whitney U test
+  (-- * Mann-Whitney U test (non-parametric equivalent to the independent t-test)
   mannWhitneyU, mannWhitneyUCriticalValue, mannWhitneyUSignificant,
-   -- * Wilcoxon signed-rank matched-pair test
-   -- This test is the non-parametric equivalent to the paired t-test
-  wilcoxonMatchedPairSignedRank, wilcoxonSignificant, wilcoxonSignificance, wilcoxonCriticalValue) where
+   -- * Wilcoxon signed-rank matched-pair test (non-parametric equivalent to the paired t-test)
+  wilcoxonMatchedPairSignedRank, wilcoxonMatchedPairSignificant, wilcoxonMatchedPairSignificance, wilcoxonMatchedPairCriticalValue,
+  -- * Wilcoxon rank sum test
+  wilcoxonRankSums) where
 
 import Control.Applicative ((<$>))
 import Control.Arrow ((***))
@@ -68,7 +67,7 @@ wilcoxonRankSums xs1 xs2
 -- Again confusingly, different sources state reversed definitions for U_1 and U_2,
 -- so it is worth being explicit about what this function returns.  Given two samples,
 -- the first, xs_1, of size n_1 and the second, xs_2, of size n_2, this function
--- returns (U_1, U_2) where U_1 = W_1 - (n_1*(n_1+1))/2 and U_2 = W_2 - (n_2*(n_2+1))/2,
+-- returns (U_1, U_2) where U_1 = W_1 - (n_1*(n_1+1))\/2 and U_2 = W_2 - (n_2*(n_2+1))\/2,
 -- where (W_1, W_2) is the return value of @wilcoxonRankSums xs1 xs2@.
 --
 -- Some sources instead state that U_1 and U_2 should be the other way round, often
@@ -267,20 +266,20 @@ summedCoefficients = map fromIntegral . scanl1 (+) . coefficients
 -- in the opposite direction, you can either pass the parameters in a different
 -- order to 'wilcoxonMatchedPairSignedRank', or simply swap the values in the resulting
 -- pair before passing them to this function.
-wilcoxonSignificant :: Bool -- ^ Perform one-tailed test (see description above).
+wilcoxonMatchedPairSignificant :: Bool -- ^ Perform one-tailed test (see description above).
                     -> Int  -- ^ The sample size from which the (T+,T-) values were derived.
                     -> Double -- ^ The p-value at which to test (e.g. 0.05)
                     -> (Double, Double) -- ^ The (T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
                     -> Maybe Bool -- ^ Just True if the test is significant, Just
                                   -- False if it is not, and Nothing if the sample
                                   -- was too small to make a decision.
-wilcoxonSignificant oneTail sampleSize p (tPlus, tMinus)
+wilcoxonMatchedPairSignificant oneTail sampleSize p (tPlus, tMinus)
   -- According to my nearest book (Understanding Research Methods and Statistics
   -- by Gary W. Heiman, p590), to check that the first sample is bigger you must
   -- use the absolute value of T- for a one-tailed check:
-  | oneTail = ((abs tMinus <=) . fromIntegral) `fmap` wilcoxonCriticalValue sampleSize p
+  | oneTail = ((abs tMinus <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize p
   -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
-  | otherwise = ((t <=) . fromIntegral) `fmap` wilcoxonCriticalValue sampleSize (p/2)
+  | otherwise = ((t <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize (p/2)
   where
     t = min (abs tPlus) (abs tMinus)
 
@@ -301,26 +300,26 @@ wilcoxonSignificant oneTail sampleSize p (tPlus, tMinus)
 -- here: <http://www.mathematica-journal.com/issue/v6i3/article/mitic/contents/63mitic.pdf>.
 -- According to that paper, the results may differ from other published lookup tables, but
 -- (Mitic claims) the values obtained by this function will be the correct ones.
-wilcoxonCriticalValue :: Int -- ^ The sample size
+wilcoxonMatchedPairCriticalValue :: Int -- ^ The sample size
                       -> Double -- ^ The p-value (e.g. 0.05) for which you want the critical value.
                       -> Maybe Int -- ^ The critical value (of T), or Nothing if
                                    -- the sample is too small to make a decision.
-wilcoxonCriticalValue sampleSize p
+wilcoxonMatchedPairCriticalValue sampleSize p
   = case critical of
       Just n | n < 0 -> Nothing
              | otherwise -> Just n
       Nothing -> Just maxBound -- shouldn't happen: beyond end of list
   where
     m = (2 ** fromIntegral sampleSize) * p
-    critical = subtract 1 `fmap` findIndex (> m) (summedCoefficients sampleSize)
+    critical = subtract 1 <$> findIndex (> m) (summedCoefficients sampleSize)
 
 -- | Works out the significance level (p-value) of a T value, given a sample
 -- size and a T value from the Wilcoxon signed-rank matched-pairs test.
 --
 -- See the notes on 'wilcoxonCriticalValue' for how this is calculated.
-wilcoxonSignificance :: Int -- ^ The sample size
+wilcoxonMatchedPairSignificance :: Int -- ^ The sample size
                      -> Double -- ^ The value of T for which you want the significance.
                      -> Double -- ^^ The significance (p-value).
-wilcoxonSignificance sampleSize rank
+wilcoxonMatchedPairSignificance sampleSize rank
   = (summedCoefficients sampleSize !! floor rank) / 2 ** fromIntegral sampleSize
 
