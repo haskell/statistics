@@ -27,7 +27,17 @@ import qualified Data.Vector.Unboxed as U (length, toList, zipWith)
 
 import Statistics.Types (Sample)
 
--- Returns (W_1, W_2)
+-- | The Wilcoxon Rank Sums Test.
+--
+-- This test calculates the sum of ranks for the given two samples.  The samples
+-- are ordered, and assigned ranks (ties are given their average rank), then these
+-- ranks are summed for each sample.
+--
+-- The return value is (W_1, W_2) where W_1 is the sum of ranks of the first sample
+-- and W_2 is the sum of ranks of the second sample.  This test is trivially transformed
+-- into the Mann-Whitney U test.  You will probably want to use 'mannWhitneyU'
+-- and the related functions for testing significance, but this function is exposed
+-- for completeness.
 wilcoxonRankSums :: Sample -> Sample -> (Double, Double)
 wilcoxonRankSums xs1 xs2
   = ((sum . map fst) *** (sum . map fst)) . -- sum the ranks per group
@@ -45,8 +55,23 @@ wilcoxonRankSums xs1 xs2
         -- Ranks are merged by assigning them all the average of their ranks:
         rank = sum (map fst xs) / fromIntegral (length xs)
 
-
--- Returns (U_1, U_2)
+-- | The Mann-Whitney U Test.
+--
+-- This is sometimes known as the Mann-Whitney-Wilcoxon U test, and
+-- confusingly many sources state that the Mann-Whitney U test is the same as
+-- the Wilcoxon's rank sum test (which is provided as 'wilcoxonRankSums').
+-- The Mann-Whitney U is a simple transform of Wilcoxon's rank sum test.
+--
+-- Again confusingly, different sources state reversed definitions for U_1 and U_2,
+-- so it is worth being explicit about what this function returns.  Given two samples,
+-- the first, xs_1, of size n_1 and the second, xs_2, of size n_2, this function
+-- returns (U_1, U_2) where U_1 = W_1 - (n_1*(n_1+1))/2 and U_2 = W_2 - (n_2*(n_2+1))/2,
+-- where (W_1, W_2) is the return value of @wilcoxonRankSums xs1 xs2@.
+--
+-- Some sources instead state that U_1 and U_2 should be the other way round, often
+-- expressing this using U_1' = n_1*n_2 - U_1 (since U_1 + U_2 = n_1*n*2).
+--
+-- All of which you probably don't care about if you just feed this into 'mannWhitneyUSignificant'.
 mannWhitneyU :: Sample -> Sample -> (Double, Double)
 mannWhitneyU xs1 xs2
   = (fst summedRanks - (n1*(n1 + 1))/2
