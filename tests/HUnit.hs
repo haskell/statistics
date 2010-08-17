@@ -60,8 +60,8 @@ logBetaErr p q = (lb' - lb) / max 1 (abs lb')
     lb' = logGammaL p + logGammaL q - logGammaL (p+q)
 
 
-wilcoxonTests :: [Test]
-wilcoxonTests = zipWith test [0..] testData ++
+wilcoxonPairTests :: [Test]
+wilcoxonPairTests = zipWith test [0..] testData ++
   -- Taken from the Mitic paper:
   [TestCase $ assertBool "Sig 16, 35" (to4dp 0.0467 $ wilcoxonSignificance 16 35)
   ,TestCase $ assertBool "Sig 16, 36" (to4dp 0.0523 $ wilcoxonSignificance 16 36)
@@ -79,7 +79,7 @@ wilcoxonTests = zipWith test [0..] testData ++
     [wilcoxonCriticalValue x 0.005 | x <- [1..27]]
   ]
   where
-    test n (a, b, c) = TestCase $ assertEqual ("Wilcoxon " ++ show n) c (wilcoxonMatchedPairSignedRank (U.fromList a) (U.fromList b))
+    test n (a, b, c) = TestCase $ assertEqual ("Wilcoxon Paired " ++ show n) c (wilcoxonMatchedPairSignedRank (U.fromList a) (U.fromList b))
     
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
     testData :: [([Double], [Double], (Double, Double))]
@@ -109,7 +109,7 @@ wilcoxonTests = zipWith test [0..] testData ++
 
 -- These tests may take a while to run
 allTests :: Test
-allTests = TestList $ wilcoxonTests ++ [
+allTests = TestList $ wilcoxonPairTests ++ [
     TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
       all (< 1e-15) $ map factorialErr [0..170]
   , TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
