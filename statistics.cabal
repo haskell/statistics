@@ -23,6 +23,7 @@ description:
 license:        BSD3
 license-file:   LICENSE
 homepage:       http://bitbucket.org/bos/statistics
+bug-reports:    http://bitbucket.org/bos/statistics/issues
 author:         Bryan O'Sullivan <bos@serpentine.com>
 maintainer:     Bryan O'Sullivan <bos@serpentine.com>
 copyright:      2009, 2010 Bryan O'Sullivan
