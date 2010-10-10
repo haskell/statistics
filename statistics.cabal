@@ -30,7 +30,7 @@ copyright:      2009, 2010 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
 cabal-version:  >= 1.6
-extra-source-files: README
+extra-source-files: README.markdown
 
 library
   exposed-modules:
