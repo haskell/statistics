@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.8.0.1
+version:        0.8.0.2
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
