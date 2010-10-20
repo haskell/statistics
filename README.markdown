@@ -33,7 +33,7 @@ yield unacceptable performance.
 # Get involved!
 
 Please report bugs via the
-[bitbucket issue tracker](http://bitbucket.org/bos/attoparsec/statistics).
+[bitbucket issue tracker](http://bitbucket.org/bos/statistics).
 
 Master [Mercurial repository](http://bitbucket.org/bos/statistics):
 
