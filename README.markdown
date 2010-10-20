@@ -33,7 +33,7 @@ yield unacceptable performance.
 # Get involved!
 
 Please report bugs via the
-[bitbucket issue tracker](http://bitbucket.org/bos/statistics).
+[bitbucket issue tracker](http://bitbucket.org/bos/statistics/issues).
 
 Master [Mercurial repository](http://bitbucket.org/bos/statistics):
 
