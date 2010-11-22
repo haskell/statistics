@@ -24,15 +24,14 @@ module Statistics.Function
 
 import Control.Exception (assert)
 import Control.Monad.Primitive (PrimMonad)
-import Data.Vector.Algorithms.Combinators (apply)
-import Data.Vector.Generic (unsafeFreeze)
+import Data.Vector.Generic (modify, unsafeFreeze)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Generic.Mutable as M
 
 -- | Sort a vector.
 sort :: (Ord e, G.Vector v e) => v e -> v e
-sort = apply I.sort
+sort = modify I.sort
 {-# INLINE sort #-}
 
 -- | Partially sort a vector, such that the least /k/ elements will be
@@ -41,7 +40,7 @@ partialSort :: (G.Vector v e, Ord e) =>
                Int -- ^ The number /k/ of least elements.
             -> v e
             -> v e
-partialSort k = apply (\a -> I.partialSort a k)
+partialSort k = modify (\a -> I.partialSort a k)
 {-# INLINE partialSort #-}
 
 -- | Return the indices of a vector.
