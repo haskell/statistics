@@ -82,7 +82,7 @@ powers :: G.Vector v Double =>
        -> Powers
 powers k
     | k < 2     = error "Statistics.Sample.powers: too few powers"
-    | otherwise = fini . G.foldl' go (unsafePerformIO $ MU.newWith l 0)
+    | otherwise = fini . G.foldl' go (unsafePerformIO $ MU.replicate l 0)
   where
     go ms x = inlinePerformIO $ loop 0 1
         where loop !i !xk | i == l = return ms
