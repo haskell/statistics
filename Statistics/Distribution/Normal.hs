@@ -20,7 +20,6 @@ module Statistics.Distribution.Normal
     , standard
     ) where
 
-import Control.Exception (assert)
 import Data.Number.Erf (erfc)
 import Data.Typeable (Typeable)
 import Statistics.Constants (m_sqrt_2, m_sqrt_2_pi)
@@ -60,12 +59,14 @@ standard = ND { mean       = 0.0
 normalDistr :: Double            -- ^ Mean of distribution
             -> Double            -- ^ Variance of distribution
             -> NormalDistribution
-normalDistr m v = assert (v > 0)
-                 ND { mean       = m
-                    , variance   = v
-                    , ndPdfDenom = m_sqrt_2_pi * sv
-                    , ndCdfDenom = m_sqrt_2 * sv
-                    }
+normalDistr m v
+  | v <= 0    = 
+    error $ "Statistics.Distribution.Normal.normalDistr: variance must be positive. Got " ++ show v
+  | otherwise = ND { mean       = m
+                   , variance   = v
+                   , ndPdfDenom = m_sqrt_2_pi * sv
+                   , ndCdfDenom = m_sqrt_2 * sv
+                   }
     where sv = sqrt v
 
 -- | Create distribution using parameters estimated from

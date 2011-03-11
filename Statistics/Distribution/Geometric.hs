@@ -51,8 +51,11 @@ instance D.Mean GeometricDistribution where
 -- | Create geometric distribution
 geometric :: Double                -- ^ Success rate
           -> GeometricDistribution
-geometric x = assert (x >= 0 && x <= 1)
-              GD x
+geometric x
+  | x < 0 || x > 1 = 
+    error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
+  | otherwise      =
+    GD x
 {-# INLINE geometric #-}
 
 probability :: GeometricDistribution -> Int -> Double

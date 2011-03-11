@@ -23,7 +23,6 @@ module Statistics.Distribution.Binomial
     , bdProbability
     ) where
 
-import Control.Exception (assert)
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 import Statistics.Math (choose)
@@ -49,7 +48,7 @@ instance D.Mean BinomialDistribution where
     mean = mean
 
 
--- This could be slow for bin n
+-- This could be slow for big n
 probability :: BinomialDistribution -> Int -> Double
 probability (BD n p) k 
   | k < 0 || k > n = 0
@@ -77,12 +76,16 @@ variance :: BinomialDistribution -> Double
 variance (BD n p) = fromIntegral n * p * (1 - p)
 {-# INLINE variance #-}
 
--- | Construct binomial distribution
+-- | Construct binomial distribution. Number of trials must be
+--   positive and probability must be in [0,1] range
 binomial :: Int                 -- ^ Number of trials.
          -> Double              -- ^ Probability.
          -> BinomialDistribution
-binomial n p =
-    assert (n > 0) .
-    assert (p > 0 && p < 1) $
-    BD n p
+binomial n p 
+  | n <= 0         = 
+    error $ msg ++ "number of trials must be positive. Got " ++ show n
+  | p < 0 || p > 1 = 
+    error $ msg++"probability must be in [0,1] range. Got " ++ show p
+  | otherwise      = BD n p
+    where msg = "Statistics.Distribution.Binomial.binomial: "
 {-# INLINE binomial #-}
