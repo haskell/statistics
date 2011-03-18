@@ -61,14 +61,14 @@ quantile :: ExponentialDistribution -> Double -> Double
 quantile (ED l) p = -log (1 - p) / l
 {-# INLINE quantile #-}
 
--- | Create exponential distribution
+-- | Create an exponential distribution.
 exponential :: Double            -- ^ &#955; (scale) parameter.
             -> ExponentialDistribution
 exponential = ED
 {-# INLINE exponential #-}
 
 -- | Create exponential distribution from sample. No tests are made to
--- check whether it really exponential
+-- check whether it truly is exponential.
 exponentialFromSample :: Sample -> ExponentialDistribution
 exponentialFromSample = ED . S.mean
 {-# INLINE exponentialFromSample #-}
