@@ -35,8 +35,15 @@ data GammaDistribution = GD {
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
     } deriving (Eq, Read, Show, Typeable)
 
-gammaDistr :: Double -> Double -> GammaDistribution
-gammaDistr = GD
+-- | Create gamma distrivution. Both shape and scale parameters must be positive.
+gammaDistr :: Double            -- ^ Shape parameter. /k/
+           -> Double            -- ^ Scale parameter, &#977;.
+           -> GammaDistribution
+gammaDistr k theta
+  | k     <= 0 = error $ msg ++ "shape must be positive. Got " ++ show k
+  | theta <= 0 = error $ msg ++ "scale must be positive. Got " ++ show theta
+  | otherwise  = GD k theta
+    where msg = "Statistics.Distribution.Gamma.gammaDistr: "
 {-# INLINE gammaDistr #-}
 
 instance D.Distribution GammaDistribution where

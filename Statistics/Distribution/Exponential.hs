@@ -64,7 +64,10 @@ quantile (ED l) p = -log (1 - p) / l
 -- | Create an exponential distribution.
 exponential :: Double            -- ^ &#955; (scale) parameter.
             -> ExponentialDistribution
-exponential = ED
+exponential l
+  | l <= 0 = 
+    error $ "Statistics.Distribution.Exponential.exponential: scale parameter must be positive. Got " ++ show l
+  | otherwise = ED l
 {-# INLINE exponential #-}
 
 -- | Create exponential distribution from sample. No tests are made to

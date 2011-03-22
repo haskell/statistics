@@ -45,9 +45,12 @@ instance D.Mean PoissonDistribution where
     mean = poissonLambda
     {-# INLINE mean #-}
 
--- | Create po
+-- | Create poisson distribution.
 poisson :: Double -> PoissonDistribution
-poisson = PD
+poisson l
+  | l <= 0    = 
+    error $ "Statistics.Distribution.Poisson.poisson: lambda must be positive. Got " ++ show l
+  | otherwise = PD l
 {-# INLINE poisson #-}
 
 probability :: PoissonDistribution -> Int -> Double
