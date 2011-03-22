@@ -27,9 +27,8 @@ module Statistics.Distribution.Hypergeometric
     , hdK
     ) where
 
-import Control.Exception (assert)
-import Data.Typeable (Typeable)
-import Statistics.Math (choose)
+import Data.Typeable     (Typeable)
+import Statistics.Math   (choose)
 import qualified Statistics.Distribution as D
 
 data HypergeometricDistribution = HD {
@@ -66,11 +65,13 @@ hypergeometric :: Int               -- ^ /m/
                -> Int               -- ^ /l/
                -> Int               -- ^ /k/
                -> HypergeometricDistribution
-hypergeometric m l k =
-    assert (m >= 0 && m <= l) .
-    assert (l > 0) .
-    assert (k > 0 && k <= l) $
-    HD m l k
+hypergeometric m l k
+  | not (l > 0)            = error $ msg ++ "l must be positive"
+  | not (m >= 0 && m <= l) = error $ msg ++ "m must lie in [0,l] range"
+  | not (k > 0 && k <= l)  = error $ msg ++ "k must lie in (0,l] range"
+  | otherwise = HD m l k
+    where
+      msg = "Statistics.Distribution.Hypergeometric.hypergeometric: "
 {-# INLINE hypergeometric #-}
 
 -- Naive implementation

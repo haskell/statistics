@@ -34,9 +34,13 @@ chiSquaredNDF :: ChiSquared -> Int
 chiSquaredNDF (ChiSquared ndf) = ndf
 {-# INLINE chiSquaredNDF #-}
 
--- | Construct chi-squared distribution. Number of degrees of free
+-- | Construct chi-squared distribution. Number of degrees of freedom
+--   must be positive.
 chiSquared :: Int -> ChiSquared
-chiSquared x = ChiSquared x
+chiSquared n
+  | n <= 0    = error $ 
+     "Statistics.Distribution.ChiSquared.chiSquared: N.D.F. must be positive. Got " ++ show n
+  | otherwise = ChiSquared n
 {-# INLINE chiSquared #-}
 
 instance D.Distribution ChiSquared where
