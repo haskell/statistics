@@ -60,6 +60,8 @@ import qualified Data.Vector.Generic as G
 -- Operator ^ will be overriden
 import Prelude hiding ((^))
 
+-- | Range. The difference between the largest and smallest elements
+-- of a sample.
 range :: (G.Vector v Double) => v Double -> Double
 range s = hi - lo
     where (lo , hi) = minMax s
