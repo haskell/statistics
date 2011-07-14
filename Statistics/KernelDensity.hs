@@ -115,7 +115,7 @@ epanechnikovKernel f h p v
 gaussianKernel :: Kernel
 gaussianKernel f h p v = exp (-0.5 * u * u) * g
     where u = (v - p) / h
-          g = f * m_2_sqrt_pi * m_1_sqrt_2
+          g = f * 0.5 * m_2_sqrt_pi * m_1_sqrt_2
 
 -- | Kernel density estimator, providing a non-parametric way of
 -- estimating the PDF of a random variable.
