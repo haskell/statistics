@@ -52,7 +52,6 @@ scale f e@Estimate{..} = e {
                          , estLowerBound = f * estLowerBound
                          , estUpperBound = f * estUpperBound
                          }
-{-# INLINE scale #-}
 
 estimate :: Double -> Double -> Double -> Double -> Estimate
 estimate pt lb ub cl =
