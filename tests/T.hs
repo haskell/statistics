@@ -18,7 +18,7 @@ import MWC as MWC
 type T = Word32
 
 getTime :: IO Double
-getTime = (fromRational . toRational) `fmap` getPOSIXTime
+getTime = realToFrac `fmap` getPOSIXTime
 
 time :: String -> IO (a,Int) -> IO ()
 time desc act = do
