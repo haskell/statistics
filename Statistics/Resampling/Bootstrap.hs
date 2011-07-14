@@ -1,6 +1,8 @@
+{-# LANGUAGE RecordWildCards #-}
+
 -- |
 -- Module    : Statistics.Resampling.Bootstrap
--- Copyright : (c) 2009 Bryan O'Sullivan
+-- Copyright : (c) 2009, 2011 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
@@ -13,6 +15,7 @@ module Statistics.Resampling.Bootstrap
     (
       Estimate(..)
     , bootstrapBCA
+    , scale
     -- * References
     -- $references
     ) where
@@ -39,6 +42,17 @@ data Estimate = Estimate {
     , estConfidenceLevel :: {-# UNPACK #-} !Double
     -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Show)
+
+-- | Multiply the point, lower bound, and upper bound in an 'Estimate'
+-- by the given value.
+scale :: Double                 -- ^ Value to multiply by.
+      -> Estimate -> Estimate
+scale f e@Estimate{..} = e {
+                           estPoint = f * estPoint
+                         , estLowerBound = f * estLowerBound
+                         , estUpperBound = f * estUpperBound
+                         }
+{-# INLINE scale #-}
 
 estimate :: Double -> Double -> Double -> Double -> Estimate
 estimate pt lb ub cl =
