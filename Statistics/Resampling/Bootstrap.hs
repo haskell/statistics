@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
 
 -- |
 -- Module    : Statistics.Resampling.Bootstrap
@@ -21,6 +21,8 @@ module Statistics.Resampling.Bootstrap
     ) where
 
 import Control.Exception (assert)
+import Data.Data (Data)
+import Data.Typeable (Typeable)
 import Data.Vector.Unboxed ((!))
 import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
@@ -41,7 +43,7 @@ data Estimate = Estimate {
     -- the confidence interval).
     , estConfidenceLevel :: {-# UNPACK #-} !Double
     -- ^ Confidence level of the confidence intervals.
-    } deriving (Eq, Show)
+    } deriving (Eq, Show, Typeable, Data)
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'
 -- by the given value.
