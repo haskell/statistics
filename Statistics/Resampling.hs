@@ -63,5 +63,4 @@ jackknife est sample = U.map f . indices $ sample
 
 -- | Drop the /k/th element of a vector.
 dropAt :: U.Unbox e => Int -> U.Vector e -> U.Vector e
-dropAt n = U.map snd . U.filter notN . indexed
-    where notN (i , _) = i /= n
+dropAt n v = U.slice 0 n v U.++ U.slice (n+1) (U.length v - n - 1) v
