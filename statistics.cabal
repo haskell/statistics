@@ -60,7 +60,7 @@ library
   build-depends:
     base < 5,
     erf,
-    mwc-random >= 0.8.0.3,
+    mwc-random >= 0.8.0.5,
     primitive >= 0.3,
     time,
     vector >= 0.7.0.0,
