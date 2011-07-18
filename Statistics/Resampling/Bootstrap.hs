@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, RecordWildCards #-}
 
 -- |
 -- Module    : Statistics.Resampling.Bootstrap
@@ -20,7 +20,9 @@ module Statistics.Resampling.Bootstrap
     -- $references
     ) where
 
+import Control.Applicative ((<$>), (<*>), empty)
 import Control.Exception (assert)
+import Data.Aeson.Types
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 import Data.Vector.Unboxed ((!))
@@ -44,6 +46,22 @@ data Estimate = Estimate {
     , estConfidenceLevel :: {-# UNPACK #-} !Double
     -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Show, Typeable, Data)
+
+instance ToJSON Estimate where
+    toJSON Estimate{..} = object [
+                            "estPoint" .= estPoint
+                          , "estLowerBound" .= estLowerBound
+                          , "estUpperBound" .= estUpperBound
+                          , "estConfidenceLevel" .= estConfidenceLevel
+                          ]
+
+instance FromJSON Estimate where
+    parseJSON (Object v) = Estimate <$>
+                           v .: "estPoint" <*>
+                           v .: "estLowerBound" <*>
+                           v .: "estUpperBound" <*>
+                           v .: "estConfidenceLevel"
+    parseJSON _ = empty
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'
 -- by the given value.

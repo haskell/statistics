@@ -58,6 +58,7 @@ library
   other-modules:
     Statistics.Internal
   build-depends:
+    aeson,
     base < 5,
     erf,
     mwc-random >= 0.8.0.5,
