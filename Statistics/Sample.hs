@@ -205,11 +205,9 @@ kurtosis xs = c4 / (c2 * c2) - 3
 
 data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
-sqr :: Double -> Double
-sqr x = x * x
-
 robustSumVar :: (G.Vector v Double) => Double -> v Double -> Double
-robustSumVar m samp = G.sum . G.map (sqr . subtract m) $ samp
+robustSumVar m samp = G.sum . G.map (square . subtract m) $ samp
+  where square x = x * x
 {-# INLINE robustSumVar #-}
 
 -- | Maximum likelihood estimate of a sample's variance.  Also known
