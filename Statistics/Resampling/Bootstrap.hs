@@ -21,6 +21,7 @@ module Statistics.Resampling.Bootstrap
     ) where
 
 import Control.Applicative ((<$>), (<*>), empty)
+import Control.DeepSeq (NFData)
 import Control.Exception (assert)
 import Data.Aeson.Types
 import Data.Data (Data)
@@ -46,6 +47,8 @@ data Estimate = Estimate {
     , estConfidenceLevel :: {-# UNPACK #-} !Double
     -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Show, Typeable, Data)
+
+instance NFData Estimate
 
 instance ToJSON Estimate where
     toJSON Estimate{..} = object [
