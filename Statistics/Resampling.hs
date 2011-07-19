@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 -- |
 -- Module    : Statistics.Resampling
 -- Copyright : (c) 2009, 2010 Bryan O'Sullivan
@@ -16,14 +18,15 @@ module Statistics.Resampling
     , resample
     ) where
 
-import Control.Monad (forM_, liftM)
+import Control.Concurrent (forkIO, newChan, readChan, writeChan)
+import Control.Monad (forM_, liftM, replicateM_)
 import Control.Monad.Primitive (PrimMonad, PrimState)
-import Control.Monad.ST (ST)
 import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Generic (unsafeFreeze)
+import GHC.Conc (numCapabilities)
 import Statistics.Function (create, indices)
 import Statistics.Types (Estimator, Sample)
-import System.Random.MWC (Gen, uniform)
+import System.Random.MWC (Gen, initialize, uniform, uniformVector)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU
 
@@ -34,29 +37,46 @@ newtype Resample = Resample {
       fromResample :: U.Vector Double
     } deriving (Eq, Show)
 
--- | Resample a data set repeatedly, with replacement, computing each
--- estimate over the resampled data.
-resample :: (PrimMonad m) => Gen (PrimState m) -> [Estimator] -> Int -> Sample
-         -> m [Resample]
-{-# SPECIALIZE resample :: Gen (PrimState IO) -> [Estimator] -> Int -> Sample
-                        -> IO [Resample] #-}
-{-# SPECIALIZE resample :: Gen (PrimState (ST s)) -> [Estimator] -> Int
-                        -> Sample -> ST s [Resample] #-}
+-- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
+-- computing each estimate over the resampled data.
+--
+-- This function is expensive; it has to do work proportional to
+-- /e*r*s/, where /e/ is the number of estimation functions, /r/ is
+-- the number of resamples to compute, and /s/ is the number of
+-- original samples.
+--
+-- To improve performance, this function will make use of all
+-- available CPUs.  At least with GHC 7.0, parallel performance seems
+-- best if the parallel garbage collector is disabled (RTS option
+-- @-qg@).
+resample :: Gen (PrimState IO)
+         -> [Estimator]         -- ^ Estimation functions.
+         -> Int                 -- ^ Number of resamples to compute.
+         -> Sample              -- ^ Original sample.
+         -> IO [Resample]
 resample gen ests numResamples samples = do
+  let !numSamples = U.length samples
+      ixs = scanl (+) 0 $
+            zipWith (+) (replicate numCapabilities q)
+                        (replicate r 1 ++ repeat 0)
+          where (q,r) = numResamples `quotRem` numCapabilities
   results <- mapM (const (MU.new numResamples)) $ ests
-  loop 0 (zip ests results)
+  done <- newChan
+  forM_ (zip ixs (tail ixs)) $ \ (start,!end) -> do
+    gen' <- initialize =<< uniformVector gen 256
+    forkIO $ do
+      let loop k ers | k >= end = writeChan done ()
+                     | otherwise = do
+            re <- create numSamples $ \_ -> do
+                    r <- uniform gen'
+                    return (U.unsafeIndex samples (r `mod` numSamples))
+            forM_ ers $ \(est,arr) ->
+                MU.write arr k . est $ re
+            loop (k+1) ers
+      loop start (zip ests results)
+  replicateM_ numCapabilities $ readChan done
   mapM_ sort results
   mapM (liftM Resample . unsafeFreeze) results
- where
-  loop k ers | k >= numResamples = return ()
-             | otherwise = do
-    re <- create n $ \_ -> do
-            r <- uniform gen
-            return (U.unsafeIndex samples (r `mod` n))
-    forM_ ers $ \(est,arr) ->
-        MU.write arr k . est $ re
-    loop (k+1) ers
-  n = U.length samples
 
 -- | Compute a statistical estimate repeatedly over a sample, each
 -- time omitting a successive element.
