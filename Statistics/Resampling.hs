@@ -20,8 +20,7 @@ import Control.Monad (forM_, liftM)
 import Control.Monad.Primitive (PrimMonad, PrimState)
 import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Generic (unsafeFreeze)
-import Data.Vector.Unboxed ((!))
-import Statistics.Function (create, indexed, indices)
+import Statistics.Function (create, indices)
 import Statistics.Types (Estimator, Sample)
 import System.Random.MWC (Gen, uniform)
 import qualified Data.Vector.Unboxed as U
@@ -47,7 +46,7 @@ resample gen ests numResamples samples = do
              | otherwise = do
     re <- create n $ \_ -> do
             r <- uniform gen
-            return (samples ! (abs r `mod` n))
+            return (U.unsafeIndex samples (r `mod` n))
     forM_ ers $ \(est,arr) ->
         MU.write arr k . est $ re
     loop (k+1) ers
