@@ -60,6 +60,7 @@ library
   build-depends:
     aeson,
     base < 5,
+    deepseq,
     erf,
     mwc-random >= 0.8.0.5,
     primitive >= 0.3,
