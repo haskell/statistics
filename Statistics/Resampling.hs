@@ -18,6 +18,7 @@ module Statistics.Resampling
 
 import Control.Monad (forM_, liftM)
 import Control.Monad.Primitive (PrimMonad, PrimState)
+import Control.Monad.ST (ST)
 import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Generic (unsafeFreeze)
 import Statistics.Function (create, indices)
@@ -35,7 +36,12 @@ newtype Resample = Resample {
 
 -- | Resample a data set repeatedly, with replacement, computing each
 -- estimate over the resampled data.
-resample :: (PrimMonad m) => Gen (PrimState m) -> [Estimator] -> Int -> Sample -> m [Resample]
+resample :: (PrimMonad m) => Gen (PrimState m) -> [Estimator] -> Int -> Sample
+         -> m [Resample]
+{-# SPECIALIZE resample :: Gen (PrimState IO) -> [Estimator] -> Int -> Sample
+                        -> IO [Resample] #-}
+{-# SPECIALIZE resample :: Gen (PrimState (ST s)) -> [Estimator] -> Int
+                        -> Sample -> ST s [Resample] #-}
 resample gen ests numResamples samples = do
   results <- mapM (const (MU.new numResamples)) $ ests
   loop 0 (zip ests results)
@@ -51,7 +57,6 @@ resample gen ests numResamples samples = do
         MU.write arr k . est $ re
     loop (k+1) ers
   n = U.length samples
-{-# INLINE resample #-}
 
 -- | Compute a statistical estimate repeatedly over a sample, each
 -- time omitting a successive element.
