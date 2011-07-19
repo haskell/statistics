@@ -1,8 +1,7 @@
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE CPP, FlexibleContexts, Rank2Types #-}
 -- |
 -- Module    : Statistics.Function
--- Copyright : (c) 2009, 2010 Bryan O'Sullivan
+-- Copyright : (c) 2009, 2010, 2011 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
@@ -18,12 +17,16 @@ module Statistics.Function
     , partialSort
     , indexed
     , indices
+    , nextHighestPowerOfTwo
     -- * Vector setup
     , create
     ) where
 
+#include "MachDeps.h"
+
 import Control.Exception (assert)
 import Control.Monad.Primitive (PrimMonad)
+import Data.Bits ((.|.), shiftR)
 import Data.Vector.Generic (modify, unsafeFreeze)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
@@ -74,3 +77,19 @@ create size itemAt = assert (size >= 0) $
                                 M.write arr k r
                                 loop (k+1) arr
 {-# INLINE create #-}
+
+-- | Efficiently compute the next highest power of two for a
+-- non-negative integer.  If the given value is already a power of
+-- two, it is returned unchanged.  If negative, zero is returned.
+nextHighestPowerOfTwo :: Int -> Int
+nextHighestPowerOfTwo n = o + 1
+    where m = n - 1
+          o = m
+              .|. (m `shiftR` 1)
+              .|. (m `shiftR` 2)
+              .|. (m `shiftR` 4)
+              .|. (m `shiftR` 8)
+              .|. (m `shiftR` 16)
+#if WORD_SIZE_IN_BITS == 64              
+              .|. (m `shiftR` 32)
+#endif                
