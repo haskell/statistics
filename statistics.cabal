@@ -60,8 +60,9 @@ library
   build-depends:
     aeson,
     base < 5,
-    deepseq,
+    deepseq >= 1.1.0.2,
     erf,
+    monad-par >= 0.1.0.1,
     mwc-random >= 0.8.0.5,
     primitive >= 0.3,
     time,

@@ -23,6 +23,7 @@ module Statistics.Resampling.Bootstrap
 import Control.Applicative ((<$>), (<*>), empty)
 import Control.DeepSeq (NFData)
 import Control.Exception (assert)
+import Control.Monad.Par (runPar, parMap)
 import Data.Aeson.Types
 import Data.Data (Data)
 import Data.Typeable (Typeable)
@@ -96,9 +97,9 @@ bootstrapBCA :: Double          -- ^ Confidence level
              -> [Estimator]     -- ^ Estimators
              -> [Resample]      -- ^ Resampled data
              -> [Estimate]
-bootstrapBCA confidenceLevel sample =
+bootstrapBCA confidenceLevel sample estimators resamples =
     assert (confidenceLevel > 0 && confidenceLevel < 1)
-    zipWith e
+    runPar $ parMap (uncurry e) (zip estimators resamples)
   where
     e est (Resample resample)
       | U.length sample == 1 = estimate pt pt pt confidenceLevel
