@@ -23,6 +23,7 @@ import Control.Monad (forM_, liftM, replicateM_)
 import Control.Monad.Primitive (PrimMonad, PrimState)
 import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Generic (unsafeFreeze)
+import Data.Word (Word32)
 import GHC.Conc (numCapabilities)
 import Statistics.Function (create, indices)
 import Statistics.Types (Estimator, Sample)
@@ -63,7 +64,7 @@ resample gen ests numResamples samples = do
   results <- mapM (const (MU.new numResamples)) $ ests
   done <- newChan
   forM_ (zip ixs (tail ixs)) $ \ (start,!end) -> do
-    gen' <- initialize =<< uniformVector gen 256
+    gen' <- initialize =<< (uniformVector gen 256 :: IO (U.Vector Word32))
     forkIO $ do
       let loop k ers | k >= end = writeChan done ()
                      | otherwise = do
@@ -83,7 +84,7 @@ resample gen ests numResamples samples = do
 jackknife :: Estimator -> Sample -> U.Vector Double
 jackknife est sample = U.map f . indices $ sample
     where f i = est (dropAt i sample)
-{-# INLINE jackknife #-}
+{- INLINE jackknife #-}
 
 -- | Drop the /k/th element of a vector.
 dropAt :: U.Unbox e => Int -> U.Vector e -> U.Vector e
