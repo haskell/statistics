@@ -54,11 +54,11 @@ instance D.ContDistr GammaDistribution where
     quantile   = quantile
 
 instance D.Variance GammaDistribution where
-    variance (GD a l) = a / (l * l)
+    variance (GD a l) = a * l * l
     {-# INLINE variance #-}
 
 instance D.Mean GammaDistribution where
-    mean (GD a l) = a / l
+    mean (GD a l) = a * l
     {-# INLINE mean #-}
 
 density :: GammaDistribution -> Double -> Double
