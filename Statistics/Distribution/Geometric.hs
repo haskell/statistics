@@ -26,7 +26,6 @@ module Statistics.Distribution.Geometric
     , gdSuccess
     ) where
 
-import Control.Exception (assert)
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 
@@ -48,7 +47,7 @@ instance D.Mean GeometricDistribution where
     mean (GD s) = 1 / s
     {-# INLINE mean #-}
 
--- | Create geometric distribution
+-- | Create geometric distribution.
 geometric :: Double                -- ^ Success rate
           -> GeometricDistribution
 geometric x
