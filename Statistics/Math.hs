@@ -32,6 +32,8 @@ module Statistics.Math
     , log1p
     -- * References
     -- $references
+    -- ** Fast Poisson
+    , pois
     ) where
 
 import Data.Int (Int64)
@@ -347,6 +349,77 @@ log1p x
               -0.10324619158271569595141333961932e-15
              ]
 
+-- | Calculate the error term of the Stirling approximation
+-- stirlerr @n@ = @log(n!) - log(sqrt(2*pi*n)*(n/e)^n)
+-- algorithm by Catherine Loader, 2000 
+stirlerr :: Double -> Double
+stirlerr n 
+  | n <= 15.0   = if fromIntegral ((floor (n+n))::Int) == n+n 
+                     then sfe U.! (floor (n+n)) 
+                     else (logGamma (n+1.0)) - (n+0.5)*(log n) + n - m_ln_sqrt_2_pi
+  | n > 500     = (s0-s1/nn)/n
+  | n > 80      = (s0-(s1-s2/nn)/nn)/n
+  | n > 35      = (s0-(s1-(s2-s3/nn)/nn)/nn)/n
+  | otherwise   = (s0-(s1-(s2-(s3-s4/nn)/nn)/nn)/nn)/n
+  where
+    nn = n*n
+    s0 = 0.083333333333333333333        -- 1/12
+    s1 = 0.00277777777777777777778      -- 1/360
+    s2 = 0.00079365079365079365079365   -- 1/1260
+    s3 = 0.000595238095238095238095238  -- 1/1680
+    s4 = 0.0008417508417508417508417508 -- 1/1188
+    sfe = U.fromList [ 0.0, 
+                0.1534264097200273452913848,   0.0810614667953272582196702,
+                0.0548141210519176538961390,   0.0413406959554092940938221,
+                0.03316287351993628748511048,  0.02767792568499833914878929,
+                0.02374616365629749597132920,  0.02079067210376509311152277,
+                0.01848845053267318523077934,  0.01664469118982119216319487,
+                0.01513497322191737887351255,  0.01387612882307074799874573,
+                0.01281046524292022692424986,  0.01189670994589177009505572,
+                0.01110455975820691732662991,  0.010411265261972096497478567,
+                0.009799416126158803298389475, 0.009255462182712732917728637,
+                0.008768700134139385462952823, 0.008330563433362871256469318,
+                0.007934114564314020547248100, 0.007573675487951840794972024,
+                0.007244554301320383179543912, 0.006942840107209529865664152,
+                0.006665247032707682442354394, 0.006408994188004207068439631,
+                0.006171712263039457647532867, 0.005951370112758847735624416,
+                0.005746216513010115682023589, 0.005554733551962801371038690 ]
+
+
+-- | Calculate @np*D(x/np)@ where @D(e) = e log(e) + 1 - e@ 
+-- algorithm by Catherine Loader, 2000 
+bd0 :: Double -> Double -> Double 
+bd0 x np 
+  | isInfinite x || isInfinite np || np == 0.0     = m_NaN
+  | abs (x-np) < 0.1*(x+np)                        = bd0_ts x np
+  | otherwise                                      = bd0_direct x np
+  where 
+    bd0_direct x' np' = x' * (log (x'/np')) + np' - x' 
+    bd0_ts x' np' =
+        let v = (x'-np')/(x'+np')
+            s = (x'-np')*v
+            ej = 2*x'*v
+            vv = v*v
+            loop j ej0 s0 =  
+                let s1 = s0 + ej0/(2*j+1)
+                in  if s1 == s0 
+                      then s1
+                      else loop (j+1) (ej0*vv) s1
+        in loop 1 (ej*vv) s
+
+-- | fast accurate poisson distribution via Catherine Loader's algorithm.
+pois :: Double -> Double -> Double 
+pois lambda x
+  | lambda == 0            = if x == 0 then 1 else 0
+  | isInfinite lambda       = 0
+  | x < 0                  = 0
+  | x <= lambda * dbl_min  =  exp (-lambda)
+  | lambda < x * dbl_min   =  exp (-lambda + x*(log lambda) - (logGamma (x+1)))
+  | otherwise = exp (-(stirlerr x)-(bd0 x lambda) ) / (m_sqrt_2_pi * (sqrt x))
+  where
+    dbl_min = 2 ** (- 1021) :: Double
+
+
 -- $references
 --
 -- * Broucke, R. (1973) Algorithm 446: Ten subroutines for the
@@ -360,6 +433,9 @@ log1p x
 -- * Lanczos, C. (1964) A precision approximation of the gamma
 --   function.  /SIAM Journal on Numerical Analysis B/
 --   1:86&#8211;96. <http://www.jstor.org/stable/2949767>
+--
+-- * Loader, C (2000) Fast and Accurate Computation of Binomial
+--   Probabilities.
 --
 -- * Macleod, A.J. (1989) Algorithm AS 245: A robust and reliable
 --   algorithm for the logarithm of the gamma function.

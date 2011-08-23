@@ -6,6 +6,8 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import Statistics.Math
 import Statistics.Test.NonParametric
+import Statistics.Distribution
+import Statistics.Distribution.Gamma
 import Debug.Trace
 
 
@@ -156,12 +158,23 @@ wilcoxonPairTests = zipWith test [0..] testData ++
     to4dp tgt x = x >= tgt - 0.00005 && x < tgt + 0.00005
 
 ----------------------------------------------------------------
+-- Gamma distribution tests
+gammaDistributionTests :: [Test]
+gammaDistributionTests = 
+  [TestCase $ assertEqual "density (gammaDistr 150 1/150) 1 == 4.883311" 4.883311418525483 (density (gammaDistr 150 (1/150)) 1) 
+  ]
+
+----------------------------------------------------------------
 -- Full list of tests
 ----------------------------------------------------------------
 
 -- These tests may take a while to run
 allTests :: Test
-allTests = TestList $ mannWhitneyTests ++ wilcoxonPairTests ++ wilcoxonSumTests  {- ++ [
+allTests = TestList $  mannWhitneyTests 
+                    ++ wilcoxonPairTests 
+                    ++ wilcoxonSumTests
+                    ++ gammaDistributionTests
+                 {- ++ [
     TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
       all (< 1e-15) $ map factorialErr [0..170]
   , TestCase $ assertBool "Factorial is expected to be precise at 1e-15 level" $
