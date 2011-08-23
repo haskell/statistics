@@ -25,8 +25,8 @@ module Statistics.Distribution.Gamma
     ) where
 
 import Data.Typeable (Typeable)
-import Statistics.Constants (m_huge)
-import Statistics.Math (incompleteGamma, logGamma)
+import Statistics.Constants (m_huge, m_pos_inf, m_NaN)
+import Statistics.Math (incompleteGamma, pois)
 import qualified Statistics.Distribution as D
 
 -- | The gamma distribution.
@@ -63,8 +63,12 @@ instance D.Mean GammaDistribution where
 
 density :: GammaDistribution -> Double -> Double
 density (GD a l) x
-  | x <= 0    = 0
-  | otherwise = x ** (a-1) * exp (-x/l) / (exp (logGamma a) * l ** a)
+  | a < 0 || l <= 0   = m_NaN
+  | x <= 0            = 0
+  | a == 0            = if x == 0 then m_pos_inf else 0
+  | x == 0            = if a < 1 then m_pos_inf else if a > 1 then 0 else 1/l
+  | a < 1             = (pois (x/l) a)*a/x
+  | otherwise         = (pois (x/l) (a-1))/l
 {-# INLINE density #-}
 
 cumulative :: GammaDistribution -> Double -> Double
