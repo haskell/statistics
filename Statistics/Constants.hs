@@ -59,7 +59,7 @@ m_epsilon :: Double
 m_epsilon = encodeFloat (signif+1) expo - 1.0
     where (signif,expo) = decodeFloat (1.0::Double)
 
--- | @log(sqrt((2*pi)) / 2@
+-- | @log(sqrt((2*pi))@
 m_ln_sqrt_2_pi :: Double
 m_ln_sqrt_2_pi = 0.9189385332046727417803297364056176398613974736377834128171
 {-# INLINE m_ln_sqrt_2_pi #-}
