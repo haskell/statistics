@@ -56,6 +56,7 @@ library
     Statistics.Test.NonParametric
     Statistics.Types
   other-modules:
+    Statistics.Distribution.Poisson.Internal
     Statistics.Internal
   build-depends:
     aeson,

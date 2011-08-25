@@ -20,11 +20,13 @@ module Statistics.Distribution.Poisson
     , poisson
     -- * Accessors
     , poissonLambda
+    -- * References
+    -- $references
     ) where
 
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
-import Statistics.Math (logGamma, factorial)
+import qualified Statistics.Distribution.Poisson.Internal as I
 
 newtype PoissonDistribution = PD {
       poissonLambda :: Double
@@ -35,7 +37,8 @@ instance D.Distribution PoissonDistribution where
     {-# INLINE cumulative #-}
 
 instance D.DiscreteDistr PoissonDistribution where
-    probability = probability
+    probability (PD lambda) x = I.probability lambda (fromIntegral x)
+    {-# INLINE probability #-}
 
 instance D.Variance PoissonDistribution where
     variance = poissonLambda
@@ -45,19 +48,15 @@ instance D.Mean PoissonDistribution where
     mean = poissonLambda
     {-# INLINE mean #-}
 
--- | Create poisson distribution.
+-- | Create Poisson distribution.
 poisson :: Double -> PoissonDistribution
 poisson l
-  | l <= 0    = 
-    error $ "Statistics.Distribution.Poisson.poisson: lambda must be positive. Got " ++ show l
+  | l <= 0    = error $ "Statistics.Distribution.Poisson.poisson:\
+                        \ lambda must be positive. Got " ++ show l
   | otherwise = PD l
 {-# INLINE poisson #-}
 
-probability :: PoissonDistribution -> Int -> Double
-probability (PD l) n
-  | n < 0                   = 0
-  | l < 20 && n <= 100      = exp (-l) * l ** x / factorial n
-  | otherwise               = exp (x * log l - logGamma (x + 1) - l)
-    where
-      x = fromIntegral n
-{-# INLINE probability #-}
+-- $references
+--
+-- * Loader, C. (2000) Fast and Accurate Computation of Binomial
+--   Probabilities. <http://projects.scipy.org/scipy/raw-attachment/ticket/620/loader2000Fast.pdf>
