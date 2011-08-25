@@ -350,10 +350,10 @@ log1p x
              ]
 
 -- | Calculate the error term of the Stirling approximation
--- stirlerr @n@ = @log(n!) - log(sqrt(2*pi*n)*(n/e)^n)
+-- stirlingError @n@ = @log(n!) - log(sqrt(2*pi*n)*(n/e)^n)
 -- algorithm by Catherine Loader, 2000 
-stirlerr :: Double -> Double
-stirlerr n 
+stirlingError :: Double -> Double
+stirlingError n 
   | n <= 15.0   = if fromIntegral ((floor (n+n))::Int) == n+n 
                      then sfe U.! (floor (n+n)) 
                      else (logGamma (n+1.0)) - (n+0.5)*(log n) + n - m_ln_sqrt_2_pi
@@ -415,7 +415,7 @@ pois lambda x
   | x < 0                  = 0
   | x <= lambda * dbl_min  =  exp (-lambda)
   | lambda < x * dbl_min   =  exp (-lambda + x*(log lambda) - (logGamma (x+1)))
-  | otherwise = exp (-(stirlerr x)-(bd0 x lambda) ) / (m_sqrt_2_pi * (sqrt x))
+  | otherwise = exp (-(stirlingError x)-(bd0 x lambda) ) / (m_sqrt_2_pi * (sqrt x))
   where
     dbl_min = 2 ** (- 1021) :: Double
 
