@@ -1,8 +1,7 @@
-{-# LANGUAGE BangPatterns     #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE BangPatterns, FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Math
--- Copyright : (c) 2009 Bryan O'Sullivan
+-- Copyright : (c) 2009, 2011 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
@@ -388,26 +387,23 @@ stirlingError n
                 0.005746216513010115682023589, 0.005554733551962801371038690 ]
 
 
--- | Calculate @np*D(x/np)@ where @D(e) = e log(e) + 1 - e@ 
--- algorithm by Catherine Loader, 2000 
-bd0 :: Double -> Double -> Double 
+-- | Evaluate the deviance term @x log(x/np) + np - x@.
+bd0 :: Double                   -- ^ @x@
+    -> Double                   -- ^ @np@
+    -> Double 
 bd0 x np 
-  | isInfinite x || isInfinite np || np == 0.0     = m_NaN
-  | abs (x-np) < 0.1*(x+np)                        = bd0_ts x np
-  | otherwise                                      = bd0_direct x np
+  | isInfinite x || isInfinite np || np == 0 = m_NaN
+  | abs x_np >= 0.1*(x+np)                   = x * log (x/np) - x_np
+  | otherwise                                = loop 1 (ej0*vv) s0
   where 
-    bd0_direct x' np' = x' * (log (x'/np')) + np' - x' 
-    bd0_ts x' np' =
-        let v = (x'-np')/(x'+np')
-            s = (x'-np')*v
-            ej = 2*x'*v
-            vv = v*v
-            loop j ej0 s0 =  
-                let s1 = s0 + ej0/(2*j+1)
-                in  if s1 == s0 
-                      then s1
-                      else loop (j+1) (ej0*vv) s1
-        in loop 1 (ej*vv) s
+    x_np = x - np
+    v    = x_np / (x+np)
+    s0   = x_np * v
+    ej0  = 2*x*v
+    vv   = v*v
+    loop j ej s = case s + ej/(2*j+1) of
+                    s' | s' == s   -> s'
+                       | otherwise -> loop (j+1) (ej*vv) s'
 
 -- | fast accurate poisson distribution via Catherine Loader's algorithm.
 pois :: Double -> Double -> Double 
@@ -436,8 +432,8 @@ pois lambda x
 --   function.  /SIAM Journal on Numerical Analysis B/
 --   1:86&#8211;96. <http://www.jstor.org/stable/2949767>
 --
--- * Loader, C (2000) Fast and Accurate Computation of Binomial
---   Probabilities.
+-- * Loader, C. (2000) Fast and Accurate Computation of Binomial
+--   Probabilities. <http://projects.scipy.org/scipy/raw-attachment/ticket/620/loader2000Fast.pdf>
 --
 -- * Macleod, A.J. (1989) Algorithm AS 245: A robust and reliable
 --   algorithm for the logarithm of the gamma function.
