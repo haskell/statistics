@@ -349,14 +349,16 @@ log1p x
               -0.10324619158271569595141333961932e-15
              ]
 
--- | Calculate the error term of the Stirling approximation
--- stirlingError @n@ = @log(n!) - log(sqrt(2*pi*n)*(n/e)^n)
--- algorithm by Catherine Loader, 2000 
+-- | Calculate the error term of the Stirling approximation.  This is
+-- only defined for non-negative values.
+--
+-- > stirlingError @n@ = @log(n!) - log(sqrt(2*pi*n)*(n/e)^n)
 stirlingError :: Double -> Double
 stirlingError n 
-  | n <= 15.0   = if fromIntegral ((floor (n+n))::Int) == n+n 
-                     then sfe U.! (floor (n+n)) 
-                     else (logGamma (n+1.0)) - (n+0.5)*(log n) + n - m_ln_sqrt_2_pi
+  | n <= 15.0   = case properFraction (n+n) of
+                    (i,0) -> sfe `U.unsafeIndex` i
+                    _     -> logGamma (n+1.0) - (n+0.5) * log n + n -
+                             m_ln_sqrt_2_pi
   | n > 500     = (s0-s1/nn)/n
   | n > 80      = (s0-(s1-s2/nn)/nn)/n
   | n > 35      = (s0-(s1-(s2-s3/nn)/nn)/nn)/n
