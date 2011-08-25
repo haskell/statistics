@@ -35,7 +35,8 @@ data GammaDistribution = GD {
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
     } deriving (Eq, Read, Show, Typeable)
 
--- | Create gamma distrivution. Both shape and scale parameters must be positive.
+-- | Create gamma distribution. Both shape and scale parameters must
+-- be positive.
 gammaDistr :: Double            -- ^ Shape parameter. /k/
            -> Double            -- ^ Scale parameter, &#977;.
            -> GammaDistribution
