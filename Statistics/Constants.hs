@@ -13,6 +13,7 @@ module Statistics.Constants
     (
       m_epsilon
     , m_huge
+    , m_tiny
     , m_1_sqrt_2
     , m_2_sqrt_pi
     , m_ln_sqrt_2_pi
@@ -28,6 +29,10 @@ module Statistics.Constants
 m_huge :: Double
 m_huge = 1.7976931348623157e308
 {-# INLINE m_huge #-}
+
+m_tiny :: Double
+m_tiny = 2.2250738585072014e-308
+{-# INLINE m_tiny #-}
 
 -- | The largest 'Int' /x/ such that 2**(/x/-1) is approximately
 -- representable as a 'Double'.

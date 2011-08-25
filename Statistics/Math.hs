@@ -29,10 +29,11 @@ module Statistics.Math
     , logGammaL
     -- ** Logarithm
     , log1p
+    -- ** Stirling's approximation
+    , stirlingError
+    , bd0
     -- * References
     -- $references
-    -- ** Fast Poisson
-    , pois
     ) where
 
 import Data.Int (Int64)
@@ -404,19 +405,6 @@ bd0 x np
     loop j ej s = case s + ej/(2*j+1) of
                     s' | s' == s   -> s'
                        | otherwise -> loop (j+1) (ej*vv) s'
-
--- | fast accurate poisson distribution via Catherine Loader's algorithm.
-pois :: Double -> Double -> Double 
-pois lambda x
-  | lambda == 0            = if x == 0 then 1 else 0
-  | isInfinite lambda       = 0
-  | x < 0                  = 0
-  | x <= lambda * dbl_min  =  exp (-lambda)
-  | lambda < x * dbl_min   =  exp (-lambda + x*(log lambda) - (logGamma (x+1)))
-  | otherwise = exp (-(stirlingError x)-(bd0 x lambda) ) / (m_sqrt_2_pi * (sqrt x))
-  where
-    dbl_min = 2 ** (- 1021) :: Double
-
 
 -- $references
 --
