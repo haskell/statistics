@@ -61,7 +61,7 @@ resample gen ests numResamples samples = do
             zipWith (+) (replicate numCapabilities q)
                         (replicate r 1 ++ repeat 0)
           where (q,r) = numResamples `quotRem` numCapabilities
-  results <- mapM (const (MU.new numResamples)) $ ests
+  results <- mapM (const (MU.new numResamples)) ests
   done <- newChan
   forM_ (zip ixs (tail ixs)) $ \ (start,!end) -> do
     gen' <- initialize =<< (uniformVector gen 256 :: IO (U.Vector Word32))

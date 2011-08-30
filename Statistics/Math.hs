@@ -124,7 +124,7 @@ factorial n
     | n < 0     = error "Statistics.Math.factorial: negative input"
     | n <= 1    = 1
     | n <= 14   = fini . U.foldl' goLong (F 1 1) $ ns
-    | otherwise = U.foldl' goDouble 1 $ ns
+    | otherwise = U.foldl' goDouble 1 ns
     where goDouble t k = t * fromIntegral k
           goLong (F z x) _ = F (z * x') x'
               where x' = x + 1
