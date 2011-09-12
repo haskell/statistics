@@ -29,14 +29,14 @@ import Control.Arrow       ((***))
 import Data.Function       (on)
 import Data.List           (findIndex, groupBy, partition, sortBy)
 import Data.Ord            (comparing)
-import qualified Data.Vector.Unboxed as U (length, toList, zipWith, fromList)
+import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
 import Statistics.Distribution        (quantile)
 import Statistics.Distribution.Normal (standard)
 import Statistics.Math                (choose)
 import Statistics.Types               (Sample)
-
+import qualified Statistics.Function as SF
 
 type AbsoluteRank = Double
 type SignedRank   = Double
@@ -53,21 +53,20 @@ type SignedRank   = Double
 -- and the related functions for testing significance, but this function is exposed
 -- for completeness.
 wilcoxonRankSums :: Sample -> Sample -> (Double, Double)
-wilcoxonRankSums xs1 xs2
-  = ((sum . map fst) *** (sum . map fst)) . -- sum the ranks per group
-    partition snd . -- split them back into left and right
-    concatMap mergeRanks . -- merge the ranks of duplicates
-    groupBy ((==) `on` (snd . snd)) . -- group duplicate values
-    zip [1..] . -- give them ranks (duplicates receive different ranks here)
-    sortBy (comparing snd) $ -- sort by their values
-    zip (repeat True) (U.toList xs1) ++ zip (repeat False) (U.toList xs2)
-      -- Tag each sample with an identifier before we merge them
+wilcoxonRankSums xs1 xs2 = ( U.sum $ U.map snd ranks1 
+                           , U.sum $ U.map snd ranks2
+                           )
   where
-    mergeRanks :: [(AbsoluteRank, (Bool, Double))] -> [(AbsoluteRank, Bool)]
-    mergeRanks xs = zip (repeat rank) (map (fst . snd) xs)
-      where
-        -- Ranks are merged by assigning them all the average of their ranks:
-        rank = sum (map fst xs) / fromIntegral (length xs)
+    -- Ranks for each sample
+    (ranks1,ranks2) = U.unstablePartition fst $ U.zip tags (rank joinSample)
+    -- Sorted and tagged sample
+    (tags,joinSample) = U.unzip
+                      $ SF.sortBy (comparing snd)
+                      $ tagSample True xs1 U.++ tagSample False xs2
+    -- Add tag to a sample
+    tagSample t = U.map ((,) t)
+
+
 
 -- | The Mann-Whitney U Test.
 --
