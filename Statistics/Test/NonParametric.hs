@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Test.NonParametric
 -- Copyright : (c) 2010 Neil Brown
@@ -29,6 +30,7 @@ import Data.Function       (on)
 import Data.List           (findIndex, groupBy, partition, sortBy)
 import Data.Ord            (comparing)
 import qualified Data.Vector.Unboxed as U (length, toList, zipWith, fromList)
+import qualified Data.Vector.Generic as G
 
 import Statistics.Distribution        (quantile)
 import Statistics.Distribution.Normal (standard)
@@ -330,3 +332,32 @@ wilcoxonMatchedPairSignificance :: Int -- ^ The sample size
 wilcoxonMatchedPairSignificance sampleSize rank
   = (summedCoefficients sampleSize !! floor rank) / 2 ** fromIntegral sampleSize
 
+
+----------------------------------------------------------------
+-- Helpers
+
+-- Private data type for unfolding
+data Rank v a = Rank { rankCnt :: Int        -- Number of ranks to return
+                     , rankVal :: Double     -- Rank to return
+                     , rankNum :: Double     -- Current rank
+                     , rankVec :: v a        -- Remaining vector
+                     }
+
+-- Calculate rank of sample. Sample should be already sorted
+rank :: (G.Vector v a, G.Vector v Double, Eq a) => v a -> v Double
+rank vec = G.unfoldr go (Rank 0 (-1) 1 vec)
+  where
+    go (Rank 0 _ r v)
+      | G.null v  = Nothing
+      | otherwise =
+          case G.length h of
+            1 -> Just (r, (Rank 0 0 (r+1) rest))
+            n -> go $ Rank { rankCnt = n
+                           , rankVal = 0.5 * (r*2 + fromIntegral (n-1))
+                           , rankNum = r + fromIntegral n
+                           , rankVec = rest
+                           }
+          where
+            (h,rest) = G.span (== (G.head v)) v
+    go (Rank n val r v) = Just (val, (Rank (n-1) val r v))
+{-# INLINE rank #-}
