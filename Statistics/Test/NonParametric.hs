@@ -10,24 +10,30 @@
 -- Functions for performing non-parametric tests (i.e. tests without an assumption
 -- of underlying distribution).
 module Statistics.Test.NonParametric
-  (-- * Mann-Whitney U test (non-parametric equivalent to the independent t-test)
-  mannWhitneyU, mannWhitneyUCriticalValue, mannWhitneyUSignificant,
+  ( -- * Mann-Whitney U test (non-parametric equivalent to the independent t-test)
+    mannWhitneyU
+  , mannWhitneyUCriticalValue
+  , mannWhitneyUSignificant
    -- * Wilcoxon signed-rank matched-pair test (non-parametric equivalent to the paired t-test)
-  wilcoxonMatchedPairSignedRank, wilcoxonMatchedPairSignificant, wilcoxonMatchedPairSignificance, wilcoxonMatchedPairCriticalValue,
+  , wilcoxonMatchedPairSignedRank
+  , wilcoxonMatchedPairSignificant
+  , wilcoxonMatchedPairSignificance
+  , wilcoxonMatchedPairCriticalValue
   -- * Wilcoxon rank sum test
-  wilcoxonRankSums) where
+  , wilcoxonRankSums
+  ) where
 
 import Control.Applicative ((<$>))
-import Control.Arrow ((***))
-import Data.Function (on)
-import Data.List (findIndex, groupBy, partition, sortBy)
-import Data.Ord (comparing)
-import qualified Data.Vector.Unboxed as U (length, toList, zipWith)
+import Control.Arrow       ((***))
+import Data.Function       (on)
+import Data.List           (findIndex, groupBy, partition, sortBy)
+import Data.Ord            (comparing)
+import qualified Data.Vector.Unboxed as U (length, toList, zipWith, fromList)
 
-import Statistics.Distribution (quantile)
+import Statistics.Distribution        (quantile)
 import Statistics.Distribution.Normal (standard)
-import Statistics.Math (choose)
-import Statistics.Types (Sample)
+import Statistics.Math                (choose)
+import Statistics.Types               (Sample)
 
 -- | The Wilcoxon Rank Sums Test.
 --
