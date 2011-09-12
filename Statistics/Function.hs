@@ -14,6 +14,7 @@ module Statistics.Function
     (
       minMax
     , sort
+    , sortBy
     , partialSort
     , indexed
     , indices
@@ -36,6 +37,11 @@ import qualified Data.Vector.Generic.Mutable as M
 sort :: (Ord e, G.Vector v e) => v e -> v e
 sort = modify I.sort
 {-# INLINE sort #-}
+
+-- | Sort a vector using a custom ordering.
+sortBy :: (G.Vector v e) => I.Comparison e -> v e -> v e
+sortBy f = modify $ I.sortBy f
+{-# INLINE sortBy #-}
 
 -- | Partially sort a vector, such that the least /k/ elements will be
 -- at the front.
