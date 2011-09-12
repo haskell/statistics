@@ -35,6 +35,10 @@ import Statistics.Distribution.Normal (standard)
 import Statistics.Math                (choose)
 import Statistics.Types               (Sample)
 
+
+type AbsoluteRank = Double
+type SignedRank   = Double
+
 -- | The Wilcoxon Rank Sums Test.
 --
 -- This test calculates the sum of ranks for the given two samples.  The samples
@@ -230,9 +234,6 @@ wilcoxonMatchedPairSignedRank a b
       where
         -- Ranks are merged by assigning them all the average of their ranks:
         rank = sum (map fst xs) / fromIntegral (length xs)
-
-type AbsoluteRank = Double
-type SignedRank = Double
 
 -- | The coefficients for x^0, x^1, x^2, etc, in the expression
 -- \prod_{r=1}^s (1 + x^r).  See the Mitic paper for details.
