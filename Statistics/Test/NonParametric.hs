@@ -53,12 +53,11 @@ type SignedRank   = Double
 -- and the related functions for testing significance, but this function is exposed
 -- for completeness.
 wilcoxonRankSums :: Sample -> Sample -> (Double, Double)
-wilcoxonRankSums xs1 xs2 = ( U.sum $ U.map snd ranks1
-                           , U.sum $ U.map snd ranks2
+wilcoxonRankSums xs1 xs2 = ( U.sum ranks1 , U.sum ranks2
                            )
   where
     -- Ranks for each sample
-    (ranks1,ranks2) = U.unstablePartition fst $ U.zip tags (rank (==) joinSample)
+    (ranks1,ranks2) = splitByTags $ U.zip tags (rank (==) joinSample)
     -- Sorted and tagged sample
     (tags,joinSample) = U.unzip
                       $ SF.sortBy (comparing snd)
