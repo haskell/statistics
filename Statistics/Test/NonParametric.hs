@@ -114,7 +114,7 @@ mannWhitneyUCriticalValue (m, n) p
   | p' <= 1 = Nothing
   | m < 1 || n < 1 = Nothing
   | otherwise = findIndex (>= p') $ let
-     firstHalf = map fromIntegral $ take (((m*n)+1)`div`2) $ tail $ alookup !! (m+n-2) !! (min m n - 1)
+     firstHalf = take (((m*n)+1)`div`2) $ tail $ alookup !! (m+n-2) !! (min m n - 1)
        {- Original: [fromIntegral $ a k (m+n) (min m n) | k <- [1..m*n]] -}
      secondHalf
        | even (m*n) = reverse firstHalf
@@ -135,32 +135,39 @@ a u bigN m
   where smalln = bigN - m
 -}
 
--- Memoised version of the original a function, above.
+-- Memoised version of the original a function, above. 
+--
+-- Doubles are stored to avoid integer overflow. 32-bit Ints begin to
+-- overflow for bigN as small as 33 (64-bit one at 66) while Double to
+-- go to infinity till bigN=1029
+-- 
 --
 -- outer list is indexed by big N - 2
 -- inner list by (m-1) (we know m < bigN)
 -- innermost list by u
 --
 -- So: (alookup !! (bigN - 2) !! (m - 1) ! u) == a u bigN m
-alookup :: [[[Int]]]
+alookup :: [[[Double]]]
 alookup = gen 2 [1 : repeat 2]
   where
     gen bigN predBigNList
-       = let bigNlist = [ let limit = round $ bigN `choose` m
-                          in  [ amemoed u m | u <- [0 .. m*(bigN-m)] ] ++ repeat limit
+       = let bigNlist = [ [ amemoed u m
+                          | u <- [0 .. m*(bigN-m)]
+                          ] ++ repeat (bigN `choose` m)
                         | m <- [1 .. (bigN-1)]] -- has bigN-1 elements
          in bigNlist : gen (bigN+1) bigNlist
       where
-        amemoed :: Int -> Int -> Int
+        amemoed :: Int -> Int -> Double
         amemoed u m
-          | m == 1 || smalln == 1 = u + 1
+          | m == 1 || n == 1 = fromIntegral (u + 1)
           | otherwise = let (predmList : mList : _) = drop (m-2) predBigNList -- m-2 because starts at 1
                         -- We know that predBigNList has bigN - 2 elements
-                        -- (and we know that smalln > 1 therefore bigN > m + 1)
+                        -- (and we know that n > 1 therefore bigN > m + 1)
                         -- So bigN - 2 >= m, i.e. predBigNList must have at least m elements
                         -- elements, so dropping (m-2) must leave at least 2
-                        in (mList !! u) + (if u < smalln then 0 else predmList !! (u - smalln))
-          where smalln = bigN - m
+                        in (mList !! u) + (if u < n then 0 else predmList !! (u - n))
+          where n = bigN - m
+
 
 -- | Calculates whether the Mann Whitney U test is significant.
 --
