@@ -124,15 +124,18 @@ mannWhitneyUCriticalValue (m, n) p
     mnCn = (m+n) `choose` n
     p' = mnCn * p
 
-{- Original function, without memoisation, from Cheung and Klotz:
-a :: Int -> Int -> Int -> Int
+{-
+-- Original function, without memoisation, from Cheung and Klotz:
+-- Double is needed to avoid integer overflows.
+a :: Int -> Int -> Int -> Double
 a u bigN m
-      | u < 0 = 0
-      | u >= (m * smalln) = floor $ fromIntegral bigN `choose` fromIntegral m
-      | m == 1 || smalln == 1 = u + 1
-      | otherwise = a u (bigN - 1) m
-                  + a (u - smalln) (bigN - 1) (m-1)
-  where smalln = bigN - m
+  | u < 0            = 0
+  | u >= m * n       = bigN `choose` m
+  | m == 1 || n == 1 = fromIntegral (u + 1)
+  | otherwise        = a  u      (bigN - 1)  m
+                     + a (u - n) (bigN - 1) (m-1)
+  where
+    n = bigN - m
 -}
 
 -- Memoised version of the original a function, above. 
