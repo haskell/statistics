@@ -138,17 +138,17 @@ a u bigN m
 -- Memoised version of the original a function, above.
 --
 -- outer list is indexed by big N - 2
--- inner list by m (we know m < bigN)
+-- inner list by (m-1) (we know m < bigN)
 -- innermost list by u
 --
--- So: (alookup ! (bigN - 2) ! m ! u) == a u bigN m
+-- So: (alookup !! (bigN - 2) !! (m - 1) ! u) == a u bigN m
 alookup :: [[[Int]]]
 alookup = gen 2 [1 : repeat 2]
   where
     gen bigN predBigNList
-       = let bigNlist = [ let limit = round $ fromIntegral bigN `choose` fromIntegral m
-                          in [amemoed u m | u <- [0..m*(bigN-m)]] ++ repeat limit
-                        | m <- [1..(bigN-1)]] -- has bigN-1 elements
+       = let bigNlist = [ let limit = round $ bigN `choose` m
+                          in  [ amemoed u m | u <- [0 .. m*(bigN-m)] ] ++ repeat limit
+                        | m <- [1 .. (bigN-1)]] -- has bigN-1 elements
          in bigNlist : gen (bigN+1) bigNlist
       where
         amemoed :: Int -> Int -> Int
