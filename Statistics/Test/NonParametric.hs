@@ -111,18 +111,17 @@ mannWhitneyUCriticalValue :: (Int, Int) -- ^ The sample size
                           -> Double     -- ^ The p-value (e.g. 0.05) for which you want the critical value.
                           -> Maybe Int  -- ^ The critical value (of U).
 mannWhitneyUCriticalValue (m, n) p
-  | p' <= 1 = Nothing
-  | m < 1 || n < 1 = Nothing
-  | otherwise = findIndex (>= p') $ let
-     firstHalf = take (((m*n)+1)`div`2) $ tail $ alookup !! (m+n-2) !! (min m n - 1)
-       {- Original: [fromIntegral $ a k (m+n) (min m n) | k <- [1..m*n]] -}
-     secondHalf
-       | even (m*n) = reverse firstHalf
-       | otherwise = tail $ reverse firstHalf
-     in firstHalf ++ map (mnCn -) secondHalf
+  | m < 1 || n < 1 = Nothing    -- Sample must be nonempty
+  | p  >= 1        = Nothing    -- Nonsensical p-value
+  | p' <= 1        = Nothing    -- p-value is too small. Null hypothesys couln't be disproved
+  | otherwise      = findIndex (>= p')
+                   $ take (m*n)
+                   $ tail
+                   $ alookup !! (m+n-2) !! (min m n - 1)
   where
     mnCn = (m+n) `choose` n
-    p' = mnCn * p
+    p'   = mnCn * p
+
 
 {-
 -- Original function, without memoisation, from Cheung and Klotz:
