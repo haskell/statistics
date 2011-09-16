@@ -193,20 +193,19 @@ mannWhitneyUSignificant ::
                       --   False if it is not, and Nothing if the sample
                       --   was too small to make a decision.
 mannWhitneyUSignificant oneTail (in1, in2) p (u1, u2)
-  | in1 > 20 || in2 > 20 --Use normal approximation
---     = (n1*(n1+1))/2 - u1 - (n1*(n1+n2))/2
---     = (n1*(n1+1))/2 - (-2*u1 + n1*(n1+n2))/2
---     = (n1*(n1+1) - 2*u1 + n1*(n1+n2))/2
---     = (n1*(2*n1 + n2 + 1) - 2*u1)/2
-       = let num = (n1*(2*n1 + n2 + 1)) / 2 - u1
-             denom = sqrt $ n1*n2*(n1 + n2 + 1) / 12
-             z = num / denom
-             zcrit = quantile standard (1 - if oneTail then p else p/2)
-         in Just $ (if oneTail then z else abs z) > zcrit
+   --Use normal approximation
+  | in1 > 20 || in2 > 20 =
+    let mean  = n1 * n2 / 2
+        sigma = sqrt $ n1*n2*(n1 + n2 + 1) / 12
+        z     = (mean - u1) / sigma
+    in Just $ if oneTail
+              then z     > quantile standard  p
+              else abs z > quantile standard (p/2)
+  -- Use exact critical value
   | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) p
                    return $ if oneTail
-                              then u2 <= crit
-                              else min u1 u2 <= crit
+                            then u2 <= crit
+                            else min u1 u2 <= crit
   where
     n1 = fromIntegral in1
     n2 = fromIntegral in2
