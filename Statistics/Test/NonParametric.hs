@@ -58,7 +58,7 @@ wilcoxonRankSums xs1 xs2 = ( U.sum $ U.map snd ranks1
                            )
   where
     -- Ranks for each sample
-    (ranks1,ranks2) = U.unstablePartition fst $ U.zip tags (rank joinSample)
+    (ranks1,ranks2) = U.unstablePartition fst $ U.zip tags (rank (==) joinSample)
     -- Sorted and tagged sample
     (tags,joinSample) = U.unzip
                       $ SF.sortBy (comparing snd)
@@ -223,31 +223,18 @@ mannWhitneyUSignificant oneTail (in1, in2) p (u1, u2)
 --
 -- Note that: wilcoxonMatchedPairSignedRank == (\(x, y) -> (y, x)) . flip wilcoxonMatchedPairSignedRank
 wilcoxonMatchedPairSignedRank :: Sample -> Sample -> (Double, Double)
-wilcoxonMatchedPairSignedRank a b
-  -- Best to read this function bottom to top:
-  = (sum *** sum) . -- Sum the positive and negative ranks separately.
-    partition (> 0) . -- Split the ranks into positive and negative.  None of the
-                      -- ranks can be zero.
-    concatMap mergeRanks . -- Then merge the ranks for any duplicates by taking
-                           -- the average of the ranks, and also make the rank
-                           -- into a signed rank
-    groupBy ((==) `on` abs . snd) . -- Now group any duplicates together
-                                    -- Note: duplicate means same absolute difference
-    zip [1..] . -- Add a rank (note: at this stage, duplicates will get different ranks)
-    dropWhile (== 0) . -- Remove any differences that are zero (i.e. ties in the
-                       -- original data).  We know they must be at the head of
-                       -- the list because we just sorted it, so dropWhile not filter
-    sortBy (comparing abs) . -- Sort the differences by absolute difference
-    U.toList $ -- Convert to a list (could be done later in the pipeline?)
-    U.zipWith (-) a b -- Work out differences
+wilcoxonMatchedPairSignedRank a b = (          U.sum ranks1
+                                    , negate $ U.sum ranks2
+                                    )
   where
-    mergeRanks :: [(AbsoluteRank, Double)] -> [SignedRank]
-    mergeRanks xs = map ((* rank) . signum . snd) xs
-      -- Note that signum above will always be 1 or -1; any zero differences will
-      -- have been removed before this function is called.
-      where
-        -- Ranks are merged by assigning them all the average of their ranks:
-        rank = sum (map fst xs) / fromIntegral (length xs)
+    (ranks1, ranks2) = splitByTags
+                     $ U.zip tags (rank ((==) `on` abs) diffs)
+    (tags,diffs) = U.unzip
+                 $ U.map (\x -> (x>0 , x))   -- Attack tags to distribution elements
+                 $ U.filter  (/= 0.0)        -- Remove equal elements
+                 $ SF.sortBy (comparing abs) -- Sort the differences by absolute difference
+                 $ U.zipWith (-) a b         -- Work out differences
+
 
 -- | The coefficients for x^0, x^1, x^2, etc, in the expression
 -- \prod_{r=1}^s (1 + x^r).  See the Mitic paper for details.
@@ -358,10 +345,13 @@ data Rank v a = Rank { rankCnt :: Int        -- Number of ranks to return
                      }
 
 -- Calculate rank of sample. Sample should be already sorted
-rank :: (G.Vector v a, G.Vector v Double, Eq a) => v a -> v Double
-rank vec = G.unfoldr go (Rank 0 (-1) 1 vec)
+rank :: (G.Vector v a, G.Vector v Double, Eq a)
+     => (a -> a -> Bool)        -- Equivalence relation
+     -> v a                     -- Vector to rank
+     -> v Double
+rank eq vec = G.unfoldr go (Rank 0 (-1) 1 vec)
   where
-    go (Rank 0 _ r v)
+    go rr@(Rank 0 _ r v)
       | G.null v  = Nothing
       | otherwise =
           case G.length h of
@@ -372,6 +362,14 @@ rank vec = G.unfoldr go (Rank 0 (-1) 1 vec)
                            , rankVec = rest
                            }
           where
-            (h,rest) = G.span (== (G.head v)) v
+            (h,rest) = G.span (eq $ G.head v) v
     go (Rank n val r v) = Just (val, (Rank (n-1) val r v))
 {-# INLINE rank #-}
+
+
+-- Split tagged vector
+splitByTags :: (G.Vector v a, G.Vector v (Bool,a)) => v (Bool,a) -> (v a, v a)
+splitByTags vs = (G.map snd a, G.map snd b)
+  where
+    (a,b) = G.unstablePartition fst vs
+{-# INLINE splitByTags #-}
