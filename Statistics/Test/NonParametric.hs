@@ -163,13 +163,17 @@ alookup = gen 2 [1 : repeat 2]
         amemoed :: Int -> Int -> Double
         amemoed u m
           | m == 1 || n == 1 = fromIntegral (u + 1)
-          | otherwise = let (predmList : mList : _) = drop (m-2) predBigNList -- m-2 because starts at 1
-                        -- We know that predBigNList has bigN - 2 elements
-                        -- (and we know that n > 1 therefore bigN > m + 1)
-                        -- So bigN - 2 >= m, i.e. predBigNList must have at least m elements
-                        -- elements, so dropping (m-2) must leave at least 2
-                        in (mList !! u) + (if u < n then 0 else predmList !! (u - n))
-          where n = bigN - m
+          | otherwise        = mList !! u
+                             + if u < n then 0 else predmList !! (u-n)
+          where
+            n = bigN - m
+            (predmList : mList : _) = drop (m-2) predBigNList
+            -- Lists for m-1 and m respectively. i-th list correspond to m=i+1
+            --
+            -- We know that predBigNList has bigN - 2 elements
+            -- (and we know that n > 1 therefore bigN > m + 1)
+            -- So bigN - 2 >= m, i.e. predBigNList must have at least m elements
+            -- elements, so dropping (m-2) must leave at least 2
 
 
 -- | Calculates whether the Mann Whitney U test is significant.
