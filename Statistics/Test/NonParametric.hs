@@ -10,6 +10,10 @@
 --
 -- Functions for performing non-parametric tests (i.e. tests without an assumption
 -- of underlying distribution).
+
+-- HADDOCK NOTE
+--   &#8321; is 1 subscript
+--   &#8322; is 2 subscript
 module Statistics.Test.NonParametric
   ( -- * Mann-Whitney U test
     mannWhitneyUtest
@@ -47,8 +51,8 @@ import Statistics.Function            (sortBy)
 -- are ordered, and assigned ranks (ties are given their average rank), then these
 -- ranks are summed for each sample.
 --
--- The return value is (W_1, W_2) where W_1 is the sum of ranks of the first sample
--- and W_2 is the sum of ranks of the second sample.  This test is trivially transformed
+-- The return value is (W&#8321;, W&#8322;) where W&#8321; is the sum of ranks of the first sample
+-- and W&#8322; is the sum of ranks of the second sample.  This test is trivially transformed
 -- into the Mann-Whitney U test.  You will probably want to use 'mannWhitneyU'
 -- and the related functions for testing significance, but this function is exposed
 -- for completeness.
@@ -74,14 +78,16 @@ wilcoxonRankSums xs1 xs2 = ( U.sum ranks1 , U.sum ranks2
 -- the Wilcoxon's rank sum test (which is provided as 'wilcoxonRankSums').
 -- The Mann-Whitney U is a simple transform of Wilcoxon's rank sum test.
 --
--- Again confusingly, different sources state reversed definitions for U_1 and U_2,
--- so it is worth being explicit about what this function returns.  Given two samples,
--- the first, xs_1, of size n_1 and the second, xs_2, of size n_2, this function
--- returns (U_1, U_2) where U_1 = W_1 - (n_1*(n_1+1))\/2 and U_2 = W_2 - (n_2*(n_2+1))\/2,
--- where (W_1, W_2) is the return value of @wilcoxonRankSums xs1 xs2@.
+-- Again confusingly, different sources state reversed definitions for U&#8321;
+-- and U&#8322;, so it is worth being explicit about what this function returns.
+-- Given two samples, the first, xs&#8321;, of size n&#8321; and the second, xs&#8322;,
+-- of size n&#8322;, this function returns (U&#8321;, U&#8322;)
+-- where U&#8321; = W&#8321; - (n&#8321;(n&#8321;+1))\/2
+-- and U&#8322; = W&#8322; - (n&#8322;(n&#8322;+1))\/2,
+-- where (W&#8321;, W&#8322;) is the return value of @wilcoxonRankSums xs1 xs2@.
 --
--- Some sources instead state that U_1 and U_2 should be the other way round, often
--- expressing this using U_1' = n_1*n_2 - U_1 (since U_1 + U_2 = n_1*n*2).
+-- Some sources instead state that U&#8321; and U&#8322; should be the other way round, often
+-- expressing this using U&#8321;' = n&#8321;n&#8322; - U&#8321; (since U&#8321; + U&#8322; = n&#8321;n&#8322;).
 --
 -- All of which you probably don't care about if you just feed this into 'mannWhitneyUSignificant'.
 mannWhitneyU :: Sample -> Sample -> (Double, Double)
@@ -182,12 +188,12 @@ alookup = gen 2 [1 : repeat 2]
 --
 -- If you use a one-tailed test, the test indicates whether the first sample is
 -- significantly larger than the second.  If you want the opposite, simply reverse
--- the order in both the sample size and the (U_1, U_2) pairs.
+-- the order in both the sample size and the (U&#8321;, U&#8322;) pairs.
 mannWhitneyUSignificant ::
      Bool             -- ^ Perform one-tailed test (see description above).
-  -> (Int, Int)       -- ^ The sample size from which the (U_1,U_2) values were derived.
+  -> (Int, Int)       -- ^ The samples' size from which the (U&#8321;,U&#8322;) values were derived.
   -> Double           -- ^ The p-value at which to test (e.g. 0.05)
-  -> (Double, Double) -- ^ The (U_1, U_2) values from 'mannWhitneyU'.
+  -> (Double, Double) -- ^ The (U&#8321;, U&#8322;) values from 'mannWhitneyU'.
   -> Maybe Bool       -- ^ Just True if the test is significant, Just
                       --   False if it is not, and Nothing if the sample
                       --   was too small to make a decision.
