@@ -35,7 +35,7 @@ import Statistics.Distribution        (quantile)
 import Statistics.Distribution.Normal (standard)
 import Statistics.Math                (choose)
 import Statistics.Types               (Sample)
-import qualified Statistics.Function as SF
+import Statistics.Function            (sortBy)
 
 
 
@@ -58,7 +58,7 @@ wilcoxonRankSums xs1 xs2 = ( U.sum ranks1 , U.sum ranks2
     (ranks1,ranks2) = splitByTags $ U.zip tags (rank (==) joinSample)
     -- Sorted and tagged sample
     (tags,joinSample) = U.unzip
-                      $ SF.sortBy (comparing snd)
+                      $ sortBy (comparing snd)
                       $ tagSample True xs1 U.++ tagSample False xs2
     -- Add tag to a sample
     tagSample t = U.map ((,) t)
@@ -229,7 +229,7 @@ wilcoxonMatchedPairSignedRank a b = (          U.sum ranks1
     (tags,diffs) = U.unzip
                  $ U.map (\x -> (x>0 , x))   -- Attack tags to distribution elements
                  $ U.filter  (/= 0.0)        -- Remove equal elements
-                 $ SF.sortBy (comparing abs) -- Sort the differences by absolute difference
+                 $ sortBy (comparing abs)    -- Sort the differences by absolute difference
                  $ U.zipWith (-) a b         -- Work out differences
 
 
