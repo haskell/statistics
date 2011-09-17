@@ -28,6 +28,8 @@ module Statistics.Test.NonParametric
   , wilcoxonMatchedPairSignificant
   , wilcoxonMatchedPairSignificance
   , wilcoxonMatchedPairCriticalValue
+    -- * Data types
+  , TestType(..)
   ) where
 
 import Control.Applicative ((<$>))
@@ -44,6 +46,12 @@ import Statistics.Types               (Sample)
 import Statistics.Function            (sortBy)
 
 
+
+-- | Test type. Exact meaning depends on a specific test. But
+-- generally it's tested whether some statistics is too big (small)
+-- for 'OneTailed' or whether it too big or too small for 'TwoTailed'
+data TestType = OneTailed
+              | TwoTailed
 
 -- | The Wilcoxon Rank Sums Test.
 --
@@ -190,30 +198,31 @@ alookup = gen 2 [1 : repeat 2]
 -- significantly larger than the second.  If you want the opposite, simply reverse
 -- the order in both the sample size and the (U&#8321;, U&#8322;) pairs.
 mannWhitneyUSignificant ::
-     Bool             -- ^ Perform one-tailed test (see description above).
+     TestType         -- ^ Perform one-tailed test (see description above).
   -> (Int, Int)       -- ^ The samples' size from which the (U&#8321;,U&#8322;) values were derived.
   -> Double           -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double) -- ^ The (U&#8321;, U&#8322;) values from 'mannWhitneyU'.
   -> Maybe Bool       -- ^ Just True if the test is significant, Just
                       --   False if it is not, and Nothing if the sample
                       --   was too small to make a decision.
-mannWhitneyUSignificant oneTail (in1, in2) p (u1, u2)
+mannWhitneyUSignificant test (in1, in2) p (u1, u2)
    --Use normal approximation
   | in1 > 20 || in2 > 20 =
     let mean  = n1 * n2 / 2
         sigma = sqrt $ n1*n2*(n1 + n2 + 1) / 12
         z     = (mean - u1) / sigma
-    in Just $ if oneTail
-              then z     > quantile standard  p
-              else abs z > quantile standard (p/2)
+    in Just $ case test of
+                OneTailed -> z     > quantile standard  p
+                TwoTailed -> abs z > quantile standard (p/2)
   -- Use exact critical value
   | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) p
-                   return $ if oneTail
-                            then u2 <= crit
-                            else min u1 u2 <= crit
+                   return $ case test of
+                              OneTailed -> u2        <= crit
+                              TwoTailed -> min u1 u2 <= crit
   where
     n1 = fromIntegral in1
     n2 = fromIntegral in2
+
 
 -- | Perform Mann-Whitney U Test for two samples and required
 -- significance. For additional information check documentation of
@@ -222,7 +231,7 @@ mannWhitneyUSignificant oneTail (in1, in2) p (u1, u2)
 --
 -- One-tailed test checks whether first sample is significantly larger
 -- than second. Two-tailed whether they are significantly different.
-mannWhitneyUtest :: Bool        -- ^ Perform one-tailed test (see description above).
+mannWhitneyUtest :: TestType    -- ^ Perform one-tailed test (see description above).
                  -> Double      -- ^ The p-value at which to test (e.g. 0.05)
                  -> Sample      -- ^ First sample
                  -> Sample      -- ^ Second sample
@@ -290,9 +299,9 @@ summedCoefficients = map fromIntegral . scanl1 (+) . coefficients
 -- is significant at the given level.
 --
 -- This function can perform a one-tailed or two-tailed test.  If the first
--- parameter to this function is False, the test is performed two-tailed to
+-- parameter to this function is 'TwoTailed', the test is performed two-tailed to
 -- check if the two samples differ significantly.  If the first parameter is
--- True, the check is performed one-tailed to decide whether the first sample
+-- 'OneTailed', the check is performed one-tailed to decide whether the first sample
 -- (i.e. the first sample you passed to 'wilcoxonMatchedPairSignedRank') is
 -- greater than the second sample (i.e. the second sample you passed to
 -- 'wilcoxonMatchedPairSignedRank').  If you wish to perform a one-tailed test
@@ -300,20 +309,21 @@ summedCoefficients = map fromIntegral . scanl1 (+) . coefficients
 -- order to 'wilcoxonMatchedPairSignedRank', or simply swap the values in the resulting
 -- pair before passing them to this function.
 wilcoxonMatchedPairSignificant ::
-     Bool                -- ^ Perform one-tailed test (see description above).
+     TestType            -- ^ Perform one-tailed test (see description above).
   -> Int                 -- ^ The sample size from which the (T+,T-) values were derived.
   -> Double              -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double)    -- ^ The (T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
   -> Maybe Bool          -- ^ Just True if the test is significant, Just
                          --   False if it is not, and Nothing if the sample
                          --   was too small to make a decision.
-wilcoxonMatchedPairSignificant oneTail sampleSize p (tPlus, tMinus)
-  -- According to my nearest book (Understanding Research Methods and Statistics
-  -- by Gary W. Heiman, p590), to check that the first sample is bigger you must
-  -- use the absolute value of T- for a one-tailed check:
-  | oneTail = ((abs tMinus <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize p
-  -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
-  | otherwise = ((t <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize (p/2)
+wilcoxonMatchedPairSignificant test sampleSize p (tPlus, tMinus) =
+  case test of
+    -- According to my nearest book (Understanding Research Methods and Statistics
+    -- by Gary W. Heiman, p590), to check that the first sample is bigger you must
+    -- use the absolute value of T- for a one-tailed check:
+    OneTailed -> ((abs tMinus <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize p
+    -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
+    TwoTailed -> ((t <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize (p/2)
   where
     t = min (abs tPlus) (abs tMinus)
 
@@ -368,7 +378,7 @@ wilcoxonMatchedPairSignificance sampleSize rnk
 --
 -- Check 'wilcoxonMatchedPairSignedRank' and
 -- 'wilcoxonMatchedPairSignificant' for additional information.
-wilcoxonMatchedPairTest :: Bool       -- ^ Perform one-tailed test.
+wilcoxonMatchedPairTest :: TestType   -- ^ Perform one-tailed test.
                         -> Double     -- ^ The p-value at which to test (e.g. 0.05)
                         -> Sample     -- ^ First sample
                         -> Sample     -- ^ Second sample

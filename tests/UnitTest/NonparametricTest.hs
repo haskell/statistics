@@ -34,7 +34,7 @@ mannWhitneyTests = zipWith test [0..] testData ++
     test n (a, b, c, d)
       = TestCase $ do assertEqual ("Mann-Whitney U "    ++ show n) c us
                       assertEqual ("Mann-Whitney U Sig" ++ show n)
-                        d $ mannWhitneyUSignificant False (length a, length b) 0.05 us
+                        d $ mannWhitneyUSignificant TwoTailed (length a, length b) 0.05 us
       where
         us = mannWhitneyU (U.fromList a) (U.fromList b)
 
