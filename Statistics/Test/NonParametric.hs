@@ -11,17 +11,19 @@
 -- Functions for performing non-parametric tests (i.e. tests without an assumption
 -- of underlying distribution).
 module Statistics.Test.NonParametric
-  ( -- * Mann-Whitney U test (non-parametric equivalent to the independent t-test)
-    mannWhitneyU
+  ( -- * Mann-Whitney U test
+    mannWhitneyUtest
+  , mannWhitneyU
   , mannWhitneyUCriticalValue
   , mannWhitneyUSignificant
-   -- * Wilcoxon signed-rank matched-pair test (non-parametric equivalent to the paired t-test)
+    -- ** Wilcoxon rank sum test
+  , wilcoxonRankSums
+    -- * Wilcoxon signed-rank matched-pair test
+  , wilcoxonMatchedPairTest
   , wilcoxonMatchedPairSignedRank
   , wilcoxonMatchedPairSignificant
   , wilcoxonMatchedPairSignificance
   , wilcoxonMatchedPairCriticalValue
-  -- * Wilcoxon rank sum test
-  , wilcoxonRankSums
   ) where
 
 import Control.Applicative ((<$>))
@@ -207,6 +209,26 @@ mannWhitneyUSignificant oneTail (in1, in2) p (u1, u2)
     n1 = fromIntegral in1
     n2 = fromIntegral in2
 
+-- | Perform Mann-Whitney U Test for two samples and required
+-- significance. For additional information check documentation of
+-- 'mannWhitneyU' and 'mannWhitneyUSignificant'. This is just a helper
+-- function.
+--
+-- One-tailed test checks whether first sample is significantly larger
+-- than second. Two-tailed whether they are significantly different.
+mannWhitneyUtest :: Bool        -- ^ Perform one-tailed test (see description above).
+                 -> Double      -- ^ The p-value at which to test (e.g. 0.05)
+                 -> Sample      -- ^ First sample
+                 -> Sample      -- ^ Second sample
+                 -> Maybe Bool  -- ^ Just True if the test is significant, Just
+                                --   False if it is not, and Nothing if the sample
+                                --   was too small to make a decision.
+mannWhitneyUtest ontTail p smp1 smp2 =
+  mannWhitneyUSignificant ontTail (n1,n2) p $ mannWhitneyU smp1 smp2
+    where
+      n1 = U.length smp1
+      n2 = U.length smp2
+
 -- | The Wilcoxon matched-pairs signed-rank test.
 --
 -- The value returned is the pair (T+, T-).  T+ is the sum of positive ranks (the
@@ -329,6 +351,28 @@ wilcoxonMatchedPairSignificance :: Int    -- ^ The sample size
                                 -> Double -- ^ The significance (p-value).
 wilcoxonMatchedPairSignificance sampleSize rnk
   = (summedCoefficients sampleSize !! floor rnk) / 2 ** fromIntegral sampleSize
+
+-- | The Wilcoxon matched-pairs signed-rank test. The samples are
+-- zipped together: if one is longer than the other, both are
+-- truncated to the the length of the shorter sample.
+--
+-- For one-tailed test it tests whether first sample is significantly
+-- greater than the second. For two-tailed it checks whether they
+-- significantly differ
+--
+-- Check 'wilcoxonMatchedPairSignedRank' and
+-- 'wilcoxonMatchedPairSignificant' for additional information.
+wilcoxonMatchedPairTest :: Bool       -- ^ Perform one-tailed test.
+                        -> Double     -- ^ The p-value at which to test (e.g. 0.05)
+                        -> Sample     -- ^ First sample
+                        -> Sample     -- ^ Second sample
+                        -> Maybe Bool -- ^ Just True if the test is significant, Just
+                                      --   False if it is not, and Nothing if the sample
+                                      --   was too small to make a decision.
+wilcoxonMatchedPairTest test p smp1 smp2 =
+  wilcoxonMatchedPairSignificant test (min (U.length smp1) (U.length smp2)) p
+    $ wilcoxonMatchedPairSignedRank smp1 smp2
+
 
 
 ----------------------------------------------------------------
