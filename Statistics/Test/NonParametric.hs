@@ -25,9 +25,8 @@ module Statistics.Test.NonParametric
   ) where
 
 import Control.Applicative ((<$>))
-import Control.Arrow       ((***))
 import Data.Function       (on)
-import Data.List           (findIndex, groupBy, partition, sortBy)
+import Data.List           (findIndex)
 import Data.Ord            (comparing)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
@@ -38,8 +37,7 @@ import Statistics.Math                (choose)
 import Statistics.Types               (Sample)
 import qualified Statistics.Function as SF
 
-type AbsoluteRank = Double
-type SignedRank   = Double
+
 
 -- | The Wilcoxon Rank Sums Test.
 --
@@ -329,8 +327,8 @@ wilcoxonMatchedPairCriticalValue sampleSize p
 wilcoxonMatchedPairSignificance :: Int    -- ^ The sample size
                                 -> Double -- ^ The value of T for which you want the significance.
                                 -> Double -- ^ The significance (p-value).
-wilcoxonMatchedPairSignificance sampleSize rank
-  = (summedCoefficients sampleSize !! floor rank) / 2 ** fromIntegral sampleSize
+wilcoxonMatchedPairSignificance sampleSize rnk
+  = (summedCoefficients sampleSize !! floor rnk) / 2 ** fromIntegral sampleSize
 
 
 ----------------------------------------------------------------
@@ -350,11 +348,11 @@ rank :: (G.Vector v a, G.Vector v Double, Eq a)
      -> v Double
 rank eq vec = G.unfoldr go (Rank 0 (-1) 1 vec)
   where
-    go rr@(Rank 0 _ r v)
+    go (Rank 0 _ r v)
       | G.null v  = Nothing
       | otherwise =
           case G.length h of
-            1 -> Just (r, (Rank 0 0 (r+1) rest))
+            1 -> Just (r, Rank 0 0 (r+1) rest)
             n -> go $ Rank { rankCnt = n
                            , rankVal = 0.5 * (r*2 + fromIntegral (n-1))
                            , rankNum = r + fromIntegral n
@@ -362,7 +360,7 @@ rank eq vec = G.unfoldr go (Rank 0 (-1) 1 vec)
                            }
           where
             (h,rest) = G.span (eq $ G.head v) v
-    go (Rank n val r v) = Just (val, (Rank (n-1) val r v))
+    go (Rank n val r v) = Just (val, Rank (n-1) val r v)
 {-# INLINE rank #-}
 
 
