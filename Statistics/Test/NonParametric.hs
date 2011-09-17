@@ -212,8 +212,8 @@ mannWhitneyUSignificant test (in1, in2) p (u1, u2)
         sigma = sqrt $ n1*n2*(n1 + n2 + 1) / 12
         z     = (mean - u1) / sigma
     in Just $ case test of
-                OneTailed -> z     > quantile standard  p
-                TwoTailed -> abs z > quantile standard (p/2)
+                OneTailed -> z     < quantile standard  p
+                TwoTailed -> abs z > abs (quantile standard (p/2))
   -- Use exact critical value
   | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) p
                    return $ case test of
