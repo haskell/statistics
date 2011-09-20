@@ -46,6 +46,7 @@ library
     Statistics.Distribution.Hypergeometric
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
+    Statistics.Distribution.Uniform
     Statistics.Function
     Statistics.KernelDensity
     Statistics.Math

@@ -21,6 +21,7 @@ import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Normal
 import Statistics.Distribution.Poisson
+import Statistics.Distribution.Uniform
 
 import Tests.Helpers
 
@@ -31,6 +32,7 @@ distributionTests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T ExponentialDistribution )
   , contDistrTests (T :: T GammaDistribution       )
   , contDistrTests (T :: T ChiSquared              )
+  , contDistrTests (T :: T UniformDistribution     )
     
   , discreteDistrTests (T :: T BinomialDistribution       )
   , discreteDistrTests (T :: T GeometricDistribution      )
@@ -125,6 +127,11 @@ instance QC.Arbitrary PoissonDistribution where
   arbitrary = poisson <$> QC.choose (0,1)
 instance QC.Arbitrary ChiSquared where
   arbitrary = chiSquared <$> QC.choose (1,100)
+instance QC.Arbitrary UniformDistribution where
+  arbitrary = do a <- QC.arbitrary
+                 b <- QC.arbitrary `QC.suchThat` (/= a)
+                 return $ uniformDistr a b
+
 
 ----------------------------------------------------------------
 -- Unit tests
