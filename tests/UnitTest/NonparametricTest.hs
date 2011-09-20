@@ -16,7 +16,7 @@ nonparametricTests = concat [ mannWhitneyTests
 ----------------------------------------------------------------
 
 mannWhitneyTests :: [Test]
-mannWhitneyTests = zipWith test [0..] testData ++
+mannWhitneyTests = zipWith test [(0::Int)..] testData ++
   [TestCase $ assertEqual "Mann-Whitney U Critical Values, m=1"
     (replicate (20*3) Nothing)
     [mannWhitneyUCriticalValue (1,x) p | x <- [1..20], p <- [0.005,0.01,0.025]]
@@ -73,7 +73,7 @@ mannWhitneyTests = zipWith test [0..] testData ++
                ]
 
 wilcoxonSumTests :: [Test]
-wilcoxonSumTests = zipWith test [0..] testData
+wilcoxonSumTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b, c) = TestCase $ assertEqual ("Wilcoxon Sum " ++ show n) c (wilcoxonRankSums (U.fromList a) (U.fromList b))
 
@@ -90,7 +90,7 @@ wilcoxonSumTests = zipWith test [0..] testData
                ]
 
 wilcoxonPairTests :: [Test]
-wilcoxonPairTests = zipWith test [0..] testData ++
+wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
   -- Taken from the Mitic paper:
   [ TestCase $ assertBool "Sig 16, 35" (to4dp 0.0467 $ wilcoxonMatchedPairSignificance 16 35)
   , TestCase $ assertBool "Sig 16, 36" (to4dp 0.0523 $ wilcoxonMatchedPairSignificance 16 36)

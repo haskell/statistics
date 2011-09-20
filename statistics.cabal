@@ -30,7 +30,7 @@ maintainer:     Bryan O'Sullivan <bos@serpentine.com>
 copyright:      2009, 2010, 2011 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
-cabal-version:  >= 1.6
+cabal-version:  >= 1.8
 extra-source-files: README.markdown
 
 library
@@ -80,6 +80,20 @@ library
   ghc-options: -Wall -funbox-strict-fields
   if impl(ghc >= 6.8)
     ghc-options: -fwarn-tabs
+
+test-suite tests
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: tests
+  main-is:        HUnit.hs
+
+  ghc-options:
+    -Wall -threaded -rtsopts
+
+  build-depends:
+    HUnit,
+    base,
+    statistics,
+    vector
 
 source-repository head
   type:     git
