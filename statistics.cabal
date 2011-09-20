@@ -23,8 +23,8 @@ description:
     samples.
 license:        BSD3
 license-file:   LICENSE
-homepage:       http://bitbucket.org/bos/statistics
-bug-reports:    http://bitbucket.org/bos/statistics/issues
+homepage:       https://github.com/bos/statistics
+bug-reports:    https://github.com/bos/statistics/issues
 author:         Bryan O'Sullivan <bos@serpentine.com>
 maintainer:     Bryan O'Sullivan <bos@serpentine.com>
 copyright:      2009, 2010, 2011 Bryan O'Sullivan
@@ -82,5 +82,9 @@ library
     ghc-options: -fwarn-tabs
 
 source-repository head
+  type:     git
+  location: https://github.com/bos/statistics
+
+source-repository head
   type:     mercurial
-  location: http://bitbucket.org/bos/statistics
+  location: https://bitbucket.org/bos/statistics
