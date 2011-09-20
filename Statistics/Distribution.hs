@@ -57,9 +57,14 @@ class Distribution d => Mean d where
     mean :: d -> Double
 
 
--- | Type class for distributions with variance.
+-- | Type class for distributions with variance. Minimal complete
+--   definition is 'variance' or 'stdDev'
 class Mean d => Variance d where
     variance :: d -> Double
+    variance d = x * x where x = stdDev d
+    stdDev   :: d -> Double
+    stdDev = sqrt . variance
+
 
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
