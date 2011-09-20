@@ -60,8 +60,10 @@ gaussianBW n = (4 / (n * 3)) ** 0.2
 -- | The width of the convolution kernel used.
 type Bandwidth = Double
 
--- | Compute the optimal bandwidth from the observed data for the given
--- kernel.
+-- | Compute the optimal bandwidth from the observed data for the
+-- given kernel. This function uses estimate based on standard
+-- deviation of sample which performs reasonably well for unimodal
+-- distributions but leads to oversmoothing for more complex ones.
 bandwidth :: G.Vector v Double =>
              (Double -> Bandwidth)
           -> v Double
