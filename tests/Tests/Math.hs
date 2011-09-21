@@ -4,7 +4,11 @@ module Tests.Math (
   ) where
 
 import Data.Vector.Unboxed (fromList)
-import Test.QuickCheck
+import qualified Data.Vector as V
+import           Data.Vector   ((!))
+
+import Test.QuickCheck  hiding (choose)
+import Test.HUnit       hiding (Test)
 import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
@@ -21,10 +25,41 @@ mathTests = testGroup "S.Math"
   , testProperty "γ - increases"             $
       \s x y -> s > 0 && x > 0 && y > 0 ==> monotonicallyIncreases (incompleteGamma s) x y
   , chebyshevTests
+    -- Unit tests
+  , testCase "Factorial"
+      $ assertBool "Factorial is expected to be precise at 1e-15 level"
+      $ and [ eq 1e-15 (factorial (fromIntegral n))
+                       (fromIntegral (factorial' n))
+            |n <- [0..170]]
+  , testCase "Log factorial"
+      $ assertBool "Log factorial is expected to be precise at 1e-15 level"
+      $ and [ eq 1e-15 (logFactorial (fromIntegral n))
+                       (log $ fromIntegral $ factorial' n)
+            | n <- [2..170]]
+  , testCase "logGamma"
+      $ assertBool "logGamma is expected to be precise at 1e-9 level"
+      $ and [ eq 1e-9 (logGamma (fromIntegral n))
+                      (logFactorial (n-1))
+            | n <- [3..10000]]
+  , testCase "logGammaL"
+      $ assertBool "logGammaL is expected to be precise at 1e-15 level"
+      $ and [ eq 1e-15 (logGammaL (fromIntegral n))
+                       (logFactorial (n-1))
+            | n <- [3..10000]]
+  , testCase "logBeta"
+      $ assertBool "logBeta is expected to be precise at 1e-6 level"
+      $ and [ eq 1e-6 (logBeta p q)
+                      (logGammaL p + logGammaL q - logGammaL (p+q))
+            | p <- [0.1,0.2 .. 0.9] ++ [2 .. 20]
+            , q <- [0.1,0.2 .. 0.9] ++ [2 .. 20]]
+  , testCase "choose"
+      $ assertBool "choose is expected to precise at 1e-12 level"
+      $ and [ eq 1e-12 (choose (fromIntegral n) (fromIntegral k)) (fromIntegral $ choose' n k)
+            | n <- [0..300], k <- [0..n]]
   ]
 
 ----------------------------------------------------------------
---
+-- QC tests
 ----------------------------------------------------------------
 
 -- Γ(x+1) = x·Γ(x)
@@ -47,15 +82,15 @@ incompleteGammaAt1Check x =
 -- Test that Chebyshev polynomial of low order are evaluated correctly
 chebyshevTests :: Test
 chebyshevTests = testGroup "Chebyshev polynomials"
-  [ testProperty "Chebyshev 0" $ \a0 (Ch x) -> 
+  [ testProperty "Chebyshev 0" $ \a0 (Ch x) ->
       (ch0 x * a0) ≈ (chebyshev x $ fromList [a0])
-  , testProperty "Chebyshev 1" $ \a0 a1 (Ch x) -> 
+  , testProperty "Chebyshev 1" $ \a0 a1 (Ch x) ->
       (a0*ch0 x + a1*ch1 x) ≈  (chebyshev x $ fromList [a0,a1])
-  , testProperty "Chebyshev 2" $ \a0 a1 a2 (Ch x) -> 
+  , testProperty "Chebyshev 2" $ \a0 a1 a2 (Ch x) ->
        (a0*ch0 x + a1*ch1 x + a2*ch2 x) ≈ (chebyshev x $ fromList [a0,a1,a2])
-  , testProperty "Chebyshev 3" $ \a0 a1 a2 a3 (Ch x) -> 
+  , testProperty "Chebyshev 3" $ \a0 a1 a2 a3 (Ch x) ->
        (a0*ch0 x + a1*ch1 x + a2*ch2 x + a3*ch3 x) ≈ (chebyshev x $ fromList [a0,a1,a2,a3])
-  , testProperty "Chebyshev 4" $ \a0 a1 a2 a3 a4 (Ch x) -> 
+  , testProperty "Chebyshev 4" $ \a0 a1 a2 a3 a4 (Ch x) ->
        (a0*ch0 x + a1*ch1 x + a2*ch2 x + a3*ch3 x + a4*ch4 x) ≈ (chebyshev x $ fromList [a0,a1,a2,a3,a4])
   ]
   where (≈) = eq 1e-12
@@ -73,3 +108,22 @@ newtype Ch = Ch Double
 instance Arbitrary Ch  where
   arbitrary = do x <- arbitrary
                  return $ Ch $ 2 * (snd . properFraction) x - 1
+
+
+
+----------------------------------------------------------------
+-- Unit tests
+----------------------------------------------------------------
+
+-- Lookup table for fact factorial calculation. It has fixed size
+-- which is bad but it's OK for this particular case
+factorial_table :: V.Vector Integer
+factorial_table = V.generate 2000 (\n -> product [1..fromIntegral n])
+
+-- Exact implementation of factorial
+factorial' :: Integer -> Integer
+factorial' n = factorial_table ! fromIntegral n
+
+-- Exact albeit slow implementation of choose
+choose' :: Integer -> Integer -> Integer
+choose' n k = factorial' n `div` (factorial' k * factorial' (n-k))
