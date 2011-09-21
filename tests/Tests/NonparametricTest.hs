@@ -1,16 +1,25 @@
 -- Tests for Statistics.Test.NonParametric
-module UnitTest.NonparametricTest where
+module Tests.NonparametricTest (
+  nonparametricTests
+  ) where
+
 
 import qualified Data.Vector.Unboxed as U
-import Test.HUnit  (Test(..),assertEqual,assertBool)
+import Test.HUnit                     (Test(..),assertEqual,assertBool)
+import qualified Test.Framework as TF
+import Test.Framework.Providers.HUnit
 
 import Statistics.Test.NonParametric
 
-nonparametricTests :: [Test]
-nonparametricTests = concat [ mannWhitneyTests
-                            , wilcoxonSumTests
-                            , wilcoxonPairTests
-                            ]
+
+
+
+nonparametricTests :: TF.Test
+nonparametricTests = TF.testGroup "Nonparametric tests"
+                   $ hUnitTestToTests =<< concat [ mannWhitneyTests
+                                                 , wilcoxonSumTests
+                                                 , wilcoxonPairTests
+                                                 ]
 
 
 ----------------------------------------------------------------
