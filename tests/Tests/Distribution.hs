@@ -73,7 +73,7 @@ cdfSanityCheck _ d x = c >= 0 && c <= 1
 
 -- CDF never decreases
 cdfIsNondecreasing :: (Distribution d, QC.Arbitrary d) => T d -> d -> Double -> Double -> Bool
-cdfIsNondecreasing _ d x y = cumulative d (min x y) <= cumulative d (max x y)
+cdfIsNondecreasing _ d = monotonicallyIncreases $ cumulative d
 
 -- CDF limit at +∞ is 1
 cdfLimitAtPosInfinity :: (Distribution d, QC.Arbitrary d) => T d -> d -> Bool

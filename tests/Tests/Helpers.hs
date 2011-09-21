@@ -1,13 +1,23 @@
 -- | Helpers for testing
 module Tests.Helpers (
-    -- * QC helpers
+    -- * helpers
     T(..)
   , typeName
+  , eq
+  , (=~)
+    -- * Generic QC tests
+  , monotonicallyIncreases
   ) where
 
 import Data.Typeable
+import Test.QuickCheck
+import Statistics.Constants
 
 
+
+----------------------------------------------------------------
+-- Helpers
+----------------------------------------------------------------
 
 -- | Phantom typed value used to select right instance in QC tests
 data T a = T
@@ -18,3 +28,21 @@ typeName = show . typeOf . typeParam
   where
     typeParam :: T a -> a
     typeParam _ = undefined
+
+eq :: Double -> Double -> Double -> Bool
+eq eps a b 
+  | a == 0 && b == 0 = True
+  | otherwise        = abs (a - b) / max (abs a) (abs b) <= eps
+
+-- Approximately equal up to 1 ulp
+(=~) :: Double -> Double -> Bool
+(=~) = eq m_epsilon
+
+
+----------------------------------------------------------------
+-- Generic QC
+----------------------------------------------------------------
+
+-- Check that function is monotonically increasing
+monotonicallyIncreases :: (Ord a, Ord b) => (a -> b) -> a -> a -> Bool
+monotonicallyIncreases f x1 x2 = f (min x1 x2) <= f (max x1 x2)
