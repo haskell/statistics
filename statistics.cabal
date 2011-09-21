@@ -84,14 +84,18 @@ library
 test-suite tests
   type:           exitcode-stdio-1.0
   hs-source-dirs: tests
-  main-is:        HUnit.hs
+  main-is:        tests.hs
 
   ghc-options:
     -Wall -threaded -rtsopts
 
   build-depends:
-    HUnit,
     base,
+    HUnit,
+    QuickCheck >= 2,
+    test-framework,
+    test-framework-quickcheck2,
+    test-framework-hunit,
     statistics,
     vector
 
