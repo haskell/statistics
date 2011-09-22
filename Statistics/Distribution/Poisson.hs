@@ -27,13 +27,18 @@ module Statistics.Distribution.Poisson
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
+import Statistics.Math (incompleteGamma)
+
+
 
 newtype PoissonDistribution = PD {
       poissonLambda :: Double
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution PoissonDistribution where
-    cumulative d x = D.sumProbabilities d 0 (floor x)
+    cumulative (PD lambda) x
+      | x < 0     = 0
+      | otherwise = 1 - incompleteGamma (fromIntegral (floor x + 1 :: Int)) lambda
     {-# INLINE cumulative #-}
 
 instance D.DiscreteDistr PoissonDistribution where

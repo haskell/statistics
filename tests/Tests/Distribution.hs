@@ -39,8 +39,7 @@ distributionTests = testGroup "Tests for all distributions"
   , discreteDistrTests (T :: T GeometricDistribution      )
   -- FIXME: too slow CDF (Could it be fixed???)
   -- , discreteDistrTests (T :: T HypergeometricDistribution )
-  -- FIXME: too slow CDF
-  -- , discreteDistrTests (T :: T PoissonDistribution        )
+  , discreteDistrTests (T :: T PoissonDistribution        )
 
   , unitTests
   ]
@@ -108,7 +107,7 @@ probSanityCheck _ d x = p >= 0 && p <= 1
 -- Check that discrete CDF is correct
 discreteCDFcorrect :: (DiscreteDistr d) => T d -> d -> Int -> Int -> Property
 discreteCDFcorrect _ d a b = 
-  abs (a - b) < 100  ==>  abs (p1 - p2) < 1e-14
+  abs (a - b) < 100  ==>  abs (p1 - p2) < 3e-10
   -- Avoid too large differeneces. Otherwise there is to much to sum
   --
   -- Absolute difference is used guard againist precision loss when
