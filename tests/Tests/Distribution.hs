@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Tests.Distribution (
     distributionTests
   ) where
@@ -7,8 +8,7 @@ import Control.Applicative
 import Data.List     (find)
 import Data.Typeable (Typeable)
 
-import Test.Framework                      --(defaultMain, testGroup)
--- import Test.Framework.Providers.HUnit
+import Test.Framework                       (Test,testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import qualified Test.QuickCheck as QC
 
@@ -38,6 +38,8 @@ distributionTests = testGroup "Tests for all distributions"
   -- , discreteDistrTests (T :: T HypergeometricDistribution )
   -- FIXME: too slow CDF
   -- , discreteDistrTests (T :: T PoissonDistribution        )
+
+  , unitTests
   ]
 
 ----------------------------------------------------------------
@@ -46,24 +48,26 @@ distributionTests = testGroup "Tests for all distributions"
 
 -- Tests for continous distribution
 contDistrTests :: (ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
-contDistrTests t = testGroup ("Tests for: " ++ typeName t)
-  [ testProperty "CDF sanity"           $ cdfSanityCheck        t
-  , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity t
-  , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity t
-  , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing    t
-  , testProperty "PDF sanity"           $ pdfSanityCheck        t
+contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
+  cdfTests t ++
+  [ testProperty "PDF sanity"           $ pdfSanityCheck        t
   ]
 
 -- Tests for discrete distribution
 discreteDistrTests :: (DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
-discreteDistrTests t = testGroup ("Tests for: " ++ typeName t)
+discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
+  cdfTests t ++
+  [ testProperty "Prob. sanity"         $ probSanityCheck       t
+  ]
+
+-- Tests for distributions which have CDF
+cdfTests :: (Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
+cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck        t
   , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity t
   , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity t
   , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing    t
-  , testProperty "Prob. sanity"         $ probSanityCheck       t
   ]
-
 ----------------------------------------------------------------
 
 -- CDF is in [0,1] range
@@ -121,3 +125,13 @@ instance QC.Arbitrary PoissonDistribution where
   arbitrary = poisson <$> QC.choose (0,1)
 instance QC.Arbitrary ChiSquared where
   arbitrary = chiSquared <$> QC.choose (1,100)
+
+----------------------------------------------------------------
+-- Unit tests
+----------------------------------------------------------------
+
+unitTests :: Test
+unitTests = testGroup "Unit tests"
+  [ testAssertion "density (gammaDistr 150 1/150) 1 == 4.883311" $
+      4.883311418525483 =~ (density (gammaDistr 150 (1/150)) 1)
+  ]
