@@ -10,7 +10,7 @@ import Data.Typeable (Typeable)
 
 import Test.Framework                       (Test,testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import qualified Test.QuickCheck as QC
+import Test.QuickCheck as QC
 
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
@@ -24,6 +24,7 @@ import Statistics.Distribution.Poisson
 import Statistics.Distribution.Uniform
 
 import Tests.Helpers
+
 
 -- | Tests for all distributions
 distributionTests :: Test
@@ -60,6 +61,7 @@ discreteDistrTests :: (DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T
 discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
+  , testProperty "CDF is sum of prob."  $ discreteCDFcorrect    t
   ]
 
 -- Tests for distributions which have CDF
@@ -103,7 +105,22 @@ probSanityCheck :: (DiscreteDistr d, QC.Arbitrary d) => T d -> d -> Int -> Bool
 probSanityCheck _ d x = p >= 0 && p <= 1 
   where p = probability d x
 
+-- Check that discrete CDF is correct
+discreteCDFcorrect :: (DiscreteDistr d) => T d -> d -> Int -> Int -> Property
+discreteCDFcorrect _ d a b = 
+  abs (a - b) < 100  ==>  abs (p1 - p2) < 1e-14
+  -- Avoid too large differeneces. Otherwise there is to much to sum
+  --
+  -- Absolute difference is used guard againist precision loss when
+  -- close values of CDF are subtracted
+  where
+    n  = min a b
+    m  = max a b
+    p1 = cumulative d (fromIntegral m + 0.5) - cumulative d (fromIntegral n - 0.5)
+    p2 = sum $ map (probability d) [n .. m]
 
+
+    
 ----------------------------------------------------------------
 -- Arbitrary instances for ditributions
 ----------------------------------------------------------------
