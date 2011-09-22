@@ -7,10 +7,16 @@ module Tests.Helpers (
   , (=~)
     -- * Generic QC tests
   , monotonicallyIncreases
+    -- * HUnit helpers
+  , testAssertion
   ) where
 
 import Data.Typeable
-import Test.QuickCheck
+
+import qualified Test.HUnit      as HU
+import Test.Framework
+import Test.Framework.Providers.HUnit
+
 import Statistics.Constants
 
 
@@ -46,3 +52,12 @@ eq eps a b
 -- Check that function is monotonically increasing
 monotonicallyIncreases :: (Ord a, Ord b) => (a -> b) -> a -> a -> Bool
 monotonicallyIncreases f x1 x2 = f (min x1 x2) <= f (max x1 x2)
+
+
+
+----------------------------------------------------------------
+-- HUnit helpers
+----------------------------------------------------------------
+
+testAssertion :: String -> Bool -> Test
+testAssertion str cont = testCase str $ HU.assertBool str cont
