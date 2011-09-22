@@ -8,9 +8,7 @@ import qualified Data.Vector as V
 import           Data.Vector   ((!))
 
 import Test.QuickCheck  hiding (choose)
-import Test.HUnit       hiding (Test)
 import Test.Framework
-import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
 
 import Tests.Helpers
@@ -26,34 +24,28 @@ mathTests = testGroup "S.Math"
       \s x y -> s > 0 && x > 0 && y > 0 ==> monotonicallyIncreases (incompleteGamma s) x y
   , chebyshevTests
     -- Unit tests
-  , testCase "Factorial"
-      $ assertBool "Factorial is expected to be precise at 1e-15 level"
+  , testAssertion "Factorial is expected to be precise at 1e-15 level"
       $ and [ eq 1e-15 (factorial (fromIntegral n))
                        (fromIntegral (factorial' n))
             |n <- [0..170]]
-  , testCase "Log factorial"
-      $ assertBool "Log factorial is expected to be precise at 1e-15 level"
+  , testAssertion "Log factorial is expected to be precise at 1e-15 level"
       $ and [ eq 1e-15 (logFactorial (fromIntegral n))
                        (log $ fromIntegral $ factorial' n)
             | n <- [2..170]]
-  , testCase "logGamma"
-      $ assertBool "logGamma is expected to be precise at 1e-9 level"
+  , testAssertion "logGamma is expected to be precise at 1e-9 level"
       $ and [ eq 1e-9 (logGamma (fromIntegral n))
                       (logFactorial (n-1))
             | n <- [3..10000]]
-  , testCase "logGammaL"
-      $ assertBool "logGammaL is expected to be precise at 1e-15 level"
+  , testAssertion "logGammaL is expected to be precise at 1e-15 level"
       $ and [ eq 1e-15 (logGammaL (fromIntegral n))
                        (logFactorial (n-1))
             | n <- [3..10000]]
-  , testCase "logBeta"
-      $ assertBool "logBeta is expected to be precise at 1e-6 level"
+  , testAssertion "logBeta is expected to be precise at 1e-6 level"
       $ and [ eq 1e-6 (logBeta p q)
                       (logGammaL p + logGammaL q - logGammaL (p+q))
             | p <- [0.1,0.2 .. 0.9] ++ [2 .. 20]
             , q <- [0.1,0.2 .. 0.9] ++ [2 .. 20]]
-  , testCase "choose"
-      $ assertBool "choose is expected to precise at 1e-12 level"
+  , testAssertion "choose is expected to precise at 1e-12 level"
       $ and [ eq 1e-12 (choose (fromIntegral n) (fromIntegral k)) (fromIntegral $ choose' n k)
             | n <- [0..300], k <- [0..n]]
   ]
