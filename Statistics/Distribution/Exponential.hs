@@ -39,13 +39,20 @@ instance D.ContDistr ExponentialDistribution where
     density  = density
     quantile = quantile
 
+instance D.Mean ExponentialDistribution where
+    mean (ED l) = 1 / l
+    {-# INLINE mean #-}
+
 instance D.Variance ExponentialDistribution where
     variance (ED l) = 1 / (l * l)
     {-# INLINE variance #-}
 
-instance D.Mean ExponentialDistribution where
-    mean (ED l) = 1 / l
-    {-# INLINE mean #-}
+instance D.MaybeMean ExponentialDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance ExponentialDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
 
 cumulative :: ExponentialDistribution -> Double -> Double
 cumulative (ED l) x | x < 0     = 0

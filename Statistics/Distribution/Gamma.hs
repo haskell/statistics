@@ -63,6 +63,15 @@ instance D.Mean GammaDistribution where
     mean (GD a l) = a * l
     {-# INLINE mean #-}
 
+instance D.MaybeMean GammaDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance GammaDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
+
+
 density :: GammaDistribution -> Double -> Double
 density (GD a l) x
   | a < 0 || l <= 0   = m_NaN

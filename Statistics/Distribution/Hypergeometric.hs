@@ -43,11 +43,20 @@ instance D.Distribution HypergeometricDistribution where
 instance D.DiscreteDistr HypergeometricDistribution where
     probability = probability
 
+instance D.Mean HypergeometricDistribution where
+    mean = mean
+
 instance D.Variance HypergeometricDistribution where
     variance = variance
 
-instance D.Mean HypergeometricDistribution where
-    mean = mean
+instance D.MaybeMean HypergeometricDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance HypergeometricDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
+
 
 variance :: HypergeometricDistribution -> Double
 variance (HD m l k) = (k' * ml) * (1 - ml) * (l' - k') / (l' - 1)
