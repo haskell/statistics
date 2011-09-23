@@ -58,6 +58,13 @@ instance D.Variance ChiSquared where
     variance (ChiSquared ndf) = fromIntegral (2*ndf)
     {-# INLINE variance #-}
 
+instance D.MaybeMean ChiSquared where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance ChiSquared where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
 cumulative :: ChiSquared -> Double -> Double
 cumulative chi x
   | x <= 0    = 0
