@@ -51,7 +51,8 @@ distributionTests = testGroup "Tests for all distributions"
 contDistrTests :: (ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
-  [ testProperty "PDF sanity"           $ pdfSanityCheck        t
+  [ testProperty "PDF sanity"              $ pdfSanityCheck   t
+  , testProperty "Quantile is CDF inverse" $ quantileIsInvCDF t
   ]
 
 -- Tests for discrete distribution
@@ -97,6 +98,13 @@ cdfLimitAtNegInfinity _ d =
 pdfSanityCheck :: (ContDistr d, QC.Arbitrary d) => T d -> d -> Double -> Bool
 pdfSanityCheck _ d x = p >= 0
   where p = density d x
+
+-- Quantile is inverse of CDF
+quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double -> Property
+quantileIsInvCDF _ d p =
+  p > 0 && p < 1  ==>  abs (p - p') < 1e-14
+  where
+    p' = (cumulative d . quantile d) p
 
 -- Probability is in [0,1] range
 probSanityCheck :: (DiscreteDistr d, QC.Arbitrary d) => T d -> d -> Int -> Bool
