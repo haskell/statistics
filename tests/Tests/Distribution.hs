@@ -37,8 +37,7 @@ distributionTests = testGroup "Tests for all distributions"
     
   , discreteDistrTests (T :: T BinomialDistribution       )
   , discreteDistrTests (T :: T GeometricDistribution      )
-  -- FIXME: too slow CDF (Could it be fixed???)
-  -- , discreteDistrTests (T :: T HypergeometricDistribution )
+  , discreteDistrTests (T :: T HypergeometricDistribution )
   , discreteDistrTests (T :: T PoissonDistribution        )
 
   , unitTests
