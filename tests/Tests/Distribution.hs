@@ -19,6 +19,7 @@ import Text.Printf
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
 import Statistics.Distribution.ChiSquared
+import Statistics.Distribution.CauchyLorentz
 import Statistics.Distribution.Exponential
 import Statistics.Distribution.Gamma
 import Statistics.Distribution.Geometric
@@ -35,10 +36,11 @@ import Tests.Helpers
 -- | Tests for all distributions
 distributionTests :: Test
 distributionTests = testGroup "Tests for all distributions"
-  [ contDistrTests (T :: T NormalDistribution      )
+  [ contDistrTests (T :: T CauchyDistribution      )
+  , contDistrTests (T :: T ChiSquared              )
   , contDistrTests (T :: T ExponentialDistribution )
   , contDistrTests (T :: T GammaDistribution       )
-  , contDistrTests (T :: T ChiSquared              )
+  , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
     
   , discreteDistrTests (T :: T BinomialDistribution       )
@@ -176,9 +178,12 @@ instance QC.Arbitrary ChiSquared where
   arbitrary = chiSquared <$> QC.choose (1,100)
 instance QC.Arbitrary UniformDistribution where
   arbitrary = do a <- QC.arbitrary
-                 b <- QC.arbitrary `QC.suchThat` (/= a)
+                 b <- QC.arbitrary `suchThat` (/= a)
                  return $ uniformDistr a b
-
+instance QC.Arbitrary CauchyDistribution where
+  arbitrary = cauchyDistribution
+                <$> arbitrary
+                <*> ((abs <$> arbitrary) `suchThat` (> 0))
 
 ----------------------------------------------------------------
 -- Unit tests
