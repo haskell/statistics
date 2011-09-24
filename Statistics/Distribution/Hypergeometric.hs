@@ -38,7 +38,7 @@ data HypergeometricDistribution = HD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution HypergeometricDistribution where
-    cumulative d x = D.sumProbabilities d 0 (floor x)
+    cumulative = cumulative
 
 instance D.DiscreteDistr HypergeometricDistribution where
     probability = probability
@@ -90,3 +90,13 @@ probability (HD mi li ki) n
   | otherwise =
       choose mi n * choose (li - mi) (ki - n) / choose li ki
 {-# INLINE probability #-}
+
+cumulative :: HypergeometricDistribution -> Double -> Double
+cumulative d@(HD mi li ki) x
+  | n <  minN = 0 
+  | n >= maxN = 1
+  | otherwise = D.sumProbabilities d minN n
+    where
+      n    = floor x
+      minN = max 0 (mi+ki-li)
+      maxN = min mi ki
