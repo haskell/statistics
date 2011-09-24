@@ -92,6 +92,7 @@ test-suite tests
 
   build-depends:
     base,
+    ieee754 >= 0.7.3,
     HUnit,
     QuickCheck >= 2,
     test-framework,
