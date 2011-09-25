@@ -12,6 +12,8 @@ import Test.Framework                       (Test,testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
 
+import Text.Printf
+
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
 import Statistics.Distribution.ChiSquared
@@ -102,9 +104,13 @@ pdfSanityCheck _ d x = p >= 0
 -- Quantile is inverse of CDF
 quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d p =
-  p > 0 && p < 1  ==>  abs (p - p') < 1e-14
+  p > 0 && p < 1  ==> ( printTestCase (printf "Quantile     = %g" q )
+                      $ printTestCase (printf "Probabilitu' = %g" p')
+                      $ abs (p - p') < 1e-14
+                      )
   where
-    p' = (cumulative d . quantile d) p
+    q  = quantile   d p
+    p' = cumulative d q
 
 -- Probability is in [0,1] range
 probSanityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Bool
