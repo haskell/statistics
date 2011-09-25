@@ -74,28 +74,28 @@ cdfTests t =
 ----------------------------------------------------------------
 
 -- CDF is in [0,1] range
-cdfSanityCheck :: (Distribution d, QC.Arbitrary d) => T d -> d -> Double -> Bool
+cdfSanityCheck :: (Distribution d) => T d -> d -> Double -> Bool
 cdfSanityCheck _ d x = c >= 0 && c <= 1 
   where c = cumulative d x
 
 -- CDF never decreases
-cdfIsNondecreasing :: (Distribution d, QC.Arbitrary d) => T d -> d -> Double -> Double -> Bool
+cdfIsNondecreasing :: (Distribution d) => T d -> d -> Double -> Double -> Bool
 cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
 
 -- CDF limit at +∞ is 1
-cdfLimitAtPosInfinity :: (Distribution d, QC.Arbitrary d) => T d -> d -> Bool
+cdfLimitAtPosInfinity :: (Distribution d) => T d -> d -> Bool
 cdfLimitAtPosInfinity _ d = 
   Just 1.0 == (find (>=1) $ take 1000 $ map (cumulative d) $ iterate (*1.4) 1)
 
 -- CDF limit at -∞ is 0
-cdfLimitAtNegInfinity :: (Distribution d, QC.Arbitrary d) => T d -> d -> Bool
+cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Bool
 cdfLimitAtNegInfinity _ d = 
   Just 0.0 == (find (<=0) $ take 1000 $ map (cumulative d) $ iterate (*1.4) (-1))
 
 
 
 -- PDF is positive
-pdfSanityCheck :: (ContDistr d, QC.Arbitrary d) => T d -> d -> Double -> Bool
+pdfSanityCheck :: (ContDistr d) => T d -> d -> Double -> Bool
 pdfSanityCheck _ d x = p >= 0
   where p = density d x
 
@@ -107,7 +107,7 @@ quantileIsInvCDF _ d p =
     p' = (cumulative d . quantile d) p
 
 -- Probability is in [0,1] range
-probSanityCheck :: (DiscreteDistr d, QC.Arbitrary d) => T d -> d -> Int -> Bool
+probSanityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Bool
 probSanityCheck _ d x = p >= 0 && p <= 1 
   where p = probability d x
 
