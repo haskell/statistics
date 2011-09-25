@@ -24,9 +24,10 @@ module Statistics.Math
     , factorial
     , logFactorial
     -- ** Gamma function
-    , incompleteGamma
     , logGamma
     , logGammaL
+    , incompleteGamma
+    , invIncompleteGamma
     -- ** Logarithm
     , log1p
     -- ** Stirling's approximation
@@ -44,6 +45,8 @@ import Statistics.Distribution (cumulative)
 import Statistics.Distribution.Normal (standard)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
+
+import Debug.Trace
 
 -- $chebyshev
 --
@@ -186,6 +189,75 @@ incompleteGamma p x
     limit     = -88
     tolerance = 1e-14
     overflow  = 1e37
+
+
+
+-- Adopted from Numerical Recipes §6.2.1
+
+-- | Inverse incomplete gamma function. It's approximately inverse of
+--   'incompleteGamma' for the same /s/. So following equality
+--   approximately holds:
+--
+-- > invIncompleteGamma s . incompleteGamma s = id
+--
+--   For @invIncompleteGamma s p@ /s/ must be positive and /p/ must be
+--   in [0,1] range.
+invIncompleteGamma :: Double -> Double -> Double
+invIncompleteGamma a p
+  | a <= 0         = 
+      error $ "Statistics.Math.invIncompleteGamma: a must be positive. Got: " ++ show a
+  | p < 0 || p > 1 = 
+      error $ "Statistics.Math.invIncompleteGamma: p must be in [0,1] range. Got: " ++ show p
+  | p == 0         = 0
+  | p == 1         = 1 / 0
+  | otherwise      = loop 0 guess
+  where
+    -- Solve equation γ(a,x) = p using Halley method
+    loop i x
+      | i >= 12   = x
+      | otherwise =
+         let 
+           -- Value of γ(a,x) - p
+           f    = incompleteGamma a x - p
+           -- dγ(a,x)/dx
+           f'   | a > 1     = afac * exp( -(x - a1) + a1 * (log x - lna1))
+                | otherwise = exp( -x + a1 * log x - gln)
+           u    = f / f'
+           -- Halley correction to Newton-Rapson step
+           corr = u * (a1 / x - 1)
+           dx   = u / (1 - 0.5 * min 1.0 corr)
+           -- New approximation to x
+           x'   | x < dx    = 0.5 * x -- Do not go below 0
+                | otherwise = x - dx
+         in if abs dx < eps * x'
+            then x'
+            else loop (i+1) x'
+    -- Calculate inital guess for root
+    guess
+      -- 
+      | a > 1   =
+         let t  = sqrt $ -2 * log(if p < 0.5 then p else 1 - p)
+             x1 = (2.30753 + t * 0.27061) / (1 + t * (0.99229 + t * 0.04481)) - t
+             x2 = if p < 0.5 then -x1 else x1
+         in max (1e-3) (a * (1 - 1/(9*a) - x2 / (3 * sqrt a)) ** 3)
+      -- For a <= 1 use following approximations:
+      --   γ(a,1) ≈ 0.253a + 0.12a²
+      --
+      --   γ(a,x) ≈ γ(a,1)·x^a                               x <  1
+      --   γ(a,x) ≈ γ(a,1) + (1 - γ(a,1))(1 - exp(1 - x))    x >= 1
+      | otherwise =
+         let t = 1 - a * (0.253 + a*0.12)
+         in if p < t
+            then (p / t) ** (1 / a)
+            else 1 - log( 1 - (p-t) / (1-t))
+    -- Constants
+    a1   = a - 1
+    lna1 = log a1
+    afac = exp( a1 * (lna1 - 1) - gln )
+    gln  = logGamma a
+    eps  = 1e-8
+
+
 
 -- Adapted from http://people.sc.fsu.edu/~burkardt/f_src/asa245/asa245.html
 
