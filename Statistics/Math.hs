@@ -46,7 +46,6 @@ import Statistics.Distribution.Normal (standard)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
-import Debug.Trace
 
 -- $chebyshev
 --
@@ -213,6 +212,7 @@ invIncompleteGamma a p
   | otherwise      = loop 0 guess
   where
     -- Solve equation γ(a,x) = p using Halley method
+    loop :: Int -> Double -> Double
     loop i x
       | i >= 12   = x
       | otherwise =
