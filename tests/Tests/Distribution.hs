@@ -73,10 +73,11 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
 -- Tests for distributions which have CDF
 cdfTests :: (Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
 cdfTests t =
-  [ testProperty "C.D.F. sanity"        $ cdfSanityCheck        t
-  , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity t
-  , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity t
-  , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing    t
+  [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
+  , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity  t
+  , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity  t
+  , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
+  , testProperty "1-CDF is correct"     $ cdfComplementIsCorrect t
   ]
 ----------------------------------------------------------------
 
@@ -99,6 +100,9 @@ cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Bool
 cdfLimitAtNegInfinity _ d = 
   Just 0.0 == (find (<=0) $ take 1000 $ map (cumulative d) $ iterate (*1.4) (-1))
 
+-- CDF's complement is implemented correctly
+cdfComplementIsCorrect :: (Distribution d) => T d -> d -> Double -> Bool
+cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d x)
 
 
 -- PDF is positive
