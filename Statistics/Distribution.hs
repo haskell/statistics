@@ -39,6 +39,16 @@ class Distribution d where
     -- i.e. P(/X/&#8804;/x/). 
     cumulative :: d -> Double -> Double
 
+    -- | One's complement of cumulative distibution:
+    --
+    -- > complCumulative d x = 1 - cumulative d x
+    --
+    -- It's useful when one is interested in P(/X/&#8805;/x/) and
+    -- expression on the right side begin to lose precision. This
+    -- function have default implementation but implementors are
+    -- encouraged to provide more precise implementation
+    complCumulative :: d -> Double -> Double
+    complCumulative d x = 1 - cumulative d x
 
 -- | Discrete probability distribution.
 class Distribution  d => DiscreteDistr d where
