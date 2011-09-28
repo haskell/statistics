@@ -50,7 +50,9 @@ weightedAvg :: G.Vector v Double =>
             -> Int        -- ^ /q/, the number of quantiles.
             -> v Double   -- ^ /x/, the sample data.
             -> Double
-weightedAvg k q x =
+weightedAvg k q x
+    | n == 1    = G.head x
+    | otherwise =
     assert (q >= 2) .
     assert (k >= 0) .
     assert (k < q) .
@@ -58,11 +60,12 @@ weightedAvg k q x =
     xj + g * (xj1 - xj)
   where
     j   = floor idx
-    idx = fromIntegral (G.length x - 1) * fromIntegral k / fromIntegral q
+    idx = fromIntegral (n - 1) * fromIntegral k / fromIntegral q
     g   = idx - fromIntegral j
     xj  = sx ! j
     xj1 = sx ! (j+1)
     sx  = partialSort (j+2) x
+    n   = G.length x
 {-# INLINE weightedAvg #-}
 
 -- | Parameters /a/ and /b/ to the 'continuousBy' function.
