@@ -35,7 +35,8 @@ data NormalDistribution = ND {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution NormalDistribution where
-    cumulative = cumulative
+    cumulative      = cumulative
+    complCumulative = complCumulative
 
 instance D.ContDistr NormalDistribution where
     density    = density
@@ -92,6 +93,9 @@ density d x = exp (-xm * xm / (2 * sd * sd)) / ndPdfDenom d
 
 cumulative :: NormalDistribution -> Double -> Double
 cumulative d x = erfc ((mean d - x) / ndCdfDenom d) / 2
+
+complCumulative :: NormalDistribution -> Double -> Double
+complCumulative d x = erfc ((x - mean d) / ndCdfDenom d) / 2
 
 quantile :: NormalDistribution -> Double -> Double
 quantile d p
