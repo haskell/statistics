@@ -38,16 +38,25 @@ data HypergeometricDistribution = HD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution HypergeometricDistribution where
-    cumulative d x = D.sumProbabilities d 0 (floor x)
+    cumulative = cumulative
 
 instance D.DiscreteDistr HypergeometricDistribution where
     probability = probability
 
+instance D.Mean HypergeometricDistribution where
+    mean = mean
+
 instance D.Variance HypergeometricDistribution where
     variance = variance
 
-instance D.Mean HypergeometricDistribution where
-    mean = mean
+instance D.MaybeMean HypergeometricDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance HypergeometricDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
+
 
 variance :: HypergeometricDistribution -> Double
 variance (HD m l k) = (k' * ml) * (1 - ml) * (l' - k') / (l' - 1)
@@ -81,3 +90,13 @@ probability (HD mi li ki) n
   | otherwise =
       choose mi n * choose (li - mi) (ki - n) / choose li ki
 {-# INLINE probability #-}
+
+cumulative :: HypergeometricDistribution -> Double -> Double
+cumulative d@(HD mi li ki) x
+  | n <  minN = 0 
+  | n >= maxN = 1
+  | otherwise = D.sumProbabilities d minN n
+    where
+      n    = floor x
+      minN = max 0 (mi+ki-li)
+      maxN = min mi ki

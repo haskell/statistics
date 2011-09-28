@@ -41,11 +41,18 @@ instance D.Distribution BinomialDistribution where
 instance D.DiscreteDistr BinomialDistribution where
     probability = probability
 
+instance D.Mean BinomialDistribution where
+    mean = mean
+
 instance D.Variance BinomialDistribution where
     variance = variance
 
-instance D.Mean BinomialDistribution where
-    mean = mean
+instance D.MaybeMean BinomialDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance BinomialDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
 
 
 -- This could be slow for big n

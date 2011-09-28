@@ -52,3 +52,9 @@ instance D.Variance UniformDistribution where
   --       numerical constant. (Also FIXME!)
   stdDev   (UniformDistribution a b) = 0.2886751345948129 * (b - a)
   variance (UniformDistribution a b) = d * d / 12 where d = b - a
+
+instance D.MaybeMean UniformDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance UniformDistribution where
+    maybeStdDev   = Just . D.stdDev

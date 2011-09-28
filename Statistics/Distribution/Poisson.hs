@@ -53,6 +53,13 @@ instance D.Mean PoissonDistribution where
     mean = poissonLambda
     {-# INLINE mean #-}
 
+instance D.MaybeMean PoissonDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance PoissonDistribution where
+    maybeStdDev   = Just . D.stdDev
+
+
 -- | Create Poisson distribution.
 poisson :: Double -> PoissonDistribution
 poisson l

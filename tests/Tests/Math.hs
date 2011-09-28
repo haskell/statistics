@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 -- | Tests for Statistics.Math
 module Tests.Math (
   mathTests
@@ -22,6 +23,7 @@ mathTests = testGroup "S.Math"
   , testProperty "γ(1,x) = 1 - exp(-x)"      $ incompleteGammaAt1Check
   , testProperty "γ - increases"             $
       \s x y -> s > 0 && x > 0 && y > 0 ==> monotonicallyIncreases (incompleteGamma s) x y
+  , testProperty "invIncompleteGamma = γ^-1" $ invIGammaIsInverse
   , chebyshevTests
     -- Unit tests
   , testAssertion "Factorial is expected to be precise at 1e-15 level"
@@ -70,6 +72,19 @@ incompleteGammaAt1Check x =
   x > 0 ==> (incompleteGamma 1 x + exp(-x)) ≈ 1
   where
     (≈) = eq 1e-13
+
+-- invIncompleteGamma is inverse of incompleteGamma
+invIGammaIsInverse :: Double -> Double -> Property
+invIGammaIsInverse (abs -> a) (abs . snd . properFraction -> p) =
+  a > 0 && p > 0 && p < 1  ==> ( printTestCase ("x  = " ++ show x )
+                               $ printTestCase ("p' = " ++ show p')
+                               $ printTestCase ("Δp = " ++ show (p - p'))
+                               $ abs (p - p') <= 1e-12
+                               )
+  where
+    x  = invIncompleteGamma a p
+    p' = incompleteGamma    a x
+
 
 -- Test that Chebyshev polynomial of low order are evaluated correctly
 chebyshevTests :: Test

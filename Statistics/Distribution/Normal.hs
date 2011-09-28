@@ -41,11 +41,19 @@ instance D.ContDistr NormalDistribution where
     density    = density
     quantile   = quantile
 
-instance D.Variance NormalDistribution where
-    stdDev = stdDev
+instance D.MaybeMean NormalDistribution where
+    maybeMean = Just . D.mean
 
 instance D.Mean NormalDistribution where
     mean = mean
+
+instance D.MaybeVariance NormalDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
+instance D.Variance NormalDistribution where
+    stdDev = stdDev
+
 
 -- | Standard normal distribution with mean equal to 0 and variance equal to 1
 standard :: NormalDistribution

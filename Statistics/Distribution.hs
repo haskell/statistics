@@ -16,14 +16,20 @@ module Statistics.Distribution
       Distribution(..)
     , DiscreteDistr(..)
     , ContDistr(..)
+      -- ** Distribution statistics
+    , MaybeMean(..)
     , Mean(..)
+    , MaybeVariance(..)
     , Variance(..)
       -- * Helper functions
     , findRoot
     , sumProbabilities
     ) where
 
+import Control.Applicative ((<$>), Applicative(..))
 import qualified Data.Vector.Unboxed as U
+
+
 
 -- | Type class common to all distributions. Only c.d.f. could be
 -- defined for both discrete and continous distributions.
@@ -52,14 +58,37 @@ class Distribution d => ContDistr d where
     quantile :: d -> Double -> Double
 
 
--- | Type class for distributions with mean.
-class Distribution d => Mean d where
+
+-- | Type class for distributions with mean. 'maybeMean' should return
+--   'Nothing' if it's undefined for current value of data
+class Distribution d => MaybeMean d where
+    maybeMean :: d -> Maybe Double
+
+-- | Type class for distributions with mean. If distribution have
+--   finite mean for all valid values of parameters it should be
+--   instance of this type class.
+class MaybeMean d => Mean d where
     mean :: d -> Double
 
 
--- | Type class for distributions with variance. Minimal complete
---   definition is 'variance' or 'stdDev'
-class Mean d => Variance d where
+
+-- | Type class for distributions with variance. If variance is
+--   undefined for some parameter values both 'maybeVariance' and
+--   'maybeStdDev' should return Nothing.
+--
+--   Minimal complete definition is 'maybeVariance' or 'maybeStdDev'
+class MaybeMean d => MaybeVariance d where
+    maybeVariance :: d -> Maybe Double
+    maybeVariance d = (*) <$> x <*> x where x = maybeStdDev d
+    maybeStdDev   :: d -> Maybe Double
+    maybeStdDev = fmap sqrt . maybeVariance
+
+-- | Type class for distributions with variance. If distibution have
+--   finite variance for all valid parameter values it should be
+--   instance of this type class.
+--
+--   Minimal complete definition is 'variance' or 'stdDev'
+class (Mean d, MaybeVariance d) => Variance d where
     variance :: d -> Double
     variance d = x * x where x = stdDev d
     stdDev   :: d -> Double

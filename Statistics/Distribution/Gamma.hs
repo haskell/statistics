@@ -25,9 +25,9 @@ module Statistics.Distribution.Gamma
     ) where
 
 import Data.Typeable (Typeable)
-import Statistics.Constants (m_huge, m_pos_inf, m_NaN)
+import Statistics.Constants (m_pos_inf, m_NaN)
 import Statistics.Distribution.Poisson.Internal as Poisson
-import Statistics.Math (incompleteGamma)
+import Statistics.Math (incompleteGamma, invIncompleteGamma)
 import qualified Statistics.Distribution as D
 
 -- | The gamma distribution.
@@ -63,6 +63,15 @@ instance D.Mean GammaDistribution where
     mean (GD a l) = a * l
     {-# INLINE mean #-}
 
+instance D.MaybeMean GammaDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance GammaDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
+
+
 density :: GammaDistribution -> Double -> Double
 density (GD a l) x
   | a < 0 || l <= 0   = m_NaN
@@ -80,8 +89,9 @@ cumulative (GD k l) x
 {-# INLINE cumulative #-}
 
 quantile :: GammaDistribution -> Double -> Double
-quantile d p
-  | p == 0    = -1/0
-  | p == 1    = 1/0
-  | otherwise = D.findRoot d p (gdShape d) 0 m_huge
+quantile (GD k l) p
+  | p < 0 || p > 1 = 0/0
+  | p == 0         = -1/0
+  | p == 1         = 1/0
+  | otherwise      = l * invIncompleteGamma k p
 {-# INLINE quantile #-}
