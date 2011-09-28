@@ -85,8 +85,9 @@ density chi x
 
 quantile :: ChiSquared -> Double -> Double
 quantile d@(ChiSquared ndf) p
-  | p < 0 || p > 1 = 0/0
-  | p == 0         = -1/0
+  | p == 0         = 0
   | p == 1         = 1/0
-  | otherwise      = 2 * invIncompleteGamma (fromIntegral ndf / 2) p
+  | p > 0 && p < 1 = 2 * invIncompleteGamma (fromIntegral ndf / 2) p
+  | otherwise      =
+    error $ "Statistics.Distribution.ChiSquared.quantile: p must be in [0,1] range. Got: "++show p
 {-# INLINE quantile #-}

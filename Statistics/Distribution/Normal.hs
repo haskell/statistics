@@ -95,10 +95,11 @@ cumulative d x = erfc ((mean d - x) / ndCdfDenom d) / 2
 
 quantile :: NormalDistribution -> Double -> Double
 quantile d p
-  | p < 0 || p > 1 = inf/inf
   | p == 0         = -inf
   | p == 1         = inf
   | p == 0.5       = mean d
-  | otherwise      = x * stdDev d + mean d
+  | p > 0 && p < 1 = x * stdDev d + mean d
+  | otherwise      =
+    error $ "Statistics.Distribution.Normal.quantile: p must be in [0,1] range. Got: "++show p
   where x          = D.findRoot standard p 0 (-100) 100
         inf        = 1/0

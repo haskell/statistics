@@ -17,6 +17,9 @@ module Statistics.Distribution.Uniform (
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 
+import Control.Exception
+import Prelude hiding (catch)
+
 -- | Uniform distribution
 data UniformDistribution = UniformDistribution {-# UNPACK #-} !Double {-# UNPACK #-} !Double
                            deriving (Eq,Show,Read,Typeable)
@@ -41,8 +44,9 @@ instance D.ContDistr UniformDistribution where
     | x > b     = 0
     | otherwise = 1 / (b - a)
   quantile (UniformDistribution a b) p
-    | p < 0 || p > 1 = 0/0
-    | otherwise      = a + (b - a) * p
+    | p >= 0 && p <= 1 = a + (b - a) * p
+    | otherwise        =
+      error $ "Statistics.Distribution.Uniform.quantile: p must be in [0,1] range. Got: "++show p
 
 instance D.Mean UniformDistribution where
   mean (UniformDistribution a b) = 0.5 * (a + b)
