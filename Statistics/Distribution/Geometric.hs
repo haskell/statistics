@@ -39,13 +39,21 @@ instance D.Distribution GeometricDistribution where
 instance D.DiscreteDistr GeometricDistribution where
     probability = probability
 
+instance D.Mean GeometricDistribution where
+    mean (GD s) = 1 / s
+    {-# INLINE mean #-}
+
 instance D.Variance GeometricDistribution where
     variance (GD s) = (1 - s) / (s * s)
     {-# INLINE variance #-}
 
-instance D.Mean GeometricDistribution where
-    mean (GD s) = 1 / s
-    {-# INLINE mean #-}
+instance D.MaybeMean GeometricDistribution where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance GeometricDistribution where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
 
 -- | Create geometric distribution.
 geometric :: Double                -- ^ Success rate

@@ -20,7 +20,7 @@ module Statistics.Distribution.ChiSquared (
 
 import Data.Typeable (Typeable)
 import Statistics.Constants (m_huge)
-import Statistics.Math (incompleteGamma,logGamma)
+import Statistics.Math      (incompleteGamma,invIncompleteGamma,logGamma)
 
 import qualified Statistics.Distribution as D
 
@@ -58,6 +58,13 @@ instance D.Variance ChiSquared where
     variance (ChiSquared ndf) = fromIntegral (2*ndf)
     {-# INLINE variance #-}
 
+instance D.MaybeMean ChiSquared where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance ChiSquared where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
 cumulative :: ChiSquared -> Double -> Double
 cumulative chi x
   | x <= 0    = 0
@@ -78,7 +85,8 @@ density chi x
 
 quantile :: ChiSquared -> Double -> Double
 quantile d@(ChiSquared ndf) p
-  | p == 0    = -1/0
-  | p == 1    = 1/0
-  | otherwise = D.findRoot d p (fromIntegral ndf) 0 m_huge
+  | p < 0 || p > 1 = 0/0
+  | p == 0         = -1/0
+  | p == 1         = 1/0
+  | otherwise      = 2 * invIncompleteGamma (fromIntegral ndf / 2) p
 {-# INLINE quantile #-}
