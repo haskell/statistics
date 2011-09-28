@@ -1,17 +1,19 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Tests.Distribution (
     distributionTests
   ) where
 
 import Control.Applicative
+import Control.Exception
 
 import Data.List     (find)
 import Data.Typeable (Typeable)
 
 import Test.Framework                       (Test,testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck as QC
-
+import Test.QuickCheck         as QC
+import Test.QuickCheck.Monadic as QC
 import Text.Printf
 
 import Statistics.Distribution
@@ -24,6 +26,8 @@ import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Normal
 import Statistics.Distribution.Poisson
 import Statistics.Distribution.Uniform
+
+import Prelude hiding (catch)
 
 import Tests.Helpers
 
@@ -55,6 +59,7 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck   t
   , testProperty "Quantile is CDF inverse" $ quantileIsInvCDF t
+  , testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
   ]
 
 -- Tests for discrete distribution
@@ -111,6 +116,15 @@ quantileIsInvCDF _ d p =
   where
     q  = quantile   d p
     p' = cumulative d q
+
+-- Test that quantile fails if p<0 or p>1
+quantileShouldFail :: (ContDistr d) => T d -> d -> Double -> Property
+quantileShouldFail _ d p =
+  p < 0 || p > 1 ==> QC.monadicIO $ do r <- QC.run $ catch
+                                              (do { return $! quantile d p; return False })
+                                              (\(e :: SomeException) -> return True)
+                                       QC.assert r
+
 
 -- Probability is in [0,1] range
 probSanityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Bool

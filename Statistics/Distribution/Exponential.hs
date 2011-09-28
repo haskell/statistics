@@ -65,7 +65,11 @@ density (ED l) x | x < 0     = 0
 {-# INLINE density #-}
 
 quantile :: ExponentialDistribution -> Double -> Double
-quantile (ED l) p = -log (1 - p) / l
+quantile (ED l) p
+  | p == 1          = 1 / 0
+  | p >= 0 && p < 1 = -log (1 - p) / l
+  | otherwise       =
+    error $ "Statistics.Distribution.Exponential.quantile: p must be in [0,1] range. Got: "++show p
 {-# INLINE quantile #-}
 
 -- | Create an exponential distribution.

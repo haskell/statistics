@@ -54,7 +54,8 @@ class Distribution d => ContDistr d where
     density :: d -> Double -> Double
 
     -- | Inverse of the cumulative distribution function. The value
-    -- /x/ for which P(/X/&#8804;/x/) = /p/.
+    -- /x/ for which P(/X/&#8804;/x/) = /p/. If probability is outside
+    -- of [0,1] range function should call 'error'
     quantile :: d -> Double -> Double
 
 
