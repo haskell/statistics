@@ -94,13 +94,17 @@ cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
 
 -- CDF limit at +∞ is 1
 cdfLimitAtPosInfinity :: (Distribution d) => T d -> d -> Bool
-cdfLimitAtPosInfinity _ d = 
-  Just 1.0 == (find (>=1) $ take 1000 $ map (cumulative d) $ iterate (*1.4) 1)
+cdfLimitAtPosInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
+                          $ Just 1.0 == (find (>=1) probs)
+  where
+    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1)
 
 -- CDF limit at -∞ is 0
-cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Bool
-cdfLimitAtNegInfinity _ d = 
-  Just 0.0 == (find (<=0) $ take 1000 $ map (cumulative d) $ iterate (*1.4) (-1))
+cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Property
+cdfLimitAtNegInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
+                          $ Just 0.0 == (find (<=0) probs)
+  where
+    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) (-1)
 
 -- CDF's complement is implemented correctly
 cdfComplementIsCorrect :: (Distribution d) => T d -> d -> Double -> Bool
@@ -116,7 +120,9 @@ pdfSanityCheck _ d x = p >= 0
 quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d p =
   p > 0 && p < 1  ==> ( printTestCase (printf "Quantile     = %g" q )
-                      $ printTestCase (printf "Probabilitu' = %g" p')
+                      $ printTestCase (printf "Probability  = %g" p )
+                      $ printTestCase (printf "Probability' = %g" p')
+                      $ printTestCase (printf "Error        = %e" (abs $ p - p'))
                       $ abs (p - p') < 1e-14
                       )
   where
