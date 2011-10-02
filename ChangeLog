@@ -10,6 +10,9 @@ Changes in 0.10.0.0
 
 	* stdDev is added to Variance type class for distributions.
 
+	* Constructor S.Distribution.normalDistr takes standard deviation
+	  instead of variance as parameter.
+
 	* Bug in S.Quantile.weightedAvg is fixed. It produced wrong answer if
 	  sample contains only one element.
 
@@ -20,8 +23,11 @@ Changes in 0.10.0.0
 	  wrong critical value for moderately large samples. Something around 20
 	  for 32-bit machines and 40 for 64-bit ones.
 
-	* Bug mannWhitneyUSignificant is fixed. If either of samples is larger
+	* Bug in mannWhitneyUSignificant is fixed. If either of samples is larger
 	  than 20 it produced completely wrong answer.
+
+	* One and two tailed tests in S.Tests.NonParametric are selected with
+	  enumeration types instead of booleans.
 
 	* Performance improvements for Mann-Whitney U and Wilcoxon tests.
 
