@@ -18,8 +18,7 @@ module Statistics.Distribution.ChiSquared (
         , chiSquaredNDF
         ) where
 
-import Data.Typeable (Typeable)
-import Statistics.Constants (m_huge)
+import Data.Typeable        (Typeable)
 import Statistics.Math      (incompleteGamma,invIncompleteGamma,logGamma)
 
 import qualified Statistics.Distribution as D
@@ -84,7 +83,7 @@ density chi x
 {-# INLINE density #-}
 
 quantile :: ChiSquared -> Double -> Double
-quantile d@(ChiSquared ndf) p
+quantile (ChiSquared ndf) p
   | p == 0         = 0
   | p == 1         = 1/0
   | p > 0 && p < 1 = 2 * invIncompleteGamma (fromIntegral ndf / 2) p

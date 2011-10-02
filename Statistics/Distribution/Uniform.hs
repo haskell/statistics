@@ -17,8 +17,6 @@ module Statistics.Distribution.Uniform (
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 
-import Control.Exception
-import Prelude hiding (catch)
 
 -- | Uniform distribution
 data UniformDistribution = UniformDistribution {-# UNPACK #-} !Double {-# UNPACK #-} !Double
