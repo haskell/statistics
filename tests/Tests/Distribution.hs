@@ -10,6 +10,8 @@ import Control.Exception
 import Data.List     (find)
 import Data.Typeable (Typeable)
 
+import qualified Numeric.IEEE    as IEEE
+
 import Test.Framework                       (Test,testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck         as QC
@@ -93,16 +95,18 @@ cdfIsNondecreasing :: (Distribution d) => T d -> d -> Double -> Double -> Bool
 cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
 
 -- CDF limit at +∞ is 1
-cdfLimitAtPosInfinity :: (Distribution d) => T d -> d -> Bool
+cdfLimitAtPosInfinity :: (Distribution d) => T d -> d -> Property
 cdfLimitAtPosInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
                           $ Just 1.0 == (find (>=1) probs)
   where
-    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1)
+    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1
 
 -- CDF limit at -∞ is 0
 cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Property
 cdfLimitAtNegInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
-                          $ Just 0.0 == (find (<=0) probs)
+                          $ case find (< IEEE.epsilon) probs of
+                              Nothing -> False
+                              Just p  -> p >= 0
   where
     probs = take 1000 $ map (cumulative d) $ iterate (*1.4) (-1)
 
