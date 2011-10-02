@@ -14,6 +14,7 @@
 -- It doesn't have mean and variance.
 module Statistics.Distribution.CauchyLorentz (
     CauchyDistribution
+  , cauchyDistribMedian
   , cauchyDistribScale
     -- * Constructors
   , cauchyDistribution
@@ -21,13 +22,15 @@ module Statistics.Distribution.CauchyLorentz (
   ) where
 
 import Data.Typeable (Typeable)
-import Statistics.Constants (m_sqrt_2, m_sqrt_2_pi)
 import qualified Statistics.Distribution as D
 
 
 -- | Cauchy-Lorentz distribution.
 data CauchyDistribution = CD {
-    cauchyMean          :: {-# UNPACK #-} !Double
+    -- | Central value of Cauchy-Lorentz distribution which is its
+    --   mode and median. Distribution doesn't have mean so function
+    --   is named after median.
+    cauchyDistribMedian :: {-# UNPACK #-} !Double
     -- | Scale parameter of Cauchy-Lorentz distribution. It's
     --   different from variance and specify half width at half
     --   maximum (HWHM).
