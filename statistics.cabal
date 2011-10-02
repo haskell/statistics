@@ -14,7 +14,7 @@ description:
     we focus on the most common.)
   .
   * Computing with sample data: quantile estimation, kernel density
-    estimation, bootstrap methods, signigicance testing, and
+    estimation, bootstrap methods, significance testing, and
     autocorrelation analysis.
   .
   * Random variate generation under several different distributions.
