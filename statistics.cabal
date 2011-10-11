@@ -69,7 +69,7 @@ library
     mwc-random >= 0.8.0.5,
     primitive >= 0.3,
     time,
-    vector >= 0.7.0.0,
+    vector >= 0.7.1,
     vector-algorithms >= 0.4
   if impl(ghc >= 6.10)
     build-depends:
