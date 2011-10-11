@@ -22,10 +22,10 @@ import Control.Concurrent (forkIO, newChan, readChan, writeChan)
 import Control.Monad (forM_, liftM, replicateM_)
 import Control.Monad.Primitive (PrimMonad, PrimState)
 import Data.Vector.Algorithms.Intro (sort)
-import Data.Vector.Generic (unsafeFreeze)
+import Data.Vector.Generic (generateM, unsafeFreeze)
 import Data.Word (Word32)
 import GHC.Conc (numCapabilities)
-import Statistics.Function (create, indices)
+import Statistics.Function (indices)
 import Statistics.Types (Estimator, Sample)
 import System.Random.MWC (Gen, initialize, uniform, uniformVector)
 import qualified Data.Vector.Unboxed as U
@@ -68,7 +68,7 @@ resample gen ests numResamples samples = do
     forkIO $ do
       let loop k ers | k >= end = writeChan done ()
                      | otherwise = do
-            re <- create numSamples $ \_ -> do
+            re <- generateM numSamples $ \_ -> do
                     r <- uniform gen'
                     return (U.unsafeIndex samples (r `mod` numSamples))
             forM_ ers $ \(est,arr) ->

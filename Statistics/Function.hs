@@ -19,28 +19,22 @@ module Statistics.Function
     , indexed
     , indices
     , nextHighestPowerOfTwo
-    -- * Vector setup
-    , create
     ) where
 
 #include "MachDeps.h"
 
-import Control.Exception (assert)
-import Control.Monad.Primitive (PrimMonad)
 import Data.Bits ((.|.), shiftR)
-import Data.Vector.Generic (modify, unsafeFreeze)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Generic.Mutable as M
 
 -- | Sort a vector.
 sort :: (Ord e, G.Vector v e) => v e -> v e
-sort = modify I.sort
+sort = G.modify I.sort
 {-# INLINE sort #-}
 
 -- | Sort a vector using a custom ordering.
 sortBy :: (G.Vector v e) => I.Comparison e -> v e -> v e
-sortBy f = modify $ I.sortBy f
+sortBy f = G.modify $ I.sortBy f
 {-# INLINE sortBy #-}
 
 -- | Partially sort a vector, such that the least /k/ elements will be
@@ -49,7 +43,7 @@ partialSort :: (G.Vector v e, Ord e) =>
                Int -- ^ The number /k/ of least elements.
             -> v e
             -> v e
-partialSort k = modify (\a -> I.partialSort a k)
+partialSort k = G.modify (\a -> I.partialSort a k)
 {-# INLINE partialSort #-}
 
 -- | Return the indices of a vector.
@@ -71,18 +65,6 @@ minMax = fini . G.foldl' go (MM (1/0) (-1/0))
     go (MM lo hi) k = MM (min lo k) (max hi k)
     fini (MM lo hi) = (lo, hi)
 {-# INLINE minMax #-}
-
--- | Create a vector, using the given action to populate each
--- element.
-create :: (PrimMonad m, G.Vector v e) => Int -> (Int -> m e) -> m (v e)
-create size itemAt = assert (size >= 0) $
-    M.new size >>= loop 0
-  where
-    loop k arr | k >= size = unsafeFreeze arr
-               | otherwise = do r <- itemAt k
-                                M.write arr k r
-                                loop (k+1) arr
-{-# INLINE create #-}
 
 -- | Efficiently compute the next highest power of two for a
 -- non-negative integer.  If the given value is already a power of
