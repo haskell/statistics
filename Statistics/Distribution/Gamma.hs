@@ -90,8 +90,9 @@ cumulative (GD k l) x
 
 quantile :: GammaDistribution -> Double -> Double
 quantile (GD k l) p
-  | p < 0 || p > 1 = 0/0
-  | p == 0         = -1/0
+  | p == 0         = 0
   | p == 1         = 1/0
-  | otherwise      = l * invIncompleteGamma k p
+  | p > 0 && p < 1 = l * invIncompleteGamma k p
+  | otherwise      =
+    error $ "Statistics.Distribution.Gamma.quantile: p must be in [0,1] range. Got: "++show p
 {-# INLINE quantile #-}

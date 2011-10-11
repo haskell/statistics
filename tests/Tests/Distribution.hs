@@ -1,22 +1,27 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Tests.Distribution (
     distributionTests
   ) where
 
 import Control.Applicative
+import Control.Exception
 
 import Data.List     (find)
 import Data.Typeable (Typeable)
 
+import qualified Numeric.IEEE    as IEEE
+
 import Test.Framework                       (Test,testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck as QC
-
+import Test.QuickCheck         as QC
+import Test.QuickCheck.Monadic as QC
 import Text.Printf
 
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
 import Statistics.Distribution.ChiSquared
+import Statistics.Distribution.CauchyLorentz
 import Statistics.Distribution.Exponential
 import Statistics.Distribution.Gamma
 import Statistics.Distribution.Geometric
@@ -25,16 +30,19 @@ import Statistics.Distribution.Normal
 import Statistics.Distribution.Poisson
 import Statistics.Distribution.Uniform
 
+import Prelude hiding (catch)
+
 import Tests.Helpers
 
 
 -- | Tests for all distributions
 distributionTests :: Test
 distributionTests = testGroup "Tests for all distributions"
-  [ contDistrTests (T :: T NormalDistribution      )
+  [ contDistrTests (T :: T CauchyDistribution      )
+  , contDistrTests (T :: T ChiSquared              )
   , contDistrTests (T :: T ExponentialDistribution )
   , contDistrTests (T :: T GammaDistribution       )
-  , contDistrTests (T :: T ChiSquared              )
+  , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
     
   , discreteDistrTests (T :: T BinomialDistribution       )
@@ -55,6 +63,7 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck   t
   , testProperty "Quantile is CDF inverse" $ quantileIsInvCDF t
+  , testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
   ]
 
 -- Tests for discrete distribution
@@ -68,10 +77,11 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
 -- Tests for distributions which have CDF
 cdfTests :: (Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
 cdfTests t =
-  [ testProperty "C.D.F. sanity"        $ cdfSanityCheck        t
-  , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity t
-  , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity t
-  , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing    t
+  [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
+  , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity  t
+  , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity  t
+  , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
+  , testProperty "1-CDF is correct"     $ cdfComplementIsCorrect t
   ]
 ----------------------------------------------------------------
 
@@ -85,15 +95,24 @@ cdfIsNondecreasing :: (Distribution d) => T d -> d -> Double -> Double -> Bool
 cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
 
 -- CDF limit at +∞ is 1
-cdfLimitAtPosInfinity :: (Distribution d) => T d -> d -> Bool
-cdfLimitAtPosInfinity _ d = 
-  Just 1.0 == (find (>=1) $ take 1000 $ map (cumulative d) $ iterate (*1.4) 1)
+cdfLimitAtPosInfinity :: (Distribution d) => T d -> d -> Property
+cdfLimitAtPosInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
+                          $ Just 1.0 == (find (>=1) probs)
+  where
+    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1
 
 -- CDF limit at -∞ is 0
-cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Bool
-cdfLimitAtNegInfinity _ d = 
-  Just 0.0 == (find (<=0) $ take 1000 $ map (cumulative d) $ iterate (*1.4) (-1))
+cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Property
+cdfLimitAtNegInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
+                          $ case find (< IEEE.epsilon) probs of
+                              Nothing -> False
+                              Just p  -> p >= 0
+  where
+    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) (-1)
 
+-- CDF's complement is implemented correctly
+cdfComplementIsCorrect :: (Distribution d) => T d -> d -> Double -> Bool
+cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d x)
 
 
 -- PDF is positive
@@ -105,12 +124,23 @@ pdfSanityCheck _ d x = p >= 0
 quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d p =
   p > 0 && p < 1  ==> ( printTestCase (printf "Quantile     = %g" q )
-                      $ printTestCase (printf "Probabilitu' = %g" p')
+                      $ printTestCase (printf "Probability  = %g" p )
+                      $ printTestCase (printf "Probability' = %g" p')
+                      $ printTestCase (printf "Error        = %e" (abs $ p - p'))
                       $ abs (p - p') < 1e-14
                       )
   where
     q  = quantile   d p
     p' = cumulative d q
+
+-- Test that quantile fails if p<0 or p>1
+quantileShouldFail :: (ContDistr d) => T d -> d -> Double -> Property
+quantileShouldFail _ d p =
+  p < 0 || p > 1 ==> QC.monadicIO $ do r <- QC.run $ catch
+                                              (do { return $! quantile d p; return False })
+                                              (\(e :: SomeException) -> return True)
+                                       QC.assert r
+
 
 -- Probability is in [0,1] range
 probSanityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Bool
@@ -158,9 +188,12 @@ instance QC.Arbitrary ChiSquared where
   arbitrary = chiSquared <$> QC.choose (1,100)
 instance QC.Arbitrary UniformDistribution where
   arbitrary = do a <- QC.arbitrary
-                 b <- QC.arbitrary `QC.suchThat` (/= a)
+                 b <- QC.arbitrary `suchThat` (/= a)
                  return $ uniformDistr a b
-
+instance QC.Arbitrary CauchyDistribution where
+  arbitrary = cauchyDistribution
+                <$> arbitrary
+                <*> ((abs <$> arbitrary) `suchThat` (> 0))
 
 ----------------------------------------------------------------
 -- Unit tests
