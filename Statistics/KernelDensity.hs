@@ -1,183 +1,121 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE BangPatterns, FlexibleContexts, UnboxedTuples #-}
 -- |
 -- Module    : Statistics.KernelDensity
--- Copyright : (c) 2009 Bryan O'Sullivan
+-- Copyright : (c) 2011 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
 -- Stability   : experimental
 -- Portability : portable
 --
--- Kernel density estimation code, providing non-parametric ways to
--- estimate the probability density function of a sample.
+-- Kernel density estimation.  This module provides a fast, robust,
+-- non-parametric way to estimate the probability density function of
+-- a sample.
 
 module Statistics.KernelDensity
     (
-    -- * Simple entry points
-      epanechnikovPDF
-    , gaussianPDF
-    -- * Building blocks
-    -- These functions may be useful if you need to construct a kernel
-    -- density function estimator other than the ones provided in this
-    -- module.
-
-    -- ** Choosing points from a sample
-    , Points(..)
-    , choosePoints
-    -- ** Bandwidth estimation
-    , Bandwidth
-    , bandwidth
-    , epanechnikovBW
-    , gaussianBW
-    -- ** Kernels
-    , Kernel
-    , epanechnikovKernel
-    , gaussianKernel
-    -- ** Low-level estimation
-    , estimatePDF
-    , simplePDF
+      kde
+    , kde_
     -- * References
     -- $references
     ) where
 
-import Statistics.Constants (m_1_sqrt_2, m_2_sqrt_pi)
-import Statistics.Function (minMax)
-import Statistics.Sample (stdDev)
-import qualified Data.Vector.Unboxed as U
+import Data.Complex (Complex(..))
+import Data.Maybe (fromMaybe)
+import Prelude hiding (const,min,max)
+import Statistics.Function (minMax, nextHighestPowerOfTwo)
+import Statistics.Histogram (histogram_)
+import Statistics.RootFinding (ridders)
+import Statistics.Transform (dct, idct)
+import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
 
--- | Points from the range of a 'Sample'.
-newtype Points = Points {
-      fromPoints :: U.Vector Double
-    } deriving (Eq, Show)
-
--- | Bandwidth estimator for an Epanechnikov kernel.
-epanechnikovBW :: Double -> Bandwidth
-epanechnikovBW n = (80 / (n * m_2_sqrt_pi)) ** 0.2
-
--- | Bandwidth estimator for a Gaussian kernel.
-gaussianBW :: Double -> Bandwidth
-gaussianBW n = (4 / (n * 3)) ** 0.2
-
--- | The width of the convolution kernel used.
-type Bandwidth = Double
-
--- | Compute the optimal bandwidth from the observed data for the
--- given kernel. This function uses an estimate based on the standard
--- deviation of a sample (due to Deheuvels), which performs reasonably
--- well for unimodal distributions but leads to oversmoothing for more
--- complex ones.
-bandwidth :: G.Vector v Double =>
-             (Double -> Bandwidth)
-          -> v Double
-          -> Bandwidth
-bandwidth kern values = stdDev values * kern (fromIntegral $ G.length values)
-
--- | Choose a uniform range of points at which to estimate a sample's
--- probability density function.
+-- | Gaussian kernel density estimator for one-dimensional data, using
+-- the method of Botev et al.
 --
--- If you are using a Gaussian kernel, multiply the sample's bandwidth
--- by 3 before passing it to this function.
+-- The result is a pair of vectors, containing:
 --
--- If this function is passed an empty vector, it returns values of
--- positive and negative infinity.
-choosePoints :: G.Vector v Double =>
-                Int             -- ^ Number of points to select, /n/
-             -> Double          -- ^ Sample bandwidth, /h/
-             -> v Double        -- ^ Input data
-             -> Points
-choosePoints n h sample = Points . U.map f $ U.enumFromTo 0 n'
-  where lo     = a - h
-        hi     = z + h
-        (a, z) = minMax sample
-        d      = (hi - lo) / fromIntegral n'
-        f i    = lo + fromIntegral i * d
-        n'     = n - 1
-
--- | The convolution kernel.  Its parameters are as follows:
+-- * The coordinates of each mesh point.  The mesh interval is chosen
+--   to be 20% larger than the range of the sample.
 --
--- * Scaling factor, 1\//nh/
+-- * Density estimates at each mesh point.
 --
--- * Bandwidth, /h/
---
--- * A point at which to sample the input, /p/
---
--- * One sample value, /v/
-type Kernel =  Double
-            -> Double
-            -> Double
-            -> Double
-            -> Double
-
--- | Epanechnikov kernel for probability density function estimation.
-epanechnikovKernel :: Kernel
-epanechnikovKernel f h p v
-    | abs u <= 1 = f * (1 - u * u)
-    | otherwise  = 0
-    where u = (v - p) / (h * 0.75)
-
--- | Gaussian kernel for probability density function estimation.
-gaussianKernel :: Kernel
-gaussianKernel f h p v = exp (-0.5 * u * u) * g
-    where u = (v - p) / h
-          g = f * 0.5 * m_2_sqrt_pi * m_1_sqrt_2
-
--- | Kernel density estimator, providing a non-parametric way of
--- estimating the PDF of a random variable.
-estimatePDF :: G.Vector v Double =>
-               Kernel           -- ^ Kernel function
-            -> Bandwidth        -- ^ Bandwidth, /h/
-            -> v Double         -- ^ Sample data
-            -> Points           -- ^ Points at which to estimate
-            -> U.Vector Double
-estimatePDF kernel h sample
-    | n < 2     = errorShort "estimatePDF"
-    | otherwise = U.map k . fromPoints
+-- This estimator does not use the commonly employed \"Gaussian rule
+-- of thumb\".  As a result it outperforms many plug-in methods on
+-- multimodal densities with widely separated modes.
+kde :: (G.Vector v Double) =>
+       Int
+    -- ^ The number of mesh points used in the uniform discretization
+    -- of the interval @(min,max)@.  If this value is not a power of
+    -- two, then it is rounded up to the next power of two.
+    -> v Double -> (v Double, v Double)
+{-# SPECIALIZE kde :: Int -> U.Vector Double
+                   -> (U.Vector Double, U.Vector Double) #-}
+{-# SPECIALIZE kde :: Int -> V.Vector Double
+                   -> (V.Vector Double, V.Vector Double) #-}
+kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
   where
-    k p = G.sum . G.map (kernel f h p) $ sample
-    f   = 1 / (h * fromIntegral n)
-    n   = G.length sample
-{-# INLINE estimatePDF #-}
+    (lo,hi) = minMax xs
+    range = hi - lo
 
--- | A helper for creating a simple kernel density estimation function
--- with automatically chosen bandwidth and estimation points.
-simplePDF :: G.Vector v Double =>
-             (Double -> Double) -- ^ Bandwidth function
-          -> Kernel             -- ^ Kernel function
-          -> Double             -- ^ Bandwidth scaling factor (3 for a Gaussian kernel, 1 for all others)
-          -> Int                -- ^ Number of points at which to estimate
-          -> v Double           -- ^ sample data
-          -> (Points, U.Vector Double)
-simplePDF fbw fpdf k numPoints sample =
-    (points, estimatePDF fpdf bw sample points)
-  where points = choosePoints numPoints (bw*k) sample
-        bw     = bandwidth fbw sample
-{-# INLINE simplePDF #-}
-
--- | Simple Epanechnikov kernel density estimator.  Returns the
--- uniformly spaced points from the sample range at which the density
--- function was estimated, and the estimates at those points.
-epanechnikovPDF :: G.Vector v Double =>
-                   Int          -- ^ Number of points at which to estimate
-                -> v Double     -- ^ Data sample
-                -> (Points, U.Vector Double)
-epanechnikovPDF = simplePDF epanechnikovBW epanechnikovKernel 1
-
--- | Simple Gaussian kernel density estimator.  Returns the uniformly
--- spaced points from the sample range at which the density function
--- was estimated, and the estimates at those points.
-gaussianPDF :: G.Vector v Double =>
-               Int              -- ^ Number of points at which to estimate
-            -> v Double         -- ^ Data sample
-            -> (Points, U.Vector Double)
-gaussianPDF = simplePDF gaussianBW gaussianKernel 3
-
-errorShort :: String -> a
-errorShort func = error ("Statistics.KernelDensity." ++ func ++
-                        ": at least two points required")
+-- | Gaussian kernel density estimator for one-dimensional data, using
+-- the method of Botev et al.
+--
+-- The result is a pair of vectors, containing:
+--
+-- * The coordinates of each mesh point.
+--
+-- * Density estimates at each mesh point.
+--
+-- This estimator does not use the commonly employed \"Gaussian rule
+-- of thumb\".  As a result it outperforms many plug-in methods on
+-- multimodal densities with widely separated modes.
+kde_ :: (G.Vector v Double) =>
+        Int
+     -- ^ The number of mesh points used in the uniform discretization
+     -- of the interval @(min,max)@.  If this value is not a power of
+     -- two, then it is rounded up to the next power of two.
+     -> Double
+     -- ^ Lower bound (@min@) of the mesh range.
+     -> Double
+     -- ^ Upper bound (@max@) of the mesh range.
+     -> v Double -> (v Double, v Double)
+{-# SPECIALIZE kde_ :: Int -> Double -> Double -> U.Vector Double
+                   -> (U.Vector Double, U.Vector Double) #-}
+{-# SPECIALIZE kde_ :: Int -> Double -> Double -> V.Vector Double
+                   -> (V.Vector Double, V.Vector Double) #-}
+kde_ n0 min max xs
+  | n0 < 1    = error "Statistics.KernelDensity.kde: invalid number of points"
+  | otherwise = (mesh, density)
+  where
+    mesh = G.generate ni $ \z -> min + (d * fromIntegral z)
+        where d = r / (n-1)
+    density = G.map (/r) . idct $ G.zipWith f a (G.enumFromTo 0 (n-1))
+      where f b z = b * exp (sqr z * sqr pi * t_star * (-0.5)) :+ 0
+    !n = fromIntegral ni
+    !ni = nextHighestPowerOfTwo n0
+    !r = max - min
+    a = dct . G.map (/ (G.sum h)) $ h
+      where h = G.map (/ (len :+ 0)) $ histogram_ ni min max xs
+    !len = fromIntegral (G.length xs)
+    !t_star = fromMaybe (0.28 * len ** (-0.4)) . ridders 1e-14 0 0.1 $ \x ->
+              x - (2 * len * sqrt pi * go 6 (f 7 x)) ** (-0.4)
+      where
+        f q t = 2 * pi ** (q*2) * G.sum (G.zipWith g iv a2v)
+          where g i a2 = i ** q * a2 * exp ((-i) * sqr pi * t)
+                a2v = G.map (sqr . (*0.5)) $ G.tail a
+                iv = G.map sqr $ G.enumFromTo 1 (n-1)
+        go s !h | s == 1    = h
+                | otherwise = go (s-1) (f s time)
+          where time = (2 * const * k0 / len / h) ** (2 / (3 + 2 * s))
+                const = (1 + 0.5 ** (s+0.5)) / 3
+                k0 = U.product (G.enumFromThenTo 1 3 (2*s-1)) / sqrt (2*pi)
+    _bandwidth = sqrt t_star * r
+    sqr x = x * x
 
 -- $references
 --
--- * Deheuvels, P. (1977) Estimation non paramétrique de la densité
---   par histogrammes
---   généralisés. Mhttp://archive.numdam.org/article/RSA_1977__25_3_5_0.pdf>
+-- Botev. Z.I., Grotowski J.F., Kroese D.P. (2010). Kernel density
+-- estimation via diffusion. /Annals of Statistics/
+-- 38(5):2916&#8211;2957. <http://arxiv.org/pdf/1011.2602>
