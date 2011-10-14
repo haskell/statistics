@@ -15,6 +15,7 @@
 module Statistics.KernelDensity.Botev
     (
       kde
+    , kde_
     -- * References
     -- $references
     ) where
@@ -31,12 +32,12 @@ import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 
 -- | Gaussian kernel density estimator for one-dimensional data, using
--- Botev's method.
+-- the method of Botev et al.
 --
 -- The result is a pair of vectors, containing:
 --
--- * The coordinates of each mesh point.  The mesh interval is 20%
---   larger than the range of the sample.
+-- * The coordinates of each mesh point.  The mesh interval is chosen
+--   to be 20% larger than the range of the sample.
 --
 -- * Density estimates at each mesh point.
 --
@@ -53,7 +54,38 @@ kde :: (G.Vector v Double) =>
                    -> (U.Vector Double, U.Vector Double) #-}
 {-# SPECIALIZE kde :: Int -> V.Vector Double
                    -> (V.Vector Double, V.Vector Double) #-}
-kde n0 xs
+kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
+  where
+    (lo,hi) = minMax xs
+    range = hi - lo
+
+-- | Gaussian kernel density estimator for one-dimensional data, using
+-- the method of Botev et al.
+--
+-- The result is a pair of vectors, containing:
+--
+-- * The coordinates of each mesh point.
+--
+-- * Density estimates at each mesh point.
+--
+-- This estimator does not use the commonly employed \"Gaussian rule
+-- of thumb\".  As a result it outperforms many plug-in methods on
+-- multimodal densities with widely separated modes.
+kde_ :: (G.Vector v Double) =>
+        Int
+     -- ^ The number of mesh points used in the uniform discretization
+     -- of the interval @(min,max)@.  If this value is not a power of
+     -- two, then it is rounded up to the next power of two.
+     -> Double
+     -- ^ Lower bound (@min@) of the mesh range.
+     -> Double
+     -- ^ Upper bound (@max@) of the mesh range.
+     -> v Double -> (v Double, v Double)
+{-# SPECIALIZE kde_ :: Int -> Double -> Double -> U.Vector Double
+                   -> (U.Vector Double, U.Vector Double) #-}
+{-# SPECIALIZE kde_ :: Int -> Double -> Double -> V.Vector Double
+                   -> (V.Vector Double, V.Vector Double) #-}
+kde_ n0 min max xs
   | n0 < 1    = error "Statistics.KernelDensity.kde: invalid number of points"
   | otherwise = (mesh, density)
   where
@@ -63,9 +95,6 @@ kde n0 xs
       where f b z = b * exp (sqr z * sqr pi * t_star * (-0.5)) :+ 0
     !n = fromIntegral ni
     !ni = nextHighestPowerOfTwo n0
-    (lo,hi) = minMax xs
-    (# !min, !max #) = (# lo - range / 10, hi + range / 10 #)
-      where range = hi - lo
     !r = max - min
     a = dct . G.map (/ (G.sum h)) $ h
       where h = G.map (/ (len :+ 0)) $ histogram_ ni min max xs
