@@ -26,11 +26,11 @@ module Statistics.RootFinding
 -- The result is 'Nothing' if the root is not bracketed, or if the
 -- search fails to converge after 50 iterations.
 ridders :: Double               -- ^ Error tolerance.
-        -> (Double -> Double)
         -> Double               -- ^ Lower bound.
         -> Double               -- ^ Upper bound.
+        -> (Double -> Double)   -- ^ Function to find the roots of.
         -> Maybe Double
-ridders tol f lo hi
+ridders tol lo hi f
     | flo ~= 0    = Just lo
     | fhi ~= 0    = Just hi
     | flo*fhi > 0 = Nothing -- root is not bracketed
