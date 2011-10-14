@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 
 -- |
--- Module    : Statistics.RootFinding
+-- Module    : Statistics.Math.RootFinding
 -- Copyright : (c) 2011 Bryan O'Sullivan
 -- License   : BSD3
 --
@@ -11,7 +11,7 @@
 --
 -- Haskell functions for finding the roots of mathematical functions.
 
-module Statistics.RootFinding
+module Statistics.Math.RootFinding
     (
       ridders
     -- * References

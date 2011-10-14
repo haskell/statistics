@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Module    : Statistics.Histogram
+-- Module    : Statistics.Sample.Histogram
 -- Copyright : (c) 2011 Bryan O'Sullivan
 -- License   : BSD3
 --
@@ -11,7 +11,7 @@
 --
 -- Functions for computing histograms of sample data.
 
-module Statistics.Histogram
+module Statistics.Sample.Histogram
     (
       histogram
     -- * Building blocks

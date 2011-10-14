@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns, FlexibleContexts, UnboxedTuples #-}
 -- |
--- Module    : Statistics.KernelDensity
+-- Module    : Statistics.Sample.KernelDensity
 -- Copyright : (c) 2011 Bryan O'Sullivan
 -- License   : BSD3
 --
@@ -12,7 +12,7 @@
 -- non-parametric way to estimate the probability density function of
 -- a sample.
 
-module Statistics.KernelDensity
+module Statistics.Sample.KernelDensity
     (
       kde
     , kde_
@@ -24,8 +24,8 @@ import Data.Complex (Complex(..))
 import Data.Maybe (fromMaybe)
 import Prelude hiding (const,min,max)
 import Statistics.Function (minMax, nextHighestPowerOfTwo)
-import Statistics.Histogram (histogram_)
-import Statistics.RootFinding (ridders)
+import Statistics.Math.RootFinding (ridders)
+import Statistics.Sample.Histogram (histogram_)
 import Statistics.Transform (dct, idct)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
