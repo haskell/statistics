@@ -17,7 +17,6 @@ module Statistics.Function.Comparison
       within
     ) where
 
-import Debug.Trace
 import Control.Monad.ST (runST)
 import Data.Array.ST (newArray, castSTUArray, readArray, writeArray)
 import Data.Int (Int64)
