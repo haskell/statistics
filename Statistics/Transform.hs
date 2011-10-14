@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, FlexibleContexts, UnboxedTuples #-}
+{-# LANGUAGE BangPatterns, FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Transform
 -- Copyright : (c) 2011 Bryan O'Sullivan
@@ -9,6 +9,9 @@
 -- Portability : portable
 --
 -- Transformations of functions.
+--
+-- These functions are not particularly fast, so they're not yet
+-- public.
 
 module Statistics.Transform
     (

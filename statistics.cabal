@@ -96,7 +96,7 @@ library
     Statistics.Function
     Statistics.Histogram
     Statistics.KernelDensity
-    Statistics.KernelDensity.Botev
+    Statistics.KernelDensity.Simple
     Statistics.Math
     Statistics.Quantile
     Statistics.Resampling
