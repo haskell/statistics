@@ -13,6 +13,7 @@ import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 
 import Tests.Helpers
+import Tests.Math.Tables
 import Statistics.Math
 
 
@@ -34,14 +35,18 @@ mathTests = testGroup "S.Math"
       $ and [ eq 1e-15 (logFactorial (fromIntegral n))
                        (log $ fromIntegral $ factorial' n)
             | n <- [2..170]]
-  , testAssertion "logGamma is expected to be precise at 1e-9 level"
+  , testAssertion "logGamma is expected to be precise at 1e-9 level [integer points]"
       $ and [ eq 1e-9 (logGamma (fromIntegral n))
                       (logFactorial (n-1))
             | n <- [3..10000]]
+  , testAssertion "logGamma is expected to be precise at 1e-9 level [fractional points]"
+      $ and [ eq 1e-9 (logGamma x) lg | (x,lg) <- tableLogGamma ]
   , testAssertion "logGammaL is expected to be precise at 1e-15 level"
       $ and [ eq 1e-15 (logGammaL (fromIntegral n))
                        (logFactorial (n-1))
             | n <- [3..10000]]
+  , testAssertion "logGammaL is expected to be precise at 1e-9 level [fractional points]"
+      $ and [ eq 1e-10 (logGammaL x) lg | (x,lg) <- tableLogGamma ]
   , testAssertion "logBeta is expected to be precise at 1e-6 level"
       $ and [ eq 1e-6 (logBeta p q)
                       (logGammaL p + logGammaL q - logGammaL (p+q))
