@@ -11,9 +11,14 @@
 -- Kernel density estimation.  This module provides a fast, robust,
 -- non-parametric way to estimate the probability density function of
 -- a sample.
+--
+-- This estimator does not use the commonly employed \"Gaussian rule
+-- of thumb\".  As a result, it outperforms many plug-in methods on
+-- multimodal samples with widely separated modes.
 
 module Statistics.Sample.KernelDensity
     (
+    -- * Estimation functions
       kde
     , kde_
     -- * References
@@ -23,6 +28,7 @@ module Statistics.Sample.KernelDensity
 import Data.Complex (Complex(..))
 import Data.Maybe (fromMaybe)
 import Prelude hiding (const,min,max)
+import Statistics.Constants (m_sqrt_2_pi)
 import Statistics.Function (minMax, nextHighestPowerOfTwo)
 import Statistics.Math.RootFinding (ridders)
 import Statistics.Sample.Histogram (histogram_)
@@ -37,16 +43,13 @@ import qualified Data.Vector.Unboxed as U
 -- The result is a pair of vectors, containing:
 --
 -- * The coordinates of each mesh point.  The mesh interval is chosen
---   to be 20% larger than the range of the sample.
+--   to be 20% larger than the range of the sample.  (To specify the
+--   mesh interval, use 'kde_'.)
 --
 -- * Density estimates at each mesh point.
---
--- This estimator does not use the commonly employed \"Gaussian rule
--- of thumb\".  As a result it outperforms many plug-in methods on
--- multimodal densities with widely separated modes.
 kde :: (G.Vector v Double) =>
        Int
-    -- ^ The number of mesh points used in the uniform discretization
+    -- ^ The number of mesh points to use in the uniform discretization
     -- of the interval @(min,max)@.  If this value is not a power of
     -- two, then it is rounded up to the next power of two.
     -> v Double -> (v Double, v Double)
@@ -67,13 +70,9 @@ kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
 -- * The coordinates of each mesh point.
 --
 -- * Density estimates at each mesh point.
---
--- This estimator does not use the commonly employed \"Gaussian rule
--- of thumb\".  As a result it outperforms many plug-in methods on
--- multimodal densities with widely separated modes.
 kde_ :: (G.Vector v Double) =>
         Int
-     -- ^ The number of mesh points used in the uniform discretization
+     -- ^ The number of mesh points to use in the uniform discretization
      -- of the interval @(min,max)@.  If this value is not a power of
      -- two, then it is rounded up to the next power of two.
      -> Double
@@ -100,7 +99,7 @@ kde_ n0 min max xs
       where h = G.map (/ (len :+ 0)) $ histogram_ ni min max xs
     !len = fromIntegral (G.length xs)
     !t_star = fromMaybe (0.28 * len ** (-0.4)) . ridders 1e-14 0 0.1 $ \x ->
-              x - (2 * len * sqrt pi * go 6 (f 7 x)) ** (-0.4)
+              x - (len * (2 * sqrt pi) * go 6 (f 7 x)) ** (-0.4)
       where
         f q t = 2 * pi ** (q*2) * G.sum (G.zipWith g iv a2v)
           where g i a2 = i ** q * a2 * exp ((-i) * sqr pi * t)
@@ -110,7 +109,7 @@ kde_ n0 min max xs
                 | otherwise = go (s-1) (f s time)
           where time = (2 * const * k0 / len / h) ** (2 / (3 + 2 * s))
                 const = (1 + 0.5 ** (s+0.5)) / 3
-                k0 = U.product (G.enumFromThenTo 1 3 (2*s-1)) / sqrt (2*pi)
+                k0 = U.product (G.enumFromThenTo 1 3 (2*s-1)) / m_sqrt_2_pi
     _bandwidth = sqrt t_star * r
     sqr x = x * x
 

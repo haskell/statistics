@@ -26,8 +26,8 @@ module Statistics.Math.RootFinding
 -- The result is 'Nothing' if the root is not bracketed, or if the
 -- search fails to converge after 50 iterations.
 ridders :: Double               -- ^ Error tolerance.
-        -> Double               -- ^ Lower bound.
-        -> Double               -- ^ Upper bound.
+        -> Double               -- ^ Lower bound for the search.
+        -> Double               -- ^ Upper bound for the search.
         -> (Double -> Double)   -- ^ Function to find the roots of.
         -> Maybe Double
 ridders tol lo hi f
@@ -59,5 +59,5 @@ ridders tol lo hi f
 -- $references
 --
 -- * Ridders, C.F.J. (1979) A new algorithm for computing a single
---   root of a real continuous function. /IEEE Trans. Circuits
---   Systems/ 26, 979&#8211;980.
+--   root of a real continuous function.
+--   /IEEE Transactions on Circuits and Systems/ 26:979&#8211;980.
