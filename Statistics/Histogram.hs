@@ -31,8 +31,8 @@ import qualified Data.Vector.Generic.Mutable as GM
 -- * The number of samples within the interval.
 --
 -- Interval (bin) sizes are uniform, and the upper and lower bounds
--- are chosen automatically using the @range@ function.  To specify
--- these parameters directly, use the @histogram_@ function.
+-- are chosen automatically using the 'range' function.  To specify
+-- these parameters directly, use the 'histogram_' function.
 histogram :: (G.Vector v0 Double, G.Vector v1 Double, G.Vector v1 Int) =>
              Int                -- ^ Number of bins (must be positive).
           -> v0 Double          -- ^ Sample data (cannot be empty).
