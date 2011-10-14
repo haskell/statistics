@@ -191,7 +191,7 @@ incompleteGamma p x
 
 
 
--- Adopted from Numerical Recipes §6.2.1
+-- Adapted from Numerical Recipes §6.2.1
 
 -- | Inverse incomplete gamma function. It's approximately inverse of
 --   'incompleteGamma' for the same /s/. So following equality
