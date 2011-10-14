@@ -52,6 +52,9 @@ mathTests = testGroup "S.Math"
                       (logGammaL p + logGammaL q - logGammaL (p+q))
             | p <- [0.1,0.2 .. 0.9] ++ [2 .. 20]
             , q <- [0.1,0.2 .. 0.9] ++ [2 .. 20]]
+  -- FIXME: Why 1e-8? Is it due to poor precision of logBeta?
+  , testAssertion "incompleteBeta is expected to be precise at 1e-8 level"
+      $ and [ eq 1e-8 (incompleteBeta p q x) ib | (p,q,x,ib) <- tableIncompleteBeta ]
   , testAssertion "choose is expected to precise at 1e-12 level"
       $ and [ eq 1e-12 (choose (fromIntegral n) (fromIntegral k)) (fromIntegral $ choose' n k)
             | n <- [0..300], k <- [0..n]]

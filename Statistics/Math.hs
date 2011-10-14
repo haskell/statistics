@@ -16,6 +16,8 @@ module Statistics.Math
       choose
     -- ** Beta function
     , logBeta
+    , incompleteBeta
+    , incompleteBeta_
     -- ** Chebyshev polynomials
     -- $chebyshev
     , chebyshev
@@ -380,6 +382,52 @@ logBeta a b
       ppq = p / pq
       pq  = p + q
       c   = logGammaCorrection q - logGammaCorrection pq
+
+-- | Regularized incomplete beta function. Uses algorithm AS63 by
+--   Majumder abd Bhattachrjee.
+incompleteBeta :: Double -- ^ /p/ > 0
+               -> Double -- ^ /q/ > 0
+               -> Double -- ^ /x/, must lie in [0,1] range
+               -> Double
+incompleteBeta p q = incompleteBeta_ (logBeta p q) p q
+
+-- | Regularized incomplete beta function. Same as 'incompleteBeta'
+-- but also takes value of lo
+incompleteBeta_ :: Double -- ^ logarithm of beta function
+                -> Double -- ^ /p/ > 0
+                -> Double -- ^ /q/ > 0
+                -> Double -- ^ /x/, must lie in [0,1] range
+                -> Double
+incompleteBeta_ beta p q x
+  | p <= 0 || q <= 0 = error "p <= 0 || q <= 0"
+  | x <  0 || x >  1 = error "x <  0 || x >  1"
+  | x == 0 || x == 1 = x
+  | p >= (p+q) * x   = incompleteBetaWorker beta p q x
+  | otherwise        = 1 - incompleteBetaWorker beta q p (1 - x)
+
+-- Worker for incomplete beta function. It is separate function to
+-- avoid confusion with parameter during parameter swapping
+incompleteBetaWorker :: Double -> Double -> Double -> Double -> Double
+incompleteBetaWorker beta p q x = loop (p+q) (truncate $ q + cx * (p+q) :: Int) 1 1 1
+  where
+    -- Constants
+    eps = 1e-15
+    cx  = 1 - x
+    -- Loop
+    loop psq ns ai term betain
+      | done      = betain' * exp( p * log x + (q - 1) * log cx - beta) / p
+      | otherwise = loop psq' (ns - 1) (ai + 1) term' betain'
+      where
+        -- New values
+        term'   = term * fact / (p + ai)
+        betain' = betain + term'
+        fact | ns >  0   = (q - ai) * x/cx
+             | ns == 0   = (q - ai) * x
+             | otherwise = psq * x
+        -- Iterations are complete
+        done = db <= eps && db <= eps*betain' where db = abs term'
+        psq' = if ns < 0 then psq + 1 else psq
+
 
 -- | Compute the natural logarithm of 1 + @x@.  This is accurate even
 -- for values of @x@ near zero, where use of @log(1+x)@ would lose
