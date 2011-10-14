@@ -26,3 +26,26 @@ gammaArg = [ 1.25e-6, 6.82e-5, 2.46e-4, 8.8e-4,  3.12e-3, 2.67e-2,
 printListLiteral(
     [ '(%.15f, %.20g)' % (x, log(gamma(x))) for x in gammaArg ]
     )
+
+
+################################################################
+## Generate table for incompleteBeta
+
+print "tableIncompleteBeta :: [(Double,Double,Double,Double)]"
+print "tableIncompleteBeta ="
+
+incompleteBetaArg = [
+    (2,    3,    0.03),
+    (2,    3,    0.23),
+    (2,    3,    0.76),
+    (4,    2.3,  0.89),
+    (1,    1,    0.55),
+    (0.3,  12.2, 0.11),
+    (13.1, 9.8,  0.12),
+    (13.1, 9.8,  0.42),
+    (13.1, 9.8,  0.92),
+    ]
+printListLiteral(
+    [ '(%.15f, %.15f, %.15f, %.20g)' % (p,q,x, betainc(p,q,0,x, regularized=True))
+      for (p,q,x) in incompleteBetaArg
+      ])
