@@ -65,6 +65,9 @@ description:
   * Better density function for gamma and Poisson distributions.
   .
   * Cauchy-Lorentz distrbution is added.
+  .
+  * Function S.Function.create is removed. Use generateM from vector
+    package instead.
 
 license:        BSD3
 license-file:   LICENSE
