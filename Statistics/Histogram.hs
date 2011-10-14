@@ -33,10 +33,10 @@ import qualified Data.Vector.Generic.Mutable as GM
 -- Interval (bin) sizes are uniform, and the upper and lower bounds
 -- are chosen automatically using the 'range' function.  To specify
 -- these parameters directly, use the 'histogram_' function.
-histogram :: (G.Vector v0 Double, G.Vector v1 Double, G.Vector v1 Int) =>
+histogram :: (G.Vector v0 Double, G.Vector v1 Double, Num b, G.Vector v1 b) =>
              Int                -- ^ Number of bins (must be positive).
           -> v0 Double          -- ^ Sample data (cannot be empty).
-          -> (v1 Double, v1 Int)
+          -> (v1 Double, v1 b)
 histogram numBins xs = (G.generate numBins step, histogram_ numBins lo hi xs)
     where (lo,hi)    = range numBins xs
           step i     = lo + d * fromIntegral i
@@ -47,7 +47,7 @@ histogram numBins xs = (G.generate numBins step, histogram_ numBins lo hi xs)
 --
 -- Interval (bin) sizes are uniform, based on the supplied upper
 -- and lower bounds.
-histogram_ :: (RealFrac a, G.Vector v0 a, G.Vector v1 Int) =>
+histogram_ :: (Num b, RealFrac a, G.Vector v0 a, G.Vector v1 b) =>
               Int
            -- ^ Number of bins.  This value must be positive.  A zero
            -- or negative value will cause an error.
@@ -60,7 +60,7 @@ histogram_ :: (RealFrac a, G.Vector v0 a, G.Vector v1 Int) =>
            -- the upper bound will cause an error.
            -> v0 a
            -- ^ Sample data.
-           -> v1 Int
+           -> v1 b
 histogram_ numBins lo hi xs0 = G.create (GM.replicate numBins 0 >>= bin xs0)
   where
     bin xs bins = go 0
