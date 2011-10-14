@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 -- |
--- Module    : Statistics.KernelDensity.Simple
+-- Module    : Statistics.Sample.KernelDensity.Simple
 -- Copyright : (c) 2009 Bryan O'Sullivan
 -- License   : BSD3
 --
@@ -15,8 +15,8 @@
 -- fast, but they generally give inferior results to the KDE function
 -- in the main 'Statistics.KernelDensity' module.
 
-module Statistics.KernelDensity.Simple
-    {-# DEPRECATED "Use Statistics.KernelDensity instead." #-}
+module Statistics.Sample.KernelDensity.Simple
+    {-# DEPRECATED "Use Statistics.Sample.KernelDensity instead." #-}
     (
     -- * Simple entry points
       epanechnikovPDF
