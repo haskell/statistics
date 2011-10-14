@@ -94,6 +94,7 @@ library
     Statistics.Distribution.Poisson
     Statistics.Distribution.Uniform
     Statistics.Function
+    Statistics.Histogram
     Statistics.KernelDensity
     Statistics.Math
     Statistics.Quantile
