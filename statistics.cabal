@@ -96,6 +96,7 @@ library
     Statistics.Function
     Statistics.Histogram
     Statistics.KernelDensity
+    Statistics.KernelDensity.Botev
     Statistics.Math
     Statistics.Quantile
     Statistics.Resampling
@@ -109,6 +110,7 @@ library
     Statistics.Distribution.Poisson.Internal
     Statistics.Function.Comparison
     Statistics.Internal
+    Statistics.Transform
   build-depends:
     aeson,
     array,
