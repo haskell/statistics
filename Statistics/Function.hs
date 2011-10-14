@@ -12,13 +12,19 @@
 
 module Statistics.Function
     (
+    -- * Scanning
       minMax
+    -- * Sorting
     , sort
     , sortBy
     , partialSort
+    -- * Indexing
     , indexed
     , indices
+    -- * Bit twiddling
     , nextHighestPowerOfTwo
+    -- * Comparison
+    , within
     ) where
 
 #include "MachDeps.h"
@@ -26,6 +32,7 @@ module Statistics.Function
 import Data.Bits ((.|.), shiftR)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
+import Statistics.Function.Comparison (within)
 
 -- | Sort a vector.
 sort :: (Ord e, G.Vector v e) => v e -> v e

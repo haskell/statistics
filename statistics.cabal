@@ -100,15 +100,18 @@ library
     Statistics.Quantile
     Statistics.Resampling
     Statistics.Resampling.Bootstrap
+    Statistics.RootFinding
     Statistics.Sample
     Statistics.Sample.Powers
     Statistics.Test.NonParametric
     Statistics.Types
   other-modules:
     Statistics.Distribution.Poisson.Internal
+    Statistics.Function.Comparison
     Statistics.Internal
   build-depends:
     aeson,
+    array,
     base < 5,
     deepseq >= 1.1.0.2,
     erf,
