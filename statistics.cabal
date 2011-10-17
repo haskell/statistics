@@ -127,7 +127,6 @@ library
     Statistics.Transform
   build-depends:
     aeson,
-    array,
     base < 5,
     deepseq >= 1.1.0.2,
     erf,
