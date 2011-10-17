@@ -18,6 +18,7 @@ module Statistics.Math
     , logBeta
     , incompleteBeta
     , incompleteBeta_
+    , invIncompleteBeta
     -- ** Chebyshev polynomials
     -- $chebyshev
     , chebyshev
@@ -428,6 +429,60 @@ incompleteBetaWorker beta p q x = loop (p+q) (truncate $ q + cx * (p+q) :: Int) 
         done = db <= eps && db <= eps*betain' where db = abs term'
         psq' = if ns < 0 then psq + 1 else psq
 
+-- | Compute inverse of regularized incomplete beta function. Uses
+-- initial approximation from AS109 and Halley method to solve equation.
+invIncompleteBeta :: Double     -- ^ /p/
+                  -> Double     -- ^ /q/
+                  -> Double     -- ^ /a/
+                  -> Double
+invIncompleteBeta p q a
+  | p <= 0 || q <= 0 = error "p <= 0 || q <= 0"
+  | a <  0 || a >  1 = error "bad a"
+  | a == 0 || a == 1 = a
+  | a > 0.5          = 1 - invIncompleteBetaWorker (logBeta p q) q p (1 - a)
+  | otherwise        = invIncompleteBetaWorker (logBeta p q) p q a
+
+invIncompleteBetaWorker :: Double -> Double -> Double -> Double -> Double
+invIncompleteBetaWorker beta p q a = loop 0 guess
+  where
+    p1 = p - 1
+    q1 = q - 1
+    -- Solve equation using Halley method
+    loop !i !x
+      | x == 0 || x == 1             = x
+      | i >= 10                      = x
+      | abs dx <= 16 * m_epsilon * x = x
+      | otherwise                    = loop (i+1) x'
+      where
+        f   = incompleteBeta_ beta p q x - a
+        f'  = exp $ p1 * log x + q1 * log (1 - x) - beta
+        u   = f / f'
+        dx  = u / (1 - 0.5 * min 1 (u * (p1 / x - q1 / (1 - x))))
+        x'  | z < 0     = x / 2
+            | z > 1     = (x + 1) / 2
+            | otherwise = z
+            where z = x - dx
+    -- Calculate initial guess
+    guess 
+      | p > 1 && q > 1 = 
+          let rr = (y*y - 3) / 6
+              ss = 1 / (2*p - 1)
+              tt = 1 / (2*q - 1)
+              hh = 2 / (ss + tt)
+              ww = y * sqrt(hh + rr) / hh - (tt - ss) * (rr + 5/6 - 2 / (3 * hh))
+          in p / (p + q * exp(2 * ww))
+      | t'  <= 0  = 1 - exp( (log((1 - a) * q) + beta) / q )
+      | t'' <= 1  = exp( (log(a * p) + beta) / p )
+      | otherwise = 1 - 2 / (t'' + 1)
+      where
+        r   = sqrt ( - log ( a * a ) )
+        y   = r - ( 2.30753 + 0.27061 * r )
+                   / ( 1.0 + ( 0.99229 + 0.04481 * r ) * r )
+        t   = 1 / (9 * q)
+        t'  = 2 * q * (1 - t + y * sqrt t) ** 3
+        t'' = (4*p + 2*q - 2) / t'
+        
+            
 
 -- | Compute the natural logarithm of 1 + @x@.  This is accurate even
 -- for values of @x@ near zero, where use of @log(1+x)@ would lose
