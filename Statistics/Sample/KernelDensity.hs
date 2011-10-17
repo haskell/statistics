@@ -98,7 +98,7 @@ kde_ n0 min max xs
     a = dct . G.map (/ (G.sum h)) $ h
       where h = G.map (/ (len :+ 0)) $ histogram_ ni min max xs
     !len = fromIntegral (G.length xs)
-    !t_star = fromMaybe (0.28 * len ** (-0.4)) . ridders 1e-14 0 0.1 $ \x ->
+    !t_star = fromMaybe (0.28 * len ** (-0.4)) . ridders 1e-14 (0,0.1) $ \x ->
               x - (len * (2 * sqrt pi) * go 6 (f 7 x)) ** (-0.4)
       where
         f q t = 2 * pi ** (q*2) * G.sum (G.zipWith g iv a2v)
