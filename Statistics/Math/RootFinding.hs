@@ -24,7 +24,8 @@ module Statistics.Math.RootFinding
 -- and upper bounds of the search (i.e. the root must be bracketed).
 --
 -- The result is 'Nothing' if the root is not bracketed, or if the
--- search fails to converge after 50 iterations.
+-- search fails to converge to within the error tolerance after 50
+-- iterations.
 ridders :: Double               -- ^ Error tolerance.
         -> (Double,Double)      -- ^ Lower and upper bounds for the search.
         -> (Double -> Double)   -- ^ Function to find the roots of.
