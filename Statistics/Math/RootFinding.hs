@@ -54,7 +54,7 @@ ridders tol lo hi f
            | otherwise = dx0
     flo = f lo
     fhi = f hi
-    a ~= b = abs (a-b) < abs (a*tol)
+    a ~= b = abs (a-b) <= abs (a*tol)
 
 -- $references
 --
