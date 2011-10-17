@@ -25,6 +25,7 @@ mathTests = testGroup "S.Math"
   , testProperty "γ - increases"             $
       \s x y -> s > 0 && x > 0 && y > 0 ==> monotonicallyIncreases (incompleteGamma s) x y
   , testProperty "invIncompleteGamma = γ^-1" $ invIGammaIsInverse
+  , testProperty "invIncompleteBeta  = B^-1" $ invIBetaIsInverse
   , chebyshevTests
     -- Unit tests
   , testAssertion "Factorial is expected to be precise at 1e-15 level"
@@ -93,7 +94,21 @@ invIGammaIsInverse (abs -> a) (abs . snd . properFraction -> p) =
     x  = invIncompleteGamma a p
     p' = incompleteGamma    a x
 
-
+-- invIncompleteBeta is inverse of incompleteBeta
+invIBetaIsInverse :: Double -> Double -> Double -> Property
+invIBetaIsInverse (abs -> p) (abs -> q) (abs . snd . properFraction -> x) =
+  p > 0 && q > 0  ==> ( printTestCase ("p   = " ++ show p )
+                      $ printTestCase ("q   = " ++ show q )
+                      $ printTestCase ("x   = " ++ show x )
+                      $ printTestCase ("x'  = " ++ show x')
+                      $ printTestCase ("a   = " ++ show a)  
+                      $ printTestCase ("err = " ++ (show $ abs $ (x - x') / x))
+                      $ abs (x - x') <= 1e-12
+                      )
+  where
+    x' = incompleteBeta    p q a
+    a  = invIncompleteBeta p q x
+  
 -- Test that Chebyshev polynomial of low order are evaluated correctly
 chebyshevTests :: Test
 chebyshevTests = testGroup "Chebyshev polynomials"
