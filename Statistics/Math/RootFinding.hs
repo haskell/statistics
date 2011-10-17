@@ -26,19 +26,18 @@ module Statistics.Math.RootFinding
 -- The result is 'Nothing' if the root is not bracketed, or if the
 -- search fails to converge after 50 iterations.
 ridders :: Double               -- ^ Error tolerance.
-        -> Double               -- ^ Lower bound for the search.
-        -> Double               -- ^ Upper bound for the search.
+        -> (Double,Double)      -- ^ Lower and upper bounds for the search.
         -> (Double -> Double)   -- ^ Function to find the roots of.
         -> Maybe Double
-ridders tol lo hi f
+ridders tol (lo,hi) f
     | flo ~= 0    = Just lo
     | fhi ~= 0    = Just hi
     | flo*fhi > 0 = Nothing -- root is not bracketed
-    | otherwise   = go lo flo hi fhi (0::Int)
+    | otherwise   = go lo flo hi fhi 0
   where
     go !a !fa !b !fb !i
         | fn ~= 0 || abs (b-a) < tol = Just n
-        | i >= 50                    = Nothing
+        | i >= (50 :: Int)           = Nothing
         | fn*fm < 0 = go n fn m fm (i+1)
         | fn*fa < 0 = go a fa n fn (i+1)
         | otherwise = go n fn b fb (i+1)
