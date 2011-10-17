@@ -34,24 +34,21 @@ ridders tol lo hi f
     | flo ~= 0    = Just lo
     | fhi ~= 0    = Just hi
     | flo*fhi > 0 = Nothing -- root is not bracketed
-    | otherwise   = go lo flo hi fhi 0 (0::Int)
+    | otherwise   = go lo flo hi fhi (0::Int)
   where
-    go !a !fa !b !fb !x0 !i
-        | i >= 50 || s ~= 0  = Nothing
-        | i > 0   && x ~= x0 = Just x
-        | fc*fx > 0 = if fa*fx < 0
-                      then go a fa x fx x (i+1)
-                      else go x fx b fb x (i+1)
-        | otherwise =      go c fc x fx x (i+1)
+    go !a !fa !b !fb !i
+        | fn ~= 0 || abs (b-a) < tol = Just n
+        | i >= 50                    = Nothing
+        | fn*fm < 0 = go n fn m fm (i+1)
+        | fn*fa < 0 = go a fa n fn (i+1)
+        | otherwise = go n fn b fb (i+1)
       where
-        s   = sqrt (fc*fc - fa*fb)
-        c   = (a+b) * 0.5
-        fc  = f c
-        x   = c + dx
-        fx  = f x
-        dx0 = (c-a) * fc / s
-        dx | fa-fb < 0 = -dx0
-           | otherwise = dx0
+        dm  = (b - a) * 0.5
+        m   = a + dm
+        fm  = f m
+        dn  = signum (fb - fa) * dm * fm / sqrt(fm*fm - fa*fb)
+        n   = m - signum dn * min (abs dn) (abs dm - 0.5 * tol)
+        fn  = f n
     flo = f lo
     fhi = f hi
     a ~= b = abs (a-b) <= abs (a*tol)
