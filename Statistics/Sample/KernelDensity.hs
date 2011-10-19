@@ -32,7 +32,6 @@ import Statistics.Function (minMax, nextHighestPowerOfTwo)
 import Statistics.Math.RootFinding (fromRoot, ridders)
 import Statistics.Sample.Histogram (histogram_)
 import Statistics.Transform (dct, idct)
-import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 
@@ -46,16 +45,11 @@ import qualified Data.Vector.Unboxed as U
 --   mesh interval, use 'kde_'.)
 --
 -- * Density estimates at each mesh point.
-kde :: (G.Vector v Double) =>
-       Int
+kde :: Int
     -- ^ The number of mesh points to use in the uniform discretization
     -- of the interval @(min,max)@.  If this value is not a power of
     -- two, then it is rounded up to the next power of two.
-    -> v Double -> (v Double, v Double)
-{-# SPECIALIZE kde :: Int -> U.Vector Double
-                   -> (U.Vector Double, U.Vector Double) #-}
-{-# SPECIALIZE kde :: Int -> V.Vector Double
-                   -> (V.Vector Double, V.Vector Double) #-}
+    -> U.Vector Double -> (U.Vector Double, U.Vector Double)
 kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
   where
     (lo,hi) = minMax xs
@@ -69,8 +63,7 @@ kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
 -- * The coordinates of each mesh point.
 --
 -- * Density estimates at each mesh point.
-kde_ :: (G.Vector v Double) =>
-        Int
+kde_ :: Int
      -- ^ The number of mesh points to use in the uniform discretization
      -- of the interval @(min,max)@.  If this value is not a power of
      -- two, then it is rounded up to the next power of two.
@@ -78,11 +71,7 @@ kde_ :: (G.Vector v Double) =>
      -- ^ Lower bound (@min@) of the mesh range.
      -> Double
      -- ^ Upper bound (@max@) of the mesh range.
-     -> v Double -> (v Double, v Double)
-{-# SPECIALIZE kde_ :: Int -> Double -> Double -> U.Vector Double
-                   -> (U.Vector Double, U.Vector Double) #-}
-{-# SPECIALIZE kde_ :: Int -> Double -> Double -> V.Vector Double
-                   -> (V.Vector Double, V.Vector Double) #-}
+     -> U.Vector Double -> (U.Vector Double, U.Vector Double)
 kde_ n0 min max xs
   | n0 < 1    = error "Statistics.KernelDensity.kde: invalid number of points"
   | otherwise = (mesh, density)
