@@ -91,7 +91,7 @@ fft2 v = G.create $ do
 mfft :: (M.MVector v CD) => v s CD -> ST s ()
 mfft vec = do
   bitReverse 0 0
-  stage 0 1 (-1) 0
+  stage 0 1
  where
   bitReverse i j | i == (len-1) = return ()
                  | otherwise = do
@@ -99,24 +99,27 @@ mfft vec = do
     let inner k l | k <= l    = inner (l-k) (k `shiftR` 1)
                   | otherwise = bitReverse (i+1) (l+k)
     inner (len `shiftR` 1) j
-  stage l !l1 !c1 !c2 | l == log2 len = return ()
-                      | otherwise = do
+  stage l !l1 | l == log2 len = return ()
+              | otherwise = do
     let !l2 = l1 `shiftL` 1
-        flight j !u1 !u2 | j == l1 = return ()
+        !e  = -6.283185307179586/fromIntegral l2
+        flight j !a | j == l1 = return ()
                          | otherwise = do
           let butterfly i | i >= len = return ()
                           | otherwise = do
+                let !c = cos a
+                    !s = sin a
                 let i1 = i + l1
                 ci1@(xi1 :+ yi1) <- M.read vec i1
-                let d = (u1*xi1 - u2*yi1) :+ (u1*yi1 + u2*xi1)
+                let d = (c*xi1 - s*yi1) :+ (s*xi1 + c*yi1)
                 ci <- M.read vec i
                 M.write vec i1 (ci - d)
                 M.write vec i (ci + d)
                 butterfly (i+l2)
           butterfly j
-          flight (j+1) (u1*c1 - u2*c2) (u1*c2 + u2*c1)
-    flight 0 1 0
-    stage (l+1) l2 (sqrt ((1+c1) / 2)) (sqrt ((1-c1) / 2))
+          flight (j+1) (a+e)
+    flight 0 0
+    stage (l+1) l2
   len = M.length vec
 
 -- | Discrete Fourier transform.
