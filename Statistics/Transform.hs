@@ -85,11 +85,11 @@ mfft vec = do
                     | otherwise = do
           let butterfly i | i >= len = return ()
                           | otherwise = do
-                let !c = cos a
-                    !s = sin a
                 let i1 = i + l1
                 xi1 :+ yi1 <- M.read vec i1
-                let d = (c*xi1 - s*yi1) :+ (s*xi1 + c*yi1)
+                let !c = cos a
+                    !s = sin a
+                    d  = (c*xi1 - s*yi1) :+ (s*xi1 + c*yi1)
                 ci <- M.read vec i
                 M.write vec i1 (ci - d)
                 M.write vec i (ci + d)
