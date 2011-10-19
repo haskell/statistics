@@ -59,7 +59,7 @@ idct xs = G.generate len interleave
 ifft :: U.Vector CD -> U.Vector CD
 ifft xs = G.map ((/fi (G.length xs)) . conjugate) . fft . G.map conjugate $ xs
 
--- | Fast Fourier transform.
+-- | Radix-2 decimation-in-time fast Fourier transform.
 fft :: U.Vector CD -> U.Vector CD
 fft v = G.create $ do
           mv <- G.thaw v
