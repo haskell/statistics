@@ -445,7 +445,7 @@ invIncompleteBeta p q a
   | otherwise        = invIncompleteBetaWorker (logBeta p q) p q a
 
 invIncompleteBetaWorker :: Double -> Double -> Double -> Double -> Double
-invIncompleteBetaWorker beta p q a = loop 0 guess
+invIncompleteBetaWorker beta p q a = loop (0::Int) guess
   where
     p1 = p - 1
     q1 = q - 1
