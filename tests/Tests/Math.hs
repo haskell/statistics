@@ -13,6 +13,7 @@ import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 
 import Tests.Helpers
+import Tests.Math.Tables
 import Statistics.Math
 
 
@@ -24,6 +25,7 @@ mathTests = testGroup "S.Math"
   , testProperty "γ - increases"             $
       \s x y -> s > 0 && x > 0 && y > 0 ==> monotonicallyIncreases (incompleteGamma s) x y
   , testProperty "invIncompleteGamma = γ^-1" $ invIGammaIsInverse
+  , testProperty "invIncompleteBeta  = B^-1" $ invIBetaIsInverse
   , chebyshevTests
     -- Unit tests
   , testAssertion "Factorial is expected to be precise at 1e-15 level"
@@ -34,19 +36,26 @@ mathTests = testGroup "S.Math"
       $ and [ eq 1e-15 (logFactorial (fromIntegral n))
                        (log $ fromIntegral $ factorial' n)
             | n <- [2..170]]
-  , testAssertion "logGamma is expected to be precise at 1e-9 level"
+  , testAssertion "logGamma is expected to be precise at 1e-9 level [integer points]"
       $ and [ eq 1e-9 (logGamma (fromIntegral n))
                       (logFactorial (n-1))
             | n <- [3..10000]]
+  , testAssertion "logGamma is expected to be precise at 1e-9 level [fractional points]"
+      $ and [ eq 1e-9 (logGamma x) lg | (x,lg) <- tableLogGamma ]
   , testAssertion "logGammaL is expected to be precise at 1e-15 level"
       $ and [ eq 1e-15 (logGammaL (fromIntegral n))
                        (logFactorial (n-1))
             | n <- [3..10000]]
+  , testAssertion "logGammaL is expected to be precise at 1e-9 level [fractional points]"
+      $ and [ eq 1e-10 (logGammaL x) lg | (x,lg) <- tableLogGamma ]
   , testAssertion "logBeta is expected to be precise at 1e-6 level"
       $ and [ eq 1e-6 (logBeta p q)
                       (logGammaL p + logGammaL q - logGammaL (p+q))
             | p <- [0.1,0.2 .. 0.9] ++ [2 .. 20]
             , q <- [0.1,0.2 .. 0.9] ++ [2 .. 20]]
+  -- FIXME: Why 1e-8? Is it due to poor precision of logBeta?
+  , testAssertion "incompleteBeta is expected to be precise at 1e-8 level"
+      $ and [ eq 1e-8 (incompleteBeta p q x) ib | (p,q,x,ib) <- tableIncompleteBeta ]
   , testAssertion "choose is expected to precise at 1e-12 level"
       $ and [ eq 1e-12 (choose (fromIntegral n) (fromIntegral k)) (fromIntegral $ choose' n k)
             | n <- [0..300], k <- [0..n]]
@@ -85,7 +94,21 @@ invIGammaIsInverse (abs -> a) (abs . snd . properFraction -> p) =
     x  = invIncompleteGamma a p
     p' = incompleteGamma    a x
 
-
+-- invIncompleteBeta is inverse of incompleteBeta
+invIBetaIsInverse :: Double -> Double -> Double -> Property
+invIBetaIsInverse (abs -> p) (abs -> q) (abs . snd . properFraction -> x) =
+  p > 0 && q > 0  ==> ( printTestCase ("p   = " ++ show p )
+                      $ printTestCase ("q   = " ++ show q )
+                      $ printTestCase ("x   = " ++ show x )
+                      $ printTestCase ("x'  = " ++ show x')
+                      $ printTestCase ("a   = " ++ show a)  
+                      $ printTestCase ("err = " ++ (show $ abs $ (x - x') / x))
+                      $ abs (x - x') <= 1e-12
+                      )
+  where
+    x' = incompleteBeta    p q a
+    a  = invIncompleteBeta p q x
+  
 -- Test that Chebyshev polynomial of low order are evaluated correctly
 chebyshevTests :: Test
 chebyshevTests = testGroup "Chebyshev polynomials"
