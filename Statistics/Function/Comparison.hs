@@ -17,9 +17,9 @@ module Statistics.Function.Comparison
       within
     ) where
 
-import Control.Monad.ST (runST)
-import Data.Array.ST (newArray, castSTUArray, readArray, writeArray)
-import Data.Int (Int64)
+import Control.Monad.ST         (runST)
+import Data.Primitive.ByteArray (newByteArray, readByteArray, writeByteArray)
+import Data.Int                 (Int64)
 
 -- | Compare two 'Double' values for approximate equality, using
 -- Dawson's method.
@@ -29,16 +29,13 @@ import Data.Int (Int64)
 -- or less, this function returns @True@.
 within :: Int                   -- ^ Number of ULPs of accuracy desired.
        -> Double -> Double -> Bool
-within ulps a b = runST go
-  where go = do
-          dary <- newArray (0,0::Int) a
-          iary <- castSTUArray dary
-          ai0 <- readArray iary 0
-          writeArray dary 0 b
-          bi0 <- readArray iary 0
-          let ai | ai0 < 0   = big - ai0
-                 | otherwise = ai0
-              bi | bi0 < 0   = big - bi0
-                 | otherwise = bi0
-          return $ abs (ai - bi) <= fromIntegral ulps
-        big = 0x8000000000000000 :: Int64
+within ulps a b = runST $ do
+  buf <- newByteArray 8
+  ai0 <- writeByteArray buf 0 a >> readByteArray buf 0
+  bi0 <- writeByteArray buf 0 b >> readByteArray buf 0
+  let big  = 0x8000000000000000 :: Int64
+      ai | ai0 < 0   = big - ai0
+         | otherwise = ai0
+      bi | bi0 < 0   = big - bi0
+         | otherwise = bi0
+  return $ abs (ai - bi) <= fromIntegral ulps

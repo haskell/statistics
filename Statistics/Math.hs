@@ -16,6 +16,9 @@ module Statistics.Math
       choose
     -- ** Beta function
     , logBeta
+    , incompleteBeta
+    , incompleteBeta_
+    , invIncompleteBeta
     -- ** Chebyshev polynomials
     -- $chebyshev
     , chebyshev
@@ -193,7 +196,7 @@ incompleteGamma p x
 
 
 
--- Adopted from Numerical Recipes §6.2.1
+-- Adapted from Numerical Recipes §6.2.1
 
 -- | Inverse incomplete gamma function. It's approximately inverse of
 --   'incompleteGamma' for the same /s/. So following equality
@@ -383,6 +386,106 @@ logBeta a b
       pq  = p + q
       c   = logGammaCorrection q - logGammaCorrection pq
 
+-- | Regularized incomplete beta function. Uses algorithm AS63 by
+--   Majumder abd Bhattachrjee.
+incompleteBeta :: Double -- ^ /p/ > 0
+               -> Double -- ^ /q/ > 0
+               -> Double -- ^ /x/, must lie in [0,1] range
+               -> Double
+incompleteBeta p q = incompleteBeta_ (logBeta p q) p q
+
+-- | Regularized incomplete beta function. Same as 'incompleteBeta'
+-- but also takes value of lo
+incompleteBeta_ :: Double -- ^ logarithm of beta function
+                -> Double -- ^ /p/ > 0
+                -> Double -- ^ /q/ > 0
+                -> Double -- ^ /x/, must lie in [0,1] range
+                -> Double
+incompleteBeta_ beta p q x
+  | p <= 0 || q <= 0 = error "p <= 0 || q <= 0"
+  | x <  0 || x >  1 = error "x <  0 || x >  1"
+  | x == 0 || x == 1 = x
+  | p >= (p+q) * x   = incompleteBetaWorker beta p q x
+  | otherwise        = 1 - incompleteBetaWorker beta q p (1 - x)
+
+-- Worker for incomplete beta function. It is separate function to
+-- avoid confusion with parameter during parameter swapping
+incompleteBetaWorker :: Double -> Double -> Double -> Double -> Double
+incompleteBetaWorker beta p q x = loop (p+q) (truncate $ q + cx * (p+q) :: Int) 1 1 1
+  where
+    -- Constants
+    eps = 1e-15
+    cx  = 1 - x
+    -- Loop
+    loop psq ns ai term betain
+      | done      = betain' * exp( p * log x + (q - 1) * log cx - beta) / p
+      | otherwise = loop psq' (ns - 1) (ai + 1) term' betain'
+      where
+        -- New values
+        term'   = term * fact / (p + ai)
+        betain' = betain + term'
+        fact | ns >  0   = (q - ai) * x/cx
+             | ns == 0   = (q - ai) * x
+             | otherwise = psq * x
+        -- Iterations are complete
+        done = db <= eps && db <= eps*betain' where db = abs term'
+        psq' = if ns < 0 then psq + 1 else psq
+
+-- | Compute inverse of regularized incomplete beta function. Uses
+-- initial approximation from AS109 and Halley method to solve equation.
+invIncompleteBeta :: Double     -- ^ /p/
+                  -> Double     -- ^ /q/
+                  -> Double     -- ^ /a/
+                  -> Double
+invIncompleteBeta p q a
+  | p <= 0 || q <= 0 = error "p <= 0 || q <= 0"
+  | a <  0 || a >  1 = error "bad a"
+  | a == 0 || a == 1 = a
+  | a > 0.5          = 1 - invIncompleteBetaWorker (logBeta p q) q p (1 - a)
+  | otherwise        = invIncompleteBetaWorker (logBeta p q) p q a
+
+invIncompleteBetaWorker :: Double -> Double -> Double -> Double -> Double
+invIncompleteBetaWorker beta p q a = loop 0 guess
+  where
+    p1 = p - 1
+    q1 = q - 1
+    -- Solve equation using Halley method
+    loop !i !x
+      | x == 0 || x == 1             = x
+      | i >= 10                      = x
+      | abs dx <= 16 * m_epsilon * x = x
+      | otherwise                    = loop (i+1) x'
+      where
+        f   = incompleteBeta_ beta p q x - a
+        f'  = exp $ p1 * log x + q1 * log (1 - x) - beta
+        u   = f / f'
+        dx  = u / (1 - 0.5 * min 1 (u * (p1 / x - q1 / (1 - x))))
+        x'  | z < 0     = x / 2
+            | z > 1     = (x + 1) / 2
+            | otherwise = z
+            where z = x - dx
+    -- Calculate initial guess
+    guess 
+      | p > 1 && q > 1 = 
+          let rr = (y*y - 3) / 6
+              ss = 1 / (2*p - 1)
+              tt = 1 / (2*q - 1)
+              hh = 2 / (ss + tt)
+              ww = y * sqrt(hh + rr) / hh - (tt - ss) * (rr + 5/6 - 2 / (3 * hh))
+          in p / (p + q * exp(2 * ww))
+      | t'  <= 0  = 1 - exp( (log((1 - a) * q) + beta) / q )
+      | t'' <= 1  = exp( (log(a * p) + beta) / p )
+      | otherwise = 1 - 2 / (t'' + 1)
+      where
+        r   = sqrt ( - log ( a * a ) )
+        y   = r - ( 2.30753 + 0.27061 * r )
+                   / ( 1.0 + ( 0.99229 + 0.04481 * r ) * r )
+        t   = 1 / (9 * q)
+        t'  = 2 * q * (1 - t + y * sqrt t) ** 3
+        t'' = (4*p + 2*q - 2) / t'
+        
+            
+
 -- | Compute the natural logarithm of 1 + @x@.  This is accurate even
 -- for values of @x@ near zero, where use of @log(1+x)@ would lose
 -- precision.
@@ -519,3 +622,21 @@ log2 v0
 -- * Shea, B. (1988) Algorithm AS 239: Chi-squared and incomplete
 --   gamma integral. /Applied Statistics/
 --   37(3):466&#8211;473. <http://www.jstor.org/stable/2347328>
+--
+-- * K. L. Majumder, G. P. Bhattacharjee (1973) Algorithm AS 63: The
+--   Incomplete Beta Integral. /Journal of the Royal Statistical
+--   Society. Series C (Applied Statistics)/ Vol. 22, No. 3 (1973),
+--   pp. 409-411. <http://www.jstor.org/pss/2346797>
+--
+-- * K. L. Majumder, G. P. Bhattacharjee (1973) Algorithm AS 64:
+--   Inverse of the Incomplete Beta Function Ratio. /Journal of the
+--   Royal Statistical Society. Series C (Applied Statistics)/
+--   Vol. 22, No. 3 (1973), pp. 411-414
+--   <http://www.jstor.org/pss/2346798>
+--
+-- * G. W. Cran, K. J. Martin and G. E. Thomas (1977) Remark AS R19
+--   and Algorithm AS 109: A Remark on Algorithms: AS 63: The
+--   Incomplete Beta Integral AS 64: Inverse of the Incomplete Beta
+--   Function Ratio. /Journal of the Royal Statistical Society. Series
+--   C (Applied Statistics)/ Vol. 26, No. 1 (1977), pp. 111-114
+--   <http://www.jstor.org/pss/2346887>

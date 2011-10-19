@@ -20,9 +20,12 @@ module Statistics.Math.RootFinding
     -- $references
     ) where
 
-import Control.Monad (MonadPlus(..), ap)
+import Statistics.Function.Comparison
+
 import Control.Applicative
-import Data.Typeable (Typeable)
+import Control.Monad       (MonadPlus(..), ap)
+import Data.Typeable       (Typeable)
+
 
 -- | The result of searching for a root of a mathematical function.
 data Root a = NotBracketed
@@ -71,28 +74,43 @@ fromRoot :: a                   -- ^ Default value.
 fromRoot _ (Root a) = a
 fromRoot a _        = a
 
+
 -- | Use the method of Ridders to compute a root of a function.
 --
 -- The function must have opposite signs when evaluated at the lower
 -- and upper bounds of the search (i.e. the root must be bracketed).
-ridders :: Double               -- ^ Error tolerance.
+ridders :: Double               -- ^ Absolute error tolerance.
         -> (Double,Double)      -- ^ Lower and upper bounds for the search.
         -> (Double -> Double)   -- ^ Function to find the roots of.
         -> Root Double
 ridders tol (lo,hi) f
-    | flo ~= 0    = Root lo
-    | fhi ~= 0    = Root hi
+    | flo == 0    = Root lo
+    | fhi == 0    = Root hi
     | flo*fhi > 0 = NotBracketed -- root is not bracketed
     | otherwise   = go lo flo hi fhi 0
   where
     go !a !fa !b !fb !i
-        | fn ~= 0 || abs (b-a) < tol = Root n
-        | i >= (50 :: Int)           = SearchFailed
-        | fn*fm < 0 = go n fn m fm (i+1)
-        | fn*fa < 0 = go a fa n fn (i+1)
-        | otherwise = go n fn b fb (i+1)
+        -- Root is bracketed within 1 ulp. No improvement could be made
+        | within 1 a b       = Root a
+        -- Root is found. Check that f(m) == 0 is nessesary to ensure
+        -- that root is never passed to 'go'
+        | fm == 0            = Root m
+        | fn == 0            = Root n
+        | d < tol            = Root n
+        -- Too many iterations performed. Fail
+        | i >= (100 :: Int)  = SearchFailed
+        -- Ridder's approximation coincide with one of old
+        -- bounds. Revert to bisection
+        | n == a || n == b   = case () of
+          _| fm*fa < 0 -> go a fa m fm (i+1)
+           | otherwise -> go m fm b fb (i+1)
+        -- Proceed as usual
+        | fn*fm < 0          = go n fn m fm (i+1)
+        | fn*fa < 0          = go a fa n fn (i+1)
+        | otherwise          = go n fn b fb (i+1)
       where
-        dm  = (b - a) * 0.5
+        d    = abs (b - a)
+        dm   = (b - a) * 0.5
         !m   = a + dm
         !fm  = f m
         !dn  = signum (fb - fa) * dm * fm / sqrt(fm*fm - fa*fb)
@@ -100,7 +118,7 @@ ridders tol (lo,hi) f
         !fn  = f n
     !flo = f lo
     !fhi = f hi
-    a ~= b = abs (a-b) <= abs (a*tol)
+
 
 -- $references
 --
