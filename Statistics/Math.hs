@@ -30,6 +30,7 @@ module Statistics.Math
     , invIncompleteGamma
     -- ** Logarithm
     , log1p
+    , log2
     -- ** Stirling's approximation
     , stirlingError
     , bd0
@@ -37,6 +38,7 @@ module Statistics.Math
     -- $references
     ) where
 
+import Data.Bits ((.&.), (.|.), shiftR)
 import Data.Int (Int64)
 import Data.Word (Word64)
 import Statistics.Constants (m_epsilon, m_sqrt_2_pi, m_ln_sqrt_2_pi, m_NaN,
@@ -477,6 +479,20 @@ bd0 x np
     loop j ej s = case s + ej/(2*j+1) of
                     s' | s' == s   -> s'
                        | otherwise -> loop (j+1) (ej*vv) s'
+
+-- | /O(log n)/ Compute the logarithm in base 2 of the given value.
+log2 :: Int -> Int
+log2 v0
+    | v0 <= 0   = error "Statistics.Math.log2: invalid input"
+    | otherwise = go 5 0 v0
+  where
+    go !i !r !v | i == -1        = r
+                | v .&. b i /= 0 = let si = U.unsafeIndex sv i
+                                   in go (i-1) (r .|. si) (v `shiftR` si)
+                | otherwise      = go (i-1) r v
+    b = U.unsafeIndex bv
+    !bv = U.fromList [0x2, 0xc, 0xf0, 0xff00, 0xffff0000, 0xffffffff00000000]
+    !sv = U.fromList [1,2,4,8,16,32]
 
 -- $references
 --
