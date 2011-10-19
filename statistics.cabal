@@ -126,7 +126,6 @@ library
     Statistics.Internal
     Statistics.Transform
   build-depends:
-    aeson,
     base < 5,
     deepseq >= 1.1.0.2,
     erf,

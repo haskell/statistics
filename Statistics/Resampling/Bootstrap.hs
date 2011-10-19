@@ -20,11 +20,9 @@ module Statistics.Resampling.Bootstrap
     -- $references
     ) where
 
-import Control.Applicative ((<$>), (<*>), empty)
 import Control.DeepSeq (NFData)
 import Control.Exception (assert)
 import Control.Monad.Par (runPar, parMap)
-import Data.Aeson.Types
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 import Data.Vector.Unboxed ((!))
@@ -50,22 +48,6 @@ data Estimate = Estimate {
     } deriving (Eq, Show, Typeable, Data)
 
 instance NFData Estimate
-
-instance ToJSON Estimate where
-    toJSON Estimate{..} = object [
-                            "estPoint" .= estPoint
-                          , "estLowerBound" .= estLowerBound
-                          , "estUpperBound" .= estUpperBound
-                          , "estConfidenceLevel" .= estConfidenceLevel
-                          ]
-
-instance FromJSON Estimate where
-    parseJSON (Object v) = Estimate <$>
-                           v .: "estPoint" <*>
-                           v .: "estLowerBound" <*>
-                           v .: "estUpperBound" <*>
-                           v .: "estConfidenceLevel"
-    parseJSON _ = empty
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'
 -- by the given value.
