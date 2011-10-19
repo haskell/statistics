@@ -28,6 +28,7 @@ import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Normal
 import Statistics.Distribution.Poisson
+import Statistics.Distribution.StudentT
 import Statistics.Distribution.Uniform
 
 import Prelude hiding (catch)
@@ -44,7 +45,8 @@ distributionTests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T GammaDistribution       )
   , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
-    
+  , contDistrTests (T :: T StudentT                )
+
   , discreteDistrTests (T :: T BinomialDistribution       )
   , discreteDistrTests (T :: T GeometricDistribution      )
   , discreteDistrTests (T :: T HypergeometricDistribution )
@@ -194,7 +196,8 @@ instance QC.Arbitrary CauchyDistribution where
   arbitrary = cauchyDistribution
                 <$> arbitrary
                 <*> ((abs <$> arbitrary) `suchThat` (> 0))
-
+instance QC.Arbitrary StudentT where
+  arbitrary = studentT <$> ((abs <$> arbitrary) `suchThat` (>0))
 ----------------------------------------------------------------
 -- Unit tests
 ----------------------------------------------------------------
@@ -203,4 +206,18 @@ unitTests :: Test
 unitTests = testGroup "Unit tests"
   [ testAssertion "density (gammaDistr 150 1/150) 1 == 4.883311" $
       4.883311418525483 =~ (density (gammaDistr 150 (1/150)) 1)
+    -- Student-T
+  , testStudentPDF 0.3  1.34  0.0648215 -- PDF
+  , testStudentPDF 1    0.42  0.27058
+  , testStudentPDF 4.4  0.33  0.352994
+  , testStudentCDF 0.3  3.34  0.757146 -- CDF
+  , testStudentCDF 1    0.42  0.626569
+  , testStudentCDF 4.4  0.33  0.621739
   ]
+  where
+    testStudentPDF ndf x exact
+      = testAssertion (printf "density (studentT %f) %f ≈ %f" ndf x exact)
+      $ eq 1e-5  exact  (density (studentT ndf) x)
+    testStudentCDF ndf x exact
+      = testAssertion (printf "cumulative (studentT %f) %f ≈ %f" ndf x exact)
+      $ eq 1e-5  exact  (cumulative (studentT ndf) x)
