@@ -3,7 +3,6 @@ module Tests.Transform
       tests
     ) where
 
-import Debug.Trace
 import Data.Bits ((.&.), shiftL)
 import Data.Complex (Complex((:+)))
 import Statistics.Function (within)
@@ -32,7 +31,7 @@ t_impulse k (Positive m) = G.all (c_near i) (fft v)
 -- otherwise zero vector, the sum-of-squares of each component of the
 -- result should equal the square of the impulse.
 t_impulse_offset :: Double -> Positive Int -> Positive Int -> Bool
-t_impulse_offset k (Positive x) (Positive m) = G.all ok (fft v) || traceShow (k,v) False
+t_impulse_offset k (Positive x) (Positive m) = G.all ok (fft v)
   where v = G.concat [G.replicate xn 0, G.singleton i, G.replicate (n-xn-1) 0]
         ok (re :+ im) = within ulps (re*re + im*im) (k*k)
         i = k :+ 0
