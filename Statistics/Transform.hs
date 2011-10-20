@@ -8,10 +8,12 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Transformations of functions.
+-- Fourier-related transformations of mathematical functions.
 --
--- These functions are not particularly fast, so they're not yet
--- public.
+-- These functions are written for simplicity and correctness, not
+-- speed.  If you need a fast FFT implementation for your application,
+-- you should strongly consider using a library of FFTW bindings
+-- instead.
 
 module Statistics.Transform
     (
@@ -67,23 +69,23 @@ fft v = G.create $ do
           return mv
 
 mfft :: (M.MVector v CD) => v s CD -> ST s ()
-mfft vec = do
-  bitReverse 0 0
-  stage 0 1
+mfft vec
+    | 1 `shiftL` m /= len = error "Statistics.Transform.fft: bad vector size"
+    | otherwise           = bitReverse 0 0
  where
-  bitReverse i j | i == (len-1) = return ()
-                 | otherwise = do
+  bitReverse i j | i == (len-1) = stage 0 1
+                 | otherwise    = do
     when (i < j) $ M.swap vec i j
     let inner k l | k <= l    = inner (l-k) (k `shiftR` 1)
                   | otherwise = bitReverse (i+1) (l+k)
     inner (len `shiftR` 1) j
-  stage l !l1 | l == log2 len = return ()
+  stage l !l1 | l == m    = return ()
               | otherwise = do
     let !l2 = l1 `shiftL` 1
         !e  = -6.283185307179586/fromIntegral l2
-        flight j !a | j == l1 = return ()
+        flight j !a | j == l1   = stage (l+1) l2
                     | otherwise = do
-          let butterfly i | i >= len = return ()
+          let butterfly i | i >= len  = flight (j+1) (a+e)
                           | otherwise = do
                 let i1 = i + l1
                 xi1 :+ yi1 <- M.read vec i1
@@ -95,10 +97,9 @@ mfft vec = do
                 M.write vec i (ci + d)
                 butterfly (i+l2)
           butterfly j
-          flight (j+1) (a+e)
     flight 0 0
-    stage (l+1) l2
   len = M.length vec
+  m   = log2 len
 
 fi :: Int -> CD
 fi = fromIntegral
