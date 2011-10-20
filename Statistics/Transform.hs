@@ -73,10 +73,10 @@ mfft vec
     | 1 `shiftL` m /= len = error "Statistics.Transform.fft: bad vector size"
     | otherwise           = bitReverse 0 0
  where
-  bitReverse i j | i == (len-1) = stage 0 1
-                 | otherwise    = do
+  bitReverse i j | i == len-1 = stage 0 1
+                 | otherwise  = do
     when (i < j) $ M.swap vec i j
-    let inner k l | k <= l    = inner (l-k) (k `shiftR` 1)
+    let inner k l | k <= l    = inner (k `shiftR` 1) (l-k)
                   | otherwise = bitReverse (i+1) (l+k)
     inner (len `shiftR` 1) j
   stage l !l1 | l == m    = return ()
