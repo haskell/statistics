@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+-- Required for Param
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverlappingInstances #-}
 module Tests.Distribution (
     distributionTests
   ) where
@@ -60,7 +63,7 @@ distributionTests = testGroup "Tests for all distributions"
 ----------------------------------------------------------------
 
 -- Tests for continous distribution
-contDistrTests :: (ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
+contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck   t
@@ -69,7 +72,7 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for discrete distribution
-discreteDistrTests :: (DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
+discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
@@ -77,7 +80,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for distributions which have CDF
-cdfTests :: (Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
+cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
 cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
   , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity  t
@@ -97,18 +100,20 @@ cdfIsNondecreasing :: (Distribution d) => T d -> d -> Double -> Double -> Bool
 cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
 
 -- CDF limit at +∞ is 1
-cdfLimitAtPosInfinity :: (Distribution d) => T d -> d -> Property
-cdfLimitAtPosInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
-                          $ Just 1.0 == (find (>=1) probs)
+cdfLimitAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Property
+cdfLimitAtPosInfinity _ d =
+  okForInfLimit d ==> printTestCase ("Last elements: " ++ show (drop 990 probs))
+                    $ Just 1.0 == (find (>=1) probs)
   where
     probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1
 
 -- CDF limit at -∞ is 0
-cdfLimitAtNegInfinity :: (Distribution d) => T d -> d -> Property
-cdfLimitAtNegInfinity _ d = printTestCase ("Last elements: " ++ show (drop 990 probs))
-                          $ case find (< IEEE.epsilon) probs of
-                              Nothing -> False
-                              Just p  -> p >= 0
+cdfLimitAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Property
+cdfLimitAtNegInfinity _ d =
+  okForInfLimit d ==> printTestCase ("Last elements: " ++ show (drop 990 probs))
+                    $ case find (< IEEE.epsilon) probs of
+                        Nothing -> False
+                        Just p  -> p >= 0
   where
     probs = take 1000 $ map (cumulative d) $ iterate (*1.4) (-1)
 
@@ -123,13 +128,13 @@ pdfSanityCheck _ d x = p >= 0
   where p = density d x
 
 -- Quantile is inverse of CDF
-quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double -> Property
+quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d p =
   p > 0 && p < 1  ==> ( printTestCase (printf "Quantile     = %g" q )
                       $ printTestCase (printf "Probability  = %g" p )
                       $ printTestCase (printf "Probability' = %g" p')
                       $ printTestCase (printf "Error        = %e" (abs $ p - p'))
-                      $ abs (p - p') < 1e-14
+                      $ abs (p - p') < invQuantilePrec d
                       )
   where
     q  = quantile   d p
@@ -198,6 +203,25 @@ instance QC.Arbitrary CauchyDistribution where
                 <*> ((abs <$> arbitrary) `suchThat` (> 0))
 instance QC.Arbitrary StudentT where
   arbitrary = studentT <$> ((abs <$> arbitrary) `suchThat` (>0))
+
+
+-- Parameters for distribution testing. Some distribution require
+-- relaxing parameters a bit
+class Param a where
+  -- Precision for quantileIsInvCDF
+  invQuantilePrec :: a -> Double
+  invQuantilePrec _ = 1e-14
+  -- Distribution is OK for testing limits
+  okForInfLimit :: a -> Bool
+  okForInfLimit _ = True
+
+
+instance Param a
+
+instance Param StudentT where
+  invQuantilePrec _ = 1e-13
+  okForInfLimit   d = studentTndf d > 0.75
+
 ----------------------------------------------------------------
 -- Unit tests
 ----------------------------------------------------------------
