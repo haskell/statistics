@@ -119,12 +119,12 @@ library
     Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Powers
     Statistics.Test.NonParametric
+    Statistics.Transform
     Statistics.Types
   other-modules:
     Statistics.Distribution.Poisson.Internal
     Statistics.Function.Comparison
     Statistics.Internal
-    Statistics.Transform
   build-depends:
     base < 5,
     deepseq >= 1.1.0.2,
