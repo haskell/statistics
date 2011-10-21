@@ -1,46 +1,67 @@
 
 Changes in 0.10.0.0
 
-	* Both type classes Mean and Variance are split in two. This
- 	  is required for distributions which do not have finite
- 	  variance or mean.
+  * The type classes Mean and Variance are split in two. This is
+    required for distributions which do not have finite variance or
+    mean.
 
-	* complCumulative is added to type class Distribution in order to assess
-	  accurately probalities P(X>x) which is used in one-tailed tests.
+  * The S.Sample.KernelDensity module has been renamed, and
+    completely rewritten to be much more robust.  The older module
+    oversmoothed multi-modal data.  (The older module is still
+    available under the name S.Sample.KernelDensity.Simple).
 
-	* stdDev is added to Variance type class for distributions.
+  * Histogram computation is added, in S.Sample.Histogram.
 
-	* Constructor S.Distribution.normalDistr takes standard deviation
-	  instead of variance as parameter.
+  * Discrete Fourie transform is added, in S.Transform
 
-	* Bug in S.Quantile.weightedAvg is fixed. It produced wrong answer if
-	  sample contains only one element.
+  * Root finding is added, in S.Math.RootFinding.
 
-	* Bug in quantile estimations for chi-square and gamma distribution is
-	  fixed.
+  * The complCumulative function is added to the Distribution
+    class in order to accurately assess probalities P(X>x) which are
+    used in one-tailed tests.
 
-	* Integer overlow in mannWhitneyUCriticalValue is fixed. It produced
-	  wrong critical value for moderately large samples. Something around 20
-	  for 32-bit machines and 40 for 64-bit ones.
+  * A stdDev function is added to the Variance class for
+    distributions.
 
-	* Bug in mannWhitneyUSignificant is fixed. If either of samples is larger
-	  than 20 it produced completely wrong answer.
+  * The constructor S.Distribution.normalDistr now takes standard
+    deviation instead of variance as its parameter.
 
-	* One and two tailed tests in S.Tests.NonParametric are selected with
-	  enumeration types instead of booleans.
+  * A bug in S.Quantile.weightedAvg is fixed. It produced a wrong
+    answer if a sample contained only one element.
 
-	* Performance improvements for Mann-Whitney U and Wilcoxon tests.
+  * Bugs in quantile estimations for chi-square and gamma distribution
+    are fixed.
 
-	* sortBy is added to Statistics.Function
+  * Integer overlow in mannWhitneyUCriticalValue is fixed. It
+    produced incorrect critical values for moderately large
+    samples. Something around 20 for 32-bit machines and 40 for 64-bit
+    ones.
 
-	* Mean and variance for gamma distribution is fixed
+  * A bug in mannWhitneyUSignificant is fixed. If either sample was
+    larger than 20, it produced a completely incorrect answer.
 
-	* Much faster cumulutive probablity functions for Poisson and
-	  hyperheometric distributions.
+  * One- and two-tailed tests in S.Tests.NonParametric are selected
+    with sum types instead of Bool.
 
-	* Better density function for gamma and Poisson distributions.
+  * Performance improvements for Mann-Whitney U and Wilcoxon tests.
 
-	* Cauchy-Lorentz distrbution is added.
+  * sortBy is added to S.Function.
 
-	* Function S.Function.create is removed. Use generateM from vector
-	  package instead.
+  * Mean and variance for gamma distribution are fixed.
+
+  * Much faster cumulative probablity functions for Poisson and
+    hypergeometric distributions.
+
+  * Better density functions for gamma and Poisson distributions.
+
+  * Student-T, Fisher-Snedecor F-distributions and Cauchy-Lorentz
+    distrbution are added.
+
+  * The function S.Function.create is removed. Use generateM from
+    the vector package instead.
+
+  * Function to perform approximate comparion of doubles is added to
+    S.Function.Comparison
+
+  * Regularized incomplete beta function and its inverse are added to
+    S.Function

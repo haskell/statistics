@@ -35,6 +35,8 @@ description:
   .
   * Histogram computation is added, in @S.Sample.Histogram@.
   .
+  * Discrete Fourie transform is added, in @S.Transform@
+  .
   * Root finding is added, in @S.Math.RootFinding@.
   .
   * The @complCumulative@ function is added to the @Distribution@
@@ -75,10 +77,17 @@ description:
   .
   * Better density functions for gamma and Poisson distributions.
   .
-  * Cauchy-Lorentz distrbution is added.
+  * Student-T, Fisher-Snedecor F-distributions and Cauchy-Lorentz
+    distrbution are added.
   .
   * The function @S.Function.create@ is removed. Use @generateM@ from
     the @vector@ package instead.
+  .
+  * Function to perform approximate comparion of doubles is added to
+    @S.Function.Comparison@
+  .
+  * Regularized incomplete beta function and its inverse are added to
+    @S.Function@
 
 license:        BSD3
 license-file:   LICENSE
