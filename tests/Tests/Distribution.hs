@@ -243,17 +243,34 @@ unitTests = testGroup "Unit tests"
   [ testAssertion "density (gammaDistr 150 1/150) 1 == 4.883311" $
       4.883311418525483 =~ (density (gammaDistr 150 (1/150)) 1)
     -- Student-T
-  , testStudentPDF 0.3  1.34  0.0648215 -- PDF
+  , testStudentPDF 0.3  1.34  0.0648215  -- PDF
   , testStudentPDF 1    0.42  0.27058
   , testStudentPDF 4.4  0.33  0.352994
-  , testStudentCDF 0.3  3.34  0.757146 -- CDF
+  , testStudentCDF 0.3  3.34  0.757146   -- CDF
   , testStudentCDF 1    0.42  0.626569
   , testStudentCDF 4.4  0.33  0.621739
+    -- F-distribution
+  , testFdistrPDF  1  3   3     (1/(6 * pi)) -- PDF
+  , testFdistrPDF  2  2   1.2   0.206612
+  , testFdistrPDF  10 12  8     0.00085613179281892790166
+  , testFdistrCDF  1  3   3     0.81830988618379067153 -- CDF
+  , testFdistrCDF  2  2   1.2   0.545455
+  , testFdistrCDF  10 12  8     0.99935509863451408041
   ]
   where
+    -- Student-T
     testStudentPDF ndf x exact
       = testAssertion (printf "density (studentT %f) %f ≈ %f" ndf x exact)
       $ eq 1e-5  exact  (density (studentT ndf) x)
     testStudentCDF ndf x exact
       = testAssertion (printf "cumulative (studentT %f) %f ≈ %f" ndf x exact)
       $ eq 1e-5  exact  (cumulative (studentT ndf) x)
+    -- F-distribution
+    testFdistrPDF n m x exact
+      = testAssertion (printf "density (fDistribution %i %i) %f ≈ %f [got %f]" n m x exact d)
+      $ eq 1e-5  exact d
+      where d = density (fDistribution n m) x
+    testFdistrCDF n m x exact
+      = testAssertion (printf "cumulative (fDistribution %i %i) %f ≈ %f [got %f]" n m x exact d)
+      $ eq 1e-5  exact d
+      where d = cumulative (fDistribution n m) x
