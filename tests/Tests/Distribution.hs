@@ -26,6 +26,7 @@ import Statistics.Distribution.Binomial
 import Statistics.Distribution.ChiSquared
 import Statistics.Distribution.CauchyLorentz
 import Statistics.Distribution.Exponential
+import Statistics.Distribution.FDistribution
 import Statistics.Distribution.Gamma
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
@@ -49,6 +50,7 @@ distributionTests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
   , contDistrTests (T :: T StudentT                )
+  , contDistrTests (T :: T FDistribution           )
 
   , discreteDistrTests (T :: T BinomialDistribution       )
   , discreteDistrTests (T :: T GeometricDistribution      )
@@ -203,6 +205,11 @@ instance QC.Arbitrary CauchyDistribution where
                 <*> ((abs <$> arbitrary) `suchThat` (> 0))
 instance QC.Arbitrary StudentT where
   arbitrary = studentT <$> ((abs <$> arbitrary) `suchThat` (>0))
+instance QC.Arbitrary FDistribution where
+  arbitrary =  fDistribution 
+           <$> ((abs <$> arbitrary) `suchThat` (>0))
+           <*> ((abs <$> arbitrary) `suchThat` (>0))
+
 
 
 -- Parameters for distribution testing. Some distribution require
@@ -221,6 +228,11 @@ instance Param a
 instance Param StudentT where
   invQuantilePrec _ = 1e-13
   okForInfLimit   d = studentTndf d > 0.75
+
+instance Param FDistribution where
+  invQuantilePrec _ = 1e-12
+
+
 
 ----------------------------------------------------------------
 -- Unit tests
