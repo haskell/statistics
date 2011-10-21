@@ -252,7 +252,7 @@ unitTests = testGroup "Unit tests"
     -- F-distribution
   , testFdistrPDF  1  3   3     (1/(6 * pi)) -- PDF
   , testFdistrPDF  2  2   1.2   0.206612
-  , testFdistrPDF  10 12  8     0.00085613179281892790166
+  , testFdistrPDF  10 12  8     0.000385613179281892790166
   , testFdistrCDF  1  3   3     0.81830988618379067153 -- CDF
   , testFdistrCDF  2  2   1.2   0.545455
   , testFdistrCDF  10 12  8     0.99935509863451408041

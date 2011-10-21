@@ -34,7 +34,7 @@ fDistribution n m
   | n > 0 && m > 0 = 
     let n' = fromIntegral n  
         m' = fromIntegral m
-        f' = 0.5 * (log m' * m' + log n' * n') - logBeta n' m'
+        f' = 0.5 * (log m' * m' + log n' * n') - logBeta (0.5*n') (0.5*m')
     in F n' m' f'
   | otherwise =
     error "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
