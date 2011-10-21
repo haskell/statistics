@@ -101,6 +101,7 @@ library
     Statistics.Distribution.CauchyLorentz
     Statistics.Distribution.ChiSquared
     Statistics.Distribution.Exponential
+    Statistics.Distribution.FDistribution
     Statistics.Distribution.Gamma
     Statistics.Distribution.Geometric
     Statistics.Distribution.Hypergeometric
