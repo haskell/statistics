@@ -4,6 +4,7 @@ module Tests.Helpers (
     T(..)
   , typeName
   , eq
+  , eqC
   , (=~)
     -- * Generic QC tests
   , monotonicallyIncreases
@@ -12,6 +13,7 @@ module Tests.Helpers (
   , testAssertion
   ) where
 
+import Data.Complex
 import Data.Typeable
 
 import qualified Numeric.IEEE    as IEEE
@@ -38,12 +40,28 @@ typeName = show . typeOf . typeParam
     typeParam :: T a -> a
     typeParam _ = undefined
 
-eq :: Double -> Double -> Double -> Bool
+-- | Approximate equality for 'Double'. Doesn't work well for numbers
+--   which are almost zero.
+eq :: Double                    -- ^ Relative error
+   -> Double -> Double -> Bool
 eq eps a b 
   | a == 0 && b == 0 = True
-  | otherwise        = abs (a - b) / max (abs a) (abs b) <= eps
+  | otherwise        = abs (a - b) <= eps * max (abs a) (abs b)
 
--- Approximately equal up to 1 ulp
+-- | Approximate equality for 'Complex Double'
+eqC :: Double                   -- ^ Relative error
+    -> Complex Double
+    -> Complex Double
+    -> Bool
+eqC eps a@(ar :+ ai) b@(br :+ bi)
+  | a == 0 && b == 0 = True
+  | otherwise        = abs (ar - br) <= eps * d
+                    && abs (ai - bi) <= eps * d
+  where
+    d = max (realPart $ abs a) (realPart $ abs b)
+
+
+-- | Approximately equal up to 1 ulp
 (=~) :: Double -> Double -> Bool
 (=~) = eq m_epsilon
 
