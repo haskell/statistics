@@ -99,7 +99,12 @@ copyright:      2009, 2010, 2011 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
 cabal-version:  >= 1.8
-extra-source-files: README.markdown
+extra-source-files:
+  README.markdown
+  examples/kde/KDE.hs
+  examples/kde/data/faithful.csv
+  examples/kde/kde.html
+  examples/kde/kde.tpl
 
 library
   exposed-modules:
