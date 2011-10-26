@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 -- |
--- Module    : Statistics.Distribution.Normal
+-- Module    : Statistics.Distribution.Uniform
 -- Copyright : (c) 2011 Aleksey Khudyakov
 -- License   : BSD3
 --
