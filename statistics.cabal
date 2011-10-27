@@ -35,7 +35,8 @@ description:
   .
   * Histogram computation is added, in @S.Sample.Histogram@.
   .
-  * Discrete Fourie transform is added, in @S.Transform@
+  * Forward and inverse discrete Fourier and cosine transforms are
+    added, in @S.Transform@.
   .
   * Root finding is added, in @S.Math.RootFinding@.
   .
@@ -87,7 +88,7 @@ description:
     @S.Function.Comparison@
   .
   * Regularized incomplete beta function and its inverse are added to
-    @S.Function@
+    @S.Function@.
 
 license:        BSD3
 license-file:   LICENSE
