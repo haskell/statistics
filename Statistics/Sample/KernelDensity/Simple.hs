@@ -13,7 +13,8 @@
 --
 -- The techniques used by functions in this module are relatively
 -- fast, but they generally give inferior results to the KDE function
--- in the main 'Statistics.KernelDensity' module.
+-- in the main 'Statistics.KernelDensity' module (due to the
+-- oversmoothing documented for 'bandwidth' below).
 
 module Statistics.Sample.KernelDensity.Simple
     {-# DEPRECATED "Use Statistics.Sample.KernelDensity instead." #-}
