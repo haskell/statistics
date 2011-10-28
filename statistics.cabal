@@ -142,7 +142,7 @@ library
     Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Powers
     Statistics.Test.NonParametric
-    Statistics.Test.Types
+    Statistics.Test.KolmogorovSmirnov
     Statistics.Test.MannWhitneyU
     Statistics.Test.WilcoxonT
     Statistics.Transform
