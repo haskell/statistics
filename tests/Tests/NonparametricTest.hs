@@ -5,13 +5,18 @@ module Tests.NonparametricTest (
 
 
 import qualified Data.Vector.Unboxed as U
-import Test.HUnit                     (Test(..),assertEqual,assertBool)
+import Test.HUnit                     (Test(..),assertEqual,assertBool,runTestTT)
 import qualified Test.Framework as TF
 import Test.Framework.Providers.HUnit
 
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.WilcoxonT
 
+import Tests.Helpers
+import Tests.NonparametricTest.Table
+
+import Statistics.Test.KolmogorovSmirnov
+import Statistics.Distribution.Normal    (standard)
 
 
 
@@ -20,6 +25,7 @@ nonparametricTests = TF.testGroup "Nonparametric tests"
                    $ hUnitTestToTests =<< concat [ mannWhitneyTests
                                                  , wilcoxonSumTests
                                                  , wilcoxonPairTests
+                                                 , kolmogorovSmirnovDTest
                                                  ]
 
 
@@ -146,3 +152,24 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
                  )
                ]
     to4dp tgt x = x >= tgt - 0.00005 && x < tgt + 0.00005
+
+
+
+----------------------------------------------------------------
+-- K-S test
+----------------------------------------------------------------
+
+
+kolmogorovSmirnovDTest :: [Test]
+kolmogorovSmirnovDTest = 
+  [ TestCase $ assertBool "K-S D statistics" $ 
+    and [ eq 1e-6 (kolmogorovSmirnovD standard (toU sample)) reference
+        | (reference,sample) <- tableKSD
+        ]
+  , TestCase $ assertBool "K-S 2-sample statistics" $ 
+    and [ eq 1e-6 (kolmogorovSmirnov2D (toU xs) (toU ys)) reference
+        | (reference,xs,ys) <- tableKS2D
+        ]
+  ]
+  where
+    toU = U.fromList
