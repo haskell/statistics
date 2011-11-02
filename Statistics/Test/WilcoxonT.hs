@@ -1,3 +1,15 @@
+-- |
+-- Module    : Statistics.Test.WilcoxonT
+-- Copyright : (c) 2010 Neil Brown
+-- License   : BSD3
+--
+-- Maintainer  : bos@serpentine.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- The Wilcoxon matched-pairs signed-rank test is non-parametric test
+-- which could be used to whether two related samples have different
+-- means.
 module Statistics.Test.WilcoxonT (
     -- * Wilcoxon signed-rank matched-pair test
     wilcoxonMatchedPairTest
@@ -168,4 +180,3 @@ wilcoxonMatchedPairTest test p smp1 smp2 =
   where
     n1 = U.length smp1
     n2 = U.length smp2
-
