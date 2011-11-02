@@ -187,7 +187,10 @@ test-suite tests
     test-framework-quickcheck2,
     test-framework-hunit,
     statistics,
-    vector
+    primitive,
+    vector,
+    vector-algorithms,
+    erf
 
 source-repository head
   type:     git
