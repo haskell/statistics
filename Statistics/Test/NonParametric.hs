@@ -397,7 +397,7 @@ data Rank v a = Rank { rankCnt :: Int        -- Number of ranks to return
                      }
 
 -- Calculate rank of sample. Sample should be already sorted
-rank :: (G.Vector v a, G.Vector v Double, Eq a)
+rank :: (G.Vector v a, G.Vector v Double)
      => (a -> a -> Bool)        -- Equivalence relation
      -> v a                     -- Vector to rank
      -> v Double
