@@ -9,7 +9,8 @@ import Test.HUnit                     (Test(..),assertEqual,assertBool)
 import qualified Test.Framework as TF
 import Test.Framework.Providers.HUnit
 
-import Statistics.Test.NonParametric
+import Statistics.Test.MannWhitneyU
+import Statistics.Test.WilcoxonT
 
 
 
