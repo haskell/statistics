@@ -22,6 +22,8 @@ module Statistics.Test.MannWhitneyU (
     -- * Data types
   , TestType(..)
   , TestResult(..)
+    -- * References
+    -- $references
   ) where
 
 import Control.Applicative ((<$>))
@@ -104,8 +106,7 @@ mannWhitneyU xs1 xs2
 --
 -- The algorithm to generate these values is a faster, memoised version of the
 -- simple unoptimised generating function given in section 2 of \"The Mann Whitney
--- Wilcoxon Distribution Using Linked Lists\", Cheung and Klotz, Statistica Sinica
--- 7 (1997), <http://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n316.pdf>.
+-- Wilcoxon Distribution Using Linked Lists\"
 mannWhitneyUCriticalValue :: (Int, Int) -- ^ The sample size
                           -> Double     -- ^ The p-value (e.g. 0.05) for which you want the critical value.
                           -> Maybe Int  -- ^ The critical value (of U).
@@ -228,3 +229,9 @@ mannWhitneyUtest ontTail p smp1 smp2 =
     where
       n1 = U.length smp1
       n2 = U.length smp2
+
+-- $references
+--
+-- "The Mann Whitney Wilcoxon Distribution Using Linked Lists\",
+-- Cheung and Klotz, Statistica Sinica 7 (1997),
+-- <http://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n316.pdf>.
