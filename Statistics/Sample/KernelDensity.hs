@@ -83,7 +83,7 @@ kde_ n0 min max xs
     !n = fromIntegral ni
     !ni = nextHighestPowerOfTwo n0
     !r = max - min
-    a = dct . G.map (/ (G.sum h)) $ h
+    a = dct . G.map (/ G.sum h) $ h
       where h = G.map (/ (len :+ 0)) $ histogram_ ni min max xs
     !len = fromIntegral (G.length xs)
     !t_star = fromRoot (0.28 * len ** (-0.4)) . ridders 1e-14 (0,0.1) $ \x ->
