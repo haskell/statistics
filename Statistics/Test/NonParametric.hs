@@ -197,9 +197,8 @@ mannWhitneyUSignificant ::
   -> (Int, Int)       -- ^ The samples' size from which the (U&#8321;,U&#8322;) values were derived.
   -> Double           -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double) -- ^ The (U&#8321;, U&#8322;) values from 'mannWhitneyU'.
-  -> Maybe Bool       -- ^ Just True if the test is significant, Just
-                      --   False if it is not, and Nothing if the sample
-                      --   was too small to make a decision.
+  -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
+                      --   small to make a decision.
 mannWhitneyUSignificant test (in1, in2) p (u1, u2)
    --Use normal approximation
   | in1 > 20 || in2 > 20 =
@@ -207,13 +206,13 @@ mannWhitneyUSignificant test (in1, in2) p (u1, u2)
         sigma = sqrt $ n1*n2*(n1 + n2 + 1) / 12
         z     = (mean - u1) / sigma
     in Just $ case test of
-                OneTailed -> z     < quantile standard  p
-                TwoTailed -> abs z > abs (quantile standard (p/2))
+                OneTailed -> significant $ z     < quantile standard  p
+                TwoTailed -> significant $ abs z > abs (quantile standard (p/2))
   -- Use exact critical value
   | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) p
                    return $ case test of
-                              OneTailed -> u2        <= crit
-                              TwoTailed -> min u1 u2 <= crit
+                              OneTailed -> significant $ u2        <= crit
+                              TwoTailed -> significant $ min u1 u2 <= crit
   where
     n1 = fromIntegral in1
     n2 = fromIntegral in2
@@ -230,9 +229,9 @@ mannWhitneyUtest :: TestType    -- ^ Perform one-tailed test (see description ab
                  -> Double      -- ^ The p-value at which to test (e.g. 0.05)
                  -> Sample      -- ^ First sample
                  -> Sample      -- ^ Second sample
-                 -> Maybe Bool  -- ^ Just True if the test is significant, Just
-                                --   False if it is not, and Nothing if the sample
-                                --   was too small to make a decision.
+                 -> Maybe TestResult
+                 -- ^ Return 'Nothing' if the sample was too small to
+                 --   make a decision.
 mannWhitneyUtest ontTail p smp1 smp2 =
   mannWhitneyUSignificant ontTail (n1,n2) p $ mannWhitneyU smp1 smp2
     where
@@ -308,17 +307,16 @@ wilcoxonMatchedPairSignificant ::
   -> Int                 -- ^ The sample size from which the (T+,T-) values were derived.
   -> Double              -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double)    -- ^ The (T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
-  -> Maybe Bool          -- ^ Just True if the test is significant, Just
-                         --   False if it is not, and Nothing if the sample
-                         --   was too small to make a decision.
+  -> Maybe TestResult    -- ^ Return 'Nothing' if the sample was too
+                         --   small to make a decision.
 wilcoxonMatchedPairSignificant test sampleSize p (tPlus, tMinus) =
   case test of
     -- According to my nearest book (Understanding Research Methods and Statistics
     -- by Gary W. Heiman, p590), to check that the first sample is bigger you must
     -- use the absolute value of T- for a one-tailed check:
-    OneTailed -> ((abs tMinus <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize p
+    OneTailed -> (significant . (abs tMinus <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize p
     -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
-    TwoTailed -> ((t <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize (p/2)
+    TwoTailed -> (significant . (t <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize (p/2)
   where
     t = min (abs tPlus) (abs tMinus)
 
@@ -377,13 +375,15 @@ wilcoxonMatchedPairTest :: TestType   -- ^ Perform one-tailed test.
                         -> Double     -- ^ The p-value at which to test (e.g. 0.05)
                         -> Sample     -- ^ First sample
                         -> Sample     -- ^ Second sample
-                        -> Maybe Bool -- ^ Just True if the test is significant, Just
-                                      --   False if it is not, and Nothing if the sample
-                                      --   was too small to make a decision.
+                        -> Maybe TestResult
+                        -- ^ Return 'Nothing' if the sample was too
+                        --   small to make a decision.
 wilcoxonMatchedPairTest test p smp1 smp2 =
-  wilcoxonMatchedPairSignificant test (min (U.length smp1) (U.length smp2)) p
-    $ wilcoxonMatchedPairSignedRank smp1 smp2
-
+    wilcoxonMatchedPairSignificant test (min n1 n2) p
+  $ wilcoxonMatchedPairSignedRank smp1 smp2
+  where
+    n1 = U.length smp1
+    n2 = U.length smp2
 
 
 ----------------------------------------------------------------
