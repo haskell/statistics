@@ -135,6 +135,7 @@ library
     Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Powers
     Statistics.Test.NonParametric
+    Statistics.Test.Types
     Statistics.Transform
     Statistics.Types
   other-modules:

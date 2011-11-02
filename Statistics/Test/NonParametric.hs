@@ -30,6 +30,7 @@ module Statistics.Test.NonParametric
   , wilcoxonMatchedPairCriticalValue
     -- * Data types
   , TestType(..)
+  , TestResult(..)
   ) where
 
 import Control.Applicative ((<$>))
@@ -44,14 +45,8 @@ import Statistics.Distribution.Normal (standard)
 import Statistics.Math                (choose)
 import Statistics.Types               (Sample)
 import Statistics.Function            (sortBy)
+import Statistics.Test.Types
 
-
-
--- | Test type. Exact meaning depends on a specific test. But
--- generally it's tested whether some statistics is too big (small)
--- for 'OneTailed' or whether it too big or too small for 'TwoTailed'
-data TestType = OneTailed
-              | TwoTailed
 
 -- | The Wilcoxon Rank Sums Test.
 --
