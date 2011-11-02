@@ -1,3 +1,16 @@
+-- |
+-- Module    : Statistics.Test.MannWhitneyU
+-- Copyright : (c) 2010 Neil Brown
+-- License   : BSD3
+--
+-- Maintainer  : bos@serpentine.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- Mann-Whitney U test (also know as Mann-Whitney-Wilcoxon and
+-- Wilcoxon rank sum test) is a non-parametric test for assesing
+-- whether two samples of independent observations have different
+-- mean.
 module Statistics.Test.MannWhitneyU (
     -- * Mann-Whitney U test
     mannWhitneyUtest
