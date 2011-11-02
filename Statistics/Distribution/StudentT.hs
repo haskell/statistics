@@ -15,10 +15,11 @@ module Statistics.Distribution.StudentT (
   , studentTndf
   ) where
 
-import Debug.Trace
 import qualified Statistics.Distribution as D
 import Data.Typeable   (Typeable)
 import Statistics.Math (logBeta, incompleteBeta, invIncompleteBeta)
+
+
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
