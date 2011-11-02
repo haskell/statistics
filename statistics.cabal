@@ -136,12 +136,15 @@ library
     Statistics.Sample.Powers
     Statistics.Test.NonParametric
     Statistics.Test.Types
+    Statistics.Test.MannWhitneyU
+    Statistics.Test.WilcoxonT
     Statistics.Transform
     Statistics.Types
   other-modules:
     Statistics.Distribution.Poisson.Internal
     Statistics.Function.Comparison
     Statistics.Internal
+    Statistics.Test.Internal
   build-depends:
     base < 5,
     deepseq >= 1.1.0.2,
