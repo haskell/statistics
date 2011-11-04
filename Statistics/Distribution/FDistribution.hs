@@ -16,7 +16,6 @@ module Statistics.Distribution.FDistribution (
   , fDistributionNDF2
   ) where
 
-import Debug.Trace
 import qualified Statistics.Distribution as D
 import Data.Typeable   (Typeable)
 import Statistics.Math (logBeta, incompleteBeta, invIncompleteBeta)
