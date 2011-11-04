@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 -- |
 -- Module    : Statistics.Function.Comparison
 -- Copyright : (c) 2011 Bryan O'Sullivan
