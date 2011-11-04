@@ -20,6 +20,8 @@ import qualified Statistics.Distribution as D
 import Data.Typeable   (Typeable)
 import Statistics.Math (logBeta, incompleteBeta, invIncompleteBeta)
 
+
+
 -- | Student-T distribution
 data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        , fDistributionNDF2 :: {-# UNPACK #-} !Double
