@@ -244,7 +244,7 @@ invIncompleteGamma a p
          let t  = sqrt $ -2 * log(if p < 0.5 then p else 1 - p)
              x1 = (2.30753 + t * 0.27061) / (1 + t * (0.99229 + t * 0.04481)) - t
              x2 = if p < 0.5 then -x1 else x1
-         in max (1e-3) (a * (1 - 1/(9*a) - x2 / (3 * sqrt a)) ** 3)
+         in max 1e-3 (a * (1 - 1/(9*a) - x2 / (3 * sqrt a)) ** 3)
       -- For a <= 1 use following approximations:
       --   γ(a,1) ≈ 0.253a + 0.12a²
       --

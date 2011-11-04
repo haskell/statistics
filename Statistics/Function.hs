@@ -50,7 +50,7 @@ partialSort :: (G.Vector v e, Ord e) =>
                Int -- ^ The number /k/ of least elements.
             -> v e
             -> v e
-partialSort k = G.modify (\a -> I.partialSort a k)
+partialSort k = G.modify (`I.partialSort` k)
 {-# INLINE partialSort #-}
 
 -- | Return the indices of a vector.
