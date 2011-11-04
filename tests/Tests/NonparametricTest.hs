@@ -9,7 +9,8 @@ import Test.HUnit                     (Test(..),assertEqual,assertBool)
 import qualified Test.Framework as TF
 import Test.Framework.Providers.HUnit
 
-import Statistics.Test.NonParametric
+import Statistics.Test.MannWhitneyU
+import Statistics.Test.WilcoxonT
 
 
 
@@ -48,36 +49,36 @@ mannWhitneyTests = zipWith test [(0::Int)..] testData ++
         us = mannWhitneyU (U.fromList a) (U.fromList b)
 
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
-    testData :: [([Double], [Double], (Double, Double), Maybe Bool)]
+    testData :: [([Double], [Double], (Double, Double), Maybe TestResult)]
     testData = [ ( [3,4,2,6,2,5]
                  , [9,7,5,10,6,8]
                  , (2, 34)
-                 , Just True
+                 , Just Significant
                  )
                , ( [540,480,600,590,605]
                  , [760,890,1105,595,940]
                  , (2, 23)
-                 , Just True
+                 , Just Significant
                  )
                , ( [19,22,16,29,24]
                  , [20,11,17,12]
                  , (17, 3)
-                 , Just False
+                 , Just NotSignificant
                  )
                , ( [126,148,85,61, 179,93, 45,189,85,93]
                  , [194,128,69,135,171,149,89,248,79,137]
                  , (35,65)
-                 , Just False
+                 , Just NotSignificant
                  )
                , ( [1..30]
                  , [1..30]
                  , (450,450)
-                 , Just False
+                 , Just NotSignificant
                  )
                , ( [1 .. 30]
                  , [11.5 .. 40 ]
                  , (190.0,710.0)
-                 , Just True
+                 , Just Significant
                  )
                ]
 

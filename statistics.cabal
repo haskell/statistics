@@ -67,7 +67,12 @@ description:
   * One- and two-tailed tests in @S.Tests.NonParametric@ are selected
     with sum types instead of @Bool@.
   .
+  * Test results returned as enumeration instead of @Bool@.
+  .
   * Performance improvements for Mann-Whitney U and Wilcoxon tests.
+  .
+  * Module @S.Tests.NonParamtric@ is split into @S.Tests.MannWhitneyU@
+    and @S.Tests.WilcoxonT@
   .
   * @sortBy@ is added to @S.Function@.
   .
@@ -136,12 +141,16 @@ library
     Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Powers
     Statistics.Test.NonParametric
+    Statistics.Test.Types
+    Statistics.Test.MannWhitneyU
+    Statistics.Test.WilcoxonT
     Statistics.Transform
     Statistics.Types
   other-modules:
     Statistics.Distribution.Poisson.Internal
     Statistics.Function.Comparison
     Statistics.Internal
+    Statistics.Test.Internal
   build-depends:
     base < 5,
     deepseq >= 1.1.0.2,
@@ -179,7 +188,10 @@ test-suite tests
     test-framework-quickcheck2,
     test-framework-hunit,
     statistics,
-    vector
+    primitive,
+    vector,
+    vector-algorithms,
+    erf
 
 source-repository head
   type:     git

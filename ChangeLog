@@ -43,7 +43,12 @@ Changes in 0.10.0.0
   * One- and two-tailed tests in S.Tests.NonParametric are selected
     with sum types instead of Bool.
 
+  * Test results returned as enumeration instead of @Bool@.
+
   * Performance improvements for Mann-Whitney U and Wilcoxon tests.
+
+  * Module @S.Tests.NonParamtric@ is split into @S.Tests.MannWhitneyU@
+    and @S.Tests.WilcoxonT@
 
   * sortBy is added to S.Function.
 
