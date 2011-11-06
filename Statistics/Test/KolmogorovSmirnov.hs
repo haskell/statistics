@@ -64,3 +64,45 @@ kolmogorovSmirnov2D sample1 sample2
         i2' | d2 <= d1  = skip d2 i2 xs2
             | otherwise = i2
         d'  = max d (abs $ fromIntegral i1' / en1 - fromIntegral i2' / en2)
+
+
+----------------------------------------------------------------
+
+-- Maxtrix operations.
+--
+-- There isn't the matrix package for haskell yet so nessesary minimum
+-- is implemented here.
+
+-- Square matrix stored in row-major order
+data Matrix = Matrix {
+    matrixSize :: {-# UNPACK #-} !Int
+  , matrixData :: !(U.Vector Double)
+  }
+
+-- Show instance useful mostly for debugging
+instance Show Matrix where
+  show (Matrix n vs) = unlines $ map show $ split $ U.toList vs
+    where
+      split [] = []
+      split xs = row : split rest where (row, rest) = splitAt n xs
+
+-- Unsafe matrix-matrix multiplication. Matrices must be of the same
+-- size. This is not checked.
+matrixMultiply :: Matrix -> Matrix -> Matrix
+matrixMultiply (Matrix n xs) (Matrix _ ys) = Matrix n $ U.generate (n*n) go
+  where
+    go i = U.sum $ U.zipWith (*) row col
+      where
+        nCol = i `rem` n
+        row  = U.slice (i - nCol) n xs
+        col  = U.backpermute ys $ U.enumFromStepN nCol n n
+
+-- Raise matrix to power N. power must be positive it's not checked
+matrixPower :: Matrix -> Int -> Matrix
+matrixPower mat 1 = mat
+matrixPower mat n
+  | odd n     = matrixMultiply pow mat
+  | otherwise = pow
+  where
+    mat2 = matrixPower mat (n `quot` 2)
+    pow  = matrixMultiply mat2 mat2
