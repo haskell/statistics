@@ -232,6 +232,7 @@ mannWhitneyUtest ontTail p smp1 smp2 =
 
 -- $references
 --
--- "The Mann Whitney Wilcoxon Distribution Using Linked Lists\",
--- Cheung and Klotz, Statistica Sinica 7 (1997),
+-- * Cheung, Y.K, Klotz, J.H. (1997) The Mann Whitney Wilcoxon
+--   distribution using linked lists. /Statistica Sinica/
+--   7:805&#8211;813.
 -- <http://www3.stat.sinica.edu.tw/statistica/oldpdf/A7n316.pdf>.
