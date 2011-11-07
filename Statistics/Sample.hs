@@ -60,14 +60,14 @@ import qualified Data.Vector.Generic as G
 -- Operator ^ will be overriden
 import Prelude hiding ((^))
 
--- | Range. The difference between the largest and smallest elements
--- of a sample.
+-- | /O(n)/ Range. The difference between the largest and smallest
+-- elements of a sample.
 range :: (G.Vector v Double) => v Double -> Double
 range s = hi - lo
     where (lo , hi) = minMax s
 {-# INLINE range #-}
 
--- | Arithmetic mean.  This uses Welford's algorithm to provide
+-- | /O(n)/ Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
 mean :: (G.Vector v Double) => v Double -> Double
 mean = fini . G.foldl' go (T 0 0)
@@ -78,8 +78,8 @@ mean = fini . G.foldl' go (T 0 0)
               n' = n + 1
 {-# INLINE mean #-}
 
--- | Arithmetic mean for weighted sample. It uses algorithm analogous
---   to one in 'mean'
+-- | /O(n)/ Arithmetic mean for weighted sample. It uses a single-pass
+-- algorithm analogous to the one used by 'mean'.
 meanWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
 meanWeighted = fini . G.foldl' go (V 0 0)
     where
@@ -90,8 +90,8 @@ meanWeighted = fini . G.foldl' go (V 0 0)
                 w' = w + xw
 {-# INLINE meanWeighted #-}
 
--- | Harmonic mean.  This algorithm performs a single pass over the
--- sample.
+-- | /O(n)/ Harmonic mean.  This algorithm performs a single pass over
+-- the sample.
 harmonicMean :: (G.Vector v Double) => v Double -> Double
 harmonicMean = fini . G.foldl' go (T 0 0)
   where
@@ -99,7 +99,7 @@ harmonicMean = fini . G.foldl' go (T 0 0)
     go (T x y) n = T (x + (1/n)) (y+1)
 {-# INLINE harmonicMean #-}
 
--- | Geometric mean of a sample containing no negative values.
+-- | /O(n)/ Geometric mean of a sample containing no negative values.
 geometricMean :: (G.Vector v Double) => v Double -> Double
 geometricMean = fini . G.foldl' go (T 1 0)
   where
