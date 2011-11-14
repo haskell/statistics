@@ -17,9 +17,14 @@
 
 module Statistics.Transform
     (
+    -- * Type synonyms
       CD
+    -- * Discrete cosine transform
     , dct
+    , dct_
     , idct
+    , idct_
+    -- * Fast Fourier transform
     , fft
     , ifft
     ) where
@@ -35,9 +40,13 @@ import qualified Data.Vector.Unboxed as U
 
 type CD = Complex Double
 
--- | Discrete cosine transform.
-dct :: U.Vector CD -> U.Vector Double
-dct xs = G.map realPart $ G.zipWith (*) weights (fft interleaved)
+-- | Discrete cosine transform (DCT-II).
+dct :: U.Vector Double -> U.Vector Double
+dct = dct_ . G.map (:+0)
+
+-- | Discrete cosine transform, with complex coefficients (DCT-II).
+dct_ :: U.Vector CD -> U.Vector Double
+dct_ xs = G.map realPart $ G.zipWith (*) weights (fft interleaved)
   where
     interleaved = G.backpermute xs $ G.enumFromThenTo 0 2 (len-2) G.++
                                      G.enumFromThenTo (len-1) (len-3) 1
@@ -46,9 +55,14 @@ dct xs = G.map realPart $ G.zipWith (*) weights (fft interleaved)
       where n = fi len
     len = G.length xs
 
--- | Inverse discrete cosine transform.
-idct :: U.Vector CD -> U.Vector Double
-idct xs = G.generate len interleave
+-- | Inverse discrete cosine transform (DCT-III).
+idct :: U.Vector Double -> U.Vector Double
+idct = idct_ . G.map (:+0)
+
+-- | Inverse discrete cosine transform, with complex coefficients
+-- (DCT-III).
+idct_ :: U.Vector CD -> U.Vector Double
+idct_ xs = G.generate len interleave
   where
     interleave z | even z    = vals `G.unsafeIndex` halve z
                  | otherwise = vals `G.unsafeIndex` (len - halve z - 1)
