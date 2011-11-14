@@ -25,7 +25,7 @@ import Statistics.Math (logBeta, incompleteBeta, invIncompleteBeta)
 -- | Student-T distribution
 data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        , fDistributionNDF2 :: {-# UNPACK #-} !Double
-                       , pdfFactor         :: {-# UNPACK #-} !Double
+                       , _pdfFactor        :: {-# UNPACK #-} !Double
                        }
                    deriving (Eq,Show,Read,Typeable)
 
