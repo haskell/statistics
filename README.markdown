@@ -33,15 +33,15 @@ yield unacceptable performance.
 # Get involved!
 
 Please report bugs via the
-[bitbucket issue tracker](http://bitbucket.org/bos/statistics/issues).
+[github issue tracker](https://github.com/bos/statistics/issues).
 
-Master [Mercurial repository](http://bitbucket.org/bos/statistics):
-
-* `hg clone http://bitbucket.org/bos/statistics`
-
-There's also a [git mirror](http://github.com/bos/statistics):
+Master [git mirror](https://github.com/bos/statistics):
 
 * `git clone git://github.com/bos/statistics.git`
+
+There's also a [Mercurial mirror](https://bitbucket.org/bos/statistics):
+
+* `hg clone https://bitbucket.org/bos/statistics`
 
 (You can create and contribute changes using either Mercurial or git.)
 
