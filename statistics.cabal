@@ -181,7 +181,7 @@ test-suite tests
     Tests.Helpers
     Tests.Math
     Tests.Math.Tables
-    Tests.NonParametricTest
+    Tests.NonparametricTest
     Tests.Transform
 
   ghc-options:
