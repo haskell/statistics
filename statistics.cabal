@@ -111,6 +111,7 @@ extra-source-files:
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
+  tests/Tests/Math/gen.py
 
 library
   exposed-modules:
@@ -175,6 +176,13 @@ test-suite tests
   type:           exitcode-stdio-1.0
   hs-source-dirs: tests
   main-is:        tests.hs
+  other-modules:
+    Tests.Distribution
+    Tests.Helpers
+    Tests.Math
+    Tests.Math.Tables
+    Tests.NonParametricTest
+    Tests.Transform
 
   ghc-options:
     -Wall -threaded -rtsopts
