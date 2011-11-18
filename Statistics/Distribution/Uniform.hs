@@ -16,6 +16,7 @@ module Statistics.Distribution.Uniform (
 
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
+import qualified System.Random.MWC       as MWC
 
 
 -- | Uniform distribution
@@ -60,3 +61,6 @@ instance D.MaybeMean UniformDistribution where
 
 instance D.MaybeVariance UniformDistribution where
     maybeStdDev   = Just . D.stdDev
+
+instance D.ContGen UniformDistribution where
+    genContVar (UniformDistribution a b) gen = MWC.uniformR (a,b) gen
