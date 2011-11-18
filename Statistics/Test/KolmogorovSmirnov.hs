@@ -1,11 +1,28 @@
-module Statistics.Test.KolmogorovSmirnov where
+{-# LANGUAGE ScopedTypeVariables #-}
+module Statistics.Test.KolmogorovSmirnov (
+    kolmogorovSmirnovCdfD
+  , kolmogorovSmirnovD
+  , kolmogorovSmirnov2D
+  , kolmogorovSmirnovProbability
+    -- * References
+    -- $references
+  ) where
 
-import qualified Data.Vector.Unboxed as U
+import Control.Monad
+import Control.Monad.ST  (ST)
+
+import qualified Data.Vector.Unboxed         as U
+import qualified Data.Vector.Unboxed.Mutable as M
 
 import Statistics.Distribution        (Distribution(..))
 import Statistics.Types               (Sample)
 import Statistics.Function            (sort)
 
+import Text.Printf
+
+
+
+----------------------------------------------------------------
 
 -- | Calculate /D/ for given CDF and sample
 kolmogorovSmirnovCdfD :: (Double -> Double) -- ^ CDF function
@@ -21,7 +38,7 @@ kolmogorovSmirnovCdfD cdf sample
     n  = U.length xs
     --
     ps    = U.map cdf xs
-    steps = U.map ((/ fromIntegral n) . fromIntegral) 
+    steps = U.map ((/ fromIntegral n) . fromIntegral)
           $ U.generate (n+1) id
 
 
@@ -66,6 +83,62 @@ kolmogorovSmirnov2D sample1 sample2
         d'  = max d (abs $ fromIntegral i1' / en1 - fromIntegral i2' / en2)
 
 
+
+-- | Calculate robability of getting D value less than /d/. Provides
+--   at least 7-digit precision.
+kolmogorovSmirnovProbability :: Int    -- ^ Size of the sample
+                             -> Double -- ^ D value
+                             -> Double
+kolmogorovSmirnovProbability n d
+  -- Avoid potencially lengthy calculations for large N and D > 0.999
+  | s > 7.24 || (s > 3.76 && n > 99) = 1 - 2 * exp( -(2.000071 + 0.331 / sqrt n' + 1.409 / n') * s)
+  -- Exact computation
+  | otherwise = fini $ matrixPower matrix n
+  where
+    s  = n' * d * d
+    n' = fromIntegral n
+
+    size = 2*k - 1
+    k    = floor (n' * d) + 1
+    h    = fromIntegral k - n' * d
+    -- Calculate initial matrix
+    matrix =
+      let m = U.create $ do
+            mat <- M.new (size*size)
+            -- Fill matrix with 0 and 1s
+            for 0 size $ \row ->
+              for 0 size $ \col -> do
+                let val | row + 1 >= col = 1
+                        | otherwise      = 0 :: Double
+                M.write mat (row * size + col) val
+            -- Correct left column/bottom row
+            for 0 size $ \i -> do
+              let delta = h ^^ (i + 1)
+              modify mat (i    * size)         (subtract delta)
+              modify mat (size * size - 1 - i) (subtract delta)
+            -- Correct corner element if needed
+            when (2*h > 1) $ do
+              modify mat ((size - 1) * size) (+ ((2*h - 1) ^ size))
+            -- Divide diagonals by factorial
+            let divide g num
+                  | num == size = return ()
+                  | otherwise   = do for num size $ \i ->
+                                       modify mat (i * (size + 1) - n) (/ g)
+                                     divide (g * fromIntegral (n+2)) (n+1)
+            divide 2 1
+            return mat
+      in Matrix size m 0
+    -- Last calculation
+    fini m@(Matrix _ _ e) = id
+           -- $ traceShow ((matrixCenter m), (matrixExp m))
+           $ loop 1 (matrixCenter m) e
+      where
+        loop i ss eQ
+          | i  > n       = ss * 10 ^^ eQ
+          | ss' < 1e-140 = loop (i+1) (ss' * 1e140) (eQ - 140)
+          | otherwise    = loop (i+1)  ss'           eQ
+          where ss' = ss * fromIntegral i / fromIntegral n
+
 ----------------------------------------------------------------
 
 -- Maxtrix operations.
@@ -74,22 +147,32 @@ kolmogorovSmirnov2D sample1 sample2
 -- is implemented here.
 
 -- Square matrix stored in row-major order
-data Matrix = Matrix {
-    matrixSize :: {-# UNPACK #-} !Int
-  , matrixData :: !(U.Vector Double)
-  }
+data Matrix = Matrix
+              {-# UNPACK #-} !Int -- Size of matrix
+              !(U.Vector Double)  -- Matrix data
+              {-# UNPACK #-} !Int -- In order to avoid overflows
+                                  -- during matrix multiplication large
+                                  -- exponent is stored seprately
 
 -- Show instance useful mostly for debugging
 instance Show Matrix where
-  show (Matrix n vs) = unlines $ map show $ split $ U.toList vs
+  show (Matrix n vs _) = unlines $ map (unwords . map (printf "%.4f")) $ split $ U.toList vs
     where
       split [] = []
       split xs = row : split rest where (row, rest) = splitAt n xs
 
+
+-- Avoid overflow in the matrix
+avoidOverflow :: Matrix -> Matrix
+avoidOverflow m@(Matrix n xs e)
+  | matrixCenter m > 1e140 = Matrix n (U.map (* 1e-140) xs) (e + 140)
+  | otherwise              = m
+
 -- Unsafe matrix-matrix multiplication. Matrices must be of the same
 -- size. This is not checked.
 matrixMultiply :: Matrix -> Matrix -> Matrix
-matrixMultiply (Matrix n xs) (Matrix _ ys) = Matrix n $ U.generate (n*n) go
+matrixMultiply (Matrix n xs e1) (Matrix _ ys e2) =
+  Matrix n (U.generate (n*n) go) (e1 + e2)
   where
     go i = U.sum $ U.zipWith (*) row col
       where
@@ -100,9 +183,34 @@ matrixMultiply (Matrix n xs) (Matrix _ ys) = Matrix n $ U.generate (n*n) go
 -- Raise matrix to power N. power must be positive it's not checked
 matrixPower :: Matrix -> Int -> Matrix
 matrixPower mat 1 = mat
-matrixPower mat n
-  | odd n     = matrixMultiply pow mat
-  | otherwise = pow
+matrixPower mat n = avoidOverflow res
   where
     mat2 = matrixPower mat (n `quot` 2)
     pow  = matrixMultiply mat2 mat2
+    res | odd n     = matrixMultiply pow mat
+        | otherwise = pow
+
+-- Element in the center of matrix (Not corrected for exponent)
+matrixCenter :: Matrix -> Double
+matrixCenter (Matrix n xs _) = (U.!) xs (k*n + k) where k = n `quot` 2
+
+-- Simple for loop
+for :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
+for n0 n f = loop n0
+  where
+    loop i | i == n    = return ()
+           | otherwise = f i >> loop (i+1)
+
+-- Modify element in the vector
+modify :: U.Unbox a => M.MVector s a -> Int -> (a -> a) -> ST s ()
+modify arr i f = do x <- M.read arr i
+                    M.write arr i (f x)
+{-# INLINE modify #-}
+
+----------------------------------------------------------------
+
+-- $references
+--
+-- * G. Marsaglia, W. W. Tsang, J. Wang (2003) Evaluating Kolmogorov's
+--   distribution, Journal of Statistical Software, American
+--   Statistical Association, vol. 8(i18).
