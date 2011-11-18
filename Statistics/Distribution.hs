@@ -21,13 +21,19 @@ module Statistics.Distribution
     , Mean(..)
     , MaybeVariance(..)
     , Variance(..)
+      -- ** Random number generation
+    , ContGen(..)
+    , DiscreteGen(..)
       -- * Helper functions
     , findRoot
     , sumProbabilities
     ) where
 
-import Control.Applicative ((<$>), Applicative(..))
+import Control.Applicative     ((<$>), Applicative(..))
+import Control.Monad.Primitive (PrimMonad,PrimState)
+
 import qualified Data.Vector.Unboxed as U
+import System.Random.MWC
 
 
 
@@ -104,6 +110,18 @@ class (Mean d, MaybeVariance d) => Variance d where
     variance d = x * x where x = stdDev d
     stdDev   :: d -> Double
     stdDev = sqrt . variance
+
+
+-- | Generate discrete random variates which have given
+--   distribution.
+class Distribution d => ContGen d where
+  genContVar :: PrimMonad m => d -> Gen (PrimState m) -> m Double
+
+-- | Generate discrete random variates which have given
+--   distribution. 'ContGen' is superclass because it's always possible
+--   to generate real-valued variates from integer values
+class (DiscreteDistr d, ContGen d) => DiscreteGen d where
+  genDiscreteVar :: PrimMonad m => d -> Gen (PrimState m) -> m Int
 
 
 
