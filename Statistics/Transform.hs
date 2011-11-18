@@ -55,7 +55,10 @@ dct_ xs = G.map realPart $ G.zipWith (*) weights (fft interleaved)
       where n = fi len
     len = G.length xs
 
--- | Inverse discrete cosine transform (DCT-III).
+-- | Inverse discrete cosine transform (DCT-III). It's inverse of
+-- 'dct' only up to scale parameter:
+--
+-- > (idct . dct) x = (* lenngth x)
 idct :: U.Vector Double -> U.Vector Double
 idct = idct_ . G.map (:+0)
 
