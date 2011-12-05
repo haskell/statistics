@@ -1,8 +1,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Statistics.Test.KolmogorovSmirnov (
+    -- * Evaluate statistics
     kolmogorovSmirnovCdfD
   , kolmogorovSmirnovD
   , kolmogorovSmirnov2D
+    -- * Probablities
   , kolmogorovSmirnovProbability
     -- * References
     -- $references
@@ -23,15 +25,19 @@ import Text.Printf
 
 
 ----------------------------------------------------------------
+-- Kolmogorov's statistic
+----------------------------------------------------------------
 
--- | Calculate /D/ for given CDF and sample
+-- | Calculate Kolmogorov's statistic /D/ for given cumulative
+--   distribution function (CDF) and data sample. If sample is empty
+--   returns 0.
 kolmogorovSmirnovCdfD :: (Double -> Double) -- ^ CDF function
                       -> Sample             -- ^ Sample
                       -> Double
 kolmogorovSmirnovCdfD cdf sample
   | U.null xs = 0
   | otherwise = U.maximum
-              $ U.zipWith3 (\p a b -> max (abs (p-a)) (abs (p-b)))
+              $ U.zipWith3 (\p a b -> abs (p-a) `max` abs (p-b))
                   ps steps (U.tail steps)
   where
     xs = sort sample
@@ -42,7 +48,9 @@ kolmogorovSmirnovCdfD cdf sample
           $ U.generate (n+1) id
 
 
--- | Calculate /D/ for given distribution and sample
+-- | Calculate Kolmogorov's statistic /D/ for given cumulative
+--   distribution function (CDF) and data sample. If sample is empty
+--   returns 0.
 kolmogorovSmirnovD :: (Distribution d)
                    => d         -- ^ Distribution
                    -> Sample    -- ^ Sample
@@ -50,7 +58,8 @@ kolmogorovSmirnovD :: (Distribution d)
 kolmogorovSmirnovD d = kolmogorovSmirnovCdfD (cumulative d)
 {-# INLINE kolmogorovSmirnovD #-}
 
--- | Calculate /D/ statistics for two samples
+-- | Calculate Kolmogorov's statistic /D/ for two data samples. If
+--   either of samples is empty returns 0.
 kolmogorovSmirnov2D :: Sample   -- ^ First sample
                     -> Sample   -- ^ Second sample
                     -> Double
@@ -84,8 +93,12 @@ kolmogorovSmirnov2D sample1 sample2
 
 
 
--- | Calculate robability of getting D value less than /d/. Provides
---   at least 7-digit precision.
+-- | Calculate cumulative probability function for Kolmogorov's
+--   distribution with /n/ parameters or probability of getting value at
+--   smaller than /d/ with n-elements sample.
+--
+--   It uses algorithm by Marsgalia et. al. and provide at least
+--   7-digit accuracy.
 kolmogorovSmirnovProbability :: Int    -- ^ Size of the sample
                              -> Double -- ^ D value
                              -> Double
@@ -129,15 +142,14 @@ kolmogorovSmirnovProbability n d
             return mat
       in Matrix size m 0
     -- Last calculation
-    fini m@(Matrix _ _ e) = id
-           -- $ traceShow ((matrixCenter m), (matrixExp m))
-           $ loop 1 (matrixCenter m) e
+    fini m@(Matrix _ _ e) = loop 1 (matrixCenter m) e
       where
         loop i ss eQ
           | i  > n       = ss * 10 ^^ eQ
           | ss' < 1e-140 = loop (i+1) (ss' * 1e140) (eQ - 140)
           | otherwise    = loop (i+1)  ss'           eQ
           where ss' = ss * fromIntegral i / fromIntegral n
+
 
 ----------------------------------------------------------------
 
