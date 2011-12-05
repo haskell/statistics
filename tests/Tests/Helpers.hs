@@ -11,6 +11,7 @@ module Tests.Helpers (
   , monotonicallyIncreasesIEEE
     -- * HUnit helpers
   , testAssertion
+  , testEquality
   ) where
 
 import Data.Complex
@@ -94,3 +95,6 @@ monotonicallyIncreasesIEEE f x1 x2 =
 
 testAssertion :: String -> Bool -> Test
 testAssertion str cont = testCase str $ HU.assertBool str cont
+
+testEquality :: (Show a, Eq a) => String -> a -> a -> Test
+testEquality msg a b = testCase msg $ HU.assertEqual msg a b
