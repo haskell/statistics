@@ -10,6 +10,9 @@
 -- The Wilcoxon matched-pairs signed-rank test is non-parametric test
 -- which could be used to whether two related samples have different
 -- means.
+--
+-- WARNING: current implementation contain critical bugs
+-- <https://github.com/bos/statistics/issues/18>
 module Statistics.Test.WilcoxonT (
     -- * Wilcoxon signed-rank matched-pair test
     wilcoxonMatchedPairTest
@@ -99,7 +102,7 @@ summedCoefficients = map fromIntegral . scanl1 (+) . coefficients
 -- order to 'wilcoxonMatchedPairSignedRank', or simply swap the values in the resulting
 -- pair before passing them to this function.
 wilcoxonMatchedPairSignificant ::
-     TestType            -- ^ Perform one-tailed test (see description above).
+     TestType            -- ^ Perform one- or two-tailed test (see description below).
   -> Int                 -- ^ The sample size from which the (T+,T-) values were derived.
   -> Double              -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double)    -- ^ The (T+, T-) values from 'wilcoxonMatchedPairSignedRank'.

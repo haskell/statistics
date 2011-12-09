@@ -94,7 +94,7 @@ kolmogorovSmirnov2D sample1 sample2
 
 
 -- | Calculate cumulative probability function for Kolmogorov's
---   distribution with /n/ parameters or probability of getting value at
+--   distribution with /n/ parameters or probability of getting value
 --   smaller than /d/ with n-elements sample.
 --
 --   It uses algorithm by Marsgalia et. al. and provide at least
