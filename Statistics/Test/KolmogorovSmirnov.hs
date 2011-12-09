@@ -3,6 +3,7 @@ module Statistics.Test.KolmogorovSmirnov (
     -- * Kolmogorov-Smirnov test
     kolmogorovSmirnovTest
   , kolmogorovSmirnovTestCdf
+  , kolmogorovSmirnovTest2
     -- * Evaluate statistics
   , kolmogorovSmirnovCdfD
   , kolmogorovSmirnovD
@@ -55,6 +56,28 @@ kolmogorovSmirnovTestCdf cdf p sample =
       prob = kolmogorovSmirnovProbability (U.length sample) d
   in significant (prob < p)
 
+-- | Two sample Kolmogorov-Smirnov test. It tests whether two data
+--   samples could be described by the same distribution without
+--   making any assumptions about it.
+kolmogorovSmirnovTest2 :: Double -- ^ p-value
+                       -> Sample -- ^ Sample 1
+                       -> Sample -- ^ Sample 2
+                       -> TestResult
+kolmogorovSmirnovTest2 p xs1 xs2 =
+  let d    = kolmogorovSmirnov2D xs1 xs2
+      -- Effective number of data points
+      n1   = fromIntegral (U.length xs1)
+      n2   = fromIntegral (U.length xs2)
+      en   = sqrt $ n1 * n2 / (n1 + n2)
+      --
+      prob z
+        | z <  0    = error "kolmogorovSmirnov2D: internal error"
+        | z == 0    = 1
+        | z <  1.18 = let y = exp( -1.23370055013616983 / (z*z) )
+                      in  2.25675833419102515 * sqrt( -log(y) ) * (y + y**9 + y**25 + y**49)
+        | otherwise = let x = exp(-2 * z * z)
+                      in  1 - 2*(x - x**4 + x**9)
+  in significant $ prob (en + 0.12 + 0.11/en) < p
 
 ----------------------------------------------------------------
 -- Kolmogorov's statistic
