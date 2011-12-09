@@ -1,11 +1,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Statistics.Test.KolmogorovSmirnov (
+    -- * Kolmogorov-Smirnov test
+    kolmogorovSmirnovTest
+  , kolmogorovSmirnovTestCdf
     -- * Evaluate statistics
-    kolmogorovSmirnovCdfD
+  , kolmogorovSmirnovCdfD
   , kolmogorovSmirnovD
   , kolmogorovSmirnov2D
     -- * Probablities
   , kolmogorovSmirnovProbability
+    -- * Data types
+  , TestType(..)
+  , TestResult(..)
     -- * References
     -- $references
   ) where
@@ -19,9 +25,35 @@ import qualified Data.Vector.Unboxed.Mutable as M
 import Statistics.Distribution        (Distribution(..))
 import Statistics.Types               (Sample)
 import Statistics.Function            (sort)
+import Statistics.Test.Types
 
 import Text.Printf
 
+
+----------------------------------------------------------------
+-- Test
+----------------------------------------------------------------
+
+-- | Check that sample could be described by
+-- distribution. 'Significant' means distribution is not compatible
+-- with data.
+kolmogorovSmirnovTest :: Distribution d
+                      => d      -- ^ Distribution
+                      -> Double -- ^ p-value
+                      -> Sample -- ^ Data sample
+                      -> TestResult
+kolmogorovSmirnovTest d = kolmogorovSmirnovTestCdf (cumulative d)
+{-# INLINE kolmogorovSmirnovTest #-}
+
+-- | Variant of 'kolmogorovSmirnovTest'
+kolmogorovSmirnovTestCdf :: (Double -> Double) -- ^ CDF of distribution
+                         -> Double             -- ^ p-value
+                         -> Sample             -- ^ Data sample
+                         -> TestResult
+kolmogorovSmirnovTestCdf cdf p sample =
+  let d    = kolmogorovSmirnovCdfD cdf sample
+      prob = kolmogorovSmirnovProbability (U.length sample) d
+  in significant (prob < p)
 
 
 ----------------------------------------------------------------
