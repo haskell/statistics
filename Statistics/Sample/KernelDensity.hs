@@ -25,13 +25,12 @@ module Statistics.Sample.KernelDensity
     -- $references
     ) where
 
-import Data.Complex (Complex(..))
 import Prelude hiding (const,min,max)
-import Statistics.Constants (m_sqrt_2_pi)
-import Statistics.Function (minMax, nextHighestPowerOfTwo)
-import Statistics.Math.RootFinding (fromRoot, ridders)
-import Statistics.Sample.Histogram (histogram_)
-import Statistics.Transform (dct_, idct_)
+import Statistics.Constants         (m_sqrt_2_pi)
+import Statistics.Function          (minMax, nextHighestPowerOfTwo)
+import Statistics.Math.RootFinding  (fromRoot, ridders)
+import Statistics.Sample.Histogram  (histogram_)
+import Statistics.Transform         (dct, idct)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 
@@ -78,13 +77,13 @@ kde_ n0 min max xs
   where
     mesh = G.generate ni $ \z -> min + (d * fromIntegral z)
         where d = r / (n-1)
-    density = G.map (/r) . idct_ $ G.zipWith f a (G.enumFromTo 0 (n-1))
-      where f b z = b * exp (sqr z * sqr pi * t_star * (-0.5)) :+ 0
+    density = G.map (/r) . idct $ G.zipWith f a (G.enumFromTo 0 (n-1))
+      where f b z = b * exp (sqr z * sqr pi * t_star * (-0.5))
     !n = fromIntegral ni
     !ni = nextHighestPowerOfTwo n0
     !r = max - min
-    a = dct_ . G.map (/ G.sum h) $ h
-      where h = G.map (/ (len :+ 0)) $ histogram_ ni min max xs
+    a = dct . G.map (/ G.sum h) $ h
+      where h = G.map (/ len) $ histogram_ ni min max xs
     !len = fromIntegral (G.length xs)
     !t_star = fromRoot (0.28 * len ** (-0.4)) . ridders 1e-14 (0,0.1) $ \x ->
               x - (len * (2 * sqrt pi) * go 6 (f 7 x)) ** (-0.4)
