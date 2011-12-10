@@ -171,7 +171,7 @@ kolmogorovSmirnovDTest =
         | (reference,xs,ys) <- tableKS2D
         ]
   , testAssertion "K-S probability" $
-    and [ eq 1e-14 (critValue n d) p
+    and [ eq 1e-14 (kolmogorovSmirnovProbability n d) p
         | (d,n,p) <- testData
         ]
   ]
