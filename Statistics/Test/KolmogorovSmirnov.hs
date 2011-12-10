@@ -40,7 +40,7 @@ import Statistics.Function            (sort)
 import Statistics.Test.Types
 
 import Text.Printf
-
+import Debug.Trace
 
 ----------------------------------------------------------------
 -- Test
@@ -65,7 +65,7 @@ kolmogorovSmirnovTestCdf :: (Double -> Double) -- ^ CDF of distribution
 kolmogorovSmirnovTestCdf cdf p sample =
   let d    = kolmogorovSmirnovCdfD cdf sample
       prob = kolmogorovSmirnovProbability (U.length sample) d
-  in significant (prob < p)
+  in  significant $ 1 - prob < p
 
 -- | Two sample Kolmogorov-Smirnov test. It tests whether two data
 --   samples could be described by the same distribution without
@@ -88,7 +88,7 @@ kolmogorovSmirnovTest2 p xs1 xs2 =
                       in  2.25675833419102515 * sqrt( -log(y) ) * (y + y**9 + y**25 + y**49)
         | otherwise = let x = exp(-2 * z * z)
                       in  1 - 2*(x - x**4 + x**9)
-  in significant $ prob (en + 0.12 + 0.11/en) < p
+  in significant $ 1 - prob (en + 0.12 + 0.11/en) < p
 
 ----------------------------------------------------------------
 -- Kolmogorov's statistic
