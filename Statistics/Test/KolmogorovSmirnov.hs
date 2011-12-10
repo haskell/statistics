@@ -202,8 +202,8 @@ kolmogorovSmirnovProbability n d
             let divide g num
                   | num == size = return ()
                   | otherwise   = do for num size $ \i ->
-                                       modify mat (i * (size + 1) - n) (/ g)
-                                     divide (g * fromIntegral (n+2)) (n+1)
+                                       modify mat (i * (size + 1) - num) (/ g)
+                                     divide (g * fromIntegral (num+2)) (num+1)
             divide 2 1
             return mat
       in Matrix size m 0
