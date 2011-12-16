@@ -47,8 +47,11 @@ import Debug.Trace
 ----------------------------------------------------------------
 
 -- | Check that sample could be described by
--- distribution. 'Significant' means distribution is not compatible
--- with data.
+--   distribution. 'Significant' means distribution is not compatible
+--   with data for given p-value.
+--
+--   This test uses Marsaglia-Tsang-Wang exact alogorithm for
+--   calculation of p-value.
 kolmogorovSmirnovTest :: Distribution d
                       => d      -- ^ Distribution
                       -> Double -- ^ p-value
@@ -57,7 +60,8 @@ kolmogorovSmirnovTest :: Distribution d
 kolmogorovSmirnovTest d = kolmogorovSmirnovTestCdf (cumulative d)
 {-# INLINE kolmogorovSmirnovTest #-}
 
--- | Variant of 'kolmogorovSmirnovTest'
+-- | Variant of 'kolmogorovSmirnovTest' which uses CFD in form of
+--   function.
 kolmogorovSmirnovTestCdf :: (Double -> Double) -- ^ CDF of distribution
                          -> Double             -- ^ p-value
                          -> Sample             -- ^ Data sample
@@ -70,6 +74,8 @@ kolmogorovSmirnovTestCdf cdf p sample =
 -- | Two sample Kolmogorov-Smirnov test. It tests whether two data
 --   samples could be described by the same distribution without
 --   making any assumptions about it.
+--
+--   This test uses approxmate formula for computing p-value.
 kolmogorovSmirnovTest2 :: Double -- ^ p-value
                        -> Sample -- ^ Sample 1
                        -> Sample -- ^ Sample 2
@@ -89,6 +95,9 @@ kolmogorovSmirnovTest2 p xs1 xs2 =
         | otherwise = let x = exp(-2 * z * z)
                       in  1 - 2*(x - x**4 + x**9)
   in significant $ 1 - prob (en + 0.12 + 0.11/en) < p
+-- FIXME: Find source for approximation for D
+
+
 
 ----------------------------------------------------------------
 -- Kolmogorov's statistic
