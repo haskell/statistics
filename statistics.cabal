@@ -142,6 +142,7 @@ library
     Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Powers
     Statistics.Test.NonParametric
+    Statistics.Test.ChiSquared
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.MannWhitneyU
     Statistics.Test.WilcoxonT
