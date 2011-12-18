@@ -84,7 +84,7 @@ kolmogorovSmirnovTest2 :: Double -- ^ p-value
                        -> Sample -- ^ Sample 2
                        -> TestResult
 kolmogorovSmirnovTest2 p xs1 xs2
-  | p > 0 && p < 1 = significant $ 1 - prob (en + 0.12 + 0.11/en) < p
+  | p > 0 && p < 1 = significant $ 1 - prob( d*(en + 0.12 + 0.11/en) ) < p
   | otherwise      = error "Statistics.Test.KolmogorovSmirnov.kolmogorovSmirnovTest2:bad p-value"
   where
     d    = kolmogorovSmirnov2D xs1 xs2
