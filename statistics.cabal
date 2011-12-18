@@ -146,6 +146,7 @@ library
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.MannWhitneyU
     Statistics.Test.WilcoxonT
+    Statistics.Test.Types
     Statistics.Transform
     Statistics.Types
   other-modules:
