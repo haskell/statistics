@@ -17,23 +17,27 @@ sampleW = U.zip sample (U.reverse sample)
 
 -- Simple benchmark for functions from Statistics.Sample
 main :: IO ()
-main = defaultMain [ bench "range"            $ nf range            sample
-                   -- Mean
-                   , bench "mean"             $ nf mean             sample
-                   , bench "meanWeighted"     $ nf meanWeighted     sampleW
-                   , bench "harmonicMean"     $ nf harmonicMean     sample
-                   , bench "geometricMean"    $ nf geometricMean    sample
-                   -- Variance
-                   , bench "variance"         $ nf variance         sample
-                   , bench "varianceUnbiased" $ nf varianceUnbiased sample
-                   , bench "varianceWeighted" $ nf varianceWeighted sampleW
-                   -- Other
-                   , bench "stdDev"           $ nf stdDev           sample
-                   , bench "skewness"         $ nf skewness         sample
-                   , bench "kurtosis"         $ nf kurtosis         sample
-                   -- Central moments
-                   , bench "C.M. 2"           $ nf (centralMoment 2)  sample
-                   , bench "C.M. 3"           $ nf (centralMoment 3)  sample
-                   , bench "C.M. 4"           $ nf (centralMoment 4)  sample
-                   , bench "C.M. 5"           $ nf (centralMoment 5)  sample
-                   ]
+main =
+  defaultMain
+  [ bgroup "sample"
+    [ bench "range"            $ nf (\x -> range x)            sample
+      -- Mean
+    , bench "mean"             $ nf (\x -> mean x)             sample
+    , bench "meanWeighted"     $ nf (\x -> meanWeighted x)     sampleW
+    , bench "harmonicMean"     $ nf (\x -> harmonicMean x)     sample
+    , bench "geometricMean"    $ nf (\x -> geometricMean x)    sample
+      -- Variance
+    , bench "variance"         $ nf (\x -> variance x)         sample
+    , bench "varianceUnbiased" $ nf (\x -> varianceUnbiased x) sample
+    , bench "varianceWeighted" $ nf (\x -> varianceWeighted x) sampleW
+      -- Other
+    , bench "stdDev"           $ nf (\x -> stdDev x)           sample
+    , bench "skewness"         $ nf (\x -> skewness x)         sample
+    , bench "kurtosis"         $ nf (\x -> kurtosis x)         sample
+      -- Central moments
+    , bench "C.M. 2"           $ nf (\x -> centralMoment 2 x)  sample
+    , bench "C.M. 3"           $ nf (\x -> centralMoment 3 x)  sample
+    , bench "C.M. 4"           $ nf (\x -> centralMoment 4 x)  sample
+    , bench "C.M. 5"           $ nf (\x -> centralMoment 5 x)  sample
+    ]
+  ]
