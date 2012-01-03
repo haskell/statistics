@@ -27,8 +27,8 @@ module Statistics.Distribution.Hypergeometric
     , hdK
     ) where
 
-import Data.Typeable     (Typeable)
-import Statistics.Math   (choose)
+import Data.Typeable         (Typeable)
+import Numeric.SpecFunctions (choose)
 import qualified Statistics.Distribution as D
 
 data HypergeometricDistribution = HD {

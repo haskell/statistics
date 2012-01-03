@@ -25,7 +25,8 @@ module Statistics.Distribution.Binomial
 
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
-import Statistics.Math (choose)
+import Numeric.SpecFunctions (choose)
+
 
 -- | The binomial distribution.
 data BinomialDistribution = BD {

@@ -26,11 +26,11 @@ module Statistics.Sample.KernelDensity
     ) where
 
 import Prelude hiding (const,min,max)
-import Statistics.Constants         (m_sqrt_2_pi)
-import Statistics.Function          (minMax, nextHighestPowerOfTwo)
-import Statistics.Math.RootFinding  (fromRoot, ridders)
-import Statistics.Sample.Histogram  (histogram_)
-import Statistics.Transform         (dct, idct)
+import Numeric.MathFunctions.Constants (m_sqrt_2_pi)
+import Statistics.Function             (minMax, nextHighestPowerOfTwo)
+import Statistics.Math.RootFinding     (fromRoot, ridders)
+import Statistics.Sample.Histogram     (histogram_)
+import Statistics.Transform            (dct, idct)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 

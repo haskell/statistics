@@ -18,8 +18,8 @@ module Statistics.Distribution.ChiSquared (
         , chiSquaredNDF
         ) where
 
-import Data.Typeable        (Typeable)
-import Statistics.Math      (incompleteGamma,invIncompleteGamma,logGamma)
+import Data.Typeable         (Typeable)
+import Numeric.SpecFunctions (incompleteGamma,invIncompleteGamma,logGamma)
 
 import qualified Statistics.Distribution as D
 

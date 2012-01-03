@@ -25,10 +25,10 @@ module Statistics.Distribution.Gamma
     ) where
 
 import Data.Typeable (Typeable)
-import Statistics.Constants (m_pos_inf, m_NaN)
+import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN)
+import Numeric.SpecFunctions           (incompleteGamma, invIncompleteGamma)
 import Statistics.Distribution.Poisson.Internal as Poisson
-import Statistics.Math (incompleteGamma, invIncompleteGamma)
-import qualified Statistics.Distribution as D
+import qualified Statistics.Distribution        as D
 
 -- | The gamma distribution.
 data GammaDistribution = GD {

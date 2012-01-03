@@ -46,9 +46,9 @@ module Statistics.Sample.KernelDensity.Simple
     -- $references
     ) where
 
-import Statistics.Constants (m_1_sqrt_2, m_2_sqrt_pi)
+import Numeric.MathFunctions.Constants (m_1_sqrt_2, m_2_sqrt_pi)
 import Statistics.Function (minMax)
-import Statistics.Sample (stdDev)
+import Statistics.Sample   (stdDev)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
