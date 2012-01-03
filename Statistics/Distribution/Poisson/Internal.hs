@@ -14,8 +14,9 @@ module Statistics.Distribution.Poisson.Internal
       probability
     ) where
 
-import Statistics.Constants (m_sqrt_2_pi, m_tiny)
-import Statistics.Math (bd0, logGamma, stirlingError)
+import Numeric.MathFunctions.Constants (m_sqrt_2_pi, m_tiny)
+import Numeric.SpecFunctions           (logGamma, stirlingError)
+import Numeric.SpecFunctions.Extra     (bd0)
 
 -- | An unchecked, non-integer-valued version of Loader's saddle point
 -- algorithm.

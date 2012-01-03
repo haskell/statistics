@@ -31,9 +31,10 @@ import Data.List           (findIndex)
 import Data.Ord            (comparing)
 import qualified Data.Vector.Unboxed as U
 
+import Numeric.SpecFunctions          (choose)
+
 import Statistics.Distribution        (quantile)
 import Statistics.Distribution.Normal (standard)
-import Statistics.Math                (choose)
 import Statistics.Types               (Sample)
 import Statistics.Function            (sortBy)
 import Statistics.Test.Types

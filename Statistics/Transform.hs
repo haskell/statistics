@@ -29,14 +29,15 @@ module Statistics.Transform
     , ifft
     ) where
 
-import Control.Monad (when)
-import Control.Monad.ST (ST)
-import Data.Bits (shiftL, shiftR)
-import Data.Complex (Complex(..), conjugate, realPart)
-import Statistics.Math (log2)
-import qualified Data.Vector.Generic as G
+import Control.Monad         (when)
+import Control.Monad.ST      (ST)
+import Data.Bits             (shiftL, shiftR)
+import Data.Complex          (Complex(..), conjugate, realPart)
+import Numeric.SpecFunctions (log2)
+import qualified Data.Vector.Generic         as G
 import qualified Data.Vector.Generic.Mutable as M
-import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed         as U
+
 
 type CD = Complex Double
 

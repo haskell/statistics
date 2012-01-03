@@ -16,8 +16,8 @@ module Statistics.Distribution.StudentT (
   ) where
 
 import qualified Statistics.Distribution as D
-import Data.Typeable   (Typeable)
-import Statistics.Math (logBeta, incompleteBeta, invIncompleteBeta)
+import Data.Typeable         (Typeable)
+import Numeric.SpecFunctions (logBeta, incompleteBeta, invIncompleteBeta)
 
 
 

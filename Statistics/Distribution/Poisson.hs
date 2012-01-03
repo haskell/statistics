@@ -27,7 +27,7 @@ module Statistics.Distribution.Poisson
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
-import Statistics.Math (incompleteGamma)
+import Numeric.SpecFunctions (incompleteGamma)
 
 
 
