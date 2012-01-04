@@ -22,6 +22,20 @@ description:
   * Common statistical tests for significant differences between
     samples.
   .
+  Changes in 0.10.1.0
+  .
+  * Kolmogorov-Smirnov nonparametric test added.
+  .
+  * Pearson chi squared test added.
+  .
+  * Modules 'Statistics.Math' and 'Statistics.Constants' are moved to
+    the @math-functions@ package. They are still availalble but marked
+    as deprecated.
+  .
+  Changed in 0.10.0.1
+  .
+  * @dct@ and @idct@ now have type @Vector Double -> Vector Double@
+  .
   Changes in 0.10.0.0:
   .
   * The type classes @Mean@ and @Variance@ are split in two. This is
