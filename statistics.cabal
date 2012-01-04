@@ -26,7 +26,10 @@ description:
   .
   * Kolmogorov-Smirnov nonparametric test added.
   .
-  * Pearson chi squared test added.
+  * Pearson's chi squared test added.
+  .
+  * Type class for generating random variates for given distribution
+    is added.
   .
   * Modules 'Statistics.Math' and 'Statistics.Constants' are moved to
     the @math-functions@ package. They are still availalble but marked
