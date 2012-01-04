@@ -4,6 +4,9 @@ Changes in 0.10.1.0
 
   * Pearson chi squared test added.
 
+  * Type class for generating random variates for given distribution
+    is added.
+
   * Modules 'Statistics.Math' and 'Statistics.Constants' are moved to
     the @math-functions@ package. They are still availalble but marked
     as deprecated.
