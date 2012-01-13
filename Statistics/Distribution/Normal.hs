@@ -20,14 +20,12 @@ module Statistics.Distribution.Normal
     , standard
     ) where
 
-import Data.Number.Erf                 (erfc)
-import Data.Typeable                   (Typeable)
+import Data.Number.Erf (erfc)
+import Data.Typeable (Typeable)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
 import qualified Statistics.Distribution as D
-import qualified Statistics.Sample       as S
+import qualified Statistics.Sample as S
 import qualified System.Random.MWC.Distributions as MWC
-
-
 
 -- | The normal distribution.
 data NormalDistribution = ND {
