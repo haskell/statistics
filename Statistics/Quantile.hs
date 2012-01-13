@@ -39,7 +39,7 @@ module Statistics.Quantile
 
 import Control.Exception (assert)
 import Data.Vector.Generic ((!))
-import Statistics.Constants (m_epsilon)
+import Numeric.MathFunctions.Constants (m_epsilon)
 import Statistics.Function (partialSort)
 import qualified Data.Vector.Generic as G
 
