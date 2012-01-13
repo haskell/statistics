@@ -8,7 +8,7 @@ Changes in 0.10.1.0
     is added.
 
   * Modules 'Statistics.Math' and 'Statistics.Constants' are moved to
-    the @math-functions@ package. They are still availalble but marked
+    the @math-functions@ package. They are still available but marked
     as deprecated.
 
 
