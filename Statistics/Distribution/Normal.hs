@@ -25,7 +25,7 @@ import Data.Typeable                   (Typeable)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample       as S
-import qualified System.Random.MWC       as MWC
+import qualified System.Random.MWC.Distributions as MWC
 
 
 
@@ -59,7 +59,7 @@ instance D.Variance NormalDistribution where
     stdDev = stdDev
 
 instance D.ContGen NormalDistribution where
-    genContVar d gen = do x <- MWC.normal gen
+    genContVar d gen = do x <- MWC.standard gen
                           return $! stdDev d * (x - mean d)
 
 -- | Standard normal distribution with mean equal to 0 and variance equal to 1
