@@ -86,7 +86,9 @@ coefficients r = let coeffs = coefficients (r-1)
 
 -- This list will be processed lazily from the head.
 summedCoefficients :: Int -> [Double]
-summedCoefficients = map fromIntegral . scanl1 (+) . coefficients
+summedCoefficients n
+  | n < 1     = error "Statistics.Test.WilcoxonT.summedCoefficients: nonpositive sample size"
+  | otherwise = map fromIntegral $ scanl1 (+) $ coefficients n
 
 -- | Tests whether a given result from a Wilcoxon signed-rank matched-pairs test
 -- is significant at the given level.
