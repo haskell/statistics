@@ -74,7 +74,7 @@ wilcoxonMatchedPairSignedRank a b = (          U.sum ranks1
 -- all the coefficients by r down the list.
 --
 -- This list will be processed lazily from the head.
-coefficients :: Int -> [Int]
+coefficients :: Int -> [Integer]
 coefficients 1 = [1, 1] -- 1 + x
 coefficients r = let coeffs = coefficients (r-1)
                      (firstR, rest) = splitAt r coeffs
