@@ -88,6 +88,7 @@ coefficients r = let coeffs = coefficients (r-1)
 summedCoefficients :: Int -> [Double]
 summedCoefficients n
   | n < 1     = error "Statistics.Test.WilcoxonT.summedCoefficients: nonpositive sample size"
+  | n > 1023  = error "Statistics.Test.WilcoxonT.summedCoefficients: sample is too large (see bug #18)"
   | otherwise = map fromIntegral $ scanl1 (+) $ coefficients n
 
 -- | Tests whether a given result from a Wilcoxon signed-rank matched-pairs test
