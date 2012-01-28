@@ -30,6 +30,7 @@ import qualified Data.Vector.Generic.Mutable as GM
 -- The result consists of a pair of vectors:
 --
 -- * The lower bound of each interval.
+--
 -- * The number of samples within the interval.
 --
 -- Interval (bin) sizes are uniform, and the upper and lower bounds
@@ -50,6 +51,7 @@ histogram numBins xs = (G.generate numBins step, histogram_ numBins lo hi xs)
 -- The result consists of a pair of vectors:
 --
 -- * The lower bound of each interval.
+--
 -- * The number of samples within the interval and all previous intervals.
 --
 -- Interval (bin) sizes are uniform, and the upper and lower bounds
