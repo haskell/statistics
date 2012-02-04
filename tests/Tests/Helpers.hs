@@ -23,7 +23,7 @@ import qualified Test.HUnit      as HU
 import Test.Framework
 import Test.Framework.Providers.HUnit
 
-import Statistics.Constants
+import Numeric.MathFunctions.Constants
 
 
 
