@@ -22,6 +22,12 @@ description:
   * Common statistical tests for significant differences between
     samples.
   .
+  Changes in NEXT-VERSION
+  .
+  * Binomial distribution allows zero trials.
+  .
+  * Integer overflow in caculation of Wilcoxon-T test is fixed.
+  .
   Changes in 0.10.1.0
   .
   * Kolmogorov-Smirnov nonparametric test added.
