@@ -19,6 +19,7 @@ module Statistics.Sample.Histogram
     , range
     ) where
 
+import Numeric.MathFunctions.Constants (m_epsilon)
 import Statistics.Function (minMax)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Generic.Mutable as GM
@@ -72,7 +73,7 @@ histogram_ numBins lo hi xs0 = G.create (GM.replicate numBins 0 >>= bin xs0)
          GM.write bins b . (+1) =<< GM.read bins b
          go (i+1)
        len = G.length xs
-       d = (hi - lo) / fromIntegral numBins
+       d = ((hi - lo) * (1 + realToFrac m_epsilon)) / fromIntegral numBins
 {-# INLINE histogram_ #-}
 
 -- | /O(n)/ Compute decent defaults for the lower and upper bounds of
