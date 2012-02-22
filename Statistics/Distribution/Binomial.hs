@@ -85,13 +85,13 @@ variance (BD n p) = fromIntegral n * p * (1 - p)
 {-# INLINE variance #-}
 
 -- | Construct binomial distribution. Number of trials must be
---   positive and probability must be in [0,1] range
+--   non-negative and probability must be in [0,1] range
 binomial :: Int                 -- ^ Number of trials.
          -> Double              -- ^ Probability.
          -> BinomialDistribution
 binomial n p 
-  | n <= 0         = 
-    error $ msg ++ "number of trials must be positive. Got " ++ show n
+  | n < 0          =
+    error $ msg ++ "number of trials must be non-negative. Got " ++ show n
   | p < 0 || p > 1 = 
     error $ msg++"probability must be in [0,1] range. Got " ++ show p
   | otherwise      = BD n p
