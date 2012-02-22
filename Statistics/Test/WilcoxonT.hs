@@ -74,7 +74,7 @@ wilcoxonMatchedPairSignedRank a b = (          U.sum ranks1
 -- all the coefficients by r down the list.
 --
 -- This list will be processed lazily from the head.
-coefficients :: Int -> [Int]
+coefficients :: Int -> [Integer]
 coefficients 1 = [1, 1] -- 1 + x
 coefficients r = let coeffs = coefficients (r-1)
                      (firstR, rest) = splitAt r coeffs
@@ -86,7 +86,10 @@ coefficients r = let coeffs = coefficients (r-1)
 
 -- This list will be processed lazily from the head.
 summedCoefficients :: Int -> [Double]
-summedCoefficients = map fromIntegral . scanl1 (+) . coefficients
+summedCoefficients n
+  | n < 1     = error "Statistics.Test.WilcoxonT.summedCoefficients: nonpositive sample size"
+  | n > 1023  = error "Statistics.Test.WilcoxonT.summedCoefficients: sample is too large (see bug #18)"
+  | otherwise = map fromIntegral $ scanl1 (+) $ coefficients n
 
 -- | Tests whether a given result from a Wilcoxon signed-rank matched-pairs test
 -- is significant at the given level.
