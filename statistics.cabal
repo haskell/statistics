@@ -141,6 +141,7 @@ library
     Statistics.Autocorrelation
     Statistics.Constants
     Statistics.Distribution
+    Statistics.Distribution.Beta
     Statistics.Distribution.Binomial
     Statistics.Distribution.CauchyLorentz
     Statistics.Distribution.ChiSquared
