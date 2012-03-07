@@ -22,6 +22,7 @@ import Test.QuickCheck.Monadic as QC
 import Text.Printf
 
 import Statistics.Distribution
+import Statistics.Distribution.Beta
 import Statistics.Distribution.Binomial
 import Statistics.Distribution.ChiSquared
 import Statistics.Distribution.CauchyLorentz
@@ -43,7 +44,8 @@ import Tests.Helpers
 -- | Tests for all distributions
 distributionTests :: Test
 distributionTests = testGroup "Tests for all distributions"
-  [ contDistrTests (T :: T CauchyDistribution      )
+  [ contDistrTests (T :: T BetaDistribution        )
+  , contDistrTests (T :: T CauchyDistribution      )
   , contDistrTests (T :: T ChiSquared              )
   , contDistrTests (T :: T ExponentialDistribution )
   , contDistrTests (T :: T GammaDistribution       )
@@ -182,6 +184,8 @@ instance QC.Arbitrary ExponentialDistribution where
   arbitrary = exponential <$> QC.choose (0,100)
 instance QC.Arbitrary GammaDistribution where
   arbitrary = gammaDistr <$> QC.choose (0.1,10) <*> QC.choose (0.1,10)
+instance QC.Arbitrary BetaDistribution where
+  arbitrary = betaDistr <$> QC.choose (1e-3,10) <*> QC.choose (1e-3,10)
 instance QC.Arbitrary GeometricDistribution where
   arbitrary = geometric <$> QC.choose (0,1)
 instance QC.Arbitrary HypergeometricDistribution where
