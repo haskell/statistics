@@ -48,7 +48,8 @@ betaDistr a b
 
 instance D.Distribution BetaDistribution where
   cumulative (BD a b) x
-    | x <= 0 = 0
+    | x <= 0    = 0
+    | x >= 1    = 1
     | otherwise = incompleteBeta a b x
   {-# INLINE cumulative #-}
 
@@ -69,19 +70,6 @@ instance D.MaybeVariance BetaDistribution where
   maybeVariance = Just . D.variance
   {-# INLINE maybeVariance #-}
 
--- invert a monotone function
-invertMono :: (Double -> Double) -> Double -> Double -> Double -> Double
-invertMono f l0 h0 b = go l0 h0 where
-  go l h
-    | h - l < epsilon = m
-    | otherwise = case compare (f m) b of
-      LT -> go m h
-      EQ -> m
-      GT -> go l m
-    where m = l + (h-l)/2
-          epsilon = 1e-12
-{-# INLINE invertMono #-}
-
 instance D.ContDistr BetaDistribution where
   density (BD a b) x
    | a <= 0 || b <= 0 = m_NaN
@@ -90,10 +78,10 @@ instance D.ContDistr BetaDistribution where
    | otherwise = exp $ (a-1)*log x + (b-1)*log (1-x) - logBeta a b
   {-# INLINE density #-}
 
-  quantile d p
+  quantile (BD a b) p
     | p == 0         = 0
     | p == 1         = 1
-    | p > 0 && p < 1 = invertMono (D.cumulative d) 0 1 p
+    | p > 0 && p < 1 = invIncompleteBeta a b p
     | otherwise      =
         error $ "Statistics.Distribution.Gamma.quantile: p must be in [0,1] range. Got: "++show p
   {-# INLINE quantile #-}
