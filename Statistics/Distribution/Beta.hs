@@ -19,7 +19,7 @@ module Statistics.Distribution.Beta
   , bdBeta
   ) where
 
-import Numeric.SpecFunctions
+import Numeric.SpecFunctions           (incompleteBeta, invIncompleteBeta, logBeta)
 import Numeric.MathFunctions.Constants (m_NaN)
 import qualified Statistics.Distribution as D
 import Data.Typeable
