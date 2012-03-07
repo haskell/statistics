@@ -11,8 +11,12 @@
 --
 ----------------------------------------------------------------------------
 module Statistics.Distribution.Beta
-  ( BetaDistribution(..)
+  ( BetaDistribution
+    -- * Constructor
   , betaDistr
+    -- * Accessors
+  , bdAlpha
+  , bdBeta
   ) where
 
 import Numeric.SpecFunctions
@@ -20,17 +24,26 @@ import Numeric.MathFunctions.Constants (m_NaN)
 import qualified Statistics.Distribution as D
 import Data.Typeable
 
+-- | The beta distribution
 data BetaDistribution = BD
  { bdAlpha :: {-# UNPACK #-} !Double
+   -- ^ Alpha shape parameter
  , bdBeta  :: {-# UNPACK #-} !Double
+   -- ^ Beta shape parameter
  } deriving (Eq,Read,Show,Typeable)
 
-betaDistr :: Double -> Double -> BetaDistribution
+-- | Create beta distribution. Both shape parameters must be positive.
+betaDistr :: Double             -- ^ Shape parameter alpha
+          -> Double             -- ^ Shape parameter beta
+          -> BetaDistribution
 betaDistr a b
-  | a < 0 = error $ msg ++ "alpha must be positive. Got " ++ show a
-  | b < 0 = error $ msg ++ "beta must be positive. Got " ++ show b
-  | otherwise = BD a b
-  where msg = "Statistics.Distribution.Beta.betaDistr: "
+  | a > 0 && b > 0 = BD a b
+  | otherwise      =
+      error $  "Statistics.Distribution.Beta.betaDistr: "
+            ++ "shape parameters must be positive. Got a = "
+            ++ show a
+            ++ " b = "
+            ++ show b
 {-# INLINE betaDistr #-}
 
 instance D.Distribution BetaDistribution where
@@ -51,6 +64,10 @@ instance D.Variance BetaDistribution where
   variance (BD a b) = a*b / (apb*apb*(apb+1))
     where apb = a + b
   {-# INLINE variance #-}
+
+instance D.MaybeVariance BetaDistribution where
+  maybeVariance = Just . D.variance
+  {-# INLINE maybeVariance #-}
 
 -- invert a monotone function
 invertMono :: (Double -> Double) -> Double -> Double -> Double -> Double
@@ -74,13 +91,11 @@ instance D.ContDistr BetaDistribution where
   {-# INLINE density #-}
 
   quantile d p
-    | p < 0 = error $ "probability must be positive. Got " ++ show p
-    | p > 1 = error $ "probability must be less than 1. Got " ++ show p
-    | otherwise = invertMono (D.cumulative d) 0 1 p
+    | p == 0         = 0
+    | p == 1         = 1
+    | p > 0 && p < 1 = invertMono (D.cumulative d) 0 1 p
+    | otherwise      =
+        error $ "Statistics.Distribution.Gamma.quantile: p must be in [0,1] range. Got: "++show p
   {-# INLINE quantile #-}
-
-instance D.MaybeVariance BetaDistribution where
-  maybeVariance = Just . D.variance
-  {-# INLINE maybeVariance #-}
 
 -- TODO: D.ContGen for rbeta
