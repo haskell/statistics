@@ -24,6 +24,7 @@ module Statistics.Distribution
       -- ** Random number generation
     , ContGen(..)
     , DiscreteGen(..)
+    , genContinous
       -- * Helper functions
     , findRoot
     , sumProbabilities
@@ -123,7 +124,13 @@ class Distribution d => ContGen d where
 class (DiscreteDistr d, ContGen d) => DiscreteGen d where
   genDiscreteVar :: PrimMonad m => d -> Gen (PrimState m) -> m Int
 
-
+-- | Generate variates from continous distribution using inverse
+--   transform rule.
+genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
+genContinous d gen = do
+  x <- uniform gen
+  return $! quantile d x
+{-# INLINE genContinous #-}
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 

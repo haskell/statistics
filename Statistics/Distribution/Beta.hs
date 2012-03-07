@@ -86,4 +86,5 @@ instance D.ContDistr BetaDistribution where
         error $ "Statistics.Distribution.Gamma.quantile: p must be in [0,1] range. Got: "++show p
   {-# INLINE quantile #-}
 
--- TODO: D.ContGen for rbeta
+instance D.ContGen BetaDistribution where
+  genContVar = D.genContinous
