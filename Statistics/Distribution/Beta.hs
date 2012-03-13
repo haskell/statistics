@@ -14,6 +14,7 @@ module Statistics.Distribution.Beta
   ( BetaDistribution
     -- * Constructor
   , betaDistr
+  , improperBetaDistr
     -- * Accessors
   , bdAlpha
   , bdBeta
@@ -37,7 +38,7 @@ betaDistr :: Double             -- ^ Shape parameter alpha
           -> Double             -- ^ Shape parameter beta
           -> BetaDistribution
 betaDistr a b
-  | a > 0 && b > 0 = BD a b
+  | a > 0 && b > 0 = improperBetaDistr a b
   | otherwise      =
       error $  "Statistics.Distribution.Beta.betaDistr: "
             ++ "shape parameters must be positive. Got a = "
@@ -45,6 +46,13 @@ betaDistr a b
             ++ " b = "
             ++ show b
 {-# INLINE betaDistr #-}
+
+-- | Create beta distribution. This construtor doesn't check parameters.
+improperBetaDistr :: Double             -- ^ Shape parameter alpha
+                  -> Double             -- ^ Shape parameter beta
+                  -> BetaDistribution
+improperBetaDistr = BD
+{-# INLINE improperBetaDistr #-}
 
 instance D.Distribution BetaDistribution where
   cumulative (BD a b) x
