@@ -19,6 +19,7 @@ module Statistics.Distribution.Gamma
       GammaDistribution
     -- * Constructors
     , gammaDistr
+    , improperGammaDistr
     -- * Accessors
     , gdShape
     , gdScale
@@ -44,9 +45,17 @@ gammaDistr :: Double            -- ^ Shape parameter. /k/
 gammaDistr k theta
   | k     <= 0 = error $ msg ++ "shape must be positive. Got " ++ show k
   | theta <= 0 = error $ msg ++ "scale must be positive. Got " ++ show theta
-  | otherwise  = GD k theta
+  | otherwise  = improperGammaDistr k theta
     where msg = "Statistics.Distribution.Gamma.gammaDistr: "
 {-# INLINE gammaDistr #-}
+
+-- | Create gamma distribution. This constructor do not check whether
+--   parameters are valid
+improperGammaDistr :: Double            -- ^ Shape parameter. /k/
+                   -> Double            -- ^ Scale parameter, &#977;.
+                   -> GammaDistribution
+improperGammaDistr = GD
+{-# INLINE improperGammaDistr #-}
 
 instance D.Distribution GammaDistribution where
     cumulative = cumulative
