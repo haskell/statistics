@@ -24,8 +24,9 @@ module Statistics.Distribution.Exponential
     ) where
 
 import Data.Typeable (Typeable)
-import qualified Statistics.Distribution as D
-import qualified Statistics.Sample as S
+import qualified Statistics.Distribution         as D
+import qualified Statistics.Sample               as S
+import qualified System.Random.MWC.Distributions as MWC
 import Statistics.Types (Sample)
 
 newtype ExponentialDistribution = ED {
@@ -54,6 +55,9 @@ instance D.MaybeMean ExponentialDistribution where
 instance D.MaybeVariance ExponentialDistribution where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
+
+instance D.ContGen ExponentialDistribution where
+  genContVar = MWC.exponential . edLambda
 
 cumulative :: ExponentialDistribution -> Double -> Double
 cumulative (ED l) x | x <= 0    = 0
