@@ -21,7 +21,8 @@ module Statistics.Distribution.ChiSquared (
 import Data.Typeable         (Typeable)
 import Numeric.SpecFunctions (incompleteGamma,invIncompleteGamma,logGamma)
 
-import qualified Statistics.Distribution as D
+import qualified Statistics.Distribution         as D
+import qualified System.Random.MWC.Distributions as MWC
 
 
 -- | Chi-squared distribution
@@ -63,6 +64,10 @@ instance D.MaybeMean ChiSquared where
 instance D.MaybeVariance ChiSquared where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
+
+instance D.ContGen ChiSquared where
+    genContVar (ChiSquared n) = MWC.chiSquare n
+
 
 cumulative :: ChiSquared -> Double -> Double
 cumulative chi x

@@ -28,8 +28,9 @@ module Statistics.Distribution.Gamma
 import Data.Typeable (Typeable)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN)
 import Numeric.SpecFunctions           (incompleteGamma, invIncompleteGamma)
-import Statistics.Distribution.Poisson.Internal as Poisson
-import qualified Statistics.Distribution        as D
+import Statistics.Distribution.Poisson.Internal  as Poisson
+import qualified Statistics.Distribution         as D
+import qualified System.Random.MWC.Distributions as MWC
 
 -- | The gamma distribution.
 data GammaDistribution = GD {
@@ -79,6 +80,8 @@ instance D.MaybeVariance GammaDistribution where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
 
+instance D.ContGen GammaDistribution where
+    genContVar (GD a l) = MWC.gamma a l
 
 
 density :: GammaDistribution -> Double -> Double

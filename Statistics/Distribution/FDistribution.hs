@@ -75,6 +75,9 @@ instance D.MaybeVariance FDistribution where
     | m > 4     = Just $ 2 * sqr m * (m + n - 2) / (n * sqr (m - 2) * (m - 4))
     | otherwise = Nothing
 
+instance D.ContGen FDistribution where
+  genContVar = D.genContinous
+
 sqr :: Double -> Double
 sqr x = x * x
 {-# INLINE sqr #-}
