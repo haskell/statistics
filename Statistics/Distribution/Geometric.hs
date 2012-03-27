@@ -59,10 +59,9 @@ instance D.MaybeVariance GeometricDistribution where
 geometric :: Double                -- ^ Success rate
           -> GeometricDistribution
 geometric x
-  | x < 0 || x > 1 = 
+  | x >= 0 && x <= 1 = GD x
+  | otherwise        =
     error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
-  | otherwise      =
-    GD x
 {-# INLINE geometric #-}
 
 probability :: GeometricDistribution -> Int -> Double
