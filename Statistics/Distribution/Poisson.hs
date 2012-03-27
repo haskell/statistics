@@ -63,9 +63,9 @@ instance D.MaybeVariance PoissonDistribution where
 -- | Create Poisson distribution.
 poisson :: Double -> PoissonDistribution
 poisson l
-  | l <= 0    = error $ "Statistics.Distribution.Poisson.poisson:\
-                        \ lambda must be positive. Got " ++ show l
-  | otherwise = PD l
+  | l >=  0   = PD l
+  | otherwise = error $ "Statistics.Distribution.Poisson.poisson:\
+                        \ lambda must be non-negative. Got " ++ show l
 {-# INLINE poisson #-}
 
 -- $references
