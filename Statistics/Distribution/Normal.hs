@@ -57,8 +57,8 @@ instance D.Variance NormalDistribution where
     stdDev = stdDev
 
 instance D.ContGen NormalDistribution where
-    genContVar d gen = do x <- MWC.standard gen
-                          return $! stdDev d * (x - mean d)
+    genContVar d = MWC.normal (mean d) (stdDev d)
+    {-# INLINE genContVar #-}
 
 -- | Standard normal distribution with mean equal to 0 and variance equal to 1
 standard :: NormalDistribution
