@@ -1,3 +1,17 @@
+ Changes in 0.10.2.0
+
+  * ContGen instances for all continous distribtuions are added.
+
+  * Beta distribution is added.
+
+  * Constructor for improper gamma distribtuion is added.
+
+  * Binomial distribution allows zero trials.
+
+  * Poisson distribution now accept zero parameter.
+
+  * Integer overflow in caculation of Wilcoxon-T test is fixed.
+
 Changes in 0.10.1.0
 
   * Kolmogorov-Smirnov nonparametric test added.
