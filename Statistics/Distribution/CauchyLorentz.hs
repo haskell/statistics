@@ -63,3 +63,6 @@ instance D.ContDistr CauchyDistribution where
     | p == 1         =  1 / 0
     | otherwise      =
       error $ "Statistics.Distribution.CauchyLorentz..quantile: p must be in [0,1] range. Got: "++show p
+
+instance D.ContGen CauchyDistribution where
+  genContVar = D.genContinous
