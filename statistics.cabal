@@ -36,6 +36,8 @@ description:
   .
   * Integer overflow in caculation of Wilcoxon-T test is fixed.
   .
+  * Bug in 'ContGen' instance for normal distribution is fixed.
+  .
   Changes in 0.10.1.0
   .
   * Kolmogorov-Smirnov nonparametric test added.
