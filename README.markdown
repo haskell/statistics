@@ -14,21 +14,6 @@ obtain the best runtime efficiency, it is imperative to compile
 libraries and applications that use this library using a high level of
 optimisation.
 
-Suggested GHC options:
-
-    -O -funbox-strict-fields
-
-To illustrate, here are the times (in seconds) to generate and sum 250
-million random Word32 values, on a laptop with a 2.4GHz Core2 Duo
-P8600 processor, running Fedora 11 and GHC 6.10.3:
-
-    no flags   200+
-    -O           1.249
-    -O -fvia-C   0.991
-
-As the numbers above suggest, compiling without optimisation will
-yield unacceptable performance.
-
 
 # Get involved!
 
