@@ -33,9 +33,9 @@ tests = testGroup "fft" [
         , testProperty "ifft . fft = id"  (t_fftInverse $ ifft . fft)
         , testProperty "fft . ifft = id"  (t_fftInverse $ fft . ifft)
         , testProperty "idct . dct = id [up to scale]"
-            (t_fftInverse (\v -> U.map (/ fromIntegral (U.length v)) $ idct $ dct v))
+            (t_fftInverse (\v -> U.map (/ (2 * fromIntegral (U.length v))) $ idct $ dct v))
         , testProperty "dct . idct = id [up to scale]"
-            (t_fftInverse (\v -> U.map (/ fromIntegral (U.length v)) $ idct $ dct v))
+            (t_fftInverse (\v -> U.map (/ (2 * fromIntegral (U.length v))) $ idct $ dct v))
           -- Exact small size DCT
           -- 2
         , testDCT [1,0] $ map (*2) [1, cos (pi/4)   ]
