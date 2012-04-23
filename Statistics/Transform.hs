@@ -51,7 +51,7 @@ dct_ xs = G.map realPart $ G.zipWith (*) weights (fft interleaved)
   where
     interleaved = G.backpermute xs $ G.enumFromThenTo 0 2 (len-2) G.++
                                      G.enumFromThenTo (len-1) (len-3) 1
-    weights = G.cons 1 . G.generate (len-1) $ \x ->
+    weights = G.cons 2 . G.generate (len-1) $ \x ->
               2 * exp ((0:+(-1))*fi (x+1)*pi/(2*n))
       where n = fi len
     len = G.length xs
@@ -71,7 +71,9 @@ idct_ xs = G.generate len interleave
     interleave z | even z    = vals `G.unsafeIndex` halve z
                  | otherwise = vals `G.unsafeIndex` (len - halve z - 1)
     vals = G.map realPart . ifft $ G.zipWith (*) weights xs
-    weights = G.generate len $ \x -> n * exp ((0:+1)*fi x*pi/(2*n))
+    weights 
+      = G.cons n
+      $ G.generate (len - 1) $ \x -> 2 * n * exp ((0:+1) * fi (x+1) * pi/(2*n))
       where n = fi len
     len = G.length xs
 
