@@ -79,12 +79,12 @@ kde_ n0 min max xs
         where d = r / (n-1)
     density = G.map (/r) . idct $ G.zipWith f a (G.enumFromTo 0 (n-1))
       where f b z = b * exp (sqr z * sqr pi * t_star * (-0.5))
-    !n = fromIntegral ni
+    !n  = fromIntegral ni
     !ni = nextHighestPowerOfTwo n0
-    !r = max - min
-    a = dct . G.map (/ G.sum h) $ h
-      where h = G.map (/ len) $ histogram_ ni min max xs
-    !len = fromIntegral (G.length xs)
+    !r  = max - min
+    a   = dct . G.map (/ G.sum h) $ h
+        where h = G.map (/ len) $ histogram_ ni min max xs
+    !len    = fromIntegral (G.length xs)
     !t_star = fromRoot (0.28 * len ** (-0.4)) . ridders 1e-14 (0,0.1) $ \x ->
               x - (len * (2 * sqrt pi) * go 6 (f 7 x)) ** (-0.4)
       where
@@ -94,10 +94,9 @@ kde_ n0 min max xs
                 iv = G.map sqr $ G.enumFromTo 1 (n-1)
         go s !h | s == 1    = h
                 | otherwise = go (s-1) (f s time)
-          where time = (2 * const * k0 / len / h) ** (2 / (3 + 2 * s))
+          where time  = (2 * const * k0 / len / h) ** (2 / (3 + 2 * s))
                 const = (1 + 0.5 ** (s+0.5)) / 3
-                k0 = U.product (G.enumFromThenTo 1 3 (2*s-1)) / m_sqrt_2_pi
-    _bandwidth = sqrt t_star * r
+                k0    = U.product (G.enumFromThenTo 1 3 (2*s-1)) / m_sqrt_2_pi
     sqr x = x * x
 
 -- $references
