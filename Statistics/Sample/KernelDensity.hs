@@ -52,7 +52,8 @@ kde :: Int
 kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
   where
     (lo,hi) = minMax xs
-    range = hi - lo
+    range   | U.length xs <= 1 = 1       -- Unreasonable guess
+            | otherwise        = hi - lo
 
 -- | Gaussian kernel density estimator for one-dimensional data, using
 -- the method of Botev et al.
@@ -72,6 +73,7 @@ kde_ :: Int
      -- ^ Upper bound (@max@) of the mesh range.
      -> U.Vector Double -> (U.Vector Double, U.Vector Double)
 kde_ n0 min max xs
+  | U.null xs = error "Statistics.KernelDensity.kde: empty sample"
   | n0 < 1    = error "Statistics.KernelDensity.kde: invalid number of points"
   | otherwise = (mesh, density)
   where
