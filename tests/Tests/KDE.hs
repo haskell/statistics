@@ -1,0 +1,45 @@
+-- | Tests for Kernel density estimates.
+module Tests.KDE ( 
+  tests 
+  )where
+
+import Data.Vector.Unboxed ((!))
+import qualified Data.Vector.Unboxed as U
+
+import Test.Framework                       (Test, testGroup)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.QuickCheck                      
+import Text.Printf
+
+import Statistics.Sample.KernelDensity
+
+
+
+tests :: Test
+tests = testGroup "KDE"
+  [ testProperty "integral(PDF) == 1" t_densityIsPDF
+  ]
+
+t_densityIsPDF :: [Double] -> Property
+t_densityIsPDF vec 
+  = not (null vec) ==> test
+  where
+    (xs,ys)  = kde 4096 (U.fromList vec)
+    step     = (xs ! 1) - (xs ! 0)
+    integral = integratePDF step ys
+    --
+    test = printTestCase (printf "Integral %f" integral)
+         $ abs (1 - integral) <= 1e-3
+
+          
+
+integratePDF :: Double -> U.Vector Double -> Double
+integratePDF step vec 
+  = step * U.sum (U.zipWith (*) vec weights)
+  where
+    n       = U.length vec
+    weights = U.generate n go
+      where
+        go i | i == 0    = 0.5
+             | i == n-1  = 0.5
+             | otherwise = 1
