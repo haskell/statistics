@@ -9,10 +9,15 @@
 -- Portability : portable
 --
 -- Variate distributed uniformly in the interval.
-module Statistics.Distribution.Uniform (
-    UniformDistribution
-  , uniformDistr
-  ) where
+module Statistics.Distribution.Uniform
+    (
+      UniformDistribution
+    -- * Constructors
+    , uniformDistr
+    -- ** Accessors
+    , uniformA
+    , uniformB
+    ) where
 
 import Data.Typeable (Typeable)
 import qualified Statistics.Distribution as D
@@ -20,8 +25,10 @@ import qualified System.Random.MWC       as MWC
 
 
 -- | Uniform distribution
-data UniformDistribution = UniformDistribution {-# UNPACK #-} !Double {-# UNPACK #-} !Double
-                           deriving (Eq,Show,Read,Typeable)
+data UniformDistribution = UniformDistribution {
+      uniformA :: {-# UNPACK #-} !Double
+    , uniformB :: {-# UNPACK #-} !Double
+    } deriving (Eq, Read, Show, Typeable)
 
 -- | Create uniform distribution.
 uniformDistr :: Double -> Double -> UniformDistribution
