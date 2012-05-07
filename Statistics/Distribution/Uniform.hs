@@ -24,10 +24,10 @@ import qualified Statistics.Distribution as D
 import qualified System.Random.MWC       as MWC
 
 
--- | Uniform distribution
+-- | Uniform distribution from A to B
 data UniformDistribution = UniformDistribution {
-      uniformA :: {-# UNPACK #-} !Double
-    , uniformB :: {-# UNPACK #-} !Double
+      uniformA :: {-# UNPACK #-} !Double -- ^ Low boundary of distribution
+    , uniformB :: {-# UNPACK #-} !Double -- ^ Upper boundary of distribution
     } deriving (Eq, Read, Show, Typeable)
 
 -- | Create uniform distribution.
