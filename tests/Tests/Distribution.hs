@@ -3,6 +3,7 @@
 -- Required for Param
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverlappingInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 module Tests.Distribution (
     distributionTests
   ) where
@@ -133,7 +134,7 @@ pdfSanityCheck _ d x = p >= 0
 
 -- Quantile is inverse of CDF
 quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
-quantileIsInvCDF _ d p =
+quantileIsInvCDF _ d (snd . properFraction -> p) =
   p > 0 && p < 1  ==> ( printTestCase (printf "Quantile     = %g" q )
                       $ printTestCase (printf "Probability  = %g" p )
                       $ printTestCase (printf "Probability' = %g" p')
