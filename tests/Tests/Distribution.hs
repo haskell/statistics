@@ -161,15 +161,18 @@ probSanityCheck _ d x = p >= 0 && p <= 1
 
 -- Check that discrete CDF is correct
 discreteCDFcorrect :: (DiscreteDistr d) => T d -> d -> Int -> Int -> Property
-discreteCDFcorrect _ d a b = 
-  abs (a - b) < 100  ==>  abs (p1 - p2) < 3e-10
+discreteCDFcorrect _ d a b
+  = printTestCase (printf "CDF = %g" p1)
+  $ printTestCase (printf "Sum = %g" p2)
+  $ printTestCase (printf "Δ   = %g" (abs (p1 - p2)))
+  $ abs (p1 - p2) < 3e-10
   -- Avoid too large differeneces. Otherwise there is to much to sum
   --
   -- Absolute difference is used guard againist precision loss when
   -- close values of CDF are subtracted
   where
     n  = min a b
-    m  = max a b
+    m  = n + (abs (a - b) `mod` 100)
     p1 = cumulative d (fromIntegral m + 0.5) - cumulative d (fromIntegral n - 0.5)
     p2 = sum $ map (probability d) [n .. m]
 
