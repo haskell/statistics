@@ -1,5 +1,9 @@
  Changes in 0.10.2.0
 
+  * Bugs in DCT and IDCT are fixed.
+
+  * Accesors for uniform distribution are added.
+
   * ContGen instances for all continous distribtuions are added.
 
   * Beta distribution is added.
