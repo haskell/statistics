@@ -216,10 +216,11 @@ test-suite tests
   other-modules:
     Tests.Distribution
     Tests.Helpers
-    Tests.Math
-    Tests.Math.Tables
+    Tests.Function
     Tests.NonparametricTest
+    Tests.NonparametricTest.Table
     Tests.Transform
+    Tests.KDE
 
   ghc-options:
     -Wall -threaded -rtsopts
@@ -232,6 +233,7 @@ test-suite tests
     test-framework,
     test-framework-quickcheck2,
     test-framework-hunit,
+    math-functions,
     statistics,
     primitive,
     vector,
