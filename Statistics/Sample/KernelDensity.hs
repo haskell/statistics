@@ -79,7 +79,7 @@ kde_ n0 min max xs
   where
     mesh = G.generate ni $ \z -> min + (d * fromIntegral z)
         where d = r / (n-1)
-    density = G.map (/r) . idct $ G.zipWith f a (G.enumFromTo 0 (n-1))
+    density = G.map (/(2 * r)) . idct $ G.zipWith f a (G.enumFromTo 0 (n-1))
       where f b z = b * exp (sqr z * sqr pi * t_star * (-0.5))
     !n  = fromIntegral ni
     !ni = nextHighestPowerOfTwo n0
