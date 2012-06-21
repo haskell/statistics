@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Gamma
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
@@ -59,6 +59,7 @@ improperGammaDistr = GD
 {-# INLINE improperGammaDistr #-}
 
 instance D.Distribution GammaDistribution where
+    type DistrSample GammaDistribution = Double
     cumulative = cumulative
 
 instance D.ContDistr GammaDistribution where

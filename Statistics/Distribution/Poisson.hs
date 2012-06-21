@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Poisson
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
@@ -36,6 +36,7 @@ newtype PoissonDistribution = PD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution PoissonDistribution where
+    type DistrSample PoissonDistribution = Double
     cumulative (PD lambda) x
       | x < 0     = 0
       | otherwise = 1 - incompleteGamma (fromIntegral (floor x + 1 :: Int)) lambda

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Statistics.Distribution.Beta
@@ -55,6 +55,7 @@ improperBetaDistr = BD
 {-# INLINE improperBetaDistr #-}
 
 instance D.Distribution BetaDistribution where
+  type DistrSample BetaDistribution = Double
   cumulative (BD a b) x
     | x <= 0    = 0
     | x >= 1    = 1

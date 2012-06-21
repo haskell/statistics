@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns, ScopedTypeVariables, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -32,6 +32,7 @@ module Statistics.Distribution
 
 import Control.Applicative     ((<$>), Applicative(..))
 import Control.Monad.Primitive (PrimMonad,PrimState)
+import Data.Number.LogFloat
 
 import qualified Data.Vector.Unboxed as U
 import System.Random.MWC
@@ -41,6 +42,9 @@ import System.Random.MWC
 -- | Type class common to all distributions. Only c.d.f. could be
 -- defined for both discrete and continous distributions.
 class Distribution d where
+    -- | Represents the type of a distribution's samples.
+    type DistrSample d
+
     -- | Cumulative distribution function.  The probability that a
     -- random variable /X/ is less or equal than /x/,
     -- i.e. P(/X/&#8804;/x/). 
@@ -68,25 +72,31 @@ class Distribution d => ContDistr d where
     -- | Probability density function. Probability that random
     -- variable /X/ lies in the infinitesimal interval
     -- [/x/,/x+/&#948;/x/) equal to /density(x)/&#8901;&#948;/x/
-    density :: d -> Double -> Double
+    density :: d -> DistrSample d -> Double
 
     -- | Inverse of the cumulative distribution function. The value
     -- /x/ for which P(/X/&#8804;/x/) = /p/. If probability is outside
     -- of [0,1] range function should call 'error'
-    quantile :: d -> Double -> Double
+    quantile :: d -> Double -> DistrSample d
 
+    -- | Calculates the density function in log space.  The default
+    -- implementation just uses the density function, but it is
+    -- included in the type class to allow more efficient
+    -- implementations for distributions that have them.
+    logDensity :: d -> DistrSample d -> LogFloat
+    logDensity d = logFloat . density d
 
 
 -- | Type class for distributions with mean. 'maybeMean' should return
 --   'Nothing' if it's undefined for current value of data
 class Distribution d => MaybeMean d where
-    maybeMean :: d -> Maybe Double
+    maybeMean :: d -> Maybe (DistrSample d)
 
 -- | Type class for distributions with mean. If distribution have
 --   finite mean for all valid values of parameters it should be
 --   instance of this type class.
 class MaybeMean d => Mean d where
-    mean :: d -> Double
+    mean :: d -> DistrSample d
 
 
 
@@ -96,10 +106,10 @@ class MaybeMean d => Mean d where
 --
 --   Minimal complete definition is 'maybeVariance' or 'maybeStdDev'
 class MaybeMean d => MaybeVariance d where
-    maybeVariance :: d -> Maybe Double
-    maybeVariance d = (*) <$> x <*> x where x = maybeStdDev d
-    maybeStdDev   :: d -> Maybe Double
-    maybeStdDev = fmap sqrt . maybeVariance
+    maybeVariance :: d -> Maybe (DistrSample d)
+--    maybeVariance d = (*) <$> x <*> x where x = maybeStdDev d
+    maybeStdDev   :: d -> Maybe (DistrSample d)
+--    maybeStdDev = fmap sqrt . maybeVariance
 
 -- | Type class for distributions with variance. If distibution have
 --   finite variance for all valid parameter values it should be
@@ -107,10 +117,10 @@ class MaybeMean d => MaybeVariance d where
 --
 --   Minimal complete definition is 'variance' or 'stdDev'
 class (Mean d, MaybeVariance d) => Variance d where
-    variance :: d -> Double
-    variance d = x * x where x = stdDev d
-    stdDev   :: d -> Double
-    stdDev = sqrt . variance
+    variance :: d -> DistrSample d
+--    variance d = x * x where x = stdDev d
+    stdDev   :: d -> DistrSample d
+--    stdDev = sqrt . variance
 
 
 -- | Generate discrete random variates which have given
@@ -126,7 +136,7 @@ class (DiscreteDistr d, ContGen d) => DiscreteGen d where
 
 -- | Generate variates from continous distribution using inverse
 --   transform rule.
-genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
+genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m (DistrSample d)
 genContinous d gen = do
   x <- uniform gen
   return $! quantile d x
@@ -140,7 +150,7 @@ data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- bisection with the given guess as a starting point.  The upper and
 -- lower bounds specify the interval in which the probability
 -- distribution reaches the value /p/.
-findRoot :: ContDistr d => 
+findRoot :: (ContDistr d, DistrSample d ~ Double) => 
             d                   -- ^ Distribution
          -> Double              -- ^ Probability /p/
          -> Double              -- ^ Initial guess

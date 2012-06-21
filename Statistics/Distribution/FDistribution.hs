@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.FDistribution
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -41,6 +41,7 @@ fDistribution n m
     error "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
 
 instance D.Distribution FDistribution where
+  type DistrSample FDistribution = Double
   cumulative = cumulative 
 
 instance D.ContDistr FDistribution where

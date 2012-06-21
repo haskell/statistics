@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Exponential
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -34,6 +34,7 @@ newtype ExponentialDistribution = ED {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution ExponentialDistribution where
+    type DistrSample ExponentialDistribution = Double
     cumulative      = cumulative
     complCumulative = complCumulative
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Normal
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -36,6 +36,7 @@ data NormalDistribution = ND {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution NormalDistribution where
+    type DistrSample NormalDistribution = Double
     cumulative      = cumulative
     complCumulative = complCumulative
 

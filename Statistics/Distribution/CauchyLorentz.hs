@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.CauchyLorentz
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -52,6 +52,7 @@ standardCauchy = CD 0 1
 
 
 instance D.Distribution CauchyDistribution where
+  type DistrSample CauchyDistribution = Double
   cumulative (CD m s) x = 0.5 + atan( (x - m) / s ) / pi
 
 instance D.ContDistr CauchyDistribution where
