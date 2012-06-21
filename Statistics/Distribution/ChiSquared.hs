@@ -57,6 +57,7 @@ instance D.Mean ChiSquared where
 
 instance D.Variance ChiSquared where
     variance (ChiSquared ndf) = fromIntegral (2*ndf)
+    stdDev = D.stdDevUni
     {-# INLINE variance #-}
 
 instance D.MaybeMean ChiSquared where

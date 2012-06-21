@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns, ScopedTypeVariables, TypeFamilies #-}
+{-# LANGUAGE BangPatterns, FlexibleContexts, ScopedTypeVariables,
+             TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -28,6 +29,10 @@ module Statistics.Distribution
       -- * Helper functions
     , findRoot
     , sumProbabilities
+    , maybeVarianceUni 
+    , maybeStdDevUni 
+    , varianceUni 
+    , stdDevUni 
     ) where
 
 import Control.Applicative     ((<$>), Applicative(..))
@@ -107,9 +112,7 @@ class MaybeMean d => Mean d where
 --   Minimal complete definition is 'maybeVariance' or 'maybeStdDev'
 class MaybeMean d => MaybeVariance d where
     maybeVariance :: d -> Maybe (DistrSample d)
---    maybeVariance d = (*) <$> x <*> x where x = maybeStdDev d
     maybeStdDev   :: d -> Maybe (DistrSample d)
---    maybeStdDev = fmap sqrt . maybeVariance
 
 -- | Type class for distributions with variance. If distibution have
 --   finite variance for all valid parameter values it should be
@@ -118,10 +121,24 @@ class MaybeMean d => MaybeVariance d where
 --   Minimal complete definition is 'variance' or 'stdDev'
 class (Mean d, MaybeVariance d) => Variance d where
     variance :: d -> DistrSample d
---    variance d = x * x where x = stdDev d
     stdDev   :: d -> DistrSample d
---    stdDev = sqrt . variance
 
+
+maybeVarianceUni :: (Num (DistrSample d), MaybeVariance d)
+                 => d -> Maybe (DistrSample d)
+maybeVarianceUni d = (*) <$> x <*> x where x = maybeStdDev d
+
+maybeStdDevUni :: (Floating (DistrSample d), MaybeVariance d)
+                 => d -> Maybe (DistrSample d)
+maybeStdDevUni = fmap sqrt . maybeVariance
+
+varianceUni :: (Num (DistrSample d), Variance d)
+                 => d -> (DistrSample d)
+varianceUni d = x * x where x = stdDev d
+
+stdDevUni :: (Floating (DistrSample d), Variance d)
+                 => d -> (DistrSample d)
+stdDevUni = sqrt . variance
 
 -- | Generate discrete random variates which have given
 --   distribution.

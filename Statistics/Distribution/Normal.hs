@@ -56,6 +56,7 @@ instance D.MaybeVariance NormalDistribution where
 
 instance D.Variance NormalDistribution where
     stdDev = stdDev
+    variance = D.varianceUni
 
 instance D.ContGen NormalDistribution where
     genContVar d = MWC.normal (mean d) (stdDev d)

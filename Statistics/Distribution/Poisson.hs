@@ -48,6 +48,7 @@ instance D.DiscreteDistr PoissonDistribution where
 
 instance D.Variance PoissonDistribution where
     variance = poissonLambda
+    stdDev = D.stdDevUni
     {-# INLINE variance #-}
 
 instance D.Mean PoissonDistribution where
@@ -59,6 +60,7 @@ instance D.MaybeMean PoissonDistribution where
 
 instance D.MaybeVariance PoissonDistribution where
     maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
 
 
 -- | Create Poisson distribution.

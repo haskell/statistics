@@ -48,6 +48,7 @@ instance D.Mean BinomialDistribution where
 
 instance D.Variance BinomialDistribution where
     variance = variance
+    stdDev = D.stdDevUni
 
 instance D.MaybeMean BinomialDistribution where
     maybeMean = Just . D.mean

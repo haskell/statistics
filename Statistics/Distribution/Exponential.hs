@@ -48,6 +48,7 @@ instance D.Mean ExponentialDistribution where
 
 instance D.Variance ExponentialDistribution where
     variance (ED l) = 1 / (l * l)
+    stdDev = D.stdDevUni
     {-# INLINE variance #-}
 
 instance D.MaybeMean ExponentialDistribution where

@@ -46,6 +46,7 @@ instance D.Mean GeometricDistribution where
 
 instance D.Variance GeometricDistribution where
     variance (GD s) = (1 - s) / (s * s)
+    stdDev = D.stdDevUni
     {-# INLINE variance #-}
 
 instance D.MaybeMean GeometricDistribution where

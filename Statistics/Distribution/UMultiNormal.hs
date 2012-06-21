@@ -54,10 +54,12 @@ instance D.Mean UMultiNormal where
     mean = mnMean
 
 instance D.MaybeVariance UMultiNormal where
-    maybeVariance = Just . mnVariance
+    maybeVariance = Just . D.variance
+    maybeStdDev = Just . D.stdDev
 
 instance D.Variance UMultiNormal where
     variance = mnVariance
+    stdDev = V.map sqrt . D.variance
 
 uMultiNormal :: Vector Double -> Vector Double -> UMultiNormal
 uMultiNormal mean variance = UMultiNormal mean variance detSigma

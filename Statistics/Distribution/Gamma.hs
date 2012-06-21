@@ -68,6 +68,7 @@ instance D.ContDistr GammaDistribution where
 
 instance D.Variance GammaDistribution where
     variance (GD a l) = a * l * l
+    stdDev = D.stdDevUni
     {-# INLINE variance #-}
 
 instance D.Mean GammaDistribution where

@@ -75,6 +75,7 @@ instance D.MaybeVariance FDistribution where
   maybeStdDev (F n m _) 
     | m > 4     = Just $ 2 * sqr m * (m + n - 2) / (n * sqr (m - 2) * (m - 4))
     | otherwise = Nothing
+  maybeVariance = D.maybeVarianceUni
 
 instance D.ContGen FDistribution where
   genContVar = D.genContinous

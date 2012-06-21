@@ -69,6 +69,7 @@ instance D.MaybeMean UniformDistribution where
 
 instance D.MaybeVariance UniformDistribution where
     maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
 
 instance D.ContGen UniformDistribution where
     genContVar (UniformDistribution a b) gen = MWC.uniformR (a,b) gen

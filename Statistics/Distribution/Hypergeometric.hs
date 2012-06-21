@@ -49,6 +49,7 @@ instance D.Mean HypergeometricDistribution where
 
 instance D.Variance HypergeometricDistribution where
     variance = variance
+    stdDev = D.stdDevUni
 
 instance D.MaybeMean HypergeometricDistribution where
     maybeMean = Just . D.mean
