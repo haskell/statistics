@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.ChiSquared
 -- Copyright : (c) 2010 Alexey Khudyakov
@@ -44,6 +44,7 @@ chiSquared n
 {-# INLINE chiSquared #-}
 
 instance D.Distribution ChiSquared where
+  type DistrSample ChiSquared = Double
   cumulative = cumulative
 
 instance D.ContDistr ChiSquared where
@@ -56,6 +57,7 @@ instance D.Mean ChiSquared where
 
 instance D.Variance ChiSquared where
     variance (ChiSquared ndf) = fromIntegral (2*ndf)
+    stdDev = D.stdDevUni
     {-# INLINE variance #-}
 
 instance D.MaybeMean ChiSquared where

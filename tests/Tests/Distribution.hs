@@ -3,6 +3,7 @@
 -- Required for Param
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverlappingInstances #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 module Tests.Distribution (
     distributionTests
@@ -68,7 +69,9 @@ distributionTests = testGroup "Tests for all distributions"
 ----------------------------------------------------------------
 
 -- Tests for continous distribution
-contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
+contDistrTests :: ( Param d, ContDistr d, QC.Arbitrary d, Typeable d
+                  , Show d, DistrSample d ~ Double)
+               => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck   t
@@ -128,12 +131,12 @@ cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d 
 
 
 -- PDF is positive
-pdfSanityCheck :: (ContDistr d) => T d -> d -> Double -> Bool
+pdfSanityCheck :: (ContDistr d, DistrSample d ~ Double) => T d -> d -> Double -> Bool
 pdfSanityCheck _ d x = p >= 0
   where p = density d x
 
 -- Quantile is inverse of CDF
-quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
+quantileIsInvCDF :: (Param d, ContDistr d, DistrSample d ~ Double) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d (snd . properFraction -> p) =
   p > 0 && p < 1  ==> ( printTestCase (printf "Quantile     = %g" q )
                       $ printTestCase (printf "Probability  = %g" p )

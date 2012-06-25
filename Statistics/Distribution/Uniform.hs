@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Uniform
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -39,6 +39,7 @@ uniformDistr a b
 -- NOTE: failure is in default branch to guard againist NaNs.
                 
 instance D.Distribution UniformDistribution where
+  type DistrSample UniformDistribution = Double
   cumulative (UniformDistribution a b) x
     | x < a     = 0
     | x > b     = 1
@@ -68,6 +69,7 @@ instance D.MaybeMean UniformDistribution where
 
 instance D.MaybeVariance UniformDistribution where
     maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
 
 instance D.ContGen UniformDistribution where
     genContVar (UniformDistribution a b) gen = MWC.uniformR (a,b) gen

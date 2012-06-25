@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Statistics.Distribution.Beta
@@ -55,6 +55,7 @@ improperBetaDistr = BD
 {-# INLINE improperBetaDistr #-}
 
 instance D.Distribution BetaDistribution where
+  type DistrSample BetaDistribution = Double
   cumulative (BD a b) x
     | x <= 0    = 0
     | x >= 1    = 1
@@ -72,10 +73,12 @@ instance D.MaybeMean BetaDistribution where
 instance D.Variance BetaDistribution where
   variance (BD a b) = a*b / (apb*apb*(apb+1))
     where apb = a + b
+  stdDev = D.stdDevUni
   {-# INLINE variance #-}
 
 instance D.MaybeVariance BetaDistribution where
   maybeVariance = Just . D.variance
+  maybeStdDev = D.maybeStdDevUni
   {-# INLINE maybeVariance #-}
 
 instance D.ContDistr BetaDistribution where

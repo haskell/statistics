@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.StudentT
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -34,6 +34,7 @@ studentT ndf
     error "Statistics.Distribution.StudentT.studentT: non-positive number of degrees of freedom"
 
 instance D.Distribution StudentT where
+  type DistrSample StudentT = Double
   cumulative = cumulative 
 
 instance D.ContDistr StudentT where
@@ -69,6 +70,7 @@ instance D.MaybeMean StudentT where
 instance D.MaybeVariance StudentT where
   maybeStdDev (StudentT ndf) | ndf > 2   = Just $ ndf / (ndf - 2)
                              | otherwise = Nothing
+  maybeVariance = D.maybeVarianceUni
 
 instance D.ContGen StudentT where
   genContVar = D.genContinous

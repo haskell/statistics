@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Binomial
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -37,6 +37,7 @@ data BinomialDistribution = BD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution BinomialDistribution where
+    type DistrSample BinomialDistribution = Double
     cumulative = cumulative
 
 instance D.DiscreteDistr BinomialDistribution where
@@ -47,6 +48,7 @@ instance D.Mean BinomialDistribution where
 
 instance D.Variance BinomialDistribution where
     variance = variance
+    stdDev = D.stdDevUni
 
 instance D.MaybeMean BinomialDistribution where
     maybeMean = Just . D.mean

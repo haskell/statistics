@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Geometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -34,6 +34,7 @@ newtype GeometricDistribution = GD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution GeometricDistribution where
+    type DistrSample GeometricDistribution = Double
     cumulative = cumulative
 
 instance D.DiscreteDistr GeometricDistribution where
@@ -45,6 +46,7 @@ instance D.Mean GeometricDistribution where
 
 instance D.Variance GeometricDistribution where
     variance (GD s) = (1 - s) / (s * s)
+    stdDev = D.stdDevUni
     {-# INLINE variance #-}
 
 instance D.MaybeMean GeometricDistribution where

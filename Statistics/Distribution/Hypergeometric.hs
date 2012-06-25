@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 -- |
 -- Module    : Statistics.Distribution.Hypergeometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -38,6 +38,7 @@ data HypergeometricDistribution = HD {
     } deriving (Eq, Read, Show, Typeable)
 
 instance D.Distribution HypergeometricDistribution where
+    type DistrSample HypergeometricDistribution = Double
     cumulative = cumulative
 
 instance D.DiscreteDistr HypergeometricDistribution where
@@ -48,6 +49,7 @@ instance D.Mean HypergeometricDistribution where
 
 instance D.Variance HypergeometricDistribution where
     variance = variance
+    stdDev = D.stdDevUni
 
 instance D.MaybeMean HypergeometricDistribution where
     maybeMean = Just . D.mean
