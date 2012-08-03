@@ -22,7 +22,7 @@ import Numeric.SpecFunctions (logBeta, incompleteBeta, invIncompleteBeta)
 
 
 
--- | Student-T distribution
+-- | F distribution
 data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        , fDistributionNDF2 :: {-# UNPACK #-} !Double
                        , _pdfFactor        :: {-# UNPACK #-} !Double
