@@ -1,11 +1,13 @@
-
 import Control.Monad.ST (runST)
+import Data.Complex
+import qualified Data.Vector.Unboxed as U
 
 import System.Random.MWC
-import qualified Data.Vector.Unboxed as U
 import Criterion.Main
 
 import Statistics.Sample
+import Statistics.Transform
+
 
 -- Test sample
 sample :: U.Vector Double
@@ -14,6 +16,11 @@ sample = runST $ flip uniformVector 10000 =<< create
 -- Weighted test sample
 sampleW :: U.Vector (Double,Double)
 sampleW = U.zip sample (U.reverse sample)
+
+-- Comlex vector for FFT tests
+sampleC :: U.Vector (Complex Double)
+sampleC = U.zipWith (:+) sample (U.reverse sample)
+
 
 -- Simple benchmark for functions from Statistics.Sample
 main :: IO ()
@@ -40,4 +47,22 @@ main =
     , bench "C.M. 4"           $ nf (\x -> centralMoment 4 x)  sample
     , bench "C.M. 5"           $ nf (\x -> centralMoment 5 x)  sample
     ]
+  , bgroup "FFT"
+    [ bgroup "fft"
+      [ bench  (show n) $ whnf fft   (U.take n sampleC) | n <- fftSizes ]
+    , bgroup "ifft"
+      [ bench  (show n) $ whnf ifft  (U.take n sampleC) | n <- fftSizes ]
+    , bgroup "dct"
+      [ bench  (show n) $ whnf dct   (U.take n sample)  | n <- fftSizes ]
+    , bgroup "dct_"
+      [ bench  (show n) $ whnf dct_  (U.take n sampleC) | n <- fftSizes ]
+    , bgroup "idct"
+      [ bench  (show n) $ whnf idct  (U.take n sample)  | n <- fftSizes ]
+    , bgroup "idct_"
+      [ bench  (show n) $ whnf idct_ (U.take n sampleC) | n <- fftSizes ]
+    ]
   ]
+
+
+fftSizes :: [Int]
+fftSizes = [32,128,512,2048]
