@@ -43,11 +43,16 @@ type CD = Complex Double
 
 -- | Discrete cosine transform (DCT-II).
 dct :: U.Vector Double -> U.Vector Double
-dct = dct_ . G.map (:+0)
+dct = dctWorker . G.map (:+0)
 
--- | Discrete cosine transform, with complex coefficients (DCT-II).
+-- | Discrete cosine transform (DCT-II). Only real part of vector is
+--   transformed, imaginary part is ignored.
 dct_ :: U.Vector CD -> U.Vector Double
-dct_ xs = G.map realPart $ G.zipWith (*) weights (fft interleaved)
+dct_ = dctWorker . G.map (\(i :+ _) -> i :+ 0)
+
+dctWorker :: U.Vector CD -> U.Vector Double
+dctWorker xs
+  = G.map realPart $ G.zipWith (*) weights (fft interleaved)
   where
     interleaved = G.backpermute xs $ G.enumFromThenTo 0 2 (len-2) G.++
                                      G.enumFromThenTo (len-1) (len-3) 1
@@ -56,17 +61,22 @@ dct_ xs = G.map realPart $ G.zipWith (*) weights (fft interleaved)
       where n = fi len
     len = G.length xs
 
+
+
 -- | Inverse discrete cosine transform (DCT-III). It's inverse of
 -- 'dct' only up to scale parameter:
 --
 -- > (idct . dct) x = (* lenngth x)
 idct :: U.Vector Double -> U.Vector Double
-idct = idct_ . G.map (:+0)
+idct = idctWorker . G.map (:+0)
 
--- | Inverse discrete cosine transform, with complex coefficients
--- (DCT-III).
+-- | Inverse discrete cosine transform (DCT-III). Only real part of vector is
+--   transformed, imaginary part is ignored.
 idct_ :: U.Vector CD -> U.Vector Double
-idct_ xs = G.generate len interleave
+idct_ = idctWorker . G.map (\(i :+ _) -> i :+ 0)
+
+idctWorker :: U.Vector CD -> U.Vector Double
+idctWorker xs = G.generate len interleave
   where
     interleave z | even z    = vals `G.unsafeIndex` halve z
                  | otherwise = vals `G.unsafeIndex` (len - halve z - 1)
@@ -76,6 +86,7 @@ idct_ xs = G.generate len interleave
       $ G.generate (len - 1) $ \x -> 2 * n * exp ((0:+1) * fi (x+1) * pi/(2*n))
       where n = fi len
     len = G.length xs
+
 
 -- | Inverse fast Fourier transform.
 ifft :: U.Vector CD -> U.Vector CD
