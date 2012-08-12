@@ -14,8 +14,10 @@
 module Statistics.Sample.Histogram
     (
       histogram
+    , cumulativeHistogram
     -- * Building blocks
     , histogram_
+    , cumulativeHistogram_
     , range
     ) where
 
@@ -29,6 +31,7 @@ import qualified Data.Vector.Generic.Mutable as GM
 -- The result consists of a pair of vectors:
 --
 -- * The lower bound of each interval.
+--
 -- * The number of samples within the interval.
 --
 -- Interval (bin) sizes are uniform, and the upper and lower bounds
@@ -43,6 +46,25 @@ histogram numBins xs = (G.generate numBins step, histogram_ numBins lo hi xs)
           step i     = lo + d * fromIntegral i
           d          = (hi - lo) / fromIntegral numBins
 {-# INLINE histogram #-}
+
+-- | /O(n)/ Compute a cumulative histogram over a data set.
+--
+-- The result consists of a pair of vectors:
+--
+-- * The lower bound of each interval.
+--
+-- * The number of samples within the interval and all previous intervals.
+--
+-- Interval (bin) sizes are uniform, and the upper and lower bounds
+-- are chosen automatically using the 'range' function.  To specify
+-- these parameters directly, use the 'cumulativeHistogram_' function.
+cumulativeHistogram :: (G.Vector v0 Double, G.Vector v1 Double, Num b, G.Vector v1 b) =>
+                       Int            -- ^ Number of bins (must be positive).
+                    -> v0 Double      -- ^ Sample data (cannot be empty).
+                    -> (v1 Double, v1 b)
+cumulativeHistogram numBins = c . histogram numBins
+  where c (a,b) = (a, G.postscanl (+) 0 b)
+{-# INLINE cumulativeHistogram #-}
 
 -- | /O(n)/ Compute a histogram over a data set.
 --
@@ -75,6 +97,27 @@ histogram_ numBins lo hi xs0 = G.create (GM.replicate numBins 0 >>= bin xs0)
        len = G.length xs
        d = ((hi - lo) * (1 + realToFrac m_epsilon)) / fromIntegral numBins
 {-# INLINE histogram_ #-}
+
+-- | /O(n)/ Compute a cumulative histogram over a data set.
+--
+-- Interval (bin) sizes are uniform, based on the supplied upper
+-- and lower bounds.
+cumulativeHistogram_ :: (Num b, RealFrac a, G.Vector v0 a, G.Vector v1 b) =>
+                        Int
+                        -- ^ Number of bins.  This value must be positive.  A zero
+                        -- or negative value will cause an error.
+                     -> a
+                        -- ^ Lower bound on interval range.  Sample data less than
+                        -- this will cause an error.
+                     -> a
+                        -- ^ Upper bound on interval range.  This value must not be
+                        -- less than the lower bound.  Sample data that falls above
+                        -- the upper bound will cause an error.
+                     -> v0 a
+                        -- ^ Sample data.
+                     -> v1 b
+cumulativeHistogram_ numBins lo hi = G.postscanl (+) 0 . histogram_ numBins lo hi
+{-# INLINE cumulativeHistogram_ #-}
 
 -- | /O(n)/ Compute decent defaults for the lower and upper bounds of
 -- a histogram, based on the desired number of bins and the range of
