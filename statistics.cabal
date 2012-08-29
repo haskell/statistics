@@ -238,6 +238,7 @@ test-suite tests
     test-framework-quickcheck2,
     test-framework-hunit,
     math-functions,
+    mwc-random,
     statistics,
     primitive,
     vector,
