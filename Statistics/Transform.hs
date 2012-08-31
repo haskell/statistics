@@ -66,7 +66,7 @@ dctWorker xs
 -- | Inverse discrete cosine transform (DCT-III). It's inverse of
 -- 'dct' only up to scale parameter:
 --
--- > (idct . dct) x = (* lenngth x)
+-- > (idct . dct) x = (* length x)
 idct :: U.Vector Double -> U.Vector Double
 idct = idctWorker . G.map (:+0)
 
