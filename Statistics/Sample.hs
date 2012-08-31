@@ -101,10 +101,7 @@ harmonicMean = fini . G.foldl' go (T 0 0)
 
 -- | /O(n)/ Geometric mean of a sample containing no negative values.
 geometricMean :: (G.Vector v Double) => v Double -> Double
-geometricMean = fini . G.foldl' go (T 1 0)
-  where
-    fini (T p n) = p ** (1 / fromIntegral n)
-    go (T p n) a = T (p * a) (n + 1)
+geometricMean = exp . mean . G.map log
 {-# INLINE geometricMean #-}
 
 -- | Compute the /k/th central moment of a sample.  The central moment
