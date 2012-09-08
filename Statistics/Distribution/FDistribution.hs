@@ -49,8 +49,9 @@ instance D.ContDistr FDistribution where
   
 cumulative :: FDistribution -> Double -> Double
 cumulative (F n m _) x
-  | x > 0     = let y = n*x in incompleteBeta (0.5 * n) (0.5 * m) (y / (m + y))
-  | otherwise = 0
+  | x <= 0       = 0
+  | isInfinite x = 1            -- Only matches +∞
+  | x > 0        = let y = n*x in incompleteBeta (0.5 * n) (0.5 * m) (y / (m + y))
 
 density :: FDistribution -> Double -> Double
 density (F n m fac) x
