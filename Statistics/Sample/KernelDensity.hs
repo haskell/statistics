@@ -34,6 +34,8 @@ import Statistics.Transform            (dct, idct)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 
+
+
 -- | Gaussian kernel density estimator for one-dimensional data, using
 -- the method of Botev et al.
 --
@@ -53,6 +55,7 @@ kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
   where
     (lo,hi) = minMax xs
     range   | U.length xs <= 1 = 1       -- Unreasonable guess
+            | lo == hi         = 1       -- All elements are equal
             | otherwise        = hi - lo
 
 -- | Gaussian kernel density estimator for one-dimensional data, using
