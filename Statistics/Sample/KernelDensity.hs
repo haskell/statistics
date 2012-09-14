@@ -74,7 +74,7 @@ kde_ :: Int
      -> U.Vector Double -> (U.Vector Double, U.Vector Double)
 kde_ n0 min max xs
   | U.null xs = error "Statistics.KernelDensity.kde: empty sample"
-  | n0 < 1    = error "Statistics.KernelDensity.kde: invalid number of points"
+  | n0 <= 1   = error "Statistics.KernelDensity.kde: invalid number of points"
   | otherwise = (mesh, density)
   where
     mesh = G.generate ni $ \z -> min + (d * fromIntegral z)
