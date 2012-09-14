@@ -54,7 +54,10 @@ dct_ = dctWorker . G.map (\(i :+ _) -> i :+ 0)
 
 dctWorker :: U.Vector CD -> U.Vector Double
 dctWorker xs
-  = G.map realPart $ G.zipWith (*) weights (fft interleaved)
+  -- length 1 is special cased because shuffle algorithms fail for it.
+  | G.length xs == 1 = G.map ((2*) . realPart) xs
+  | vectorOK xs      = G.map realPart $ G.zipWith (*) weights (fft interleaved)
+  | otherwise        = error "Statistics.Transform.dct: bad vector length"
   where
     interleaved = G.backpermute xs $ G.enumFromThenTo 0 2 (len-2) G.++
                                      G.enumFromThenTo (len-1) (len-3) 1
@@ -80,7 +83,9 @@ idct_ :: U.Vector CD -> U.Vector Double
 idct_ = idctWorker . G.map (\(i :+ _) -> i :+ 0)
 
 idctWorker :: U.Vector CD -> U.Vector Double
-idctWorker xs = G.generate len interleave
+idctWorker xs
+  | vectorOK xs = G.generate len interleave
+  | otherwise   = error "Statistics.Transform.dct: bad vector length"
   where
     interleave z | even z    = vals `G.unsafeIndex` halve z
                  | otherwise = vals `G.unsafeIndex` (len - halve z - 1)
@@ -94,19 +99,20 @@ idctWorker xs = G.generate len interleave
 
 -- | Inverse fast Fourier transform.
 ifft :: U.Vector CD -> U.Vector CD
-ifft xs = G.map ((/fi (G.length xs)) . conjugate) . fft . G.map conjugate $ xs
+ifft xs
+  | vectorOK xs = G.map ((/fi (G.length xs)) . conjugate) . fft . G.map conjugate $ xs
+  | otherwise   = error "Statistics.Transform.ifft: bad vector length"
 
 -- | Radix-2 decimation-in-time fast Fourier transform.
 fft :: U.Vector CD -> U.Vector CD
-fft v = G.create $ do
-          mv <- G.thaw v
-          mfft mv
-          return mv
+fft v | vectorOK v  = G.create $ do mv <- G.thaw v
+                                    mfft mv
+                                    return mv
+      | otherwise   = error "Statistics.Transform.fft: bad vector length"
 
+-- Vector length must be power of two. It's not checked
 mfft :: (M.MVector v CD) => v s CD -> ST s ()
-mfft vec
-    | 1 `shiftL` m /= len = error "Statistics.Transform.fft: bad vector size"
-    | otherwise           = bitReverse 0 0
+mfft vec = bitReverse 0 0
  where
   bitReverse i j | i == len-1 = stage 0 1
                  | otherwise  = do
@@ -141,3 +147,8 @@ fi = fromIntegral
 
 halve :: Int -> Int
 halve = (`shiftR` 1)
+
+
+vectorOK :: U.Unbox a => U.Vector a -> Bool
+{-# INLINE vectorOK #-}
+vectorOK v = (1 `shiftL` log2 n) == n where n = G.length v
