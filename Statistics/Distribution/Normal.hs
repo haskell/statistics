@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 -- |
 -- Module    : Statistics.Distribution.Normal
@@ -20,12 +21,14 @@ module Statistics.Distribution.Normal
     , standard
     ) where
 
-import Data.Number.Erf (erfc)
-import Data.Typeable (Typeable)
+import Data.Typeable                   (Typeable)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
+import Numeric.SpecFunctions           (erfc, invErfc)
 import qualified Statistics.Distribution as D
-import qualified Statistics.Sample as S
+import qualified Statistics.Sample       as S
 import qualified System.Random.MWC.Distributions as MWC
+
+
 
 -- | The normal distribution.
 data NormalDistribution = ND {
@@ -81,7 +84,7 @@ normalDistr m sd
                    , ndPdfDenom = m_sqrt_2_pi * sd
                    , ndCdfDenom = m_sqrt_2 * sd
                    }
-  | otherwise = 
+  | otherwise =
     error $ "Statistics.Distribution.Normal.normalDistr: standard deviation must be positive. Got " ++ show sd
 
 -- | Create distribution using parameters estimated from
@@ -106,8 +109,8 @@ quantile d p
   | p == 0         = -inf
   | p == 1         = inf
   | p == 0.5       = mean d
-  | p > 0 && p < 1 = x * stdDev d + mean d
+  | p > 0 && p < 1 = x * ndCdfDenom d + mean d
   | otherwise      =
     error $ "Statistics.Distribution.Normal.quantile: p must be in [0,1] range. Got: "++show p
-  where x          = D.findRoot standard p 0 (-100) 100
+  where x          = invErfc $ 2 * (1 - p)
         inf        = 1/0
