@@ -37,6 +37,8 @@ tests = testGroup "fft" [
         , testProperty "dct . idct = id [up to scale]"
             (t_fftInverse (\v -> U.map (/ (2 * fromIntegral (U.length v))) $ idct $ dct v))
           -- Exact small size DCT
+          -- 1
+        , testDCT [1] $ [2]
           -- 2
         , testDCT [1,0] $ map (*2) [1, cos (pi/4)   ]
         , testDCT [0,1] $ map (*2) [1, cos (3*pi/4) ]
@@ -46,6 +48,8 @@ tests = testGroup "fft" [
         , testDCT [0,0,1,0] $ map (*2) [1, cos(5*pi/8), cos(10*pi/8), cos(15*pi/8)]
         , testDCT [0,0,0,1] $ map (*2) [1, cos(7*pi/8), cos(14*pi/8), cos(21*pi/8)]
           -- Exact small size IDCT
+          -- 1
+        , testIDCT [1] [1]
           -- 2
         , testIDCT [1,0]            [1,         1          ]
         , testIDCT [0,1] $ map (*2) [cos(pi/4), cos(3*pi/4)]
