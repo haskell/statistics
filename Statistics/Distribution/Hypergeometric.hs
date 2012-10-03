@@ -93,10 +93,12 @@ probability (HD mi li ki) n
 
 cumulative :: HypergeometricDistribution -> Double -> Double
 cumulative d@(HD mi li ki) x
-  | n <  minN = 0 
-  | n >= maxN = 1
-  | otherwise = D.sumProbabilities d minN n
-    where
-      n    = floor x
-      minN = max 0 (mi+ki-li)
-      maxN = min mi ki
+  | isNaN x      = error "Statistics.Distribution.Hypergeometric.cumulative: NaN argument"
+  | isInfinite x = if x > 0 then 1 else 0
+  | n <  minN    = 0
+  | n >= maxN    = 1
+  | otherwise    = D.sumProbabilities d minN n
+  where
+    n    = floor x
+    minN = max 0 (mi+ki-li)
+    maxN = min mi ki

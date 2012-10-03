@@ -37,8 +37,10 @@ newtype PoissonDistribution = PD {
 
 instance D.Distribution PoissonDistribution where
     cumulative (PD lambda) x
-      | x < 0     = 0
-      | otherwise = 1 - incompleteGamma (fromIntegral (floor x + 1 :: Int)) lambda
+      | x < 0        = 0
+      | isInfinite x = 1
+      | isNaN      x = error "Statistics.Distribution.Poisson.cumulative: NaN input"
+      | otherwise    = 1 - incompleteGamma (fromIntegral (floor x + 1 :: Int)) lambda
     {-# INLINE cumulative #-}
 
 instance D.DiscreteDistr PoissonDistribution where

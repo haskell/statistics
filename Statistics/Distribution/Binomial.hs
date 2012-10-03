@@ -67,13 +67,15 @@ probability (BD n p) k
 -- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
 cumulative d@(BD n _) x
-  | k <  0    = 0
-  | k >= n    = 1
-  | k <  m    = D.sumProbabilities d 0 k
-  | otherwise = 1 - D.sumProbabilities d (k+1) n
-    where
-      m = floor (mean d)
-      k = floor x
+  | isNaN x      = error "Statistics.Distribution.Binomial.cumulative: NaN input"
+  | isInfinite x = if x > 0 then 1 else 0
+  | k <  0       = 0
+  | k >= n       = 1
+  | k <  m       = D.sumProbabilities d 0 k
+  | otherwise    = 1 - D.sumProbabilities d (k+1) n
+  where
+    m = floor (mean d)
+    k = floor x
 {-# INLINE cumulative #-}
 
 mean :: BinomialDistribution -> Double

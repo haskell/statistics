@@ -70,6 +70,9 @@ probability (GD s) n | n < 1     = 0
 {-# INLINE probability #-}
 
 cumulative :: GeometricDistribution -> Double -> Double
-cumulative (GD s) x | x < 1     = 0
-                    | otherwise = 1 - (1-s) ^ (floor x :: Int)
+cumulative (GD s) x
+  | x < 1        = 0
+  | isInfinite x = 1
+  | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
+  | otherwise    = 1 - (1-s) ^ (floor x :: Int)
 {-# INLINE cumulative #-}
