@@ -122,7 +122,7 @@ cdfLimitAtPosInfinity _ d =
   okForInfLimit d ==> printTestCase ("Last elements: " ++ show (drop 990 probs))
                     $ Just 1.0 == (find (>=1) probs)
   where
-    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1
+    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1000
 
 -- CDF limit at -∞ is 0
 cdfLimitAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Property
