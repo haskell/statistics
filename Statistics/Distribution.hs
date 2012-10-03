@@ -43,7 +43,11 @@ import System.Random.MWC
 class Distribution d where
     -- | Cumulative distribution function.  The probability that a
     -- random variable /X/ is less or equal than /x/,
-    -- i.e. P(/X/&#8804;/x/). 
+    -- i.e. P(/X/&#8804;/x/). Cumulative should be defined for
+    -- infinities as well:
+    --
+    -- > cumulative d +∞ = 1
+    -- > cumulative d -∞ = 0
     cumulative :: d -> Double -> Double
 
     -- | One's complement of cumulative distibution:
@@ -53,7 +57,7 @@ class Distribution d where
     -- It's useful when one is interested in P(/X/&#8805;/x/) and
     -- expression on the right side begin to lose precision. This
     -- function have default implementation but implementors are
-    -- encouraged to provide more precise implementation
+    -- encouraged to provide more precise implementation.
     complCumulative :: d -> Double -> Double
     complCumulative d x = 1 - cumulative d x
 

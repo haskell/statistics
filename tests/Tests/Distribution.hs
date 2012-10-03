@@ -90,6 +90,8 @@ cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
   , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity  t
   , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity  t
+  , testProperty "CDF at +∞ = 1"        $ cdfAtPosInfinity       t
+  , testProperty "CDF at -∞ = 1"        $ cdfAtNegInfinity       t
   , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
   , testProperty "1-CDF is correct"     $ cdfComplementIsCorrect t
   ]
@@ -103,6 +105,16 @@ cdfSanityCheck _ d x = c >= 0 && c <= 1
 -- CDF never decreases
 cdfIsNondecreasing :: (Distribution d) => T d -> d -> Double -> Double -> Bool
 cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
+
+-- cumulative d +∞ = 1
+cdfAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfAtPosInfinity _ d
+  = cumulative d (1/0) == 1
+
+-- cumulative d - ∞ = 0
+cdfAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfAtNegInfinity _ d
+  = cumulative d (-1/0) == 0
 
 -- CDF limit at +∞ is 1
 cdfLimitAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Property
