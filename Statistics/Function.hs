@@ -77,14 +77,5 @@ minMax = fini . G.foldl' go (MM (1/0) (-1/0))
 -- non-negative integer.  If the given value is already a power of
 -- two, it is returned unchanged.  If negative, zero is returned.
 nextHighestPowerOfTwo :: Int -> Int
-nextHighestPowerOfTwo n = o + 1
-    where m = n - 1
-          o = m
-              .|. (m `shiftR` 1)
-              .|. (m `shiftR` 2)
-              .|. (m `shiftR` 4)
-              .|. (m `shiftR` 8)
-              .|. (m `shiftR` 16)
-#if WORD_SIZE_IN_BITS == 64              
-              .|. (m `shiftR` 32)
-#endif                
+nextHighestPowerOfTwo n = 1 + foldl go (n-1) [1, 2, 4, 8, 16, 32]
+  where go m i = m .|. m `shiftR` i
