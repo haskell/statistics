@@ -88,10 +88,10 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
 cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
 cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
-  , testProperty "CDF limit at +∞"      $ cdfLimitAtPosInfinity  t
-  , testProperty "CDF limit at -∞"      $ cdfLimitAtNegInfinity  t
-  , testProperty "CDF at +∞ = 1"        $ cdfAtPosInfinity       t
-  , testProperty "CDF at -∞ = 1"        $ cdfAtNegInfinity       t
+  , testProperty "CDF limit at +inf"    $ cdfLimitAtPosInfinity  t
+  , testProperty "CDF limit at -inf"    $ cdfLimitAtNegInfinity  t
+  , testProperty "CDF at +inf = 1"      $ cdfAtPosInfinity       t
+  , testProperty "CDF at -inf = 1"      $ cdfAtNegInfinity       t
   , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
   , testProperty "1-CDF is correct"     $ cdfComplementIsCorrect t
   ]
@@ -174,9 +174,9 @@ probSanityCheck _ d x = p >= 0 && p <= 1
 -- Check that discrete CDF is correct
 discreteCDFcorrect :: (DiscreteDistr d) => T d -> d -> Int -> Int -> Property
 discreteCDFcorrect _ d a b
-  = printTestCase (printf "CDF = %g" p1)
-  $ printTestCase (printf "Sum = %g" p2)
-  $ printTestCase (printf "Δ   = %g" (abs (p1 - p2)))
+  = printTestCase (printf "CDF   = %g" p1)
+  $ printTestCase (printf "Sum   = %g" p2)
+  $ printTestCase (printf "Delta = %g" (abs (p1 - p2)))
   $ abs (p1 - p2) < 3e-10
   -- Avoid too large differeneces. Otherwise there is to much to sum
   --
@@ -280,17 +280,17 @@ unitTests = testGroup "Unit tests"
   where
     -- Student-T
     testStudentPDF ndf x exact
-      = testAssertion (printf "density (studentT %f) %f ≈ %f" ndf x exact)
+      = testAssertion (printf "density (studentT %f) %f ~ %f" ndf x exact)
       $ eq 1e-5  exact  (density (studentT ndf) x)
     testStudentCDF ndf x exact
-      = testAssertion (printf "cumulative (studentT %f) %f ≈ %f" ndf x exact)
+      = testAssertion (printf "cumulative (studentT %f) %f ~ %f" ndf x exact)
       $ eq 1e-5  exact  (cumulative (studentT ndf) x)
     -- F-distribution
     testFdistrPDF n m x exact
-      = testAssertion (printf "density (fDistribution %i %i) %f ≈ %f [got %f]" n m x exact d)
+      = testAssertion (printf "density (fDistribution %i %i) %f ~ %f [got %f]" n m x exact d)
       $ eq 1e-5  exact d
       where d = density (fDistribution n m) x
     testFdistrCDF n m x exact
-      = testAssertion (printf "cumulative (fDistribution %i %i) %f ≈ %f [got %f]" n m x exact d)
+      = testAssertion (printf "cumulative (fDistribution %i %i) %f ~ %f [got %f]" n m x exact d)
       $ eq 1e-5  exact d
       where d = cumulative (fDistribution n m) x
