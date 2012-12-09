@@ -22,7 +22,11 @@ module Statistics.Resampling.Bootstrap
 
 import Control.DeepSeq (NFData)
 import Control.Exception (assert)
-import Control.Monad.Par (runPar, parMap)
+-- Workaround for the bug https://github.com/simonmar/monad-par/issues/23
+-- As suggested by Simon Marlow direct scheduler is used.
+--   Issue #45 tracks this workaround.
+import Control.Monad.Par               (parMap)
+import Control.Monad.Par.Scheds.Direct (runPar)
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 import Data.Vector.Unboxed ((!))
