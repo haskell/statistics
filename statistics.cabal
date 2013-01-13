@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.10.2.0
+version:        0.10.3.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -21,6 +21,10 @@ description:
   .
   * Common statistical tests for significant differences between
     samples.
+  .
+  Changes in 0.10.3.0
+  .
+  * Bug fixes
   .
   Changes in 0.10.2.0
   .
@@ -198,7 +202,7 @@ library
     erf,
     monad-par         >= 0.1.0.1,
     mwc-random        >= 0.11.0.0,
-    math-functions    >= 0.1.1,
+    math-functions    >= 0.1.2,
     primitive         >= 0.3,
     vector            >= 0.7.1,
     vector-algorithms >= 0.4
