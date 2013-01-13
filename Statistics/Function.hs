@@ -77,14 +77,25 @@ minMax = fini . G.foldl' go (MM (1/0) (-1/0))
 -- non-negative integer.  If the given value is already a power of
 -- two, it is returned unchanged.  If negative, zero is returned.
 nextHighestPowerOfTwo :: Int -> Int
-nextHighestPowerOfTwo n = o + 1
-    where m = n - 1
-          o = m
-              .|. (m `shiftR` 1)
-              .|. (m `shiftR` 2)
-              .|. (m `shiftR` 4)
-              .|. (m `shiftR` 8)
-              .|. (m `shiftR` 16)
-#if WORD_SIZE_IN_BITS == 64              
-              .|. (m `shiftR` 32)
-#endif                
+nextHighestPowerOfTwo n
+#if WORD_SIZE_IN_BITS == 64
+  = 1 + _i32
+#else
+  = 1 + i16
+#endif
+  where
+    i0   = n - 1
+    i1   = i0  .|. i0  `shiftR` 1
+    i2   = i1  .|. i1  `shiftR` 2
+    i4   = i2  .|. i2  `shiftR` 4
+    i8   = i4  .|. i4  `shiftR` 8
+    i16  = i8  .|. i8  `shiftR` 16
+    _i32 = i16 .|. i16 `shiftR` 32
+-- It could be implemented as
+--
+-- > nextHighestPowerOfTwo n = 1 + foldl' go (n-1) [1, 2, 4, 8, 16, 32]
+--     where go m i = m .|. m `shiftR` i
+--
+-- But GHC do not inline foldl (probably because it's recursive) and
+-- as result function walks list of boxed ints. Hand rolled version
+-- uses unboxed arithmetic.

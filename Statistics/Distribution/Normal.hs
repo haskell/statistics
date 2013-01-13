@@ -91,7 +91,10 @@ normalDistr m sd
 --   sample. Variance is estimated using maximum likelihood method
 --   (biased estimation).
 normalFromSample :: S.Sample -> NormalDistribution
-normalFromSample a = normalDistr (S.mean a) (S.stdDev a)
+normalFromSample xs
+  = normalDistr m (sqrt v)
+  where
+    (m,v) = S.meanVariance xs
 
 density :: NormalDistribution -> Double -> Double
 density d x = exp (-xm * xm / (2 * sd * sd)) / ndPdfDenom d
