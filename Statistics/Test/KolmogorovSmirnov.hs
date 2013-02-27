@@ -9,7 +9,8 @@
 --
 -- Kolmogov-Smirnov tests are non-parametric tests for assesing
 -- whether given sample could be described by distribution or whether
--- two samples have the same distribution.
+-- two samples have the same distribution. It's only applicable to
+-- continous distributions.
 module Statistics.Test.KolmogorovSmirnov (
     -- * Kolmogorov-Smirnov test
     kolmogorovSmirnovTest
