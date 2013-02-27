@@ -37,10 +37,9 @@ module Statistics.Quantile
     -- $references
     ) where
 
-import Control.Exception (assert)
-import Data.Vector.Generic ((!))
+import Data.Vector.Generic             ((!))
 import Numeric.MathFunctions.Constants (m_epsilon)
-import Statistics.Function (partialSort)
+import Statistics.Function             (partialSort)
 import qualified Data.Vector.Generic as G
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
@@ -51,13 +50,11 @@ weightedAvg :: G.Vector v Double =>
             -> v Double   -- ^ /x/, the sample data.
             -> Double
 weightedAvg k q x
-    | n == 1    = G.head x
-    | otherwise =
-    assert (q >= 2) .
-    assert (k >= 0) .
-    assert (k < q) .
-    assert (G.all (not . isNaN) x) $
-    xj + g * (xj1 - xj)
+  | G.any isNaN x   = modErr "weightedAvg" "Sample contains NaNs"
+  | n == 1          = G.head x
+  | q < 2           = modErr "weightedAvg" "At least 2 quantiles is needed"
+  | k < 0 || k >= q = modErr "weightedAvg" "Wrong quantile number"
+  | otherwise       = xj + g * (xj1 - xj)
   where
     j   = floor idx
     idx = fromIntegral (n - 1) * fromIntegral k / fromIntegral q
@@ -81,12 +78,11 @@ continuousBy :: G.Vector v Double =>
              -> Int        -- ^ /q/, the number of quantiles.
              -> v Double   -- ^ /x/, the sample data.
              -> Double
-continuousBy (ContParam a b) k q x =
-    assert (q >= 2) .
-    assert (k >= 0) .
-    assert (k <= q) .
-    assert (G.all (not . isNaN) x) $
-    (1-h) * item (j-1) + h * item j
+continuousBy (ContParam a b) k q x
+  | q < 2          = modErr "continuousBy" "At least 2 quantiles is needed"
+  | k < 0 || k > q = modErr "continuousBy" "Wrong quantile number"
+  | G.any isNaN x  = modErr "continuousBy" "Sample contains NaNs"
+  | otherwise      = (1-h) * item (j-1) + h * item j
   where
     j               = floor (t + eps)
     t               = a + p * (fromIntegral n + 1 - a - b)
@@ -115,10 +111,10 @@ midspread :: G.Vector v Double =>
           -> Int        -- ^ /q/, the number of quantiles.
           -> v Double   -- ^ /x/, the sample data.
           -> Double
-midspread (ContParam a b) k x =
-    assert (G.all (not . isNaN) x) .
-    assert (k > 0) $
-    quantile (1-frac) - quantile frac
+midspread (ContParam a b) k x
+  | G.any isNaN x = modErr "midspread" "Sample contains NaNs"
+  | k <= 0        = modErr "midspread" "Nonpositive number of quantiles"
+  | otherwise     = quantile (1-frac) - quantile frac
   where
     quantile i        = (1-h i) * item (j i-1) + h i * item (j i)
     j i               = floor (t i + eps) :: Int
@@ -179,6 +175,9 @@ normalUnbiased :: ContParam
 normalUnbiased = ContParam ta ta
     where ta = 3/8
 {-# INLINE normalUnbiased #-}
+
+modErr :: String -> String -> a
+modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 
 -- $references
 --
