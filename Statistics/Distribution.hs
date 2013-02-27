@@ -54,7 +54,7 @@ class Distribution d where
     --
     -- > complCumulative d x = 1 - cumulative d x
     --
-    -- It's useful when one is interested in P(/X/&#8805;/x/) and
+    -- It's useful when one is interested in P(/X/</x/) and
     -- expression on the right side begin to lose precision. This
     -- function have default implementation but implementors are
     -- encouraged to provide more precise implementation.
