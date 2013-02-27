@@ -82,6 +82,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
   , testProperty "CDF is sum of prob."  $ discreteCDFcorrect    t
+  , testProperty "Discrete CDF is OK"   $ cdfDiscreteIsCorrect  t
   ]
 
 -- Tests for distributions which have CDF
@@ -137,6 +138,29 @@ cdfLimitAtNegInfinity _ d =
 -- CDF's complement is implemented correctly
 cdfComplementIsCorrect :: (Distribution d) => T d -> d -> Double -> Bool
 cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d x)
+
+-- CDF for discrete distribution uses <= for comparison
+cdfDiscreteIsCorrect :: (DiscreteDistr d) => T d -> d -> Property
+cdfDiscreteIsCorrect _ d
+  = printTestCase (unlines $ map show badN)
+  $ null badN  
+  where
+    -- We are checking that:
+    --
+    -- > CDF(i) - CDF(i-e) = P(i)
+    --
+    -- Apporixmate equality is tricky here. Scale is set by maximum
+    -- value of CDF and probability. Case when all proabilities are
+    -- zero should be trated specially.
+    badN = [ (i,p,p1,dp, (p1-p-dp) / max p1 dp)
+           | i <- [0 .. 100]
+           , let p      = cumulative d $ fromIntegral i - 1e-6
+                 p1     = cumulative d $ fromIntegral i
+                 dp     = probability d i
+                 relerr = ((p1 - p) - dp) / max p1 dp
+           ,  not (p == 0 && p1 == 0 && dp == 0)
+           && relerr > 1e-14
+           ]
 
 
 -- PDF is positive
