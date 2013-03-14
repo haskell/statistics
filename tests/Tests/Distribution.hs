@@ -35,6 +35,7 @@ import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Normal
 import Statistics.Distribution.Poisson
 import Statistics.Distribution.StudentT
+import Statistics.Distribution.Transform
 import Statistics.Distribution.Uniform
 
 import Prelude hiding (catch)
@@ -53,6 +54,7 @@ distributionTests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
   , contDistrTests (T :: T StudentT                )
+  , contDistrTests (T :: T (LinearTransform StudentT) )
   , contDistrTests (T :: T FDistribution           )
 
   , discreteDistrTests (T :: T BinomialDistribution       )
@@ -249,6 +251,11 @@ instance QC.Arbitrary CauchyDistribution where
                 <*> ((abs <$> arbitrary) `suchThat` (> 0))
 instance QC.Arbitrary StudentT where
   arbitrary = studentT <$> ((abs <$> arbitrary) `suchThat` (>0))
+instance QC.Arbitrary (LinearTransform StudentT) where
+  arbitrary = studentTUnstandardized
+           <$> ((abs <$> arbitrary) `suchThat` (>0))
+           <*> ((abs <$> arbitrary))
+           <*> ((abs <$> arbitrary) `suchThat` (>0))
 instance QC.Arbitrary FDistribution where
   arbitrary =  fDistribution 
            <$> ((abs <$> arbitrary) `suchThat` (>0))
@@ -273,6 +280,10 @@ instance Param StudentT where
   invQuantilePrec _ = 1e-13
   okForInfLimit   d = studentTndf d > 0.75
 
+instance Param (LinearTransform StudentT) where
+  invQuantilePrec _ = 1e-13
+  okForInfLimit   d = (studentTndf . distr) d > 0.75
+
 instance Param FDistribution where
   invQuantilePrec _ = 1e-12
 
@@ -293,6 +304,13 @@ unitTests = testGroup "Unit tests"
   , testStudentCDF 0.3  3.34  0.757146   -- CDF
   , testStudentCDF 1    0.42  0.626569
   , testStudentCDF 4.4  0.33  0.621739
+    -- Student-T General
+  , testStudentUnstandardizedPDF 0.3    1.2  4      0.45 0.0533456  -- PDF
+  , testStudentUnstandardizedPDF 4.3  (-2.4) 3.22 (-0.6) 0.0971141
+  , testStudentUnstandardizedPDF 3.8    0.22 7.62   0.14 0.0490523
+  , testStudentUnstandardizedCDF 0.3    1.2  4      0.45 0.458035   -- CDF
+  , testStudentUnstandardizedCDF 4.3  (-2.4) 3.22 (-0.6) 0.698001
+  , testStudentUnstandardizedCDF 3.8    0.22 7.62   0.14 0.496076
     -- F-distribution
   , testFdistrPDF  1  3   3     (1/(6 * pi)) -- PDF
   , testFdistrPDF  2  2   1.2   0.206612
@@ -309,6 +327,13 @@ unitTests = testGroup "Unit tests"
     testStudentCDF ndf x exact
       = testAssertion (printf "cumulative (studentT %f) %f ~ %f" ndf x exact)
       $ eq 1e-5  exact  (cumulative (studentT ndf) x)
+    -- Student-T General
+    testStudentUnstandardizedPDF ndf mu sigma x exact
+      = testAssertion (printf "density (studentTUnstandardized %f %f %f) %f ~ %f" ndf mu sigma x exact)
+      $ eq 1e-5  exact  (density (studentTUnstandardized ndf mu sigma) x)
+    testStudentUnstandardizedCDF ndf mu sigma x exact
+      = testAssertion (printf "cumulative (studentTUnstandardized %f %f %f) %f ~ %f" ndf mu sigma x exact)
+      $ eq 1e-5  exact  (cumulative (studentTUnstandardized ndf mu sigma) x)
     -- F-distribution
     testFdistrPDF n m x exact
       = testAssertion (printf "density (fDistribution %i %i) %f ~ %f [got %f]" n m x exact d)

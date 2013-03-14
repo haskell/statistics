@@ -13,18 +13,18 @@ module Statistics.Distribution.StudentT (
     StudentT
   , studentT
   , studentTndf
+  , studentTUnstandardized
   ) where
 
+
 import qualified Statistics.Distribution as D
+import Statistics.Distribution.Transform (LinearTransform (..))
 import Data.Typeable         (Typeable)
 import Numeric.SpecFunctions (logBeta, incompleteBeta, invIncompleteBeta)
-
-
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
                    deriving (Eq,Show,Read,Typeable)
-
 
 -- | Create Student-T distribution. Number of parameters must be positive.
 studentT :: Double -> StudentT
@@ -72,3 +72,10 @@ instance D.MaybeVariance StudentT where
 
 instance D.ContGen StudentT where
   genContVar = D.genContinous
+
+-- | Create an unstandardized Student-t distribution
+studentTUnstandardized :: Double -> Double -> Double -> LinearTransform StudentT
+studentTUnstandardized ndf mu sigma
+  | sigma <= 0 = error $ "Statistics.Distribution.StudentT.studentTGeneral: sigma must be > 0. Got: " ++ (show sigma)
+  | otherwise = LinearTransform mu sigma (StudentT ndf)
+

@@ -171,6 +171,7 @@ library
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
     Statistics.Distribution.StudentT
+    Statistics.Distribution.Transform
     Statistics.Distribution.Uniform
     Statistics.Function
     Statistics.Math
