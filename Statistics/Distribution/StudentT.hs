@@ -115,8 +115,10 @@ sq :: Double -> Double
 sq x = x*x
 
 densityGeneral :: StudentTGeneral -> Double -> Double
-densityGeneral (StudentTGeneral ndf mu sigma) x =
-    exp( log (ndf / (ndf + (sq $ (x-mu)/sigma))) * (0.5 * (1 + ndf)) - logBeta 0.5 (0.5 * ndf) ) / (sigma * sqrt ndf)
+densityGeneral (StudentTGeneral ndf mu sigma) x = (density simplestudent arg) /sigma
+  where
+    arg = (x-mu) / sigma
+    simplestudent = studentT ndf
 
 quantileGeneral :: StudentTGeneral -> Double -> Double
 quantileGeneral (StudentTGeneral ndf mu sigma) p = mu + sigma * (quantile simplestudent p)
