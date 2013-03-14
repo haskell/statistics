@@ -73,8 +73,10 @@ instance D.MaybeMean StudentT where
                            | otherwise = Nothing
 
 instance D.MaybeVariance StudentT where
-  maybeStdDev (StudentT ndf) | ndf > 2   = Just $ ndf / (ndf - 2)
-                             | otherwise = Nothing
+  maybeVariance (StudentT ndf) | ndf > 2   = Just $ ndf / (ndf - 2)
+                               | ndf > 1   = inf
+                               | otherwise = Nothing
+  inf = 1/0
 
 instance D.ContGen StudentT where
   genContVar = D.genContinous
