@@ -74,9 +74,9 @@ instance D.MaybeMean StudentT where
 
 instance D.MaybeVariance StudentT where
   maybeVariance (StudentT ndf) | ndf > 2   = Just $ ndf / (ndf - 2)
-                               | ndf > 1   = inf
+                               | ndf > 1   = Just inf
                                | otherwise = Nothing
-  inf = 1/0
+    where inf = 1/0
 
 instance D.ContGen StudentT where
   genContVar = D.genContinous
@@ -132,13 +132,14 @@ instance D.MaybeMean StudentTGeneral where
 instance D.MaybeVariance StudentTGeneral where
   maybeVariance  (StudentTGeneral ndf _ sigma) 
     | ndf > 2   = Just $ (sq sigma) * (ndf / (ndf - 2))
-    | ndf > 1   = inf
+    | ndf > 1   = Just inf
     | otherwise = Nothing
+      where inf = 1/0
   maybeStdDev  (StudentTGeneral ndf _ sigma) 
     | ndf > 2   = Just $ sigma * (sqrt (ndf / (ndf - 2)))
-    | ndf > 1   = inf
+    | ndf > 1   = Just inf
     | otherwise = Nothing
-  inf = 1/0
+      where inf = 1/0
 
 instance D.ContGen StudentTGeneral where
   genContVar = D.genContinous
