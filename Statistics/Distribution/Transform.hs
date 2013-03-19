@@ -30,8 +30,8 @@ instance D.Distribution d => D.Distribution (LinearTransform d) where
   cumulative (LinearTransform loc sc dist) x = D.cumulative dist ((x-loc)/sc)
 
 instance D.ContDistr d => D.ContDistr (LinearTransform d) where
-  density (LinearTransform loc sc dist) x = (/sc) $ D.density dist ((x-loc)/sc)
-  quantile (LinearTransform loc sc dist) p = loc + sc * D.quantile dist p 
+  density (LinearTransform loc sc dist) x = D.density dist ((x-loc)/sc) / sc
+  quantile (LinearTransform loc sc dist) p = D.quantile dist p  * sc + loc
 
 instance D.MaybeMean d => D.MaybeMean (LinearTransform d) where
   maybeMean (LinearTransform loc _ dist) = fmap (+loc) (D.maybeMean dist)
@@ -44,8 +44,8 @@ instance D.MaybeVariance  d => D.MaybeVariance (LinearTransform d) where
   maybeStdDev (LinearTransform _ sc dist) = fmap (*sc) (D.maybeStdDev dist)
 
 instance (D.Variance d) => D.Variance (LinearTransform d) where
-  variance (LinearTransform _ sc dist) = sc * sc * (D.variance dist)
-  stdDev (LinearTransform _ sc dist) = sc * (D.stdDev dist)
+  variance (LinearTransform _ sc dist) = D.variance dist * sc * sc
+  stdDev (LinearTransform _ sc dist) = D.stdDev dist * sc
 
 instance D.ContDistr d => D.ContGen (LinearTransform d) where
   genContVar = D.genContinous
