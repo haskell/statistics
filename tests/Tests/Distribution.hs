@@ -282,7 +282,7 @@ instance Param StudentT where
 
 instance Param (LinearTransform StudentT) where
   invQuantilePrec _ = 1e-13
-  okForInfLimit   d = (studentTndf . distr) d > 0.75
+  okForInfLimit   d = (studentTndf . linTransDistr) d > 0.75
 
 instance Param FDistribution where
   invQuantilePrec _ = 1e-12

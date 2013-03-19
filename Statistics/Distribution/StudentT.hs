@@ -30,8 +30,7 @@ newtype StudentT = StudentT { studentTndf :: Double }
 studentT :: Double -> StudentT
 studentT ndf
   | ndf > 0   = StudentT ndf
-  | otherwise =
-    error "Statistics.Distribution.StudentT.studentT: non-positive number of degrees of freedom"
+  | otherwise = modErr "studentT" "non-positive number of degrees of freedom"
 
 instance D.Distribution StudentT where
   cumulative = cumulative 
@@ -58,8 +57,7 @@ quantile (StudentT ndf) p
     in case sqrt $ ndf * (1 - x) / x of
          r | p < 0.5   -> -r
            | otherwise -> r 
-  | otherwise =
-    error $ "Statistics.Distribution.Uniform.quantile: p must be in [0,1] range. Got: "++show p
+  | otherwise = modErr "quantile" $ "p must be in [0,1] range. Got: "++show p
 
 
 instance D.MaybeMean StudentT where
@@ -73,9 +71,14 @@ instance D.MaybeVariance StudentT where
 instance D.ContGen StudentT where
   genContVar = D.genContinous
 
--- | Create an unstandardized Student-t distribution
-studentTUnstandardized :: Double -> Double -> Double -> LinearTransform StudentT
+-- | Create an unstandardized Student-t distribution.
+studentTUnstandardized :: Double -- ^ Number of degrees of freedom
+                       -> Double -- ^ Central value (0 for standard Student T distribution)
+                       -> Double -- ^ Scale parameter
+                       -> LinearTransform StudentT
 studentTUnstandardized ndf mu sigma
-  | sigma <= 0 = error $ "Statistics.Distribution.StudentT.studentTGeneral: sigma must be > 0. Got: " ++ (show sigma)
-  | otherwise = LinearTransform mu sigma (StudentT ndf)
+  | sigma > 0 = LinearTransform mu sigma $ studentT ndf
+  | otherwise = modErr "studentTUnstandardized" $ "sigma must be > 0. Got: " ++ show sigma
 
+modErr :: String -> String -> a
+modErr fun msg = error $ "Statistics.Distribution.StudentT." ++ fun ++ ": " ++ msg
