@@ -9,9 +9,10 @@
 -- Portability : portable
 --
 -- Transformations over distributions
-
 module Statistics.Distribution.Transform (
     LinearTransform (..)
+  , linTransFixedPoint
+  , scaleAround
   ) where
 
 import Data.Typeable         (Typeable)
@@ -31,6 +32,16 @@ data LinearTransform d = LinearTransform
     -- | Distribution being transformed.
   } deriving (Eq,Show,Read,Typeable)
 
+-- | Apply linear transformation to distribution.
+scaleAround :: Double           -- ^ Fixed point
+            -> Double           -- ^ Scale parameter
+            -> d                -- ^ Distribution
+            -> LinearTransform d
+scaleAround x0 sc = LinearTransform (x0 * (1 - sc)) sc
+
+-- | Get fixed point of linear transformation
+linTransFixedPoint :: LinearTransform d -> Double
+linTransFixedPoint (LinearTransform loc sc _) = loc / (1 - sc)
 
 instance Functor LinearTransform where
   fmap f (LinearTransform loc sc dist) = LinearTransform loc sc (f dist)
