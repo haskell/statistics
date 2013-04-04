@@ -79,9 +79,10 @@ bootstrapBCA :: Double          -- ^ Confidence level
              -> [Estimator]     -- ^ Estimators
              -> [Resample]      -- ^ Resampled data
              -> [Estimate]
-bootstrapBCA confidenceLevel sample estimators resamples =
-    assert (confidenceLevel > 0 && confidenceLevel < 1)
-    runPar $ parMap (uncurry e) (zip estimators resamples)
+bootstrapBCA confidenceLevel sample estimators resamples
+  | confidenceLevel > 0 && confidenceLevel < 1
+      = runPar $ parMap (uncurry e) (zip estimators resamples)
+  | otherwise = error "Statistics.Resampling.Bootstrap.bootstrapBCA: confidence level outside (0,1) range"
   where
     e est (Resample resample)
       | U.length sample == 1 = estimate pt pt pt confidenceLevel
