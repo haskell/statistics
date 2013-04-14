@@ -48,6 +48,7 @@ module Statistics.Sample.KernelDensity.Simple
 
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
+import Data.Vector.Binary ()
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_1_sqrt_2, m_2_sqrt_pi)
 import Statistics.Function (minMax)
@@ -60,9 +61,7 @@ newtype Points = Points {
       fromPoints :: U.Vector Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary Points where
-    put (Points v) = put (G.toList v)
-    get = (Points . G.fromList) `fmap` get
+instance Binary Points
 
 -- | Bandwidth estimator for an Epanechnikov kernel.
 epanechnikovBW :: Double -> Bandwidth

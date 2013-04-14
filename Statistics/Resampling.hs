@@ -24,6 +24,7 @@ import Control.Monad.Primitive (PrimMonad, PrimState)
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Algorithms.Intro (sort)
+import Data.Vector.Binary ()
 import Data.Vector.Generic (unsafeFreeze)
 import Data.Word (Word32)
 import GHC.Conc (numCapabilities)
@@ -41,9 +42,7 @@ newtype Resample = Resample {
       fromResample :: U.Vector Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary Resample where
-    put (Resample v) = put (U.toList v)
-    get = (Resample . U.fromList) `fmap` get
+instance Binary Resample
 
 -- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
 -- computing each estimate over the resampled data.

@@ -136,7 +136,8 @@ library
     math-functions    >= 0.1.2,
     primitive         >= 0.3,
     vector            >= 0.7.1,
-    vector-algorithms >= 0.4
+    vector-algorithms >= 0.4,
+    vector-binary-instances >= 0.2.1
   if impl(ghc >= 6.10)
     build-depends:
       base >= 4
