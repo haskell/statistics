@@ -1,5 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Normal
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -21,7 +20,8 @@ module Statistics.Distribution.Normal
     , standard
     ) where
 
-import Data.Typeable                   (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
 import Numeric.SpecFunctions           (erfc, invErfc)
 import qualified Statistics.Distribution as D
@@ -36,7 +36,7 @@ data NormalDistribution = ND {
     , stdDev     :: {-# UNPACK #-} !Double
     , ndPdfDenom :: {-# UNPACK #-} !Double
     , ndCdfDenom :: {-# UNPACK #-} !Double
-    } deriving (Eq, Read, Show, Typeable)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance D.Distribution NormalDistribution where
     cumulative      = cumulative

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.ChiSquared
 -- Copyright : (c) 2010 Alexey Khudyakov
@@ -18,7 +18,8 @@ module Statistics.Distribution.ChiSquared (
         , chiSquaredNDF
         ) where
 
-import Data.Typeable         (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import Numeric.SpecFunctions (incompleteGamma,invIncompleteGamma,logGamma)
 
 import qualified Statistics.Distribution         as D
@@ -27,7 +28,7 @@ import qualified System.Random.MWC.Distributions as MWC
 
 -- | Chi-squared distribution
 newtype ChiSquared = ChiSquared Int
-                     deriving (Show,Typeable)
+                     deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | Get number of degrees of freedom
 chiSquaredNDF :: ChiSquared -> Int
@@ -38,7 +39,7 @@ chiSquaredNDF (ChiSquared ndf) = ndf
 --   must be positive.
 chiSquared :: Int -> ChiSquared
 chiSquared n
-  | n <= 0    = error $ 
+  | n <= 0    = error $
      "Statistics.Distribution.ChiSquared.chiSquared: N.D.F. must be positive. Got " ++ show n
   | otherwise = ChiSquared n
 {-# INLINE chiSquared #-}

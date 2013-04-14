@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Statistics.Distribution.Beta
@@ -20,10 +20,11 @@ module Statistics.Distribution.Beta
   , bdBeta
   ) where
 
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import Numeric.SpecFunctions           (incompleteBeta, invIncompleteBeta, logBeta)
 import Numeric.MathFunctions.Constants (m_NaN)
 import qualified Statistics.Distribution as D
-import Data.Typeable
 
 -- | The beta distribution
 data BetaDistribution = BD
@@ -31,7 +32,7 @@ data BetaDistribution = BD
    -- ^ Alpha shape parameter
  , bdBeta  :: {-# UNPACK #-} !Double
    -- ^ Beta shape parameter
- } deriving (Eq,Read,Show,Typeable)
+ } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | Create beta distribution. Both shape parameters must be positive.
 betaDistr :: Double             -- ^ Shape parameter alpha

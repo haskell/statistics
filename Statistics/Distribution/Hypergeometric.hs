@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Hypergeometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -27,7 +27,8 @@ module Statistics.Distribution.Hypergeometric
     , hdK
     ) where
 
-import Data.Typeable         (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import Numeric.SpecFunctions (choose)
 import qualified Statistics.Distribution as D
 
@@ -35,7 +36,7 @@ data HypergeometricDistribution = HD {
       hdM :: {-# UNPACK #-} !Int
     , hdL :: {-# UNPACK #-} !Int
     , hdK :: {-# UNPACK #-} !Int
-    } deriving (Eq, Read, Show, Typeable)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative

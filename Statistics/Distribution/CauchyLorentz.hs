@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.CauchyLorentz
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -21,9 +21,9 @@ module Statistics.Distribution.CauchyLorentz (
   , standardCauchy
   ) where
 
-import Data.Typeable (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
-
 
 -- | Cauchy-Lorentz distribution.
 data CauchyDistribution = CD {
@@ -36,7 +36,7 @@ data CauchyDistribution = CD {
     --   maximum (HWHM).
   , cauchyDistribScale  :: {-# UNPACK #-} !Double
   }
-  deriving (Eq,Show,Read,Typeable)
+  deriving (Eq, Show, Read, Typeable, Data, Generic)
 
 -- | Cauchy distribution
 cauchyDistribution :: Double    -- ^ Central point

@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
 
 -- |
 -- Module    : Statistics.Math.RootFinding
@@ -24,7 +24,8 @@ import Statistics.Function.Comparison
 
 import Control.Applicative
 import Control.Monad       (MonadPlus(..), ap)
-import Data.Typeable       (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 
 
 -- | The result of searching for a root of a mathematical function.
@@ -36,7 +37,7 @@ data Root a = NotBracketed
             -- error tolerance after the given number of iterations.
             | Root a
             -- ^ A root was successfully found.
-              deriving (Eq, Read, Show, Typeable)
+              deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Functor Root where
     fmap _ NotBracketed = NotBracketed

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Binomial
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -23,7 +23,8 @@ module Statistics.Distribution.Binomial
     , bdProbability
     ) where
 
-import Data.Typeable (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import Numeric.SpecFunctions (choose)
 
@@ -34,7 +35,7 @@ data BinomialDistribution = BD {
     -- ^ Number of trials.
     , bdProbability :: {-# UNPACK #-} !Double
     -- ^ Probability.
-    } deriving (Eq, Read, Show, Typeable)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance D.Distribution BinomialDistribution where
     cumulative = cumulative
@@ -58,7 +59,7 @@ instance D.MaybeVariance BinomialDistribution where
 
 -- This could be slow for big n
 probability :: BinomialDistribution -> Int -> Double
-probability (BD n p) k 
+probability (BD n p) k
   | k < 0 || k > n = 0
   | n == 0         = 1
   | otherwise      = choose n k * p^k * (1-p)^(n-k)
@@ -91,10 +92,10 @@ variance (BD n p) = fromIntegral n * p * (1 - p)
 binomial :: Int                 -- ^ Number of trials.
          -> Double              -- ^ Probability.
          -> BinomialDistribution
-binomial n p 
+binomial n p
   | n < 0          =
     error $ msg ++ "number of trials must be non-negative. Got " ++ show n
-  | p < 0 || p > 1 = 
+  | p < 0 || p > 1 =
     error $ msg++"probability must be in [0,1] range. Got " ++ show p
   | otherwise      = BD n p
     where msg = "Statistics.Distribution.Binomial.binomial: "

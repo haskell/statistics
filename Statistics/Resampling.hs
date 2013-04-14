@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
 
 -- |
 -- Module    : Statistics.Resampling
@@ -21,10 +21,12 @@ module Statistics.Resampling
 import Control.Concurrent (forkIO, newChan, readChan, writeChan)
 import Control.Monad (forM_, liftM, replicateM_)
 import Control.Monad.Primitive (PrimMonad, PrimState)
+import Data.Data (Data, Typeable)
 import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Generic (unsafeFreeze)
 import Data.Word (Word32)
 import GHC.Conc (numCapabilities)
+import GHC.Generics (Generic)
 import Statistics.Function (indices)
 import Statistics.Types (Estimator, Sample)
 import System.Random.MWC (Gen, initialize, uniform, uniformVector)
@@ -36,7 +38,7 @@ import qualified Data.Vector.Unboxed.Mutable as MU
 -- humble author's brain to go wrong.
 newtype Resample = Resample {
       fromResample :: U.Vector Double
-    } deriving (Eq, Show)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
 -- computing each estimate over the resampled data.

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Exponential
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -23,7 +23,8 @@ module Statistics.Distribution.Exponential
     , edLambda
     ) where
 
-import Data.Typeable (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
 import qualified System.Random.MWC.Distributions as MWC
@@ -31,7 +32,7 @@ import Statistics.Types (Sample)
 
 newtype ExponentialDistribution = ED {
       edLambda :: Double
-    } deriving (Eq, Read, Show, Typeable)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance D.Distribution ExponentialDistribution where
     cumulative      = cumulative
@@ -86,7 +87,7 @@ quantile (ED l) p
 exponential :: Double            -- ^ &#955; (scale) parameter.
             -> ExponentialDistribution
 exponential l
-  | l <= 0 = 
+  | l <= 0 =
     error $ "Statistics.Distribution.Exponential.exponential: scale parameter must be positive. Got " ++ show l
   | otherwise = ED l
 {-# INLINE exponential #-}

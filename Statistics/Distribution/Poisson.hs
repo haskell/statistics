@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Poisson
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
@@ -24,7 +24,8 @@ module Statistics.Distribution.Poisson
     -- $references
     ) where
 
-import Data.Typeable (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Numeric.SpecFunctions (incompleteGamma)
@@ -33,7 +34,7 @@ import Numeric.SpecFunctions (incompleteGamma)
 
 newtype PoissonDistribution = PD {
       poissonLambda :: Double
-    } deriving (Eq, Read, Show, Typeable)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance D.Distribution PoissonDistribution where
     cumulative (PD lambda) x

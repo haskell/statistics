@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.StudentT
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -17,14 +17,15 @@ module Statistics.Distribution.StudentT (
   ) where
 
 
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import Statistics.Distribution.Transform (LinearTransform (..))
-import Data.Typeable         (Typeable)
 import Numeric.SpecFunctions (logBeta, incompleteBeta, invIncompleteBeta)
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
-                   deriving (Eq,Show,Read,Typeable)
+                   deriving (Eq, Show, Read, Typeable, Data, Generic)
 
 -- | Create Student-T distribution. Number of parameters must be positive.
 studentT :: Double -> StudentT
@@ -33,12 +34,12 @@ studentT ndf
   | otherwise = modErr "studentT" "non-positive number of degrees of freedom"
 
 instance D.Distribution StudentT where
-  cumulative = cumulative 
+  cumulative = cumulative
 
 instance D.ContDistr StudentT where
   density  = density
   quantile = quantile
-  
+
 cumulative :: StudentT -> Double -> Double
 cumulative (StudentT ndf) x
   | x > 0     = 1 - 0.5 * ibeta
@@ -52,11 +53,11 @@ density (StudentT ndf) x =
 
 quantile :: StudentT -> Double -> Double
 quantile (StudentT ndf) p
-  | p >= 0 && p <= 1 = 
+  | p >= 0 && p <= 1 =
     let x = invIncompleteBeta (0.5 * ndf) 0.5 (2 * min p (1 - p))
     in case sqrt $ ndf * (1 - x) / x of
          r | p < 0.5   -> -r
-           | otherwise -> r 
+           | otherwise -> r
   | otherwise = modErr "quantile" $ "p must be in [0,1] range. Got: "++show p
 
 

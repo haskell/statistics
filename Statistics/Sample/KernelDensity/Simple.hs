@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Sample.KernelDensity.Simple
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -46,6 +46,8 @@ module Statistics.Sample.KernelDensity.Simple
     -- $references
     ) where
 
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_1_sqrt_2, m_2_sqrt_pi)
 import Statistics.Function (minMax)
 import Statistics.Sample   (stdDev)
@@ -55,7 +57,7 @@ import qualified Data.Vector.Generic as G
 -- | Points from the range of a 'Sample'.
 newtype Points = Points {
       fromPoints :: U.Vector Double
-    } deriving (Eq, Show)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | Bandwidth estimator for an Epanechnikov kernel.
 epanechnikovBW :: Double -> Bandwidth

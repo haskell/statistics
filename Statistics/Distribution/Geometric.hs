@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Geometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -26,12 +26,13 @@ module Statistics.Distribution.Geometric
     , gdSuccess
     ) where
 
-import Data.Typeable (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 
 newtype GeometricDistribution = GD {
       gdSuccess :: Double
-    } deriving (Eq, Read, Show, Typeable)
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance D.Distribution GeometricDistribution where
     cumulative = cumulative

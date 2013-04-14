@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances, FlexibleContexts, DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts,
+    FlexibleInstances, UndecidableInstances #-}
 -- |
 -- Module    : Statistics.Distribution.Transform
 -- Copyright : (c) 2013 John McDonnell;
@@ -15,7 +16,8 @@ module Statistics.Distribution.Transform (
   , scaleAround
   ) where
 
-import Data.Typeable         (Typeable)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
 import Data.Functor          ((<$>))
 import qualified Statistics.Distribution as D
 
@@ -30,7 +32,7 @@ data LinearTransform d = LinearTransform
     -- | Scale parameter.
   , linTransDistr    :: d
     -- | Distribution being transformed.
-  } deriving (Eq,Show,Read,Typeable)
+  } deriving (Eq, Show, Read, Typeable, Data, Generic)
 
 -- | Apply linear transformation to distribution.
 scaleAround :: Double           -- ^ Fixed point
@@ -51,7 +53,7 @@ instance D.Distribution d => D.Distribution (LinearTransform d) where
 
 instance D.ContDistr d => D.ContDistr (LinearTransform d) where
   density  (LinearTransform loc sc dist) x = D.density dist ((x-loc) / sc) / sc
-  quantile (LinearTransform loc sc dist) p = loc + sc * D.quantile dist p 
+  quantile (LinearTransform loc sc dist) p = loc + sc * D.quantile dist p
 
 instance D.MaybeMean d => D.MaybeMean (LinearTransform d) where
   maybeMean (LinearTransform loc _ dist) = (+loc) <$> D.maybeMean dist
