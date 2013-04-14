@@ -19,6 +19,7 @@ module Statistics.Distribution.Uniform
     , uniformB
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
@@ -30,6 +31,8 @@ data UniformDistribution = UniformDistribution {
       uniformA :: {-# UNPACK #-} !Double -- ^ Low boundary of distribution
     , uniformB :: {-# UNPACK #-} !Double -- ^ Upper boundary of distribution
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary UniformDistribution
 
 -- | Create uniform distribution.
 uniformDistr :: Double -> Double -> UniformDistribution

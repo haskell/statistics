@@ -20,6 +20,7 @@ module Statistics.Distribution.Normal
     , standard
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
@@ -37,6 +38,8 @@ data NormalDistribution = ND {
     , ndPdfDenom :: {-# UNPACK #-} !Double
     , ndCdfDenom :: {-# UNPACK #-} !Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary NormalDistribution
 
 instance D.Distribution NormalDistribution where
     cumulative      = cumulative

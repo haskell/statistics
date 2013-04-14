@@ -25,6 +25,7 @@ module Statistics.Distribution.Gamma
     , gdScale
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN)
@@ -38,6 +39,8 @@ data GammaDistribution = GD {
       gdShape :: {-# UNPACK #-} !Double -- ^ Shape parameter, /k/.
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary GammaDistribution
 
 -- | Create gamma distribution. Both shape and scale parameters must
 -- be positive.

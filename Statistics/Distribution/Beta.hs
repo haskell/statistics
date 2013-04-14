@@ -20,6 +20,7 @@ module Statistics.Distribution.Beta
   , bdBeta
   ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.SpecFunctions           (incompleteBeta, invIncompleteBeta, logBeta)
@@ -33,6 +34,8 @@ data BetaDistribution = BD
  , bdBeta  :: {-# UNPACK #-} !Double
    -- ^ Beta shape parameter
  } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary BetaDistribution
 
 -- | Create beta distribution. Both shape parameters must be positive.
 betaDistr :: Double             -- ^ Shape parameter alpha

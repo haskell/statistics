@@ -24,6 +24,7 @@ module Statistics.Resampling.Bootstrap
 import Control.DeepSeq (NFData)
 import Control.Exception (assert)
 import Control.Monad.Par               (parMap,runPar)
+import Data.Binary (Binary)
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 import Data.Vector.Unboxed ((!))
@@ -49,6 +50,7 @@ data Estimate = Estimate {
     -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
+instance Binary Estimate
 instance NFData Estimate
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'

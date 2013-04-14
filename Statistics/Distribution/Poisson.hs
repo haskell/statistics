@@ -24,6 +24,7 @@ module Statistics.Distribution.Poisson
     -- $references
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
@@ -35,6 +36,8 @@ import Numeric.SpecFunctions (incompleteGamma)
 newtype PoissonDistribution = PD {
       poissonLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary PoissonDistribution
 
 instance D.Distribution PoissonDistribution where
     cumulative (PD lambda) x

@@ -26,6 +26,7 @@ module Statistics.Distribution.Geometric
     , gdSuccess
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
@@ -33,6 +34,8 @@ import qualified Statistics.Distribution as D
 newtype GeometricDistribution = GD {
       gdSuccess :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary GeometricDistribution
 
 instance D.Distribution GeometricDistribution where
     cumulative = cumulative

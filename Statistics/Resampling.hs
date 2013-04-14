@@ -21,6 +21,7 @@ module Statistics.Resampling
 import Control.Concurrent (forkIO, newChan, readChan, writeChan)
 import Control.Monad (forM_, liftM, replicateM_)
 import Control.Monad.Primitive (PrimMonad, PrimState)
+import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Generic (unsafeFreeze)
@@ -39,6 +40,10 @@ import qualified Data.Vector.Unboxed.Mutable as MU
 newtype Resample = Resample {
       fromResample :: U.Vector Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary Resample where
+    put (Resample v) = put (U.toList v)
+    get = (Resample . U.fromList) `fmap` get
 
 -- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
 -- computing each estimate over the resampled data.

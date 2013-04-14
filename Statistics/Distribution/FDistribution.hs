@@ -16,6 +16,7 @@ module Statistics.Distribution.FDistribution (
   , fDistributionNDF2
   ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
@@ -30,6 +31,7 @@ data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
 
+instance Binary FDistribution
 
 fDistribution :: Int -> Int -> FDistribution
 fDistribution n m

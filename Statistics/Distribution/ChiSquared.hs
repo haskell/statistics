@@ -18,6 +18,7 @@ module Statistics.Distribution.ChiSquared (
         , chiSquaredNDF
         ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.SpecFunctions (incompleteGamma,invIncompleteGamma,logGamma)
@@ -29,6 +30,8 @@ import qualified System.Random.MWC.Distributions as MWC
 -- | Chi-squared distribution
 newtype ChiSquared = ChiSquared Int
                      deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary ChiSquared
 
 -- | Get number of degrees of freedom
 chiSquaredNDF :: ChiSquared -> Int

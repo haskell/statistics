@@ -21,6 +21,7 @@ module Statistics.Distribution.CauchyLorentz (
   , standardCauchy
   ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
@@ -37,6 +38,8 @@ data CauchyDistribution = CD {
   , cauchyDistribScale  :: {-# UNPACK #-} !Double
   }
   deriving (Eq, Show, Read, Typeable, Data, Generic)
+
+instance Binary CauchyDistribution
 
 -- | Cauchy distribution
 cauchyDistribution :: Double    -- ^ Central point

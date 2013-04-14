@@ -27,6 +27,7 @@ module Statistics.Distribution.Hypergeometric
     , hdK
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.SpecFunctions (choose)
@@ -37,6 +38,8 @@ data HypergeometricDistribution = HD {
     , hdL :: {-# UNPACK #-} !Int
     , hdK :: {-# UNPACK #-} !Int
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary HypergeometricDistribution
 
 instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative

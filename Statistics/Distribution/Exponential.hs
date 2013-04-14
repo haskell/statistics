@@ -23,6 +23,7 @@ module Statistics.Distribution.Exponential
     , edLambda
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution         as D
@@ -33,6 +34,8 @@ import Statistics.Types (Sample)
 newtype ExponentialDistribution = ED {
       edLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary ExponentialDistribution
 
 instance D.Distribution ExponentialDistribution where
     cumulative      = cumulative

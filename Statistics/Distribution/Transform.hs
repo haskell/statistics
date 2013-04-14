@@ -16,6 +16,7 @@ module Statistics.Distribution.Transform (
   , scaleAround
   ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Data.Functor          ((<$>))
@@ -33,6 +34,8 @@ data LinearTransform d = LinearTransform
   , linTransDistr    :: d
     -- | Distribution being transformed.
   } deriving (Eq, Show, Read, Typeable, Data, Generic)
+
+instance (Binary d) => Binary (LinearTransform d)
 
 -- | Apply linear transformation to distribution.
 scaleAround :: Double           -- ^ Fixed point

@@ -23,6 +23,7 @@ module Statistics.Distribution.Binomial
     , bdProbability
     ) where
 
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
@@ -36,6 +37,8 @@ data BinomialDistribution = BD {
     , bdProbability :: {-# UNPACK #-} !Double
     -- ^ Probability.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary BinomialDistribution
 
 instance D.Distribution BinomialDistribution where
     cumulative = cumulative

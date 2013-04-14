@@ -16,7 +16,7 @@ module Statistics.Distribution.StudentT (
   , studentTUnstandardized
   ) where
 
-
+import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
@@ -26,6 +26,8 @@ import Numeric.SpecFunctions (logBeta, incompleteBeta, invIncompleteBeta)
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
+
+instance Binary StudentT
 
 -- | Create Student-T distribution. Number of parameters must be positive.
 studentT :: Double -> StudentT

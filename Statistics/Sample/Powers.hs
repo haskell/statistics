@@ -47,6 +47,7 @@ module Statistics.Sample.Powers
     -- $references
     ) where
 
+import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Generic   (unsafeFreeze)
 import Data.Vector.Unboxed   ((!))
@@ -62,6 +63,10 @@ import qualified Data.Vector.Unboxed.Mutable as MU
 
 newtype Powers = Powers (U.Vector Double)
     deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary Powers where
+    put (Powers v) = put (G.toList v)
+    get = (Powers . G.fromList) `fmap` get
 
 -- | O(/n/) Collect the /n/ simple powers of a sample.
 --

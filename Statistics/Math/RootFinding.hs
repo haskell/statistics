@@ -22,6 +22,7 @@ module Statistics.Math.RootFinding
 
 import Statistics.Function.Comparison
 
+import Data.Binary (Binary)
 import Control.Applicative
 import Control.Monad       (MonadPlus(..), ap)
 import Data.Data (Data, Typeable)
@@ -38,6 +39,8 @@ data Root a = NotBracketed
             | Root a
             -- ^ A root was successfully found.
               deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance (Binary a) => Binary (Root a)
 
 instance Functor Root where
     fmap _ NotBracketed = NotBracketed
