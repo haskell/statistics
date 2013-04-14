@@ -25,11 +25,11 @@ import qualified Statistics.Distribution as D
 -- > x' = μ + σ·x
 data LinearTransform d = LinearTransform
   { linTransLocation :: {-# UNPACK #-} !Double
-    -- | Location parameter.
+    -- ^ Location parameter.
   , linTransScale    :: {-# UNPACK #-} !Double
-    -- | Scale parameter.
+    -- ^ Scale parameter.
   , linTransDistr    :: d
-    -- | Distribution being transformed.
+    -- ^ Distribution being transformed.
   } deriving (Eq,Show,Read,Typeable)
 
 -- | Apply linear transformation to distribution.
