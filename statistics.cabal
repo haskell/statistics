@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.10.3.0
+version:        0.10.3.1
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -147,12 +147,17 @@ category:       Math, Statistics
 build-type:     Simple
 cabal-version:  >= 1.8
 extra-source-files:
+  ChangeLog
   README.markdown
+  benchmark/bench.hs
   examples/kde/KDE.hs
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
   tests/Tests/Math/gen.py
+  tests/Tests/Math/Tables.hs
+  tests/utils/Makefile
+  tests/utils/fftw.c
 
 library
   exposed-modules:
