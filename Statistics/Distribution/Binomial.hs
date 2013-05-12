@@ -27,7 +27,7 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
-import Numeric.SpecFunctions (choose)
+import Numeric.SpecFunctions (choose,incompleteBeta)
 
 
 -- | The binomial distribution.
@@ -70,15 +70,13 @@ probability (BD n p) k
 
 -- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
-cumulative d@(BD n _) x
+cumulative d@(BD n p) x
   | isNaN x      = error "Statistics.Distribution.Binomial.cumulative: NaN input"
   | isInfinite x = if x > 0 then 1 else 0
   | k <  0       = 0
   | k >= n       = 1
-  | k <  m       = D.sumProbabilities d 0 k
-  | otherwise    = 1 - D.sumProbabilities d (k+1) n
+  | otherwise    = incompleteBeta (fromIntegral (n-k)) (fromIntegral (k+1)) (1 - p)
   where
-    m = floor (mean d)
     k = floor x
 {-# INLINE cumulative #-}
 
