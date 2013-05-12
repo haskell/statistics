@@ -70,7 +70,7 @@ probability (BD n p) k
 
 -- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
-cumulative d@(BD n p) x
+cumulative (BD n p) x
   | isNaN x      = error "Statistics.Distribution.Binomial.cumulative: NaN input"
   | isInfinite x = if x > 0 then 1 else 0
   | k <  0       = 0
