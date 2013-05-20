@@ -144,7 +144,7 @@ cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d 
 -- CDF for discrete distribution uses <= for comparison
 cdfDiscreteIsCorrect :: (DiscreteDistr d) => T d -> d -> Property
 cdfDiscreteIsCorrect _ d
-  = printTestCase (unlines $ map show badN)
+  = printTestCase (unlines badN)
   $ null badN  
   where
     -- We are checking that:
@@ -154,7 +154,7 @@ cdfDiscreteIsCorrect _ d
     -- Apporixmate equality is tricky here. Scale is set by maximum
     -- value of CDF and probability. Case when all proabilities are
     -- zero should be trated specially.
-    badN = [ (i,p,p1,dp, (p1-p-dp) / max p1 dp)
+    badN = [ printf "N=%3i    p[i]=%g\tp[i+1]=%g\tdP=%g\trelerr=%g" i p p1 dp ((p1-p-dp) / max p1 dp)
            | i <- [0 .. 100]
            , let p      = cumulative d $ fromIntegral i - 1e-6
                  p1     = cumulative d $ fromIntegral i
