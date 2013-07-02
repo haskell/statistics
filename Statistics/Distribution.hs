@@ -126,11 +126,11 @@ class (Distribution d) => MaybeEntropy d where
   -- | Returns the entropy of a distribution, in nats, if such is defined.
   maybeEntropy :: d -> Maybe Double
   
--- | Type class for distributions with entropy, meaning Shannon entropy
---   in the case of a discrete distribution, or differential entropy in the
---   case of a continuous one.  If the distribution has finite entropy for
---   all valid parameter values then it should be an instance of this type
---   class.
+-- | Type class for distributions with entropy, meaning Shannon
+--   entropy in the case of a discrete distribution, or differential
+--   entropy in the case of a continuous one.  If the distribution has
+--   well-defined entropy for all valid parameter values then it
+--   should be an instance of this type class.
 class (MaybeEntropy d) => Entropy d where
   -- | Returns the entropy of a distribution, in nats.
   entropy :: d -> Double
