@@ -21,7 +21,8 @@ module Statistics.Distribution.ChiSquared (
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-import Numeric.SpecFunctions (incompleteGamma,invIncompleteGamma,logGamma)
+import Numeric.SpecFunctions (
+  incompleteGamma,invIncompleteGamma,logGamma,digamma)
 
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
@@ -68,6 +69,17 @@ instance D.MaybeMean ChiSquared where
 instance D.MaybeVariance ChiSquared where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
+    
+instance D.Entropy ChiSquared where
+  entropy (ChiSquared ndf) =
+    let kHalf = 0.5 * fromIntegral ndf in
+    kHalf 
+    + log 2 
+    + logGamma kHalf
+    + (1-kHalf) * digamma kHalf
+
+instance D.MaybeEntropy ChiSquared where
+  maybeEntropy = Just . D.entropy
 
 instance D.ContGen ChiSquared where
     genContVar (ChiSquared n) = MWC.chiSquare n
