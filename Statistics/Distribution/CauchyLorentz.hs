@@ -69,3 +69,9 @@ instance D.ContDistr CauchyDistribution where
 
 instance D.ContGen CauchyDistribution where
   genContVar = D.genContinous
+
+instance D.Entropy CauchyDistribution where
+  entropy (CD _ s) = log s + log (4*pi)
+    
+instance D.MaybeEntropy CauchyDistribution where
+  maybeEntropy = Just . D.entropy
