@@ -60,6 +60,12 @@ instance D.MaybeVariance ExponentialDistribution where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
 
+instance D.Entropy ExponentialDistribution where
+  entropy (ED l) = 1 - log l
+
+instance D.MaybeEntropy ExponentialDistribution where
+  maybeEntropy = Just . D.entropy
+
 instance D.ContGen ExponentialDistribution where
   genContVar = MWC.exponential . edLambda
 
