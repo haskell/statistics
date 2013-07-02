@@ -21,7 +21,8 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import Statistics.Distribution.Transform (LinearTransform (..))
-import Numeric.SpecFunctions (logBeta, incompleteBeta, invIncompleteBeta)
+import Numeric.SpecFunctions (
+  logBeta, incompleteBeta, invIncompleteBeta, digamma)
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
@@ -70,6 +71,15 @@ instance D.MaybeMean StudentT where
 instance D.MaybeVariance StudentT where
   maybeVariance (StudentT ndf) | ndf > 2   = Just $! ndf / (ndf - 2)
                                | otherwise = Nothing
+
+instance D.Entropy StudentT where
+  entropy (StudentT ndf) =
+    0.5 * (ndf+1) * (digamma ((1+ndf)/2) - digamma(ndf/2))
+    + log (sqrt ndf) 
+    + logBeta (ndf/2) 0.5
+
+instance D.MaybeEntropy StudentT where
+  maybeEntropy = Just . D.entropy
 
 instance D.ContGen StudentT where
   genContVar = D.genContinous
