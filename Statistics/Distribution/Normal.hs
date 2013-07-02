@@ -62,6 +62,12 @@ instance D.MaybeVariance NormalDistribution where
 instance D.Variance NormalDistribution where
     stdDev = stdDev
 
+instance D.Entropy NormalDistribution where
+  entropy d = 0.5 * log (2 * pi * exp 1 * D.variance d)
+
+instance D.MaybeEntropy NormalDistribution where
+  maybeEntropy = Just . D.entropy
+
 instance D.ContGen NormalDistribution where
     genContVar d = MWC.normal (mean d) (stdDev d)
     {-# INLINE genContVar #-}
