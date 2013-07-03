@@ -27,7 +27,9 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
+import qualified Statistics.Distribution.Poisson.Internal as I
 import Numeric.SpecFunctions (choose,incompleteBeta)
+import Numeric.MathFunctions.Constants (m_epsilon)
 
 
 -- | The binomial distribution.
@@ -59,6 +61,14 @@ instance D.MaybeVariance BinomialDistribution where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
 
+instance D.Entropy BinomialDistribution where
+  entropy (BD n p)
+    | n == 0 = 0
+    | n <= 100 = directEntropy (BD n p)
+    | otherwise = I.poissonEntropy (fromIntegral n * p)
+
+instance D.MaybeEntropy BinomialDistribution where
+  maybeEntropy = Just . D.entropy
 
 -- This could be slow for big n
 probability :: BinomialDistribution -> Int -> Double
@@ -87,6 +97,13 @@ mean (BD n p) = fromIntegral n * p
 variance :: BinomialDistribution -> Double
 variance (BD n p) = fromIntegral n * p * (1 - p)
 {-# INLINE variance #-}
+
+directEntropy :: BinomialDistribution -> Double
+directEntropy d@(BD n _) =   
+  negate . sum $
+  takeWhile (< negate m_epsilon) $
+  dropWhile (not . (< negate m_epsilon)) $
+  [ let x = probability d k in x * log x | k <- [0..n]]
 
 -- | Construct binomial distribution. Number of trials must be
 --   non-negative and probability must be in [0,1] range
