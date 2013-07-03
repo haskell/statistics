@@ -29,6 +29,7 @@ module Statistics.Distribution.Geometric
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
+import Numeric.MathFunctions.Constants(m_pos_inf)
 import qualified Statistics.Distribution as D
 
 newtype GeometricDistribution = GD {
@@ -58,6 +59,14 @@ instance D.MaybeVariance GeometricDistribution where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
 
+instance D.Entropy GeometricDistribution where
+  entropy (GD s)
+    | s == 0 = m_pos_inf
+    | s == 1 = 0
+    | otherwise = negate $ (s * log s + (1-s) * log (1-s)) / s
+
+instance D.MaybeEntropy GeometricDistribution where
+  maybeEntropy = Just . D.entropy
 
 -- | Create geometric distribution.
 geometric :: Double                -- ^ Success rate

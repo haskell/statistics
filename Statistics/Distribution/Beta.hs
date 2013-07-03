@@ -23,7 +23,8 @@ module Statistics.Distribution.Beta
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-import Numeric.SpecFunctions           (incompleteBeta, invIncompleteBeta, logBeta)
+import Numeric.SpecFunctions (
+  incompleteBeta, invIncompleteBeta, logBeta, digamma)
 import Numeric.MathFunctions.Constants (m_NaN)
 import qualified Statistics.Distribution as D
 
@@ -81,6 +82,18 @@ instance D.Variance BetaDistribution where
 instance D.MaybeVariance BetaDistribution where
   maybeVariance = Just . D.variance
   {-# INLINE maybeVariance #-}
+
+instance D.Entropy BetaDistribution where
+  entropy (BD a b) =
+    logBeta a b 
+    - (a-1) * digamma a
+    - (b-1) * digamma b
+    + (a+b-2) * digamma (a+b)
+  {-# INLINE entropy #-}
+    
+instance D.MaybeEntropy BetaDistribution where
+  maybeEntropy = Just . D.entropy
+  {-# INLINE maybeEntropy #-}
 
 instance D.ContDistr BetaDistribution where
   density (BD a b) x

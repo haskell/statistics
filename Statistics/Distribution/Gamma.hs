@@ -29,7 +29,8 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN)
-import Numeric.SpecFunctions           (incompleteGamma, invIncompleteGamma)
+import Numeric.SpecFunctions (
+  incompleteGamma, invIncompleteGamma, logGamma, digamma)
 import Statistics.Distribution.Poisson.Internal  as Poisson
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
@@ -83,6 +84,16 @@ instance D.MaybeMean GammaDistribution where
 instance D.MaybeVariance GammaDistribution where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
+
+instance D.MaybeEntropy GammaDistribution where
+  maybeEntropy (GD a l)
+    | a > 0 && l > 0 = 
+      Just $
+      a 
+      + log l 
+      + logGamma a 
+      + (1-a) * digamma a
+    | otherwise = Nothing
 
 instance D.ContGen GammaDistribution where
     genContVar (GD a l) = MWC.gamma a l

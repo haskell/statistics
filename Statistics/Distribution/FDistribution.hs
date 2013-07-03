@@ -20,7 +20,8 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
-import Numeric.SpecFunctions (logBeta, incompleteBeta, invIncompleteBeta)
+import Numeric.SpecFunctions (
+  logBeta, incompleteBeta, invIncompleteBeta, digamma)
 
 
 
@@ -78,6 +79,19 @@ instance D.MaybeVariance FDistribution where
   maybeStdDev (F n m _)
     | m > 4     = Just $ 2 * sqr m * (m + n - 2) / (n * sqr (m - 2) * (m - 4))
     | otherwise = Nothing
+
+instance D.Entropy FDistribution where
+  entropy (F n m _) =
+    let nHalf = 0.5 * n
+        mHalf = 0.5 * m in
+    log (n/m) 
+    + logBeta nHalf mHalf
+    + (1 - nHalf) * digamma nHalf 
+    - (1 + mHalf) * digamma mHalf
+    + (nHalf + mHalf) * digamma (nHalf + mHalf)
+
+instance D.MaybeEntropy FDistribution where
+  maybeEntropy = Just . D.entropy
 
 instance D.ContGen FDistribution where
   genContVar = D.genContinous

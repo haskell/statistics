@@ -30,6 +30,7 @@ module Statistics.Distribution.Hypergeometric
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
+import Numeric.MathFunctions.Constants (m_epsilon)
 import Numeric.SpecFunctions (choose)
 import qualified Statistics.Distribution as D
 
@@ -60,7 +61,11 @@ instance D.MaybeVariance HypergeometricDistribution where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
 
-
+instance D.Entropy HypergeometricDistribution where
+  entropy = directEntropy
+  
+instance D.MaybeEntropy HypergeometricDistribution where
+  maybeEntropy = Just . D.entropy
 
 variance :: HypergeometricDistribution -> Double
 variance (HD m l k) = (k' * ml) * (1 - ml) * (l' - k') / (l' - 1)
@@ -73,6 +78,14 @@ variance (HD m l k) = (k' * ml) * (1 - ml) * (l' - k') / (l' - 1)
 mean :: HypergeometricDistribution -> Double
 mean (HD m l k) = fromIntegral k * fromIntegral m / fromIntegral l
 {-# INLINE mean #-}
+
+directEntropy :: HypergeometricDistribution -> Double
+directEntropy d@(HD m _ _) =
+    negate . sum $
+  takeWhile (< negate m_epsilon) $
+  dropWhile (not . (< negate m_epsilon)) $
+  [ let x = probability d n in x * log x | n <- [0..m]]
+
 
 hypergeometric :: Int               -- ^ /m/
                -> Int               -- ^ /l/
