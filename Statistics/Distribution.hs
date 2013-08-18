@@ -69,18 +69,27 @@ class Distribution  d => DiscreteDistr d where
     probability :: d -> Int -> Double
 
 
--- | Continuous probability distributuion
+-- | Continuous probability distributuion.
+--
+--   Minimal complete definition is 'quantile' and either 'density' or
+--   'logDensity'.
 class Distribution d => ContDistr d where
     -- | Probability density function. Probability that random
     -- variable /X/ lies in the infinitesimal interval
     -- [/x/,/x+/&#948;/x/) equal to /density(x)/&#8901;&#948;/x/
     density :: d -> Double -> Double
+    density d = exp . logDensity d
+    {-# INLINE density #-}
 
     -- | Inverse of the cumulative distribution function. The value
     -- /x/ for which P(/X/&#8804;/x/) = /p/. If probability is outside
     -- of [0,1] range function should call 'error'
     quantile :: d -> Double -> Double
 
+    -- | Natural logarithm of density.
+    logDensity :: d -> Double -> Double
+    logDensity d = log . density d
+    {-# INLINE logDensity #-}
 
 
 -- | Type class for distributions with mean. 'maybeMean' should return
