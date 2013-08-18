@@ -203,7 +203,7 @@ kurtosis xs = c4 / (c2 * c2) - 3
 data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
 robustSumVar :: (G.Vector v Double) => Double -> v Double -> Double
-robustSumVar m samp = G.sum . G.map (square . subtract m) $ samp
+robustSumVar m = G.sum . G.map (square . subtract m)
   where square x = x * x
 {-# INLINE robustSumVar #-}
 
