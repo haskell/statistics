@@ -40,7 +40,8 @@ instance D.Distribution StudentT where
   cumulative = cumulative
 
 instance D.ContDistr StudentT where
-  density  = density
+  density    d@(StudentT ndf) x = exp (logDensityUnscaled d x) / sqrt ndf
+  logDensity d@(StudentT ndf) x = logDensityUnscaled d x - log (sqrt ndf)
   quantile = quantile
 
 cumulative :: StudentT -> Double -> Double
@@ -50,9 +51,9 @@ cumulative (StudentT ndf) x
   where
     ibeta = incompleteBeta (0.5 * ndf) 0.5 (ndf / (ndf + x*x))
 
-density :: StudentT -> Double -> Double
-density (StudentT ndf) x =
-    exp( log (ndf / (ndf + x*x)) * (0.5 * (1 + ndf)) - logBeta 0.5 (0.5 * ndf) ) / sqrt ndf
+logDensityUnscaled :: StudentT -> Double -> Double
+logDensityUnscaled (StudentT ndf) x =
+    log (ndf / (ndf + x*x)) * (0.5 * (1 + ndf)) - logBeta 0.5 (0.5 * ndf)
 
 quantile :: StudentT -> Double -> Double
 quantile (StudentT ndf) p
