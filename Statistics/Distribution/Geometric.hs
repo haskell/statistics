@@ -29,7 +29,7 @@ module Statistics.Distribution.Geometric
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-import Numeric.MathFunctions.Constants(m_pos_inf)
+import Numeric.MathFunctions.Constants(m_pos_inf,m_neg_inf)
 import qualified Statistics.Distribution as D
 
 newtype GeometricDistribution = GD {
@@ -42,7 +42,13 @@ instance D.Distribution GeometricDistribution where
     cumulative = cumulative
 
 instance D.DiscreteDistr GeometricDistribution where
-    probability = probability
+    probability (GD s) n
+      | n < 1     = 0
+      | otherwise = s * (1-s) ** (fromIntegral n - 1)
+    logProbability (GD s) n
+       | n < 1     = m_neg_inf
+       | otherwise = log s + log (1-s) * (fromIntegral n - 1)
+
 
 instance D.Mean GeometricDistribution where
     mean (GD s) = 1 / s
@@ -76,11 +82,6 @@ geometric x
   | otherwise        =
     error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
 {-# INLINE geometric #-}
-
-probability :: GeometricDistribution -> Int -> Double
-probability (GD s) n | n < 1     = 0
-                     | otherwise = s * (1-s) ** (fromIntegral n - 1)
-{-# INLINE probability #-}
 
 cumulative :: GeometricDistribution -> Double -> Double
 cumulative (GD s) x
