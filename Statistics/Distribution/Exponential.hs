@@ -26,10 +26,12 @@ module Statistics.Distribution.Exponential
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
+import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
 import qualified System.Random.MWC.Distributions as MWC
 import Statistics.Types (Sample)
+
 
 newtype ExponentialDistribution = ED {
       edLambda :: Double
@@ -42,7 +44,12 @@ instance D.Distribution ExponentialDistribution where
     complCumulative = complCumulative
 
 instance D.ContDistr ExponentialDistribution where
-    density  = density
+    density (ED l) x
+      | x < 0     = 0
+      | otherwise = l * exp (-l * x)
+    logDensity (ED l) x
+      | x < 0     = m_neg_inf
+      | otherwise = log l + (-l * x)
     quantile = quantile
 
 instance D.Mean ExponentialDistribution where
@@ -79,10 +86,6 @@ complCumulative (ED l) x | x <= 0    = 1
                          | otherwise = exp (-l * x)
 {-# INLINE complCumulative #-}
 
-density :: ExponentialDistribution -> Double -> Double
-density (ED l) x | x < 0     = 0
-                 | otherwise = l * exp (-l * x)
-{-# INLINE density #-}
 
 quantile :: ExponentialDistribution -> Double -> Double
 quantile (ED l) p
