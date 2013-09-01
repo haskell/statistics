@@ -46,7 +46,7 @@ instance D.Distribution NormalDistribution where
     complCumulative = complCumulative
 
 instance D.ContDistr NormalDistribution where
-    density    = density
+    logDensity = logDensity
     quantile   = quantile
 
 instance D.MaybeMean NormalDistribution where
@@ -90,7 +90,7 @@ normalDistr :: Double            -- ^ Mean of distribution
 normalDistr m sd
   | sd > 0    = ND { mean       = m
                    , stdDev     = sd
-                   , ndPdfDenom = m_sqrt_2_pi * sd
+                   , ndPdfDenom = log $ m_sqrt_2_pi * sd
                    , ndCdfDenom = m_sqrt_2 * sd
                    }
   | otherwise =
@@ -105,8 +105,8 @@ normalFromSample xs
   where
     (m,v) = S.meanVariance xs
 
-density :: NormalDistribution -> Double -> Double
-density d x = exp (-xm * xm / (2 * sd * sd)) / ndPdfDenom d
+logDensity :: NormalDistribution -> Double -> Double
+logDensity d x = (-xm * xm / (2 * sd * sd)) - ndPdfDenom d
     where xm = x - mean d
           sd = stdDev d
 
