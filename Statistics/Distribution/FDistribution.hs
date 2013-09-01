@@ -18,6 +18,7 @@ module Statistics.Distribution.FDistribution (
 
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
+import Numeric.MathFunctions.Constants (m_neg_inf)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import Numeric.SpecFunctions (
@@ -48,7 +49,12 @@ instance D.Distribution FDistribution where
   cumulative = cumulative
 
 instance D.ContDistr FDistribution where
-  density  = density
+  density d x
+    | x <= 0    = 0
+    | otherwise = exp $ logDensity d x
+  logDensity d x
+    | x <= 0    = m_neg_inf
+    | otherwise = logDensity d x
   quantile = quantile
 
 cumulative :: FDistribution -> Double -> Double
@@ -57,10 +63,9 @@ cumulative (F n m _) x
   | isInfinite x = 1            -- Only matches +∞
   | otherwise    = let y = n*x in incompleteBeta (0.5 * n) (0.5 * m) (y / (m + y))
 
-density :: FDistribution -> Double -> Double
-density (F n m fac) x
-  | x > 0     = exp $ fac + log x * (0.5 * n - 1) - log(m + n*x) * 0.5 * (n + m)
-  | otherwise = 0
+logDensity :: FDistribution -> Double -> Double
+logDensity (F n m fac) x
+  = fac + log x * (0.5 * n - 1) - log(m + n*x) * 0.5 * (n + m)
 
 quantile :: FDistribution -> Double -> Double
 quantile (F n m _) p
