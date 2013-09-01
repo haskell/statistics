@@ -67,6 +67,13 @@ class Distribution d where
 class Distribution  d => DiscreteDistr d where
     -- | Probability of n-th outcome.
     probability :: d -> Int -> Double
+    probability d = exp . logProbability d
+    {-# INLINE probability #-}
+
+    -- | Logarithm of probability of n-th outcome
+    logProbability :: d -> Int -> Double
+    logProbability d = log . probability d
+    {-# INLINE logProbability #-}
 
 
 -- | Continuous probability distributuion.
