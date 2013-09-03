@@ -29,8 +29,8 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
-import Numeric.SpecFunctions (incompleteGamma)
-
+import Numeric.SpecFunctions (incompleteGamma,logFactorial)
+import Numeric.MathFunctions.Constants (m_neg_inf)
 
 
 newtype PoissonDistribution = PD {
@@ -49,6 +49,9 @@ instance D.Distribution PoissonDistribution where
 
 instance D.DiscreteDistr PoissonDistribution where
     probability (PD lambda) x = I.probability lambda (fromIntegral x)
+    logProbability (PD lambda) i
+      | i < 0     = m_neg_inf
+      | otherwise = log lambda * fromIntegral i - logFactorial i - lambda
     {-# INLINE probability #-}
 
 instance D.Variance PoissonDistribution where
