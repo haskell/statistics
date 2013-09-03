@@ -28,7 +28,7 @@ module Statistics.Distribution.Gamma
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN)
+import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN, m_neg_inf)
 import Numeric.SpecFunctions (
   incompleteGamma, invIncompleteGamma, logGamma, digamma)
 import Statistics.Distribution.Poisson.Internal  as Poisson
@@ -68,6 +68,9 @@ instance D.Distribution GammaDistribution where
 
 instance D.ContDistr GammaDistribution where
     density    = density
+    logDensity (GD k theta) x
+      | x <= 0    = m_neg_inf
+      | otherwise = log x * (k - 1) - (x / theta) - logGamma k - log theta * k
     quantile   = quantile
 
 instance D.Variance GammaDistribution where
