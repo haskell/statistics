@@ -30,12 +30,13 @@ module Statistics.Distribution.Geometric
     , gdSuccess0
     ) where
 
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Monad  (liftM)
+import Data.Binary    (Binary)
+import Data.Data      (Data, Typeable)
+import GHC.Generics   (Generic)
 import Numeric.MathFunctions.Constants(m_pos_inf,m_neg_inf)
-import qualified Statistics.Distribution as D
-
+import qualified Statistics.Distribution         as D
+import qualified System.Random.MWC.Distributions as MWC
 
 ----------------------------------------------------------------
 -- Distribution over [1..]
@@ -81,6 +82,13 @@ instance D.Entropy GeometricDistribution where
 
 instance D.MaybeEntropy GeometricDistribution where
   maybeEntropy = Just . D.entropy
+
+instance D.DiscreteGen GeometricDistribution where
+  genDiscreteVar (GD s) g = MWC.geometric1 s g
+  {-# INLINE genDiscreteVar #-}
+instance D.ContGen GeometricDistribution where
+  genContVar d g = fromIntegral `liftM` D.genDiscreteVar d g
+  {-# INLINE genContVar #-}
 
 -- | Create geometric distribution.
 geometric :: Double                -- ^ Success rate
@@ -136,6 +144,13 @@ instance D.Entropy GeometricDistribution0 where
 
 instance D.MaybeEntropy GeometricDistribution0 where
   maybeEntropy = Just . D.entropy
+
+instance D.DiscreteGen GeometricDistribution0 where
+  genDiscreteVar (GD0 s) g = MWC.geometric0 s g
+  {-# INLINE genDiscreteVar #-}
+instance D.ContGen GeometricDistribution0 where
+  genContVar d g = fromIntegral `liftM` D.genDiscreteVar d g
+  {-# INLINE genContVar #-}
 
 -- | Create geometric distribution.
 geometric0 :: Double                -- ^ Success rate
