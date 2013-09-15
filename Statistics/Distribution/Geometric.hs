@@ -8,22 +8,26 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- The Geometric distribution. This is the probability distribution of
--- the number of Bernoulli trials needed to get one success, supported
--- on the set [1,2..].
+-- The Geometric distribution. There are two variants of
+-- distribution. First is the probability distribution of the number
+-- of Bernoulli trials needed to get one success, supported on the set
+-- [1,2..] ('GeometricDistribution'). Sometimes it's referred to as
+-- the /shifted/ geometric distribution to distinguish from another
+-- one.
 --
--- This distribution is sometimes referred to as the /shifted/
--- geometric distribution, to distinguish it from a variant measuring
--- the number of failures before the first success, defined over the
--- set [0,1..].
-
+-- Second variant is probability distribution of the number of
+-- failures before first success, defined over the set [0,1..]
+-- ('GeometricDistribution0').
 module Statistics.Distribution.Geometric
     (
       GeometricDistribution
+    , GeometricDistribution0
     -- * Constructors
     , geometric
+    , geometric0
     -- ** Accessors
     , gdSuccess
+    , gdSuccess0
     ) where
 
 import Data.Binary (Binary)
@@ -31,6 +35,10 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants(m_pos_inf,m_neg_inf)
 import qualified Statistics.Distribution as D
+
+
+----------------------------------------------------------------
+-- Distribution over [1..]
 
 newtype GeometricDistribution = GD {
       gdSuccess :: Double
@@ -90,3 +98,50 @@ cumulative (GD s) x
   | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
   | otherwise    = 1 - (1-s) ^ (floor x :: Int)
 {-# INLINE cumulative #-}
+
+
+----------------------------------------------------------------
+-- Distribution over [0..]
+
+newtype GeometricDistribution0 = GD0 {
+      gdSuccess0 :: Double
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary GeometricDistribution0
+
+instance D.Distribution GeometricDistribution0 where
+    cumulative (GD0 s) x = cumulative (GD s) (x + 1)
+
+instance D.DiscreteDistr GeometricDistribution0 where
+    probability    (GD0 s) n = D.probability    (GD s) (n + 1)
+    logProbability (GD0 s) n = D.logProbability (GD s) (n + 1)
+
+instance D.Mean GeometricDistribution0 where
+    mean (GD0 s) = 1 / s - 1
+    {-# INLINE mean #-}
+
+instance D.Variance GeometricDistribution0 where
+    variance (GD0 s) = D.variance (GD s)
+    {-# INLINE variance #-}
+
+instance D.MaybeMean GeometricDistribution0 where
+    maybeMean = Just . D.mean
+
+instance D.MaybeVariance GeometricDistribution0 where
+    maybeStdDev   = Just . D.stdDev
+    maybeVariance = Just . D.variance
+
+instance D.Entropy GeometricDistribution0 where
+  entropy (GD0 s) = D.entropy (GD s)
+
+instance D.MaybeEntropy GeometricDistribution0 where
+  maybeEntropy = Just . D.entropy
+
+-- | Create geometric distribution.
+geometric0 :: Double                -- ^ Success rate
+           -> GeometricDistribution0
+geometric0 x
+  | x >= 0 && x <= 1 = GD0 x
+  | otherwise        =
+    error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
+{-# INLINE geometric0 #-}

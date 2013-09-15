@@ -59,6 +59,7 @@ distributionTests = testGroup "Tests for all distributions"
 
   , discreteDistrTests (T :: T BinomialDistribution       )
   , discreteDistrTests (T :: T GeometricDistribution      )
+  , discreteDistrTests (T :: T GeometricDistribution0     )
   , discreteDistrTests (T :: T HypergeometricDistribution )
   , discreteDistrTests (T :: T PoissonDistribution        )
 
@@ -230,6 +231,8 @@ instance QC.Arbitrary BetaDistribution where
   arbitrary = betaDistr <$> QC.choose (1e-3,10) <*> QC.choose (1e-3,10)
 instance QC.Arbitrary GeometricDistribution where
   arbitrary = geometric <$> QC.choose (0,1)
+instance QC.Arbitrary GeometricDistribution0 where
+  arbitrary = geometric0 <$> QC.choose (0,1)
 instance QC.Arbitrary HypergeometricDistribution where
   arbitrary = do l <- QC.choose (1,20)
                  m <- QC.choose (0,l)
