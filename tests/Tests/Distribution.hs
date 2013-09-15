@@ -74,9 +74,10 @@ distributionTests = testGroup "Tests for all distributions"
 contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
-  [ testProperty "PDF sanity"              $ pdfSanityCheck   t
-  , testProperty "Quantile is CDF inverse" $ quantileIsInvCDF t
+  [ testProperty "PDF sanity"              $ pdfSanityCheck     t
+  , testProperty "Quantile is CDF inverse" $ quantileIsInvCDF   t
   , testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
+  , testProperty "log density check"       $ logDensityCheck    t
   ]
 
 -- Tests for discrete distribution
@@ -86,6 +87,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
   , testProperty "CDF is sum of prob."  $ discreteCDFcorrect    t
   , testProperty "Discrete CDF is OK"   $ cdfDiscreteIsCorrect  t
+  , testProperty "log probabilty check" $ logProbabilityCheck   t
   ]
 
 -- Tests for distributions which have CDF
@@ -165,6 +167,19 @@ cdfDiscreteIsCorrect _ d
            && relerr > 1e-14
            ]
 
+logDensityCheck :: (ContDistr d) => T d -> d -> Double -> Property
+logDensityCheck _ d x
+  = printTestCase (printf "density    = %g" p)
+  $ printTestCase (printf "logDensity = %g" logP)
+  $ printTestCase (printf "log p      = %g" (log p))
+  $ printTestCase (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+  $ or [ p == 0     && logP == (-1/0)
+       , p < 1e-308 && logP < 609
+       , eq 1e-14 (log p) logP
+       ]
+  where
+    p    = density d x
+    logP = logDensity d x
 
 -- PDF is positive
 pdfSanityCheck :: (ContDistr d) => T d -> d -> Double -> Bool
@@ -214,6 +229,20 @@ discreteCDFcorrect _ d a b
     m  = n + (abs (a - b) `mod` 100)
     p1 = cumulative d (fromIntegral m + 0.5) - cumulative d (fromIntegral n - 0.5)
     p2 = sum $ map (probability d) [n .. m]
+
+logProbabilityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Property
+logProbabilityCheck _ d x
+  = printTestCase (printf "probability    = %g" p)
+  $ printTestCase (printf "logProbability = %g" logP)
+  $ printTestCase (printf "log p          = %g" (log p))
+  $ printTestCase (printf "eps            = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+  $ or [ p == 0     && logP == (-1/0)
+       , p < 1e-308 && logP < 609
+       , eq 1e-14 (log p) logP
+       ]
+  where
+    p    = probability d x
+    logP = logProbability d x
 
 
     
