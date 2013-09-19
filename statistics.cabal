@@ -22,6 +22,13 @@ description:
   * Common statistical tests for significant differences between
     samples.
   .
+  Changes in 0.10.4.1
+  .
+  * Enthropy type class for distributions is added.
+  .
+  * Probability and probability density of distribution is given in
+    log domain too.
+  .
   Changes in 0.10.4.0
   .
   * Support for versions of GHC older than 7.2 is discontinued.
