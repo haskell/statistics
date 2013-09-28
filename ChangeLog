@@ -1,3 +1,20 @@
+Changes in 0.10.4.1
+
+  * Enthropy type class for distributions is added.
+
+  * Probability and probability density of distribution is given in
+    log domain too.
+
+Changes in 0.10.4.0
+
+  * Support for versions of GHC older than 7.2 is discontinued.
+
+  * All datatypes now support 'Data.Binary' and 'GHC.Generics'.
+
+Changes in 0.10.3.0
+
+  * Bug fixes
+
  Changes in 0.10.2.0
 
   * Bugs in DCT and IDCT are fixed.

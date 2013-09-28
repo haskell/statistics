@@ -21,56 +21,6 @@ description:
   .
   * Common statistical tests for significant differences between
     samples.
-  .
-  Changes in 0.10.4.1
-  .
-  * Enthropy type class for distributions is added.
-  .
-  * Probability and probability density of distribution is given in
-    log domain too.
-  .
-  Changes in 0.10.4.0
-  .
-  * Support for versions of GHC older than 7.2 is discontinued.
-  .
-  * All datatypes now support 'Data.Binary' and 'GHC.Generics'.
-  .
-  Changes in 0.10.3.0
-  .
-  * Bug fixes
-  .
-  Changes in 0.10.2.0
-  .
-  * Bugs in DCT and IDCT are fixed.
-  .
-  * Accesors for uniform distribution are added.
-  .
-  * 'ContGen' instances for all continous distribtuions are added.
-  .
-  * Beta distribution is added.
-  .
-  * Constructor for improper gamma distribtuion is added.
-  .
-  * Binomial distribution allows zero trials.
-  .
-  * Poisson distribution now accept zero parameter.
-  .
-  * Integer overflow in caculation of Wilcoxon-T test is fixed.
-  .
-  * Bug in 'ContGen' instance for normal distribution is fixed.
-  .
-  Changes in 0.10.1.0
-  .
-  * Kolmogorov-Smirnov nonparametric test added.
-  .
-  * Pearson's chi squared test added.
-  .
-  * Type class for generating random variates for given distribution
-    is added.
-  .
-  * Modules 'Statistics.Math' and 'Statistics.Constants' are moved to
-    the @math-functions@ package. They are still available but marked
-    as deprecated.
 
 license:        BSD3
 license-file:   LICENSE
