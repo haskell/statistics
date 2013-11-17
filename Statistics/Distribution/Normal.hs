@@ -76,7 +76,7 @@ instance D.ContGen NormalDistribution where
 standard :: NormalDistribution
 standard = ND { mean       = 0.0
               , stdDev     = 1.0
-              , ndPdfDenom = m_sqrt_2_pi
+              , ndPdfDenom = log m_sqrt_2_pi
               , ndCdfDenom = m_sqrt_2
               }
 
