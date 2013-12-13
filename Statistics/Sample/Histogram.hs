@@ -19,7 +19,7 @@ module Statistics.Sample.Histogram
     , range
     ) where
 
-import Numeric.MathFunctions.Constants (m_epsilon)
+import Numeric.MathFunctions.Constants (m_epsilon,m_tiny)
 import Statistics.Function (minMax)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Generic.Mutable as GM
@@ -84,13 +84,21 @@ histogram_ numBins lo hi xs0 = G.create (GM.replicate numBins 0 >>= bin xs0)
 -- The upper and lower bounds used are @(lo-d, hi+d)@, where
 --
 -- @d = (maximum sample - minimum sample) / ((bins - 1) * 2)@
+--
+-- If all elements in the sample are the same and equal to @x@ range
+-- is set to @(x - |x|/10, x + |x|/10)@. And if @x@ is equal to 0 range
+-- is set to @(-1,1)@. This is needed to avoid creating histogram with
+-- zero bin size.
 range :: (G.Vector v Double) =>
          Int                    -- ^ Number of bins (must be positive).
       -> v Double               -- ^ Sample data (cannot be empty).
-             -> (Double, Double)
+      -> (Double, Double)
 range numBins xs
     | numBins < 1 = error "Statistics.Histogram.range: invalid bin count"
     | G.null xs   = error "Statistics.Histogram.range: empty sample"
+    | lo == hi    = case abs lo / 10 of
+                      a | a < m_tiny -> (-1,1)
+                        | otherwise  -> (lo - a, lo + a)
     | otherwise   = (lo-d, hi+d)
   where
     d | numBins == 1 = 0
