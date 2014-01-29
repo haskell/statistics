@@ -38,7 +38,7 @@ module Statistics.Test.WilcoxonT (
 -- ranks of the differences where the first parameter is higher) whereas T- is
 -- the sum of negative ranks (the ranks of the differences where the second parameter is higher).
 -- to the the length of the shorter sample.
--- | The Wilcoxon matched-pairs signed-rank test.
+
 import Control.Applicative ((<$>))
 import Data.Function       (on)
 import Data.List           (findIndex)
