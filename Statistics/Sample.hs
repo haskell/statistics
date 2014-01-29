@@ -21,6 +21,7 @@ module Statistics.Sample
 
     -- * Statistics of location
     , mean
+    , welfordMean
     , meanWeighted
     , harmonicMean
     , geometricMean
@@ -54,11 +55,14 @@ module Statistics.Sample
     ) where
 
 import Statistics.Function (minMax)
+import Statistics.Sample.Internal (robustSumVar, sum)
 import Statistics.Types (Sample,WeightedSample)
+import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
 
 -- Operator ^ will be overriden
-import Prelude hiding ((^))
+import Prelude hiding ((^), sum)
 
 -- | /O(n)/ Range. The difference between the largest and smallest
 -- elements of a sample.
@@ -67,19 +71,31 @@ range s = hi - lo
     where (lo , hi) = minMax s
 {-# INLINE range #-}
 
+-- | /O(n)/ Arithmetic mean.  This uses Kahan-Babuška-Neumaier
+-- summation, so is more accurate than 'welfordMean' unless the input
+-- values are very large.
+mean :: (G.Vector v Double) => v Double -> Double
+mean xs = sum xs / fromIntegral (G.length xs)
+{-# SPECIALIZE mean :: U.Vector Double -> Double #-}
+{-# SPECIALIZE mean :: V.Vector Double -> Double #-}
+
 -- | /O(n)/ Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
-mean :: (G.Vector v Double) => v Double -> Double
-mean = fini . G.foldl' go (T 0 0)
+--
+-- Compared to 'mean', this loses a surprising amount of precision
+-- unless the inputs are very large.
+welfordMean :: (G.Vector v Double) => v Double -> Double
+welfordMean = fini . G.foldl' go (T 0 0)
   where
     fini (T a _) = a
     go (T m n) x = T m' n'
         where m' = m + (x - m) / fromIntegral n'
               n' = n + 1
-{-# INLINE mean #-}
+{-# SPECIALIZE welfordMean :: U.Vector Double -> Double #-}
+{-# SPECIALIZE welfordMean :: V.Vector Double -> Double #-}
 
 -- | /O(n)/ Arithmetic mean for weighted sample. It uses a single-pass
--- algorithm analogous to the one used by 'mean'.
+-- algorithm analogous to the one used by 'welfordMean'.
 meanWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
 meanWeighted = fini . G.foldl' go (V 0 0)
     where
@@ -117,7 +133,7 @@ centralMoment a xs
     | a < 0  = error "Statistics.Sample.centralMoment: negative input"
     | a == 0 = 1
     | a == 1 = 0
-    | otherwise = G.sum (G.map go xs) / fromIntegral (G.length xs)
+    | otherwise = sum (G.map go xs) / fromIntegral (G.length xs)
   where
     go x = (x-m) ^ a
     m    = mean xs
@@ -202,11 +218,6 @@ kurtosis xs = c4 / (c2 * c2) - 3
 
 data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
-robustSumVar :: (G.Vector v Double) => Double -> v Double -> Double
-robustSumVar m = G.sum . G.map (square . subtract m)
-  where square x = x * x
-{-# INLINE robustSumVar #-}
-
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.
 variance :: (G.Vector v Double) => v Double -> Double
@@ -242,7 +253,7 @@ meanVariance samp
 -- | Calculate mean and unbiased estimate of variance. This
 -- function should be used if both mean and variance are required
 -- since it will calculate mean only once.
-meanVarianceUnb ::  (G.Vector v Double) => v Double -> (Double,Double)
+meanVarianceUnb :: (G.Vector v Double) => v Double -> (Double,Double)
 meanVarianceUnb samp
   | n > 1     = (m, robustSumVar m samp / fromIntegral (n-1))
   | otherwise = (m, 0)

@@ -87,6 +87,7 @@ library
     Statistics.Distribution.Poisson.Internal
     Statistics.Function.Comparison
     Statistics.Internal
+    Statistics.Sample.Internal
     Statistics.Test.Internal
   build-depends:
     base < 5,

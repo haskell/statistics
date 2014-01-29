@@ -15,6 +15,8 @@ module Statistics.Resampling
     (
       Resample(..)
     , jackknife
+    , jackknifeMean
+    , jackknifeVariance
     , resample
     ) where
 
@@ -29,9 +31,12 @@ import Data.Vector.Generic (unsafeFreeze)
 import Data.Word (Word32)
 import GHC.Conc (numCapabilities)
 import GHC.Generics (Generic)
+import Numeric.Sum (Summation(..), kbn)
 import Statistics.Function (indices)
+import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
 import System.Random.MWC (Gen, initialize, uniform, uniformVector)
+import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU
 
@@ -85,13 +90,51 @@ resample gen ests numResamples samples = do
   mapM_ sort results
   mapM (liftM Resample . unsafeFreeze) results
 
--- | Compute a statistical estimate repeatedly over a sample, each
--- time omitting a successive element.
+-- | /O(n^2)/ Compute a statistical estimate repeatedly over a sample,
+-- each time omitting a successive element.
 jackknife :: Estimator -> Sample -> U.Vector Double
-jackknife est sample = U.map f . indices $ sample
-    where f i = est (dropAt i sample)
-{- INLINE jackknife #-}
+jackknife est sample
+  | G.length sample == 1 = singletonErr "jackknife"
+  | otherwise            = U.map f . indices $ sample
+  where f i = est (dropAt i sample)
+
+-- | /O(n)/ Compute the jackknife mean of a sample.
+jackknifeMean :: Sample -> U.Vector Double
+jackknifeMean samp
+  | len == 1  = singletonErr "jackknifeMean"
+  | otherwise = G.map (/l) $ G.zipWith (+) (pfxSumL samp) (pfxSumR samp)
+  where
+    l   = fromIntegral (len - 1)
+    len = G.length samp
+
+-- | /O(n)/ Compute the jackknife variance of a sample.
+jackknifeVariance :: Sample -> U.Vector Double
+jackknifeVariance samp
+  | len == 1  = singletonErr "jackknifeVariance"
+  | otherwise = G.zipWith4 go als ars bls brs
+  where
+    als = pfxSumL . G.map goa $ samp
+    ars = pfxSumR . G.map goa $ samp
+    goa x = v * v where v = x - m
+    bls = pfxSumL . G.map (subtract m) $ samp
+    brs = pfxSumR . G.map (subtract m) $ samp
+    m = mean samp
+    n = fromIntegral len
+    go al ar bl br = (al + ar - (b * b) / q) / q
+      where b = bl + br
+            q = n - 1
+    len = G.length samp
+
+pfxSumL :: U.Vector Double -> U.Vector Double
+pfxSumL = G.map kbn . G.scanl add zero
+
+pfxSumR :: U.Vector Double -> U.Vector Double
+pfxSumR = G.tail . G.map kbn . G.scanr (flip add) zero
 
 -- | Drop the /k/th element of a vector.
 dropAt :: U.Unbox e => Int -> U.Vector e -> U.Vector e
 dropAt n v = U.slice 0 n v U.++ U.slice (n+1) (U.length v - n - 1) v
+
+singletonErr :: String -> a
+singletonErr func = error $
+                    "Statistics.Resampling." ++ func ++ ": singleton input"
