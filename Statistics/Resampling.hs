@@ -18,6 +18,7 @@ module Statistics.Resampling
     , jackknifeMean
     , jackknifeVariance
     , resample
+    , estimate
     ) where
 
 import Control.Concurrent (forkIO, newChan, readChan, writeChan)
@@ -33,8 +34,8 @@ import GHC.Conc (numCapabilities)
 import GHC.Generics (Generic)
 import Numeric.Sum (Summation(..), kbn)
 import Statistics.Function (indices)
-import Statistics.Sample (mean)
-import Statistics.Types (Estimator, Sample)
+import Statistics.Sample (mean, variance)
+import Statistics.Types (Estimator(..), Sample)
 import System.Random.MWC (Gen, initialize, uniform, uniformVector)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -85,15 +86,25 @@ resample gen ests numResamples samples = do
             forM_ ers $ \(est,arr) ->
                 MU.write arr k . est $ re
             loop (k+1) ers
-      loop start (zip ests results)
+      loop start (zip ests' results)
   replicateM_ numCapabilities $ readChan done
   mapM_ sort results
   mapM (liftM Resample . unsafeFreeze) results
+ where
+  ests' = map estimate ests
 
--- | /O(n^2)/ Compute a statistical estimate repeatedly over a sample,
--- each time omitting a successive element.
+-- | Run an 'Estimator' over a sample.
+estimate :: Estimator -> Sample -> Double
+estimate Mean           = mean
+estimate Variance       = variance
+estimate (Function est) = est
+
+-- | /O(n) or O(n^2)/ Compute a statistical estimate repeatedly over a
+-- sample, each time omitting a successive element.
 jackknife :: Estimator -> Sample -> U.Vector Double
-jackknife est sample
+jackknife Mean sample     = jackknifeMean sample
+jackknife Variance sample = jackknifeVariance sample
+jackknife (Function est) sample
   | G.length sample == 1 = singletonErr "jackknife"
   | otherwise            = U.map f . indices $ sample
   where f i = est (dropAt i sample)

@@ -35,6 +35,7 @@ import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
 import qualified Data.Vector.Unboxed as U
+import qualified Statistics.Resampling as R
 
 -- | A point and interval estimate computed via an 'Estimator'.
 data Estimate = Estimate {
@@ -93,7 +94,7 @@ bootstrapBCA confidenceLevel sample estimators resamples
       | otherwise =
           estimate pt (resample ! lo) (resample ! hi) confidenceLevel
       where
-        pt    = est sample
+        pt    = R.estimate est sample
         lo    = max (cumn a1) 0
           where a1 = bias + b1 / (1 - accel * b1)
                 b1 = bias + z1
