@@ -17,7 +17,9 @@ module Statistics.Autocorrelation
     , autocorrelation
     ) where
 
+import Prelude hiding (sum)
 import Statistics.Sample (mean)
+import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Generic as G
 
 -- | Compute the autocovariance of a sample, i.e. the covariance of
@@ -25,7 +27,7 @@ import qualified Data.Vector.Generic as G
 autocovariance :: (G.Vector v Double, G.Vector v Int) => v Double -> v Double
 autocovariance a = G.map f . G.enumFromTo 0 $ l-2
   where
-    f k = G.sum (G.zipWith (*) (G.take (l-k) c) (G.slice k (l-k) c))
+    f k = sum (G.zipWith (*) (G.take (l-k) c) (G.slice k (l-k) c))
           / fromIntegral l
     c   = G.map (subtract (mean a)) a
     l   = G.length a

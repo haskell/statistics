@@ -34,9 +34,10 @@ module Statistics.Distribution
 
 import Control.Applicative     ((<$>), Applicative(..))
 import Control.Monad.Primitive (PrimMonad,PrimState)
-
-import qualified Data.Vector.Unboxed as U
+import Prelude hiding (sum)
+import Statistics.Sample.Internal (sum)
 import System.Random.MWC
+import qualified Data.Vector.Unboxed as U
 
 
 
@@ -141,7 +142,7 @@ class (Mean d, MaybeVariance d) => Variance d where
 class (Distribution d) => MaybeEntropy d where
   -- | Returns the entropy of a distribution, in nats, if such is defined.
   maybeEntropy :: d -> Maybe Double
-  
+
 -- | Type class for distributions with entropy, meaning Shannon
 --   entropy in the case of a discrete distribution, or differential
 --   entropy in the case of a continuous one.  If the distribution has
@@ -178,7 +179,7 @@ data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- bisection with the given guess as a starting point.  The upper and
 -- lower bounds specify the interval in which the probability
 -- distribution reaches the value /p/.
-findRoot :: ContDistr d => 
+findRoot :: ContDistr d =>
             d                   -- ^ Distribution
          -> Double              -- ^ Probability /p/
          -> Double              -- ^ Initial guess
@@ -207,7 +208,7 @@ findRoot d prob = loop 0 1
 -- | Sum probabilities in inclusive interval.
 sumProbabilities :: DiscreteDistr d => d -> Int -> Int -> Double
 sumProbabilities d low hi =
-  -- Return value is forced to be less than 1 to guard againist roundoff errors. 
+  -- Return value is forced to be less than 1 to guard againist roundoff errors.
   -- ATTENTION! this check should be removed for testing or it could mask bugs.
-  min 1 . U.sum . U.map (probability d) $ U.enumFromTo low hi
+  min 1 . sum . U.map (probability d) $ U.enumFromTo low hi
 {-# INLINE sumProbabilities #-}

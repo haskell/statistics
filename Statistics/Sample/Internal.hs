@@ -16,7 +16,7 @@ module Statistics.Sample.Internal
     , sum
     ) where
 
-import Numeric.Sum (add, kbn, zero)
+import Numeric.Sum (kbn, sumVector)
 import Prelude hiding (sum)
 import qualified Data.Vector.Generic as G
 
@@ -26,5 +26,5 @@ robustSumVar m = sum . G.map (square . subtract m)
 {-# INLINE robustSumVar #-}
 
 sum :: (G.Vector v Double) => v Double -> Double
-sum = kbn . G.foldl' add zero
+sum = sumVector kbn
 {-# INLINE sum #-}

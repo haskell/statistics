@@ -51,8 +51,10 @@ import Data.Data (Data, Typeable)
 import Data.Vector.Binary ()
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_1_sqrt_2, m_2_sqrt_pi)
+import Prelude hiding (sum)
 import Statistics.Function (minMax)
 import Statistics.Sample   (stdDev)
+import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
@@ -148,7 +150,7 @@ estimatePDF kernel h sample
     | n < 2     = errorShort "estimatePDF"
     | otherwise = U.map k . fromPoints
   where
-    k p = G.sum . G.map (kernel f h p) $ sample
+    k p = sum . G.map (kernel f h p) $ sample
     f   = 1 / (h * fromIntegral n)
     n   = G.length sample
 {-# INLINE estimatePDF #-}

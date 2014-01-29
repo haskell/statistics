@@ -29,18 +29,16 @@ module Statistics.Test.MannWhitneyU (
 import Control.Applicative ((<$>))
 import Data.List           (findIndex)
 import Data.Ord            (comparing)
-import qualified Data.Vector.Unboxed as U
-
 import Numeric.SpecFunctions          (choose)
-
+import Prelude hiding (sum)
 import Statistics.Distribution        (quantile)
 import Statistics.Distribution.Normal (standard)
-import Statistics.Types               (Sample)
 import Statistics.Function            (sortBy)
-import Statistics.Test.Types
+import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal
-
-
+import Statistics.Test.Types
+import Statistics.Types               (Sample)
+import qualified Data.Vector.Unboxed as U
 
 -- | The Wilcoxon Rank Sums Test.
 --
@@ -54,8 +52,7 @@ import Statistics.Test.Internal
 -- and the related functions for testing significance, but this function is exposed
 -- for completeness.
 wilcoxonRankSums :: Sample -> Sample -> (Double, Double)
-wilcoxonRankSums xs1 xs2 = ( U.sum ranks1 , U.sum ranks2
-                           )
+wilcoxonRankSums xs1 xs2 = (sum ranks1, sum ranks2)
   where
     -- Ranks for each sample
     (ranks1,ranks2) = splitByTags $ U.zip tags (rank (==) joinSample)
@@ -138,12 +135,12 @@ a u bigN m
     n = bigN - m
 -}
 
--- Memoised version of the original a function, above. 
+-- Memoised version of the original a function, above.
 --
 -- Doubles are stored to avoid integer overflow. 32-bit Ints begin to
 -- overflow for bigN as small as 33 (64-bit one at 66) while Double to
 -- go to infinity till bigN=1029
--- 
+--
 --
 -- outer list is indexed by big N - 2
 -- inner list by (m-1) (we know m < bigN)

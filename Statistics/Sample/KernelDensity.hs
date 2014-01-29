@@ -25,11 +25,12 @@ module Statistics.Sample.KernelDensity
     -- $references
     ) where
 
-import Prelude hiding (const,min,max)
 import Numeric.MathFunctions.Constants (m_sqrt_2_pi)
+import Prelude hiding (const, min, max, sum)
 import Statistics.Function             (minMax, nextHighestPowerOfTwo)
 import Statistics.Math.RootFinding     (fromRoot, ridders)
 import Statistics.Sample.Histogram     (histogram_)
+import Statistics.Sample.Internal (sum)
 import Statistics.Transform            (dct, idct)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -87,13 +88,13 @@ kde_ n0 min max xs
     !n  = fromIntegral ni
     !ni = nextHighestPowerOfTwo n0
     !r  = max - min
-    a   = dct . G.map (/ G.sum h) $ h
+    a   = dct . G.map (/ sum h) $ h
         where h = G.map (/ len) $ histogram_ ni min max xs
     !len    = fromIntegral (G.length xs)
     !t_star = fromRoot (0.28 * len ** (-0.4)) . ridders 1e-14 (0,0.1) $ \x ->
               x - (len * (2 * sqrt pi) * go 6 (f 7 x)) ** (-0.4)
       where
-        f q t = 2 * pi ** (q*2) * G.sum (G.zipWith g iv a2v)
+        f q t = 2 * pi ** (q*2) * sum (G.zipWith g iv a2v)
           where g i a2 = i ** q * a2 * exp ((-i) * sqr pi * t)
                 a2v = G.map (sqr . (*0.5)) $ G.tail a
                 iv = G.map sqr $ G.enumFromTo 1 (n-1)

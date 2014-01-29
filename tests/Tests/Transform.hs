@@ -9,21 +9,16 @@ module Tests.Transform
 import Data.Bits             ((.&.), shiftL)
 import Data.Complex          (Complex((:+)))
 import Data.Functor          ((<$>))
+import Numeric.Sum (kbn, sumVector)
 import Statistics.Function   (within)
 import Statistics.Transform
-
 import Test.Framework                       (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck                      (Positive(..),Property,Arbitrary(..),Gen,choose,vectorOf,
-                                             printTestCase, quickCheck)
-
+import Test.QuickCheck (Positive(..), Property, Arbitrary(..), Gen, choose, vectorOf, printTestCase)
+import Tests.Helpers
 import Text.Printf
-
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
-
-import Tests.Helpers
-
 
 
 tests :: Test
@@ -138,10 +133,10 @@ class HasNorm a where
   vectorNorm :: a -> Double
 
 instance HasNorm (U.Vector Double) where
-  vectorNorm = sqrt . U.sum . U.map (\x -> x*x)
+  vectorNorm = sqrt . sumVector kbn . U.map (\x -> x*x)
 
 instance HasNorm (U.Vector CD) where
-  vectorNorm = sqrt . U.sum . U.map (\(x :+ y) -> x*x + y*y)
+  vectorNorm = sqrt . sumVector kbn . U.map (\(x :+ y) -> x*x + y*y)
 
 -- Approximate equality for vectors
 vecEqual :: Double -> U.Vector Double -> U.Vector Double -> Bool

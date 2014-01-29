@@ -61,6 +61,7 @@ import System.IO.Unsafe      (unsafePerformIO)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed.Mutable as MU
+import qualified Statistics.Sample.Internal as S
 
 newtype Powers = Powers (U.Vector Double)
     deriving (Eq, Read, Show, Typeable, Data, Generic)
@@ -112,7 +113,7 @@ centralMoment k p@(Powers pa)
                   error ("Statistics.Sample.Powers.centralMoment: "
                          ++ "invalid argument")
     | k == 0    = 1
-    | otherwise = (/n) . U.sum . U.map go . indexed . U.take (k+1) $ pa
+    | otherwise = (/n) . S.sum . U.map go . indexed . U.take (k+1) $ pa
   where
     go (i , e) = (k `choose` i) * ((-m) ^ (k-i)) * e
     n = U.head pa

@@ -31,17 +31,15 @@ module Statistics.Test.KolmogorovSmirnov (
 
 import Control.Monad
 import Control.Monad.ST  (ST)
-
+import Prelude hiding (sum)
+import Statistics.Distribution        (Distribution(..))
+import Statistics.Function            (sort)
+import Statistics.Sample.Internal (sum)
+import Statistics.Test.Types
+import Statistics.Types               (Sample)
+import Text.Printf
 import qualified Data.Vector.Unboxed         as U
 import qualified Data.Vector.Unboxed.Mutable as M
-
-import Statistics.Distribution        (Distribution(..))
-import Statistics.Types               (Sample)
-import Statistics.Function            (sort)
-import Statistics.Test.Types
-
-import Text.Printf
-
 
 
 ----------------------------------------------------------------
@@ -267,7 +265,7 @@ matrixMultiply :: Matrix -> Matrix -> Matrix
 matrixMultiply (Matrix n xs e1) (Matrix _ ys e2) =
   Matrix n (U.generate (n*n) go) (e1 + e2)
   where
-    go i = U.sum $ U.zipWith (*) row col
+    go i = sum $ U.zipWith (*) row col
       where
         nCol = i `rem` n
         row  = U.slice (i - nCol) n xs

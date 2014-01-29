@@ -7,11 +7,12 @@ module Statistics.Test.ChiSquared (
   , TestResult(..)
   ) where
 
-import qualified Data.Vector.Generic as G
-
+import Prelude hiding (sum)
 import Statistics.Distribution
 import Statistics.Distribution.ChiSquared
+import Statistics.Sample.Internal (sum)
 import Statistics.Test.Types
+import qualified Data.Vector.Generic as G
 
 
 -- | Generic form of Pearson chi squared tests for binned data. Data
@@ -33,7 +34,7 @@ chi2test p ndf vec
   | otherwise      = error $ "Statistics.Test.ChiSquare.chi2test: bad p-value: " ++ show p
   where
     n     = G.length vec - ndf - 1
-    chi2  = G.sum $ G.map (\(o,e) -> sqr (fromIntegral o - e) / e) vec
+    chi2  = sum $ G.map (\(o,e) -> sqr (fromIntegral o - e) / e) vec
     d     = chiSquared n
     sqr x = x * x
 {-# INLINE chi2test #-}

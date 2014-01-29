@@ -25,34 +25,33 @@ module Statistics.Test.WilcoxonT (
   , TestResult(..)
   ) where
 
+
+
+--
+--
+--
+-- Note that: wilcoxonMatchedPairSignedRank == (\(x, y) -> (y, x)) . flip wilcoxonMatchedPairSignedRank
+-- The samples are zipped together: if one is longer than the other, both are truncated
+-- The value returned is the pair (T+, T-).  T+ is the sum of positive ranks (the
+-- These values mean little by themselves, and should be combined with the 'wilcoxonSignificant'
+-- function in this module to get a meaningful result.
+-- ranks of the differences where the first parameter is higher) whereas T- is
+-- the sum of negative ranks (the ranks of the differences where the second parameter is higher).
+-- to the the length of the shorter sample.
+-- | The Wilcoxon matched-pairs signed-rank test.
 import Control.Applicative ((<$>))
 import Data.Function       (on)
 import Data.List           (findIndex)
 import Data.Ord            (comparing)
-import qualified Data.Vector.Unboxed as U
-
-import Statistics.Types               (Sample)
+import Prelude hiding (sum)
 import Statistics.Function            (sortBy)
-import Statistics.Test.Types
+import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal
-
-
--- | The Wilcoxon matched-pairs signed-rank test.
---
--- The value returned is the pair (T+, T-).  T+ is the sum of positive ranks (the
--- ranks of the differences where the first parameter is higher) whereas T- is
--- the sum of negative ranks (the ranks of the differences where the second parameter is higher).
--- These values mean little by themselves, and should be combined with the 'wilcoxonSignificant'
--- function in this module to get a meaningful result.
---
--- The samples are zipped together: if one is longer than the other, both are truncated
--- to the the length of the shorter sample.
---
--- Note that: wilcoxonMatchedPairSignedRank == (\(x, y) -> (y, x)) . flip wilcoxonMatchedPairSignedRank
+import Statistics.Test.Types
+import Statistics.Types               (Sample)
+import qualified Data.Vector.Unboxed as U
 wilcoxonMatchedPairSignedRank :: Sample -> Sample -> (Double, Double)
-wilcoxonMatchedPairSignedRank a b = (          U.sum ranks1
-                                    , negate $ U.sum ranks2
-                                    )
+wilcoxonMatchedPairSignedRank a b = (sum ranks1, negate (sum ranks2))
   where
     (ranks1, ranks2) = splitByTags
                      $ U.zip tags (rank ((==) `on` abs) diffs)
