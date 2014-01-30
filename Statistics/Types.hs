@@ -32,6 +32,8 @@ type WeightedSample = U.Vector (Double,Double)
 -- when possible.
 data Estimator = Mean
                | Variance
+               | VarianceUnbiased
+               | StdDev
                | Function (Sample -> Double)
 
 -- | Weights for affecting the importance of elements of a sample.

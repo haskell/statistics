@@ -6,8 +6,9 @@ Changes in 0.10.6.0
     the jackknife function to potentially use more efficient jackknife
     implementations.
 
-  * jackknifeMean, jackknifeVariance: new functions. These have O(n) cost
-    instead of the O(n^2) cost of the standard jackknife.
+  * jackknifeMean, jackknifeStdDev, jackknifeVariance,
+    jackknifeVarianceUnb: new functions.  These have O(n) cost instead
+    of the O(n^2) cost of the standard jackknife.
 
   * The mean function has been renamed to welfordMean; a new
     implementation of mean has better numerical accuracy in almost all
