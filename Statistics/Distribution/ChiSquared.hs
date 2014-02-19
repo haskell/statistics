@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
 -- |
 -- Module    : Statistics.Distribution.ChiSquared
 -- Copyright : (c) 2010 Alexey Khudyakov
@@ -26,13 +26,20 @@ import Numeric.SpecFunctions (
 
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
+#if !MIN_VERSION_binary(0, 6, 0)
+import Data.Binary (put, get)
+#endif
 
 
 -- | Chi-squared distribution
 newtype ChiSquared = ChiSquared Int
                      deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary ChiSquared
+instance Binary ChiSquared where
+#if !MIN_VERSION_binary(0, 6, 0)
+    get = fmap ChiSquared get
+    put (ChiSquared x) = put x
+#endif
 
 -- | Get number of degrees of freedom
 chiSquaredNDF :: ChiSquared -> Int
