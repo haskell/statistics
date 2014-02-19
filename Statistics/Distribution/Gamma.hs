@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
 -- |
 -- Module    : Statistics.Distribution.Gamma
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
@@ -34,6 +34,10 @@ import Numeric.SpecFunctions (
 import Statistics.Distribution.Poisson.Internal  as Poisson
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
+#if !MIN_VERSION_binary(0, 6, 0)
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | The gamma distribution.
 data GammaDistribution = GD {
@@ -41,7 +45,11 @@ data GammaDistribution = GD {
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary GammaDistribution
+instance Binary GammaDistribution where
+#if !MIN_VERSION_binary(0, 6, 0)
+    put (GD x y) = put x >> put y
+    get = GD <$> get <*> get
+#endif
 
 -- | Create gamma distribution. Both shape and scale parameters must
 -- be positive.

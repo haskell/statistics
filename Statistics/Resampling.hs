@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, CPP #-}
 
 -- |
 -- Module    : Statistics.Resampling
@@ -42,7 +42,11 @@ newtype Resample = Resample {
       fromResample :: U.Vector Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary Resample
+instance Binary Resample where
+#if !MIN_VERSION_binary(0, 6, 0)
+    put = put . fromResample
+    get = fmap Resample get
+#endif
 
 -- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
 -- computing each estimate over the resampled data.

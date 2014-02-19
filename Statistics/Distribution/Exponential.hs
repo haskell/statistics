@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
 -- |
 -- Module    : Statistics.Distribution.Exponential
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -31,13 +31,20 @@ import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
 import qualified System.Random.MWC.Distributions as MWC
 import Statistics.Types (Sample)
+#if !MIN_VERSION_binary(0, 6, 0)
+import Data.Binary (put, get)
+#endif
 
 
 newtype ExponentialDistribution = ED {
       edLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary ExponentialDistribution
+instance Binary ExponentialDistribution where
+#if !MIN_VERSION_binary(0, 6, 0)
+    put = put . edLambda
+    get = fmap ED get
+#endif
 
 instance D.Distribution ExponentialDistribution where
     cumulative      = cumulative

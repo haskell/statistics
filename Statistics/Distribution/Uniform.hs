@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
 -- |
 -- Module    : Statistics.Distribution.Uniform
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -24,6 +24,10 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import qualified System.Random.MWC       as MWC
+#if !MIN_VERSION_binary(0, 6, 0)
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 
 -- | Uniform distribution from A to B
@@ -32,7 +36,11 @@ data UniformDistribution = UniformDistribution {
     , uniformB :: {-# UNPACK #-} !Double -- ^ Upper boundary of distribution
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary UniformDistribution
+instance Binary UniformDistribution where
+#if !MIN_VERSION_binary(0, 6, 0)
+    put (UniformDistribution x y) = put x >> put y
+    get = UniformDistribution <$> get <*> get
+#endif
 
 -- | Create uniform distribution.
 uniformDistr :: Double -> Double -> UniformDistribution

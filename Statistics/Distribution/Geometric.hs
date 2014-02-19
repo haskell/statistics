@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
 -- |
 -- Module    : Statistics.Distribution.Geometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -37,6 +37,10 @@ import GHC.Generics   (Generic)
 import Numeric.MathFunctions.Constants(m_pos_inf,m_neg_inf)
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
+#if !MIN_VERSION_binary(0, 6, 0)
+import Data.Binary (put, get)
+import Control.Applicative ((<$>))
+#endif
 
 ----------------------------------------------------------------
 -- Distribution over [1..]
@@ -45,7 +49,11 @@ newtype GeometricDistribution = GD {
       gdSuccess :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary GeometricDistribution
+instance Binary GeometricDistribution where
+#if !MIN_VERSION_binary(0, 6, 0)
+    get = GD <$> get
+    put (GD x) = put x
+#endif
 
 instance D.Distribution GeometricDistribution where
     cumulative = cumulative
@@ -115,7 +123,11 @@ newtype GeometricDistribution0 = GD0 {
       gdSuccess0 :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary GeometricDistribution0
+instance Binary GeometricDistribution0 where
+#if !MIN_VERSION_binary(0, 6, 0)
+    get = GD0 <$> get
+    put (GD0 x) = put x
+#endif
 
 instance D.Distribution GeometricDistribution0 where
     cumulative (GD0 s) x = cumulative (GD s) (x + 1)

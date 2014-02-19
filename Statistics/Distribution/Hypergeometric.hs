@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
 -- |
 -- Module    : Statistics.Distribution.Hypergeometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -33,6 +33,10 @@ import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_epsilon)
 import Numeric.SpecFunctions (choose)
 import qualified Statistics.Distribution as D
+#if !MIN_VERSION_binary(0, 6, 0)
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 data HypergeometricDistribution = HD {
       hdM :: {-# UNPACK #-} !Int
@@ -40,7 +44,11 @@ data HypergeometricDistribution = HD {
     , hdK :: {-# UNPACK #-} !Int
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary HypergeometricDistribution
+instance Binary HypergeometricDistribution where
+#if !MIN_VERSION_binary(0, 6, 0)
+    get = HD <$> get <*> get <*> get
+    put (HD x y z) = put x >> put y >> put z
+#endif
 
 instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative
