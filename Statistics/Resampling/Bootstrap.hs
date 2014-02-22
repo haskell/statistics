@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric, OverloadedStrings,
-    RecordWildCards, CPP #-}
+    RecordWildCards #-}
 
 -- |
 -- Module    : Statistics.Resampling.Bootstrap
@@ -35,10 +35,8 @@ import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
 import qualified Data.Vector.Unboxed as U
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
-#endif
 
 -- | A point and interval estimate computed via an 'Estimator'.
 data Estimate = Estimate {
@@ -55,10 +53,8 @@ data Estimate = Estimate {
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary Estimate where
-#if !MIN_VERSION_binary(0, 6, 0)
     put (Estimate w x y z) = put w >> put x >> put y >> put z
     get = Estimate <$> get <*> get <*> get <*> get
-#endif
 instance NFData Estimate
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Poisson
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
@@ -31,9 +31,7 @@ import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Numeric.SpecFunctions (incompleteGamma,logFactorial)
 import Numeric.MathFunctions.Constants (m_neg_inf)
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
-#endif
 
 
 newtype PoissonDistribution = PD {
@@ -41,10 +39,8 @@ newtype PoissonDistribution = PD {
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary PoissonDistribution where
-#if !MIN_VERSION_binary(0, 6, 0)
     get = fmap PD get
     put = put . poissonLambda
-#endif
 
 instance D.Distribution PoissonDistribution where
     cumulative (PD lambda) x

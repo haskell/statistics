@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts,
-    FlexibleInstances, UndecidableInstances, CPP #-}
+    FlexibleInstances, UndecidableInstances #-}
 -- |
 -- Module    : Statistics.Distribution.Transform
 -- Copyright : (c) 2013 John McDonnell;
@@ -21,10 +21,8 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Data.Functor          ((<$>))
 import qualified Statistics.Distribution as D
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Control.Applicative ((<*>))
-#endif
 
 -- | Linear transformation applied to distribution.
 --
@@ -40,10 +38,8 @@ data LinearTransform d = LinearTransform
   } deriving (Eq, Show, Read, Typeable, Data, Generic)
 
 instance (Binary d) => Binary (LinearTransform d) where
-#if !MIN_VERSION_binary(0, 6, 0)
     get = LinearTransform <$> get <*> get <*> get
     put (LinearTransform x y z) = put x >> put y >> put z
-#endif
 
 -- | Apply linear transformation to distribution.
 scaleAround :: Double           -- ^ Fixed point

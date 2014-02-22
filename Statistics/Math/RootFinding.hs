@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
 
 -- |
 -- Module    : Statistics.Math.RootFinding
@@ -27,11 +27,9 @@ import Control.Applicative
 import Control.Monad       (MonadPlus(..), ap)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Data.Binary.Put (putWord8)
 import Data.Binary.Get (getWord8)
-#endif
 
 
 -- | The result of searching for a root of a mathematical function.
@@ -46,7 +44,6 @@ data Root a = NotBracketed
               deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance (Binary a) => Binary (Root a) where
-#if !MIN_VERSION_binary(0, 6, 0)
     put NotBracketed = putWord8 0
     put SearchFailed = putWord8 1
     put (Root a) = putWord8 2 >> put a
@@ -58,7 +55,6 @@ instance (Binary a) => Binary (Root a) where
             1 -> return SearchFailed
             2 -> fmap Root get
             _ -> fail $ "Root.get: Invalid value: " ++ show i
-#endif
 
 instance Functor Root where
     fmap _ NotBracketed = NotBracketed

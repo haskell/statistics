@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.FDistribution
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -23,10 +23,8 @@ import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
-#endif
 
 
 
@@ -38,10 +36,8 @@ data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
 
 instance Binary FDistribution where
-#if !MIN_VERSION_binary(0, 6, 0)
     get = F <$> get <*> get <*> get
     put (F x y z) = put x >> put y >> put z
-#endif
 
 fDistribution :: Int -> Int -> FDistribution
 fDistribution n m

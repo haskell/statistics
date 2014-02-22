@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric,
-    FlexibleContexts, CPP #-}
+    FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Sample.Powers
 -- Copyright : (c) 2009, 2010 Bryan O'Sullivan
@@ -66,10 +66,8 @@ newtype Powers = Powers (U.Vector Double)
     deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary Powers where
-#if !MIN_VERSION_binary(0, 6, 0)
     put (Powers v) = put v
     get = fmap Powers get
-#endif
 
 -- | O(/n/) Collect the /n/ simple powers of a sample.
 --

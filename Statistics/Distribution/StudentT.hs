@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.StudentT
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -23,19 +23,15 @@ import qualified Statistics.Distribution as D
 import Statistics.Distribution.Transform (LinearTransform (..))
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
-#endif
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
 
 instance Binary StudentT where
-#if !MIN_VERSION_binary(0, 6, 0)
     put = put . studentTndf
     get = fmap StudentT get
-#endif
 
 -- | Create Student-T distribution. Number of parameters must be positive.
 studentT :: Double -> StudentT

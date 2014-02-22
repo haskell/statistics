@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Sample.KernelDensity.Simple
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -62,10 +62,8 @@ newtype Points = Points {
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary Points where
-#if !MIN_VERSION_binary(0, 6, 0)
     get = fmap Points get
     put = put . fromPoints
-#endif
 
 -- | Bandwidth estimator for an Epanechnikov kernel.
 epanechnikovBW :: Double -> Bandwidth

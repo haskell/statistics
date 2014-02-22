@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Normal
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -28,10 +28,8 @@ import Numeric.SpecFunctions           (erfc, invErfc)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample       as S
 import qualified System.Random.MWC.Distributions as MWC
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
-#endif
 
 
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.CauchyLorentz
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -25,10 +25,8 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
-#endif
 
 -- | Cauchy-Lorentz distribution.
 data CauchyDistribution = CD {
@@ -44,10 +42,8 @@ data CauchyDistribution = CD {
   deriving (Eq, Show, Read, Typeable, Data, Generic)
 
 instance Binary CauchyDistribution where
-#if !MIN_VERSION_binary(0, 6, 0)
     put (CD x y) = put x >> put y
     get = CD <$> get <*> get
-#endif
 
 -- | Cauchy distribution
 cauchyDistribution :: Double    -- ^ Central point

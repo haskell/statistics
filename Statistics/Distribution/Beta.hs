@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Statistics.Distribution.Beta
@@ -27,10 +27,8 @@ import Numeric.SpecFunctions (
   incompleteBeta, invIncompleteBeta, logBeta, digamma)
 import Numeric.MathFunctions.Constants (m_NaN)
 import qualified Statistics.Distribution as D
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
-#endif
 
 -- | The beta distribution
 data BetaDistribution = BD
@@ -41,10 +39,8 @@ data BetaDistribution = BD
  } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary BetaDistribution where
-#if !MIN_VERSION_binary(0, 6, 0)
     put (BD x y) = put x >> put y
     get = BD <$> get <*> get
-#endif
 
 -- | Create beta distribution. Both shape parameters must be positive.
 betaDistr :: Double             -- ^ Shape parameter alpha

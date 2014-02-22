@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Binomial
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -30,10 +30,8 @@ import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Numeric.SpecFunctions (choose,incompleteBeta)
 import Numeric.MathFunctions.Constants (m_epsilon)
-#if !MIN_VERSION_binary(0, 6, 0)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
-#endif
 
 
 -- | The binomial distribution.
@@ -45,10 +43,8 @@ data BinomialDistribution = BD {
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary BinomialDistribution where
-#if !MIN_VERSION_binary(0, 6, 0)
     put (BD x y) = put x >> put y
     get = BD <$> get <*> get
-#endif
 
 instance D.Distribution BinomialDistribution where
     cumulative = cumulative
