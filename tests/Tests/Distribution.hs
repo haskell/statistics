@@ -13,6 +13,7 @@ import Control.Exception
 
 import Data.List     (find)
 import Data.Typeable (Typeable)
+import Data.Binary
 
 import qualified Numeric.IEEE    as IEEE
 
@@ -71,7 +72,7 @@ distributionTests = testGroup "Tests for all distributions"
 ----------------------------------------------------------------
 
 -- Tests for continous distribution
-contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
+contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d, Binary d, Eq d) => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck     t
@@ -81,7 +82,7 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for discrete distribution
-discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
+discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d, Binary d, Eq d) => T d -> Test
 discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
@@ -91,7 +92,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for distributions which have CDF
-cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
+cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d, Binary d, Eq d) => T d -> [Test]
 cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
   , testProperty "CDF limit at +inf"    $ cdfLimitAtPosInfinity  t
@@ -100,7 +101,10 @@ cdfTests t =
   , testProperty "CDF at -inf = 1"      $ cdfAtNegInfinity       t
   , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
   , testProperty "1-CDF is correct"     $ cdfComplementIsCorrect t
+  , testProperty "Binary OK"            $ p_binary t
   ]
+
+
 ----------------------------------------------------------------
 
 -- CDF is in [0,1] range
@@ -245,7 +249,11 @@ logProbabilityCheck _ d x
     logP = logProbability d x
 
 
-    
+p_binary :: (Eq a, Show a, Binary a) => T a -> a -> Bool
+p_binary _ a = a == (decode . encode) a
+
+
+
 ----------------------------------------------------------------
 -- Arbitrary instances for ditributions
 ----------------------------------------------------------------

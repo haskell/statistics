@@ -132,6 +132,7 @@ test-suite tests
 
   build-depends:
     base,
+    binary,
     ieee754 >= 0.7.3,
     HUnit,
     QuickCheck >= 2,
