@@ -96,7 +96,7 @@ library
     erf,
     monad-par         >= 0.3.4,
     mwc-random        >= 0.13.0.0,
-    math-functions    >= 0.1.5,
+    math-functions    >= 0.1.5.2,
     primitive         >= 0.3,
     vector            >= 0.7.1,
     vector-algorithms >= 0.4,
