@@ -89,12 +89,12 @@ instance D.MaybeVariance BetaDistribution where
 
 instance D.Entropy BetaDistribution where
   entropy (BD a b) =
-    logBeta a b 
+    logBeta a b
     - (a-1) * digamma a
     - (b-1) * digamma b
     + (a+b-2) * digamma (a+b)
   {-# INLINE entropy #-}
-    
+
 instance D.MaybeEntropy BetaDistribution where
   maybeEntropy = Just . D.entropy
   {-# INLINE maybeEntropy #-}

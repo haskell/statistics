@@ -10,19 +10,20 @@
 -- Portability : portable
 --
 -- Transformations over distributions
-module Statistics.Distribution.Transform (
-    LinearTransform (..)
-  , linTransFixedPoint
-  , scaleAround
-  ) where
+module Statistics.Distribution.Transform
+    (
+      LinearTransform (..)
+    , linTransFixedPoint
+    , scaleAround
+    ) where
 
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
-import Data.Functor          ((<$>))
-import qualified Statistics.Distribution as D
-import Data.Binary (put, get)
 import Control.Applicative ((<*>))
+import Data.Binary (Binary)
+import Data.Binary (put, get)
+import Data.Data (Data, Typeable)
+import Data.Functor ((<$>))
+import GHC.Generics (Generic)
+import qualified Statistics.Distribution as D
 
 -- | Linear transformation applied to distribution.
 --
@@ -77,11 +78,11 @@ instance (D.Variance d) => D.Variance (LinearTransform d) where
   variance (LinearTransform _ sc dist) = sc * sc * D.variance dist
   stdDev   (LinearTransform _ sc dist) = sc * D.stdDev dist
 
-instance (D.MaybeEntropy d, D.DiscreteDistr d) 
+instance (D.MaybeEntropy d, D.DiscreteDistr d)
          => D.MaybeEntropy (LinearTransform d) where
   maybeEntropy (LinearTransform _ _ dist) = D.maybeEntropy dist
 
-instance (D.Entropy d, D.DiscreteDistr d) 
+instance (D.Entropy d, D.DiscreteDistr d)
          => D.Entropy (LinearTransform d) where
   entropy (LinearTransform _ _ dist) = D.entropy dist
 

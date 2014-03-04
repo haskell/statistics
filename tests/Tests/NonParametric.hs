@@ -1,32 +1,25 @@
 -- Tests for Statistics.Test.NonParametric
-module Tests.NonparametricTest (
-  nonparametricTests
-  ) where
+module Tests.NonParametric (tests) where
 
-
-import qualified Data.Vector.Unboxed as U
-import Test.HUnit                     (assertEqual)
-import Test.Framework
-import Test.Framework.Providers.HUnit
-
+import Statistics.Distribution.Normal (standard)
+import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.WilcoxonT
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.HUnit
+import Test.HUnit (assertEqual)
+import Tests.Helpers (eq, testAssertion, testEquality)
+import Tests.NonParametric.Table (tableKSD, tableKS2D)
+import qualified Data.Vector.Unboxed as U
 
-import Tests.Helpers
-import Tests.NonparametricTest.Table
 
-import Statistics.Test.KolmogorovSmirnov
-import Statistics.Distribution.Normal    (standard)
-
-
-
-nonparametricTests :: Test
-nonparametricTests = testGroup "Nonparametric tests"
-                   $ concat [ mannWhitneyTests
-                            , wilcoxonSumTests
-                            , wilcoxonPairTests
-                            , kolmogorovSmirnovDTest
-                            ]
+tests :: Test
+tests = testGroup "Nonparametric tests"
+        $ concat [ mannWhitneyTests
+                 , wilcoxonSumTests
+                 , wilcoxonPairTests
+                 , kolmogorovSmirnovDTest
+                 ]
 
 ----------------------------------------------------------------
 
@@ -177,14 +170,14 @@ kolmogorovSmirnovDTest =
   ]
   where
     toU = U.fromList
-    -- Test data for the calculation of cumulative probability 
+    -- Test data for the calculation of cumulative probability
     -- P(D[n] < d).
-    -- 
+    --
     -- Test data is:
     --    (D[n], n, p)
     -- Table is generated using sample program from paper
     testData :: [(Double,Int,Double)]
-    testData = 
+    testData =
       [ (0.09           ,    3, 0                   )
       , (0.2            ,    3, 0.00177777777777778 )
       , (0.301          ,    3, 0.116357025777778   )

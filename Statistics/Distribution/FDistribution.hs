@@ -93,9 +93,9 @@ instance D.Entropy FDistribution where
   entropy (F n m _) =
     let nHalf = 0.5 * n
         mHalf = 0.5 * m in
-    log (n/m) 
+    log (n/m)
     + logBeta nHalf mHalf
-    + (1 - nHalf) * digamma nHalf 
+    + (1 - nHalf) * digamma nHalf
     - (1 + mHalf) * digamma mHalf
     + (nHalf + mHalf) * digamma (nHalf + mHalf)
 

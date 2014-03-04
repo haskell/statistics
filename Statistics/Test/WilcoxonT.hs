@@ -40,16 +40,17 @@ module Statistics.Test.WilcoxonT (
 -- to the the length of the shorter sample.
 
 import Control.Applicative ((<$>))
-import Data.Function       (on)
-import Data.List           (findIndex)
-import Data.Ord            (comparing)
+import Data.Function (on)
+import Data.List (findIndex)
+import Data.Ord (comparing)
 import Prelude hiding (sum)
-import Statistics.Function            (sortBy)
+import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
-import Statistics.Test.Internal
-import Statistics.Test.Types
-import Statistics.Types               (Sample)
+import Statistics.Test.Internal (rank, splitByTags)
+import Statistics.Test.Types (TestResult(..), TestType(..), significant)
+import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
+
 wilcoxonMatchedPairSignedRank :: Sample -> Sample -> (Double, Double)
 wilcoxonMatchedPairSignedRank a b = (sum ranks1, negate (sum ranks2))
   where

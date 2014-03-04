@@ -29,16 +29,16 @@ module Statistics.Test.KolmogorovSmirnov (
     -- $references
   ) where
 
-import Control.Monad
-import Control.Monad.ST  (ST)
+import Control.Monad (when)
+import Control.Monad.ST (ST)
 import Prelude hiding (sum)
-import Statistics.Distribution        (Distribution(..))
-import Statistics.Function            (sort)
+import Statistics.Distribution (Distribution(..))
+import Statistics.Function (sort)
 import Statistics.Sample.Internal (sum)
-import Statistics.Test.Types
-import Statistics.Types               (Sample)
-import Text.Printf
-import qualified Data.Vector.Unboxed         as U
+import Statistics.Test.Types (TestResult(..), TestType(..), significant)
+import Statistics.Types (Sample)
+import Text.Printf (printf)
+import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
 
 

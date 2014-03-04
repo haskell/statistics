@@ -1,52 +1,41 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
--- Required for Param
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE OverlappingInstances #-}
-{-# LANGUAGE ViewPatterns #-}
-module Tests.Distribution (
-    distributionTests
-  ) where
+{-# LANGUAGE FlexibleInstances, OverlappingInstances, ScopedTypeVariables,
+    ViewPatterns #-}
+module Tests.Distribution (tests) where
 
-import Control.Applicative
-import Control.Exception
-
-import Data.List     (find)
+import Control.Applicative ((<$>), (<*>))
+import Data.Binary (Binary, decode, encode)
+import Data.List (find)
 import Data.Typeable (Typeable)
-import Data.Binary
-
-import qualified Numeric.IEEE    as IEEE
-
-import Test.Framework                       (Test,testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck         as QC
-import Test.QuickCheck.Monadic as QC
-import Text.Printf
-
 import Statistics.Distribution
-import Statistics.Distribution.Beta
-import Statistics.Distribution.Binomial
-import Statistics.Distribution.ChiSquared
+import Statistics.Distribution.Beta (BetaDistribution, betaDistr)
+import Statistics.Distribution.Binomial (BinomialDistribution, binomial)
 import Statistics.Distribution.CauchyLorentz
-import Statistics.Distribution.Exponential
-import Statistics.Distribution.FDistribution
-import Statistics.Distribution.Gamma
+import Statistics.Distribution.ChiSquared (ChiSquared, chiSquared)
+import Statistics.Distribution.Exponential (ExponentialDistribution, exponential)
+import Statistics.Distribution.FDistribution (FDistribution, fDistribution)
+import Statistics.Distribution.Gamma (GammaDistribution, gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
-import Statistics.Distribution.Normal
-import Statistics.Distribution.Poisson
+import Statistics.Distribution.Normal (NormalDistribution, normalDistr)
+import Statistics.Distribution.Poisson (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform
-import Statistics.Distribution.Uniform
-
-import Prelude hiding (catch)
-
-import Tests.Helpers
+import Statistics.Distribution.Transform (LinearTransform, linTransDistr)
+import Statistics.Distribution.Uniform (UniformDistribution, uniformDistr)
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.QuickCheck as QC
+import Test.QuickCheck.Monadic as QC
+import Tests.Helpers (T(..), (=~), eq, testAssertion, typeName)
+import Tests.Helpers (monotonicallyIncreasesIEEE)
+import Text.Printf (printf)
+import qualified Control.Exception as E
+import qualified Numeric.IEEE as IEEE
 
 
 -- | Tests for all distributions
-distributionTests :: Test
-distributionTests = testGroup "Tests for all distributions"
+tests :: Test
+tests = testGroup "Tests for all distributions"
   [ contDistrTests (T :: T BetaDistribution        )
   , contDistrTests (T :: T CauchyDistribution      )
   , contDistrTests (T :: T ChiSquared              )
@@ -109,7 +98,7 @@ cdfTests t =
 
 -- CDF is in [0,1] range
 cdfSanityCheck :: (Distribution d) => T d -> d -> Double -> Bool
-cdfSanityCheck _ d x = c >= 0 && c <= 1 
+cdfSanityCheck _ d x = c >= 0 && c <= 1
   where c = cumulative d x
 
 -- CDF never decreases
@@ -152,7 +141,7 @@ cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d 
 cdfDiscreteIsCorrect :: (DiscreteDistr d) => T d -> d -> Property
 cdfDiscreteIsCorrect _ d
   = printTestCase (unlines badN)
-  $ null badN  
+  $ null badN
   where
     -- We are checking that:
     --
@@ -206,15 +195,15 @@ quantileIsInvCDF _ d (snd . properFraction -> p) =
 -- Test that quantile fails if p<0 or p>1
 quantileShouldFail :: (ContDistr d) => T d -> d -> Double -> Property
 quantileShouldFail _ d p =
-  p < 0 || p > 1 ==> QC.monadicIO $ do r <- QC.run $ catch
+  p < 0 || p > 1 ==> QC.monadicIO $ do r <- QC.run $ E.catch
                                               (do { return $! quantile d p; return False })
-                                              (\(e :: SomeException) -> return True)
+                                              (\(_ :: E.SomeException) -> return True)
                                        QC.assert r
 
 
 -- Probability is in [0,1] range
 probSanityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Bool
-probSanityCheck _ d x = p >= 0 && p <= 1 
+probSanityCheck _ d x = p >= 0 && p <= 1
   where p = probability d x
 
 -- Check that discrete CDF is correct
@@ -297,7 +286,7 @@ instance QC.Arbitrary (LinearTransform StudentT) where
            <*> ((abs <$> arbitrary))
            <*> ((abs <$> arbitrary) `suchThat` (>0))
 instance QC.Arbitrary FDistribution where
-  arbitrary =  fDistribution 
+  arbitrary =  fDistribution
            <$> ((abs <$> arbitrary) `suchThat` (>0))
            <*> ((abs <$> arbitrary) `suchThat` (>0))
 

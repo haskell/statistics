@@ -6,10 +6,10 @@ module Tests.KDE (
 import Data.Vector.Unboxed ((!))
 import Numeric.Sum (kbn, sumVector)
 import Statistics.Sample.KernelDensity
-import Test.Framework                       (Test, testGroup)
+import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck
-import Text.Printf
+import Test.QuickCheck (Property, (==>), printTestCase)
+import Text.Printf (printf)
 import qualified Data.Vector.Unboxed as U
 
 

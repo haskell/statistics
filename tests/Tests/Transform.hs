@@ -6,17 +6,17 @@ module Tests.Transform
       tests
     ) where
 
-import Data.Bits             ((.&.), shiftL)
-import Data.Complex          (Complex((:+)))
-import Data.Functor          ((<$>))
+import Data.Bits ((.&.), shiftL)
+import Data.Complex (Complex((:+)))
+import Data.Functor ((<$>))
 import Numeric.Sum (kbn, sumVector)
-import Statistics.Function   (within)
-import Statistics.Transform
-import Test.Framework                       (Test, testGroup)
+import Statistics.Function (within)
+import Statistics.Transform (CD, dct, fft, idct, ifft)
+import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck (Positive(..), Property, Arbitrary(..), Gen, choose, vectorOf, printTestCase)
-import Tests.Helpers
-import Text.Printf
+import Tests.Helpers (testAssertion)
+import Text.Printf (printf)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 

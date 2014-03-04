@@ -20,16 +20,15 @@ module Statistics.Math.RootFinding
     -- $references
     ) where
 
-import Statistics.Function.Comparison
-
+import Control.Applicative (Alternative(..), Applicative(..))
+import Control.Monad (MonadPlus(..), ap)
 import Data.Binary (Binary)
-import Control.Applicative
-import Control.Monad       (MonadPlus(..), ap)
+import Data.Binary (put, get)
+import Data.Binary.Get (getWord8)
+import Data.Binary.Put (putWord8)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-import Data.Binary (put, get)
-import Data.Binary.Put (putWord8)
-import Data.Binary.Get (getWord8)
+import Statistics.Function.Comparison (within)
 
 
 -- | The result of searching for a root of a mathematical function.

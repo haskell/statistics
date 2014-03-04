@@ -15,7 +15,7 @@
 -- 'Numeric.SpecFunctions.Extra' and 'Numeric.Polynomial.Chebyshev'.
 
 module Statistics.Math
-{-# DEPRECATED "Use package math-function" #-} 
+{-# DEPRECATED "Use package math-function" #-}
     ( module Numeric.Polynomial.Chebyshev
     , module Numeric.SpecFunctions
     , module Numeric.SpecFunctions.Extra
@@ -24,4 +24,3 @@ module Statistics.Math
 import Numeric.Polynomial.Chebyshev
 import Numeric.SpecFunctions
 import Numeric.SpecFunctions.Extra
-

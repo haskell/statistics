@@ -123,8 +123,8 @@ test-suite tests
     Tests.Distribution
     Tests.Helpers
     Tests.Function
-    Tests.NonparametricTest
-    Tests.NonparametricTest.Table
+    Tests.NonParametric
+    Tests.NonParametric.Table
     Tests.Transform
     Tests.KDE
 

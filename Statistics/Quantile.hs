@@ -37,14 +37,14 @@ module Statistics.Quantile
     -- $references
     ) where
 
-import Data.Vector.Generic             ((!))
+import Data.Vector.Generic ((!))
 import Numeric.MathFunctions.Constants (m_epsilon)
-import Statistics.Function             (partialSort)
+import Statistics.Function (partialSort)
 import qualified Data.Vector.Generic as G
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
 -- using the weighted average method.
-weightedAvg :: G.Vector v Double => 
+weightedAvg :: G.Vector v Double =>
                Int        -- ^ /k/, the desired quantile.
             -> Int        -- ^ /q/, the number of quantiles.
             -> v Double   -- ^ /x/, the sample data.

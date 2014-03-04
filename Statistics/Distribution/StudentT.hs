@@ -79,7 +79,7 @@ instance D.MaybeVariance StudentT where
 instance D.Entropy StudentT where
   entropy (StudentT ndf) =
     0.5 * (ndf+1) * (digamma ((1+ndf)/2) - digamma(ndf/2))
-    + log (sqrt ndf) 
+    + log (sqrt ndf)
     + logBeta (ndf/2) 0.5
 
 instance D.MaybeEntropy StudentT where

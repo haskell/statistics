@@ -50,16 +50,16 @@ module Statistics.Sample.Powers
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Binary ()
-import Data.Vector.Generic   (unsafeFreeze)
-import Data.Vector.Unboxed   ((!))
+import Data.Vector.Generic (unsafeFreeze)
+import Data.Vector.Unboxed ((!))
 import GHC.Generics (Generic)
-import Prelude hiding (sum)
-import Statistics.Function   (indexed)
-import Statistics.Internal   (inlinePerformIO)
 import Numeric.SpecFunctions (choose)
-import System.IO.Unsafe      (unsafePerformIO)
-import qualified Data.Vector.Unboxed as U
+import Prelude hiding (sum)
+import Statistics.Function (indexed)
+import Statistics.Internal (inlinePerformIO)
+import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU
 import qualified Statistics.Sample.Internal as S
 

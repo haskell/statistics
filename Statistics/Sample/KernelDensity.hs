@@ -27,14 +27,13 @@ module Statistics.Sample.KernelDensity
 
 import Numeric.MathFunctions.Constants (m_sqrt_2_pi)
 import Prelude hiding (const, min, max, sum)
-import Statistics.Function             (minMax, nextHighestPowerOfTwo)
-import Statistics.Math.RootFinding     (fromRoot, ridders)
-import Statistics.Sample.Histogram     (histogram_)
+import Statistics.Function (minMax, nextHighestPowerOfTwo)
+import Statistics.Math.RootFinding (fromRoot, ridders)
+import Statistics.Sample.Histogram (histogram_)
 import Statistics.Sample.Internal (sum)
-import Statistics.Transform            (dct, idct)
+import Statistics.Transform (dct, idct)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
-
 
 
 -- | Gaussian kernel density estimator for one-dimensional data, using

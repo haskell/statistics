@@ -16,9 +16,9 @@ module Statistics.Function.Comparison
       within
     ) where
 
-import Control.Monad.ST         (runST)
+import Control.Monad.ST (runST)
+import Data.Int (Int64)
 import Data.Primitive.ByteArray (newByteArray, readByteArray, writeByteArray)
-import Data.Int                 (Int64)
 
 -- | Compare two 'Double' values for approximate equality, using
 -- Dawson's method.

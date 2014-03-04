@@ -30,15 +30,15 @@ module Statistics.Distribution.Geometric
     , gdSuccess0
     ) where
 
-import Control.Monad  (liftM)
-import Data.Binary    (Binary)
-import Data.Data      (Data, Typeable)
-import GHC.Generics   (Generic)
-import Numeric.MathFunctions.Constants(m_pos_inf,m_neg_inf)
-import qualified Statistics.Distribution         as D
-import qualified System.Random.MWC.Distributions as MWC
-import Data.Binary (put, get)
 import Control.Applicative ((<$>))
+import Control.Monad (liftM)
+import Data.Binary (Binary)
+import Data.Binary (put, get)
+import Data.Data (Data, Typeable)
+import GHC.Generics (Generic)
+import Numeric.MathFunctions.Constants (m_pos_inf, m_neg_inf)
+import qualified Statistics.Distribution as D
+import qualified System.Random.MWC.Distributions as MWC
 
 ----------------------------------------------------------------
 -- Distribution over [1..]

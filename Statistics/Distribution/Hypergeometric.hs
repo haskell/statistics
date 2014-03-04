@@ -67,7 +67,7 @@ instance D.MaybeVariance HypergeometricDistribution where
 
 instance D.Entropy HypergeometricDistribution where
   entropy = directEntropy
-  
+
 instance D.MaybeEntropy HypergeometricDistribution where
   maybeEntropy = Just . D.entropy
 

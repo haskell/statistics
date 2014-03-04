@@ -1,15 +1,11 @@
 module Tests.Function ( tests ) where
 
-import qualified Data.Vector.Unboxed as U
-import           Data.Vector.Unboxed   ((!))
-
-import Test.QuickCheck
+import Statistics.Function
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
-
+import Test.QuickCheck
 import Tests.Helpers
-import Statistics.Function
-
+import qualified Data.Vector.Unboxed as U
 
 
 tests :: Test
@@ -29,5 +25,5 @@ p_nextHighestPowerOfTwo :: Bool
 p_nextHighestPowerOfTwo
   = all (\(good, is) -> all ((==good) . nextHighestPowerOfTwo) is) lists
   where
-    pows  = [1 .. 17]
+    pows  = [1 .. 17 :: Int]
     lists = [ (2^m, [2^n+1 .. 2^m]) | (n,m) <- pows `zip` tail pows ]

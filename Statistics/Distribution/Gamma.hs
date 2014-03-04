@@ -25,17 +25,16 @@ module Statistics.Distribution.Gamma
     , gdScale
     ) where
 
+import Control.Applicative ((<$>), (<*>))
 import Data.Binary (Binary)
+import Data.Binary (put, get)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN, m_neg_inf)
-import Numeric.SpecFunctions (
-  incompleteGamma, invIncompleteGamma, logGamma, digamma)
-import Statistics.Distribution.Poisson.Internal  as Poisson
-import qualified Statistics.Distribution         as D
+import Numeric.SpecFunctions (incompleteGamma, invIncompleteGamma, logGamma, digamma)
+import Statistics.Distribution.Poisson.Internal as Poisson
+import qualified Statistics.Distribution as D
 import qualified System.Random.MWC.Distributions as MWC
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
 
 -- | The gamma distribution.
 data GammaDistribution = GD {
@@ -94,11 +93,11 @@ instance D.MaybeVariance GammaDistribution where
 
 instance D.MaybeEntropy GammaDistribution where
   maybeEntropy (GD a l)
-    | a > 0 && l > 0 = 
+    | a > 0 && l > 0 =
       Just $
-      a 
-      + log l 
-      + logGamma a 
+      a
+      + log l
+      + logGamma a
       + (1-a) * digamma a
     | otherwise = Nothing
 

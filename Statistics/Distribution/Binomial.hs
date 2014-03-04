@@ -103,7 +103,7 @@ variance (BD n p) = fromIntegral n * p * (1 - p)
 {-# INLINE variance #-}
 
 directEntropy :: BinomialDistribution -> Double
-directEntropy d@(BD n _) =   
+directEntropy d@(BD n _) =
   negate . sum $
   takeWhile (< negate m_epsilon) $
   dropWhile (not . (< negate m_epsilon)) $

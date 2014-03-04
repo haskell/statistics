@@ -21,14 +21,16 @@ module Statistics.Resampling.Bootstrap
     -- $references
     ) where
 
+import Control.Applicative ((<$>), (<*>))
 import Control.DeepSeq (NFData)
 import Control.Exception (assert)
-import Control.Monad.Par               (parMap,runPar)
+import Control.Monad.Par (parMap, runPar)
 import Data.Binary (Binary)
+import Data.Binary (put, get)
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 import Data.Vector.Unboxed ((!))
-import GHC.Generics
+import GHC.Generics (Generic)
 import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
 import Statistics.Resampling (Resample(..), jackknife)
@@ -36,8 +38,6 @@ import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
 import qualified Data.Vector.Unboxed as U
 import qualified Statistics.Resampling as R
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
 
 -- | A point and interval estimate computed via an 'Estimator'.
 data Estimate = Estimate {

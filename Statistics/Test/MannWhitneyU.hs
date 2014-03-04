@@ -27,17 +27,17 @@ module Statistics.Test.MannWhitneyU (
   ) where
 
 import Control.Applicative ((<$>))
-import Data.List           (findIndex)
-import Data.Ord            (comparing)
-import Numeric.SpecFunctions          (choose)
+import Data.List (findIndex)
+import Data.Ord (comparing)
+import Numeric.SpecFunctions (choose)
 import Prelude hiding (sum)
-import Statistics.Distribution        (quantile)
+import Statistics.Distribution (quantile)
 import Statistics.Distribution.Normal (standard)
-import Statistics.Function            (sortBy)
+import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
-import Statistics.Test.Internal
-import Statistics.Test.Types
-import Statistics.Types               (Sample)
+import Statistics.Test.Internal (rank, splitByTags)
+import Statistics.Test.Types (TestResult(..), TestType(..), significant)
+import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
 
 -- | The Wilcoxon Rank Sums Test.

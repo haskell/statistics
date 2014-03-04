@@ -32,13 +32,12 @@ module Statistics.Distribution
     , sumProbabilities
     ) where
 
-import Control.Applicative     ((<$>), Applicative(..))
+import Control.Applicative ((<$>), Applicative(..))
 import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
 import Statistics.Sample.Internal (sum)
-import System.Random.MWC
+import System.Random.MWC (Gen, uniform)
 import qualified Data.Vector.Unboxed as U
-
 
 
 -- | Type class common to all distributions. Only c.d.f. could be

@@ -1,12 +1,10 @@
 import Control.Monad.ST (runST)
-import Data.Complex
-import qualified Data.Vector.Unboxed as U
-
-import System.Random.MWC
 import Criterion.Main
-
+import Data.Complex
 import Statistics.Sample
 import Statistics.Transform
+import System.Random.MWC
+import qualified Data.Vector.Unboxed as U
 
 
 -- Test sample

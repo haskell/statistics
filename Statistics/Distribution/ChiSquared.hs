@@ -72,12 +72,12 @@ instance D.MaybeMean ChiSquared where
 instance D.MaybeVariance ChiSquared where
     maybeStdDev   = Just . D.stdDev
     maybeVariance = Just . D.variance
-    
+
 instance D.Entropy ChiSquared where
   entropy (ChiSquared ndf) =
     let kHalf = 0.5 * fromIntegral ndf in
-    kHalf 
-    + log 2 
+    kHalf
+    + log 2
     + logGamma kHalf
     + (1-kHalf) * digamma kHalf
 

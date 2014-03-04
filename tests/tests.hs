@@ -1,15 +1,14 @@
-import Test.Framework       (defaultMain)
-
-import Tests.Distribution
-import Tests.NonparametricTest
-import qualified Tests.Transform
-import qualified Tests.Function
-import qualified Tests.KDE
+import Test.Framework (defaultMain)
+import qualified Tests.Distribution as Distribution
+import qualified Tests.Function as Function
+import qualified Tests.KDE as KDE
+import qualified Tests.NonParametric as NonParametric
+import qualified Tests.Transform as Transform
 
 main :: IO ()
-main = defaultMain [ distributionTests 
-                   , nonparametricTests
-                   , Tests.Transform.tests
-                   , Tests.Function.tests
-                   , Tests.KDE.tests
+main = defaultMain [ Distribution.tests
+                   , Function.tests
+                   , KDE.tests
+                   , NonParametric.tests
+                   , Transform.tests
                    ]

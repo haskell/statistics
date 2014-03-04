@@ -20,17 +20,16 @@ module Statistics.Distribution.Normal
     , standard
     ) where
 
+import Control.Applicative ((<$>), (<*>))
 import Data.Binary (Binary)
+import Data.Binary (put, get)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
-import Numeric.SpecFunctions           (erfc, invErfc)
+import Numeric.SpecFunctions (erfc, invErfc)
 import qualified Statistics.Distribution as D
-import qualified Statistics.Sample       as S
+import qualified Statistics.Sample as S
 import qualified System.Random.MWC.Distributions as MWC
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
-
 
 
 -- | The normal distribution.
