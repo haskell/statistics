@@ -23,6 +23,8 @@ import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 
 
@@ -33,7 +35,9 @@ data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
 
-instance Binary FDistribution
+instance Binary FDistribution where
+    get = F <$> get <*> get <*> get
+    put (F x y z) = put x >> put y >> put z
 
 fDistribution :: Int -> Int -> FDistribution
 fDistribution n m

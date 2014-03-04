@@ -25,6 +25,8 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 -- | Cauchy-Lorentz distribution.
 data CauchyDistribution = CD {
@@ -39,7 +41,9 @@ data CauchyDistribution = CD {
   }
   deriving (Eq, Show, Read, Typeable, Data, Generic)
 
-instance Binary CauchyDistribution
+instance Binary CauchyDistribution where
+    put (CD x y) = put x >> put y
+    get = CD <$> get <*> get
 
 -- | Cauchy distribution
 cauchyDistribution :: Double    -- ^ Central point

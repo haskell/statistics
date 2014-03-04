@@ -33,6 +33,8 @@ import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_epsilon)
 import Numeric.SpecFunctions (choose)
 import qualified Statistics.Distribution as D
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 data HypergeometricDistribution = HD {
       hdM :: {-# UNPACK #-} !Int
@@ -40,7 +42,9 @@ data HypergeometricDistribution = HD {
     , hdK :: {-# UNPACK #-} !Int
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary HypergeometricDistribution
+instance Binary HypergeometricDistribution where
+    get = HD <$> get <*> get <*> get
+    put (HD x y z) = put x >> put y >> put z
 
 instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative

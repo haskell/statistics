@@ -31,13 +31,16 @@ import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
 import qualified System.Random.MWC.Distributions as MWC
 import Statistics.Types (Sample)
+import Data.Binary (put, get)
 
 
 newtype ExponentialDistribution = ED {
       edLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary ExponentialDistribution
+instance Binary ExponentialDistribution where
+    put = put . edLambda
+    get = fmap ED get
 
 instance D.Distribution ExponentialDistribution where
     cumulative      = cumulative

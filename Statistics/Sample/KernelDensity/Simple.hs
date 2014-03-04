@@ -63,7 +63,9 @@ newtype Points = Points {
       fromPoints :: U.Vector Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary Points
+instance Binary Points where
+    get = fmap Points get
+    put = put . fromPoints
 
 -- | Bandwidth estimator for an Epanechnikov kernel.
 epanechnikovBW :: Double -> Bandwidth

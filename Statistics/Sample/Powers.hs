@@ -66,7 +66,9 @@ import qualified Statistics.Sample.Internal as S
 newtype Powers = Powers (U.Vector Double)
     deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary Powers
+instance Binary Powers where
+    put (Powers v) = put v
+    get = fmap Powers get
 
 -- | O(/n/) Collect the /n/ simple powers of a sample.
 --

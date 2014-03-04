@@ -91,7 +91,7 @@ library
     Statistics.Test.Internal
   build-depends:
     base < 5,
-    binary >= 0.6.3.0,
+    binary >= 0.5.1.0,
     deepseq >= 1.1.0.2,
     erf,
     monad-par         >= 0.3.4,
@@ -133,6 +133,7 @@ test-suite tests
 
   build-depends:
     base,
+    binary,
     ieee754 >= 0.7.3,
     HUnit,
     QuickCheck >= 2,

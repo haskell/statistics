@@ -36,6 +36,8 @@ import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
 import qualified Data.Vector.Unboxed as U
 import qualified Statistics.Resampling as R
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 -- | A point and interval estimate computed via an 'Estimator'.
 data Estimate = Estimate {
@@ -51,7 +53,9 @@ data Estimate = Estimate {
     -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary Estimate
+instance Binary Estimate where
+    put (Estimate w x y z) = put w >> put x >> put y >> put z
+    get = Estimate <$> get <*> get <*> get <*> get
 instance NFData Estimate
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'

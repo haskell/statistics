@@ -34,6 +34,8 @@ import Numeric.SpecFunctions (
 import Statistics.Distribution.Poisson.Internal  as Poisson
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 -- | The gamma distribution.
 data GammaDistribution = GD {
@@ -41,7 +43,9 @@ data GammaDistribution = GD {
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary GammaDistribution
+instance Binary GammaDistribution where
+    put (GD x y) = put x >> put y
+    get = GD <$> get <*> get
 
 -- | Create gamma distribution. Both shape and scale parameters must
 -- be positive.

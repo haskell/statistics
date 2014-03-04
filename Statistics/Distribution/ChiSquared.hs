@@ -26,13 +26,16 @@ import Numeric.SpecFunctions (
 
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
+import Data.Binary (put, get)
 
 
 -- | Chi-squared distribution
 newtype ChiSquared = ChiSquared Int
                      deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary ChiSquared
+instance Binary ChiSquared where
+    get = fmap ChiSquared get
+    put (ChiSquared x) = put x
 
 -- | Get number of degrees of freedom
 chiSquaredNDF :: ChiSquared -> Int

@@ -21,6 +21,8 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Data.Functor          ((<$>))
 import qualified Statistics.Distribution as D
+import Data.Binary (put, get)
+import Control.Applicative ((<*>))
 
 -- | Linear transformation applied to distribution.
 --
@@ -35,7 +37,9 @@ data LinearTransform d = LinearTransform
     -- ^ Distribution being transformed.
   } deriving (Eq, Show, Read, Typeable, Data, Generic)
 
-instance (Binary d) => Binary (LinearTransform d)
+instance (Binary d) => Binary (LinearTransform d) where
+    get = LinearTransform <$> get <*> get <*> get
+    put (LinearTransform x y z) = put x >> put y >> put z
 
 -- | Apply linear transformation to distribution.
 scaleAround :: Double           -- ^ Fixed point

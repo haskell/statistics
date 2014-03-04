@@ -28,6 +28,8 @@ import Numeric.SpecFunctions           (erfc, invErfc)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample       as S
 import qualified System.Random.MWC.Distributions as MWC
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 
 
@@ -39,7 +41,9 @@ data NormalDistribution = ND {
     , ndCdfDenom :: {-# UNPACK #-} !Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary NormalDistribution
+instance Binary NormalDistribution where
+    put (ND w x y z) = put w >> put x >> put y >> put z
+    get = ND <$> get <*> get <*> get <*> get
 
 instance D.Distribution NormalDistribution where
     cumulative      = cumulative

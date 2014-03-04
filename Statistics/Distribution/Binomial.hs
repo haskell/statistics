@@ -30,6 +30,8 @@ import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Numeric.SpecFunctions (choose,incompleteBeta)
 import Numeric.MathFunctions.Constants (m_epsilon)
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 
 -- | The binomial distribution.
@@ -40,7 +42,9 @@ data BinomialDistribution = BD {
     -- ^ Probability.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary BinomialDistribution
+instance Binary BinomialDistribution where
+    put (BD x y) = put x >> put y
+    get = BD <$> get <*> get
 
 instance D.Distribution BinomialDistribution where
     cumulative = cumulative

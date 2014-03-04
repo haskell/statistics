@@ -23,12 +23,15 @@ import qualified Statistics.Distribution as D
 import Statistics.Distribution.Transform (LinearTransform (..))
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
+import Data.Binary (put, get)
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
 
-instance Binary StudentT
+instance Binary StudentT where
+    put = put . studentTndf
+    get = fmap StudentT get
 
 -- | Create Student-T distribution. Number of parameters must be positive.
 studentT :: Double -> StudentT

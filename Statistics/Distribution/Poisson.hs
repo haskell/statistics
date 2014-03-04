@@ -31,13 +31,16 @@ import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Numeric.SpecFunctions (incompleteGamma,logFactorial)
 import Numeric.MathFunctions.Constants (m_neg_inf)
+import Data.Binary (put, get)
 
 
 newtype PoissonDistribution = PD {
       poissonLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary PoissonDistribution
+instance Binary PoissonDistribution where
+    get = fmap PD get
+    put = put . poissonLambda
 
 instance D.Distribution PoissonDistribution where
     cumulative (PD lambda) x
@@ -78,8 +81,9 @@ instance D.MaybeEntropy PoissonDistribution where
 poisson :: Double -> PoissonDistribution
 poisson l
   | l >=  0   = PD l
-  | otherwise = error $ "Statistics.Distribution.Poisson.poisson:\
-                        \ lambda must be non-negative. Got " ++ show l
+  | otherwise = error $
+    "Statistics.Distribution.Poisson.poisson: lambda must be non-negative. Got "
+    ++ show l
 {-# INLINE poisson #-}
 
 -- $references

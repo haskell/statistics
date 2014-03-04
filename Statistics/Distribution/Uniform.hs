@@ -24,6 +24,8 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import qualified System.Random.MWC       as MWC
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 
 -- | Uniform distribution from A to B
@@ -32,7 +34,9 @@ data UniformDistribution = UniformDistribution {
     , uniformB :: {-# UNPACK #-} !Double -- ^ Upper boundary of distribution
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary UniformDistribution
+instance Binary UniformDistribution where
+    put (UniformDistribution x y) = put x >> put y
+    get = UniformDistribution <$> get <*> get
 
 -- | Create uniform distribution.
 uniformDistr :: Double -> Double -> UniformDistribution

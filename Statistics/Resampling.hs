@@ -50,7 +50,9 @@ newtype Resample = Resample {
       fromResample :: U.Vector Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary Resample
+instance Binary Resample where
+    put = put . fromResample
+    get = fmap Resample get
 
 -- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
 -- computing each estimate over the resampled data.

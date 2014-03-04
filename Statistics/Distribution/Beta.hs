@@ -27,6 +27,8 @@ import Numeric.SpecFunctions (
   incompleteBeta, invIncompleteBeta, logBeta, digamma)
 import Numeric.MathFunctions.Constants (m_NaN)
 import qualified Statistics.Distribution as D
+import Data.Binary (put, get)
+import Control.Applicative ((<$>), (<*>))
 
 -- | The beta distribution
 data BetaDistribution = BD
@@ -36,7 +38,9 @@ data BetaDistribution = BD
    -- ^ Beta shape parameter
  } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary BetaDistribution
+instance Binary BetaDistribution where
+    put (BD x y) = put x >> put y
+    get = BD <$> get <*> get
 
 -- | Create beta distribution. Both shape parameters must be positive.
 betaDistr :: Double             -- ^ Shape parameter alpha
