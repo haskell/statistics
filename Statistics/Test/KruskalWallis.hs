@@ -28,18 +28,19 @@ kruskalWallisRank samples = groupByTags
       where
         (ys,zs) = U.span ((==) (fst $ U.head xs) . fst) xs
 
--- Assuming ranked samples
 kruskalWallis :: [Sample] -> Double
-kruskalWallis samples = (n - 1) * (numerator / denominator)
+kruskalWallis samples = (n - 1) * numerator / denominator
   where
-    n = sumWith samples $ fromIntegral . U.length
+    n = sumWith rsamples $ fromIntegral . U.length
     avgRank = (n + 1) / 2
-    numerator = sumWith samples $ \sample ->
+    numerator = sumWith rsamples $ \sample ->
         let avgRankSample = Sample.sum sample / size
             size = fromIntegral $ U.length sample
         in  size * square (avgRankSample - avgRank)
-    denominator = sumWith samples $ \sample ->
+    denominator = sumWith rsamples $ \sample ->
         Sample.sum $ U.map (\r -> square (r - avgRank)) sample
+
+    rsamples = kruskalWallisRank samples
 
 sumWith :: [Sample] -> (Sample -> Double) -> Double
 sumWith samples f = Prelude.sum $ fmap f samples
