@@ -14,7 +14,8 @@ import Statistics.Function (within)
 import Statistics.Transform (CD, dct, fft, idct, ifft)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck (Positive(..), Property, Arbitrary(..), Gen, choose, vectorOf, printTestCase)
+import Test.QuickCheck (Positive(..), Arbitrary(..), Gen, choose, vectorOf, counterexample)
+import Test.QuickCheck.Property (Property(..))
 import Tests.Helpers (testAssertion)
 import Text.Printf (printf)
 import qualified Data.Vector.Generic as G
@@ -82,19 +83,20 @@ t_impulse_offset k (Positive x) (Positive m) = G.all ok (fft v)
 -- whole are approximate equal.
 t_fftInverse :: (HasNorm (U.Vector a), U.Unbox a, Num a, Show a, Arbitrary a)
              => (U.Vector a -> U.Vector a) -> Property
-t_fftInverse roundtrip = do
+t_fftInverse roundtrip = MkProperty $ do
   x <- genFftVector
   let n  = G.length x
       x' = roundtrip x
       d  = G.zipWith (-) x x'
       nd = vectorNorm d
       nx = vectorNorm x
-  id $ printTestCase "Original vector"
-     $ printTestCase (show x )
-     $ printTestCase "Transformed one"
-     $ printTestCase (show x')
-     $ printTestCase (printf "Length = %i" n)
-     $ printTestCase (printf "|x - x'| / |x| = %.6g" (nd / nx))
+  unProperty
+     $ counterexample "Original vector"
+     $ counterexample (show x )
+     $ counterexample "Transformed one"
+     $ counterexample (show x')
+     $ counterexample (printf "Length = %i" n)
+     $ counterexample (printf "|x - x'| / |x| = %.6g" (nd / nx))
      $ nd <= 3e-14 * nx
 
 -- Test discrete cosine transform
