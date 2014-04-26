@@ -20,6 +20,7 @@ tests = testGroup "Nonparametric tests"
                  , wilcoxonSumTests
                  , wilcoxonPairTests
                  , kruskalWallisRankTests
+                 , kruskalWallisTests
                  , kolmogorovSmirnovDTest
                  ]
 
@@ -154,19 +155,64 @@ kruskalWallisRankTests :: [Test]
 kruskalWallisRankTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b) = testCase "Kruskal-Wallis Ranking"
-                     $ assertEqual ("Kruskal-Wallis " ++ show n) (map U.fromList b) (kruskalWallisRank $ map U.fromList a)
-    testData = [ ( [ [8.50,9.48,8.65,8.16,8.83,7.76,8.63]
-                   , [8.27,8.20,8.25,8.14,9.00,8.10,7.20,8.32,7.70]
-                   , [8.38,9.50,8.63,8.13,8.80,7.71,8.62]
-                   , [8.24,8.21,8.20,8.12,9.08,8.05,7.23,8.30,7.75]
+                  $ assertEqual ("Kruskal-Wallis " ++ show n) (map U.fromList b) (kruskalWallisRank $ map U.fromList a)
+    testData = [ ( [ [68,93,123,83,108,122]
+                   , [119,116,101,103,113,84]
+                   , [70,68,54,73,81,68]
+                   , [61,54,59,67,59,70]
                    ]
-                 , [ [6.0,12.0,22.0,24.5,26.0,28.0,31.0]
-                   , [1.0,3.0,8.0,11.0,13.5,17.0,18.0,20.0,29.0]
-                   , [4.0,10.0,21.0,23.0,24.5,27.0,32.0]
-                   , [2.0,5.0,7.0,9.0,13.5,15.0,16.0,19.0,30.0]
+                 , [ [8.0,14.0,16.0,19.0,23.0,24.0]
+                   , [15.0,17.0,18.0,20.0,21.0,22.0]
+                   , [1.5,8.0,8.0,10.5,12.0,13.0]
+                   , [1.5,3.5,3.5,5.0,6.0,10.5]
                    ]
                  )
                ]
+
+kruskalWallisTests :: [Test]
+kruskalWallisTests = zipWith test [(0::Int)..] testData
+  where
+    test n (a, b, c) = testCase "Kruskal-Wallis" $ do
+        assertEqual ("Kruskal-Wallis " ++ show n) (round100 b) (round100 kw)
+        assertEqual ("Kruskal-Wallis Sig " ++ show n) c kwt
+      where
+        kw = kruskalWallis $ map U.fromList a
+        kwt = kruskalWallisTest 0.05 $ map U.fromList a
+        round100 :: Double -> Integer
+        round100 = round . (*100)
+
+    testData = [ ( [ [68,93,123,83,108,122]
+                   , [119,116,101,103,113,84]
+                   , [70,68,54,73,81,68]
+                   , [61,54,59,67,59,70]
+                   ]
+                 , 16.03
+                 , Just Significant
+                 )
+               , ( [ [5,5,3,5,5,5,5]
+                   , [5,5,5,5,7,5,5]
+                   , [5,5,6,5,5,5,5]
+                   , [4,5,5,5,6,5,5]
+                   ]
+               , 2.24
+               , Just NotSignificant
+               )
+               , ( [ [36,48,5,67,53]
+                   , [49,33,60,2,55]
+                   , [71,31,140,59,42]
+                   ]
+                 , 1.22
+                 , Just NotSignificant
+                 )
+               , ( [ [6,38,3,17,11,30,15,16,25,5]
+                   , [34,28,42,13,40,31,9,32,39,27]
+                   , [13,35,19,4,29,0,7,33,18,24]
+                   ]
+                 , 6.10
+                 , Just Significant
+                 )
+               ]
+
 
 ----------------------------------------------------------------
 -- K-S test
