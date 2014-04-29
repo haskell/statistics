@@ -16,6 +16,13 @@ import Statistics.Test.Types (TestResult(..), significant)
 import Statistics.Test.Internal (rank)
 import qualified Statistics.Sample.Internal as Sample(sum)
 
+
+-- | Kruskal-Wallis ranking.
+--
+-- All values are replaced by the absolute rank in the combined samples.
+--
+-- The samples and values need not to be ordered but the values in the result
+-- are ordered. Assigned ranks (ties are given their average rank).
 kruskalWallisRank :: [Sample] -> [Sample]
 kruskalWallisRank samples = groupByTags
                           . sortBy (comparing fst)
@@ -33,6 +40,11 @@ kruskalWallisRank samples = groupByTags
       where
         (ys,zs) = U.span ((==) (fst $ U.head xs) . fst) xs
 
+
+-- | The Kruskal-Wallis Test.
+--
+-- In textbooks the output value is usually represented by 'K' or 'H'. This
+-- function already does the ranking.
 kruskalWallis :: [Sample] -> Double
 kruskalWallis samples = (n - 1) * numerator / denominator
   where
@@ -47,6 +59,11 @@ kruskalWallis samples = (n - 1) * numerator / denominator
 
     rsamples = kruskalWallisRank samples
 
+
+-- | Calculates whether the Kruskal-Wallis test is significant.
+--
+-- It uses /Chi-Squared/ distribution for aproximation as long as the sizes are
+-- larger than 5. Otherwise the test returns 'Nothing'.
 kruskalWallisSignificant ::
        [Int]  -- ^ The samples' size
     -> Double -- ^ The p-value at which to test (e.g. 0.05)
@@ -60,9 +77,14 @@ kruskalWallisSignificant ns p k
   where
     x = quantile (chiSquared (length ns - 1)) (1 - p)
 
+-- | Perform Kruskal-Wallis Test for the given samples and required
+-- significance. For additional information check 'kruskalWallis'. This is just
+-- a helper function.
 kruskalWallisTest :: Double -> [Sample] -> Maybe TestResult
 kruskalWallisTest p samples =
     kruskalWallisSignificant (map U.length samples) p $ kruskalWallis samples
+
+-- * Helper functions
 
 sumWith :: [Sample] -> (Sample -> Double) -> Double
 sumWith samples f = Prelude.sum $ fmap f samples
