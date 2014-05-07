@@ -11,7 +11,8 @@
 -- which could be used to whether two related samples have different
 -- means.
 --
--- WARNING: current implementation contain critical bugs
+-- WARNING: current implementation contain serious bug and couldn't be
+-- used with samples larger than 1023.
 -- <https://github.com/bos/statistics/issues/18>
 module Statistics.Test.WilcoxonT (
     -- * Wilcoxon signed-rank matched-pair test
