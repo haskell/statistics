@@ -46,22 +46,22 @@ kendall xy'
     return $ fromIntegral nu / (sqrt.fromIntegral) de
 {-# INLINE kendall #-}
 
+-- calculate number of tied pairs in a sorted vector
 numOfTiesBy :: GM.MVector v a
-             => (a -> a -> Bool) -> v s a -> ST s Integer
-numOfTiesBy f xs = do
-    count <- newSTRef (0::Integer)
-    loop count (1::Int) (0::Int)
-    readSTRef count
-    where
-        n = GM.length xs
-        loop c !acc !i | i >= n - 1 = modifySTRef' c (+ g acc)
-                       | otherwise = do
-                           x1 <- GM.unsafeRead xs i
-                           x2 <- GM.unsafeRead xs (i+1)
-                           if f x1 x2
-                              then loop c (acc+1) (i+1)
-                              else modifySTRef' c (+ g acc) >> loop c 1 (i+1)
-        g x = fromIntegral ((x * (x - 1)) `shiftR` 1)
+            => (a -> a -> Bool) -> v s a -> ST s Integer
+numOfTiesBy f xs = do count <- newSTRef (0::Integer)
+                      loop count (1::Int) (0::Int)
+                      readSTRef count
+  where
+    n = GM.length xs
+    loop c !acc !i | i >= n - 1 = modifySTRef' c (+ g acc)
+                   | otherwise = do
+                       x1 <- GM.unsafeRead xs i
+                       x2 <- GM.unsafeRead xs (i+1)
+                       if f x1 x2
+                          then loop c (acc+1) (i+1)
+                          else modifySTRef' c (+ g acc) >> loop c 1 (i+1)
+    g x = fromIntegral ((x * (x - 1)) `shiftR` 1)
 {-# INLINE numOfTiesBy #-}
 
 -- Implementation of Knight's merge sort (adapted from vector-algorithm). This
@@ -73,22 +73,22 @@ mergeSort :: GM.MVector v e
           -> STRef s Integer
           -> ST s ()
 mergeSort cmp src buf count = loop 0 (GM.length src - 1)
-    where
-        loop l u 
-          | u == l = return ()
-          | u - l == 1 = do
-              eL <- GM.unsafeRead src l
-              eU <- GM.unsafeRead src u
-              case cmp eL eU of
-                  GT -> do GM.unsafeWrite src l eU
-                           GM.unsafeWrite src u eL
-                           modifySTRef' count (+1) 
-                  _ -> return ()
-          | otherwise  = do
-              let mid = (u + l) `shiftR` 1
-              loop l mid
-              loop mid u
-              merge cmp (GM.unsafeSlice l (u-l+1) src) buf (mid - l) count
+  where
+    loop l u 
+      | u == l = return ()
+      | u - l == 1 = do
+          eL <- GM.unsafeRead src l
+          eU <- GM.unsafeRead src u
+          case cmp eL eU of
+              GT -> do GM.unsafeWrite src l eU
+                       GM.unsafeWrite src u eL
+                       modifySTRef' count (+1) 
+              _ -> return ()
+      | otherwise  = do
+          let mid = (u + l) `shiftR` 1
+          loop l mid
+          loop mid u
+          merge cmp (GM.unsafeSlice l (u-l+1) src) buf (mid - l) count
 {-# INLINE mergeSort #-}
 
 merge :: GM.MVector v e
