@@ -15,7 +15,11 @@
 -- $n_c = number of concordant pairs$, $n_d = number of discordant pairs$.
 
 module Statistics.Correlation.Kendall 
-    ( kendall ) where
+    ( kendall
+
+    -- * References
+    -- $references
+    ) where
 
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
@@ -33,17 +37,18 @@ kendall xy'
   | otherwise  = runST $ do
     xy <- G.thaw xy'
     let n = GM.length xy
-        n_0 = (fromIntegral n * (fromIntegral n-1)) `shiftR` 1 :: Integer
-    n_dis <- newSTRef 0
+    n_dRef <- newSTRef 0
     I.sort xy
-    equalX <- numOfTiesBy ((==) `on` fst) xy
+    tieX <- numOfTiesBy ((==) `on` fst) xy
+    tieXY <- numOfTiesBy (==) xy
     tmp <- GM.new n
-    mergeSort (compare `on` snd) xy tmp n_dis
-    equalY <- numOfTiesBy ((==) `on` snd) xy
-    n_d <- readSTRef n_dis
-    let nu = n_0 - n_d - equalX - equalY - n_d
-        de = (n_0 - equalX) * (n_0 - equalY)
-    return $ fromIntegral nu / (sqrt.fromIntegral) de
+    mergeSort (compare `on` snd) xy tmp n_dRef
+    tieY <- numOfTiesBy ((==) `on` snd) xy
+    n_d <- readSTRef n_dRef
+    let n_0 = (fromIntegral n * (fromIntegral n-1)) `shiftR` 1 :: Integer
+        n_c = n_0 - n_d - tieX - tieY + tieXY
+    return $ fromIntegral (n_c - n_d) /
+             (sqrt.fromIntegral) ((n_0 - tieX) * (n_0 - tieY))
 {-# INLINE kendall #-}
 
 -- calculate number of tied pairs in a sorted vector
