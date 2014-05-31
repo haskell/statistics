@@ -127,5 +127,5 @@ quantile d p
   | p > 0 && p < 1 = x * ndCdfDenom d + mean d
   | otherwise      =
     error $ "Statistics.Distribution.Normal.quantile: p must be in [0,1] range. Got: "++show p
-  where x          = invErfc $ 2 * (1 - p)
+  where x          = - invErfc (2 * p)
         inf        = 1/0
