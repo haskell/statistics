@@ -141,9 +141,9 @@ jackknifeVariance_ c samp
     brs = pfxSumR . G.map (subtract m) $ samp
     m = mean samp
     n = fromIntegral len
-    go al ar bl br = (al + ar - (b * b) / q) / q
+    go al ar bl br = (al + ar - (b * b) / q) / (q - c)
       where b = bl + br
-            q = n - (1 + c)
+            q = n - 1
     len = G.length samp
 
 -- | /O(n)/ Compute the unbiased jackknife variance of a sample.
