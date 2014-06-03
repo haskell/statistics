@@ -17,8 +17,8 @@ module Statistics.Function.Comparison
     ) where
 
 import Control.Monad.ST (runST)
-import Data.Int (Int64)
 import Data.Primitive.ByteArray (newByteArray, readByteArray, writeByteArray)
+import Data.Word (Word64)
 
 -- | Compare two 'Double' values for approximate equality, using
 -- Dawson's method.
@@ -32,7 +32,7 @@ within ulps a b = runST $ do
   buf <- newByteArray 8
   ai0 <- writeByteArray buf 0 a >> readByteArray buf 0
   bi0 <- writeByteArray buf 0 b >> readByteArray buf 0
-  let big  = 0x8000000000000000 :: Int64
+  let big  = 0x8000000000000000 :: Word64
       ai | ai0 < 0   = big - ai0
          | otherwise = ai0
       bi | bi0 < 0   = big - bi0
