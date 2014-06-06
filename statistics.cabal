@@ -89,6 +89,7 @@ library
     Statistics.Internal
     Statistics.Sample.Internal
     Statistics.Test.Internal
+    Statistics.Types.Internal
   build-depends:
     base >= 4.4 && < 5,
     binary >= 0.5.1.0,

@@ -10,31 +10,70 @@
 -- Types for working with statistics.
 
 module Statistics.Types
-    (
-      Estimator(..)
+    ( -- * Confidence level and intervals
+      CL(..)
+    , cl90
+    , cl95
+    , cl99
+    , nSigma
+    , getNSigma
+      -- * Other
+    , Estimator(..)
     , Sample
     , WeightedSample
     , Weights
     ) where
 
-import qualified Data.Vector.Unboxed as U (Vector)
+import Statistics.Types.Internal
+import Statistics.Distribution
+import Statistics.Distribution.Normal
 
--- | Sample data.
-type Sample = U.Vector Double
 
--- | Sample with weights. First element of sample is data, second is weight
-type WeightedSample = U.Vector (Double,Double)
+----------------------------------------------------------------
+-- Confidence level and estimates
+----------------------------------------------------------------
 
--- | An estimator of a property of a sample, such as its 'mean'.
+-- | Confidence level. This data type serve two purposes:
 --
--- The use of an algebraic data type here allows functions such as
--- 'jackknife' and 'bootstrapBCA' to use more efficient algorithms
--- when possible.
-data Estimator = Mean
-               | Variance
-               | VarianceUnbiased
-               | StdDev
-               | Function (Sample -> Double)
+--   1. In context of confidence intervals (CI) it should be
+--      interpreted as probability that true value of parameter lies
+--      OUTSIDE of interval. CI are constructed for /p/ close to 1 so
+--      we store @1-p@ to avoid rounding errors when @p@ is very close
+--      to 1. e.g. @CL 0.05@ corresponds to 95% CL.
+--
+--   2. In context of statistical tests it's p-value of test
+--      significance.
+newtype CL a = CL { getCL :: a }
+               deriving (Show,Eq)
 
--- | Weights for affecting the importance of elements of a sample.
-type Weights = U.Vector Double
+-- FIXME: is this right instance?
+instance Ord a => Ord (CL a) where
+  CL a <  CL b = a >  b
+  CL a <= CL b = a >= b
+  CL a >  CL b = a <  b
+  CL a >= CL b = a <= b
+  max (CL a) (CL b) = CL (min a b)
+  min (CL a) (CL b) = CL (max a b)
+
+cl90 :: Fractional a => CL a
+cl90 = CL 0.10
+
+cl95 :: Fractional a => CL a
+cl95 = CL 0.05
+
+cl99 :: Fractional a => CL a
+cl99 = CL 0.01
+
+-- | CL expressed in sigma. This is convention widely used in
+--   experimental physics. N sigma confidence level corresponds to
+--   probability within N sigma of normal distribution. Note that
+--   there's no direct correspondence between standard deviation and
+--   CL expressed in sigma.
+nSigma :: Double -> CL Double
+nSigma n
+  | n > 0     = CL $ 2 * cumulative standard (-n)
+  | otherwise = error "Statistics.Extra.Error.nSigma: non-positive number of sigma"
+
+-- | Express confidence level in sigmas
+getNSigma :: CL Double -> Double
+getNSigma (CL p) = negate $ quantile standard (p / 2)
