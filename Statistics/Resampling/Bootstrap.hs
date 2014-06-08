@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, OverloadedStrings,
-    RecordWildCards #-}
-
 -- |
 -- Module    : Statistics.Resampling.Bootstrap
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
