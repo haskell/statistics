@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric,
+  GeneralizedNewtypeDeriving #-}
 -- |
 -- Module    : Statistics.Types
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -17,12 +19,22 @@ module Statistics.Types
     , cl99
     , nSigma
     , getNSigma
+      -- * Estimates and upper/lower limits
+    , Estimate(..)
+    , UpperLimit(..)
+    , LowerLimit(..)
       -- * Other
     , Estimator(..)
     , Sample
     , WeightedSample
     , Weights
     ) where
+
+import Control.Applicative
+import Control.DeepSeq
+import Data.Binary (Binary,put,get)
+import Data.Data   (Data,Typeable)
+import GHC.Generics (Generic)
 
 import Statistics.Types.Internal
 import Statistics.Distribution
@@ -44,7 +56,7 @@ import Statistics.Distribution.Normal
 --   2. In context of statistical tests it's p-value of test
 --      significance.
 newtype CL a = CL { getCL :: a }
-               deriving (Show,Eq)
+               deriving (Show,Read,Eq, Typeable, Data, Generic, Binary, NFData)
 
 -- FIXME: is this right instance?
 instance Ord a => Ord (CL a) where
@@ -55,12 +67,17 @@ instance Ord a => Ord (CL a) where
   max (CL a) (CL b) = CL (min a b)
   min (CL a) (CL b) = CL (max a b)
 
+
+
+-- | 90% confidence level
 cl90 :: Fractional a => CL a
 cl90 = CL 0.10
 
+-- | 95% confidence level
 cl95 :: Fractional a => CL a
 cl95 = CL 0.05
 
+-- | 99% confidence level
 cl99 :: Fractional a => CL a
 cl99 = CL 0.01
 
@@ -77,3 +94,58 @@ nSigma n
 -- | Express confidence level in sigmas
 getNSigma :: CL Double -> Double
 getNSigma (CL p) = negate $ quantile standard (p / 2)
+
+
+
+----------------------------------------------------------------
+-- Estimates and limits
+----------------------------------------------------------------
+
+-- | A point estimate and its confidence interval. Latter is
+--   frequently referred to as error estimate.
+data Estimate a = Estimate
+    { estPoint           :: !a
+      -- ^ Point estimate.
+    , estErrors          :: !(a,a)
+      -- ^ Estimate's error. They are given relative to central estimate.
+    , estConfidenceLevel :: !(CL a)
+      -- ^ Confidence level of the confidence intervals.
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary a => Binary (Estimate a) where
+    put (Estimate x dx cl) = put x >> put dx >> put cl
+    get = Estimate <$> get <*> get <*> get
+instance NFData a => NFData (Estimate a) where
+    rnf (Estimate x dx cl) = rnf x `seq` rnf dx `seq` rnf cl
+
+-- | Upper limit. They are usually given for small non-negative values
+--   when it's not possible detect difference from zero.
+data UpperLimit a = UpperLimit
+    { upperLimit        :: !a
+      -- ^ Upper limit
+    , ulConfidenceLevel :: !(CL a)
+      -- ^ Confidence level for which limit was calculated
+    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+
+instance Binary a => Binary (UpperLimit a) where
+    put (UpperLimit x cl) = put x >> put cl
+    get = UpperLimit <$> get <*> get
+instance NFData a => NFData (UpperLimit a) where
+    rnf (UpperLimit x cl) = rnf x `seq` rnf cl
+
+-- | Lower limit. They are usually given for large quantities when
+--   it's not possible to measure them. For example: proton half-life
+data LowerLimit a = LowerLimit {
+    lowerLimit        :: !a
+    -- ^ Lower limit
+  , llConfidenceLevel :: !(CL a)
+    -- ^ Confidence level for which limit was calculated
+  } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+
+instance Binary a => Binary (LowerLimit a) where
+    put (LowerLimit x cl) = put x >> put cl
+    get = LowerLimit <$> get <*> get
+instance NFData a => NFData (LowerLimit a) where
+    rnf (LowerLimit x cl) = rnf x `seq` rnf cl
