@@ -48,6 +48,7 @@ extra-source-files:
 library
   exposed-modules:
     Statistics.Autocorrelation
+    Statistics.ConfidenceInt
     Statistics.Constants
     Statistics.Distribution
     Statistics.Distribution.Beta
