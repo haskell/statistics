@@ -14,6 +14,8 @@
 module Statistics.Types
     ( -- * Confidence level and intervals
       CL(..)
+    , confLevel
+    , getCL
     , cl90
     , cl95
     , cl99
@@ -21,6 +23,8 @@ module Statistics.Types
     , getNSigma
       -- * Estimates and upper/lower limits
     , Estimate(..)
+    , estimate
+    , scaleEstimate
     , UpperLimit(..)
     , LowerLimit(..)
       -- * Other
@@ -55,7 +59,7 @@ import Statistics.Distribution.Normal
 --
 --   2. In context of statistical tests it's p-value of test
 --      significance.
-newtype CL a = CL { getCL :: a }
+newtype CL a = CL { unCL :: a }
                deriving (Show,Read,Eq, Typeable, Data, Generic, Binary, NFData)
 
 -- FIXME: is this right instance?
@@ -68,6 +72,17 @@ instance Ord a => Ord (CL a) where
   min (CL a) (CL b) = CL (max a b)
 
 
+-- | Construct confidence level.
+--
+--   > confLevel 0.90
+--   >>> CL { unCL = 0.10 }
+confLevel :: (Ord a, Num a) => a -> CL a
+confLevel p
+  | p > 0 && p < 1 = CL (1 - p)
+  | otherwise      = error "Statistics.Types.confLevel: probability is out if (0,1) range"
+
+getCL :: (Ord a, Num a) => CL a -> a
+getCL (CL p) = 1 - p
 
 -- | 90% confidence level
 cl90 :: Fractional a => CL a
@@ -111,6 +126,21 @@ data Estimate a = Estimate
     , estConfidenceLevel :: !(CL a)
       -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+-- | Construct estimate and check it for sanity
+estimate :: (Ord a, Num a) => a -> (a,a) -> CL a -> Estimate a
+estimate x dx@(ldx,udx) p
+  | ldx <= 0 && udx >= 0 = Estimate x dx p
+  | otherwise            = error
+      "Statistics.Types.estimate: invalid error values"
+
+-- | Multiply the point, lower bound, and upper bound in an 'Estimate'
+scaleEstimate :: (Ord a, Num a) => a -> Estimate a -> Estimate a
+scaleEstimate a (Estimate x (ldx,udx) cl)
+  = Estimate (x * a) dx cl
+  where
+    dx | a > 0     = (ldx * a, udx * a)
+       | otherwise = (udx * a, ldx * a)
 
 instance Binary a => Binary (Estimate a) where
     put (Estimate x dx cl) = put x >> put dx >> put cl
