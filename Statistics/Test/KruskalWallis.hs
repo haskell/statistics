@@ -32,7 +32,7 @@ kruskalWallisRank samples = groupByTags
     (tags,joinSample) = U.unzip
                       . sortBy (comparing snd)
                       $ foldMap (uncurry tagSample) $ zip [(1::Int)..] samples
-    tagSample = U.map . (,)
+    tagSample t = U.map (\x -> (t,x))
 
     groupByTags xs
         | U.null xs = []
@@ -90,4 +90,5 @@ sumWith :: [Sample] -> (Sample -> Double) -> Double
 sumWith samples f = Prelude.sum $ fmap f samples
 
 square :: Num a => a -> a
-square x = x ^ (2::Int)
+square x = x * x
+{-# INLINE square #-}
