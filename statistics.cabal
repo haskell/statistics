@@ -79,6 +79,7 @@ library
     Statistics.Test.ChiSquared
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.MannWhitneyU
+    Statistics.Test.KruskalWallis
     Statistics.Test.WilcoxonT
     Statistics.Test.Types
     Statistics.Transform
