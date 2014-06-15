@@ -1,3 +1,12 @@
+-- |
+-- Module    : Statistics.Test.KruskalWallis
+-- Copyright : (c) 2014 Danny Navarro
+-- License   : BSD3
+--
+-- Maintainer  : bos@serpentine.com
+-- Stability   : experimental
+-- Portability : portable
+--
 module Statistics.Test.KruskalWallis
   ( kruskalWallisRank
   , kruskalWallis
