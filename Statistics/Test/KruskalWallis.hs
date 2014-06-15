@@ -14,6 +14,7 @@ import Statistics.Distribution (quantile)
 import Statistics.Distribution.ChiSquared (chiSquared)
 import Statistics.Test.Types (TestResult(..), significant)
 import Statistics.Test.Internal (rank)
+import Statistics.Sample
 import qualified Statistics.Sample.Internal as Sample(sum)
 
 
@@ -46,14 +47,16 @@ kruskalWallisRank samples = groupByTags
 -- In textbooks the output value is usually represented by 'K' or 'H'. This
 -- function already does the ranking.
 kruskalWallis :: [Sample] -> Double
-kruskalWallis samples = (n - 1) * numerator / denominator
+kruskalWallis samples = (nTot - 1) * numerator / denominator
   where
-    n = sumWith rsamples $ fromIntegral . U.length
-    avgRank = (n + 1) / 2
+    -- Total number of elements in all samples
+    nTot    = fromIntegral $ sumWith rsamples U.length
+    -- Average rank of all samples
+    avgRank = (nTot + 1) / 2
+    --
     numerator = sumWith rsamples $ \sample ->
-        let avgRankSample = Sample.sum sample / size
-            size = fromIntegral $ U.length sample
-        in  size * square (avgRankSample - avgRank)
+        let n = fromIntegral $ U.length sample
+        in  n * square (mean sample - avgRank)
     denominator = sumWith rsamples $ \sample ->
         Sample.sum $ U.map (\r -> square (r - avgRank)) sample
 
@@ -86,8 +89,9 @@ kruskalWallisTest p samples =
 
 -- * Helper functions
 
-sumWith :: [Sample] -> (Sample -> Double) -> Double
+sumWith :: Num a => [Sample] -> (Sample -> a) -> a
 sumWith samples f = Prelude.sum $ fmap f samples
+{-# INLINE sumWith #-}
 
 square :: Num a => a -> a
 square x = x * x
