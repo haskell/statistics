@@ -53,6 +53,8 @@ binomialCI :: CL Double
 binomialCI (CL cl) ni ki
   | ni <= 0 || ki < 0 = error "Statistics.ConfidenceInt.binomialCI: negative number of events"
   | ki > ni           = error "Statistics.ConfidenceInt.binomialCI: more successes than trials"
+  | ki == 0           = estimate eff (0,udx)   (CL cl)
+  | ni == ki          = estimate eff (ldx,0)   (CL cl)
   | otherwise         = estimate eff (ldx,udx) (CL cl)
   where
     k   = fromIntegral ki
