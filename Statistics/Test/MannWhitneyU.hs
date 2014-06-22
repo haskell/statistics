@@ -19,9 +19,6 @@ module Statistics.Test.MannWhitneyU (
   , mannWhitneyUSignificant
     -- ** Wilcoxon rank sum test
   , wilcoxonRankSums
-    -- * Data types
-  , TestType(..)
-  , TestResult(..)
     -- * References
     -- $references
   ) where
