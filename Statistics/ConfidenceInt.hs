@@ -1,13 +1,14 @@
 -- | Calculation of confidence intervals
 module Statistics.ConfidenceInt (
     poissonCI
+  , binomialCI
   , naiveBinomialCI
   ) where
 
-import Data.Data   (Data,Typeable)
 import Statistics.Distribution
 import Statistics.Distribution.Normal
 import Statistics.Distribution.ChiSquared
+import Statistics.Distribution.Beta
 import Statistics.Types
 
 
@@ -42,6 +43,25 @@ naiveBinomialCI (CL cl) n k
     σ   = eff * (1 - eff) / fromIntegral n
     s   = negate $ quantile standard (cl / 2)
     dx  = σ * s
+
+-- | Clopper-Pearson confidence interval also known as exact
+--   confidence intervals.
+binomialCI :: CL Double
+           -> Int               -- ^ Number of trials
+           -> Int               -- ^ Number of successes
+           -> Estimate Double
+binomialCI (CL cl) ni ki
+  | ni <= 0 || ki < 0 = error "Statistics.ConfidenceInt.binomialCI: negative number of events"
+  | ki > ni           = error "Statistics.ConfidenceInt.binomialCI: more successes than trials"
+  | otherwise         = estimate eff (ldx,udx) (CL cl)
+  where
+    k   = fromIntegral ki
+    n   = fromIntegral ni
+    eff = k / n
+    ub  = 1 - quantile (betaDistr (n - k)     (k + 1)) (cl/2)
+    lb  = 1 - quantile (betaDistr (n - k + 1)  k     ) (1 - cl/2)
+    ldx = lb - eff
+    udx = ub - eff
 
 {-
 Brown, Lawrence D.; Cai, T. Tony; DasGupta, Anirban
