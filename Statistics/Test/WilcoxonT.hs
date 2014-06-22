@@ -21,9 +21,6 @@ module Statistics.Test.WilcoxonT (
   , wilcoxonMatchedPairSignificant
   , wilcoxonMatchedPairSignificance
   , wilcoxonMatchedPairCriticalValue
-    -- * Data types
-  , TestType(..)
-  , TestResult(..)
   ) where
 
 
