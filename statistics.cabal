@@ -66,7 +66,6 @@ library
     Statistics.Distribution.Transform
     Statistics.Distribution.Uniform
     Statistics.Function
-    Statistics.Math
     Statistics.Math.RootFinding
     Statistics.Quantile
     Statistics.Resampling
@@ -76,7 +75,6 @@ library
     Statistics.Sample.KernelDensity
     Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Powers
-    Statistics.Test.NonParametric
     Statistics.Test.ChiSquared
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.MannWhitneyU
