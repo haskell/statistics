@@ -22,9 +22,6 @@ module Statistics.Test.KolmogorovSmirnov (
   , kolmogorovSmirnov2D
     -- * Probablities
   , kolmogorovSmirnovProbability
-    -- * Data types
-  , TestType(..)
-  , TestResult(..)
     -- * References
     -- $references
   ) where
@@ -35,8 +32,8 @@ import Prelude hiding (sum)
 import Statistics.Distribution (Distribution(..))
 import Statistics.Function (sort)
 import Statistics.Sample.Internal (sum)
-import Statistics.Test.Types (TestResult(..), TestType(..), significant)
-import Statistics.Types (Sample)
+import Statistics.Test.Types
+import Statistics.Types (Sample,confLevel)
 import Text.Printf (printf)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
@@ -54,21 +51,18 @@ import qualified Data.Vector.Unboxed.Mutable as M
 --   calculation of p-value.
 kolmogorovSmirnovTest :: Distribution d
                       => d      -- ^ Distribution
-                      -> Double -- ^ p-value
                       -> Sample -- ^ Data sample
-                      -> TestResult
+                      -> Test ()
 kolmogorovSmirnovTest d = kolmogorovSmirnovTestCdf (cumulative d)
 {-# INLINE kolmogorovSmirnovTest #-}
 
 -- | Variant of 'kolmogorovSmirnovTest' which uses CFD in form of
 --   function.
 kolmogorovSmirnovTestCdf :: (Double -> Double) -- ^ CDF of distribution
-                         -> Double             -- ^ p-value
                          -> Sample             -- ^ Data sample
-                         -> TestResult
-kolmogorovSmirnovTestCdf cdf p sample
-  | p > 0 && p < 1 = significant $ 1 - prob < p
-  | otherwise      = error "Statistics.Test.KolmogorovSmirnov.kolmogorovSmirnovTestCdf:bad p-value"
+                         -> Test ()
+kolmogorovSmirnovTestCdf cdf sample
+  = Test (confLevel prob) ()
   where
     d    = kolmogorovSmirnovCdfD cdf sample
     prob = kolmogorovSmirnovProbability (U.length sample) d
@@ -78,13 +72,11 @@ kolmogorovSmirnovTestCdf cdf p sample
 --   making any assumptions about it.
 --
 --   This test uses approxmate formula for computing p-value.
-kolmogorovSmirnovTest2 :: Double -- ^ p-value
-                       -> Sample -- ^ Sample 1
+kolmogorovSmirnovTest2 :: Sample -- ^ Sample 1
                        -> Sample -- ^ Sample 2
-                       -> TestResult
-kolmogorovSmirnovTest2 p xs1 xs2
-  | p > 0 && p < 1 = significant $ 1 - prob( d*(en + 0.12 + 0.11/en) ) < p
-  | otherwise      = error "Statistics.Test.KolmogorovSmirnov.kolmogorovSmirnovTest2:bad p-value"
+                       -> Test ()
+kolmogorovSmirnovTest2 xs1 xs2
+  = Test (confLevel $ prob $ d * (en + 0.12 + 0.11/en)) ()
   where
     d    = kolmogorovSmirnov2D xs1 xs2
     -- Effective number of data points
