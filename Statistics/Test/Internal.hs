@@ -17,6 +17,10 @@ data Rank v a = Rank {
     }
 
 -- | Calculate rank of sample. Sample should be already sorted.
+--
+--   Rank is index of element in the sample, numeration starts from 1.
+--   In case of ties average of ranks of equal elements is assigned
+--   to each
 rank :: (G.Vector v a, G.Vector v Double)
      => (a -> a -> Bool)        -- ^ Equivalence relation
      -> v a                     -- ^ Vector to rank
