@@ -34,7 +34,7 @@ import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
-import Statistics.Types (Sample)
+import Statistics.Types (Sample,CL,getPValue)
 import qualified Data.Vector.Unboxed as U
 
 -- | The Wilcoxon Rank Sums Test.
@@ -103,11 +103,10 @@ mannWhitneyU xs1 xs2
 -- simple unoptimised generating function given in section 2 of \"The Mann Whitney
 -- Wilcoxon Distribution Using Linked Lists\"
 mannWhitneyUCriticalValue :: (Int, Int) -- ^ The sample size
-                          -> Double     -- ^ The p-value (e.g. 0.05) for which you want the critical value.
+                          -> CL Double  -- ^ The p-value (e.g. 0.05) for which you want the critical value.
                           -> Maybe Int  -- ^ The critical value (of U).
 mannWhitneyUCriticalValue (m, n) p
   | m < 1 || n < 1 = Nothing    -- Sample must be nonempty
-  | p  >= 1        = Nothing    -- Nonsensical p-value
   | p' <= 1        = Nothing    -- p-value is too small. Null hypothesys couln't be disproved
   | otherwise      = findIndex (>= p')
                    $ take (m*n)
@@ -115,7 +114,7 @@ mannWhitneyUCriticalValue (m, n) p
                    $ alookup !! (m+n-2) !! (min m n - 1)
   where
     mnCn = (m+n) `choose` n
-    p'   = mnCn * p
+    p'   = mnCn * getPValue p
 
 
 {-
@@ -182,11 +181,11 @@ alookup = gen 2 [1 : repeat 2]
 mannWhitneyUSignificant ::
      TestType         -- ^ Perform one-tailed test (see description above).
   -> (Int, Int)       -- ^ The samples' size from which the (U&#8321;,U&#8322;) values were derived.
-  -> Double           -- ^ The p-value at which to test (e.g. 0.05)
+  -> CL Double        -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double) -- ^ The (U&#8321;, U&#8322;) values from 'mannWhitneyU'.
   -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
-mannWhitneyUSignificant test (in1, in2) p (u1, u2)
+mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
    --Use normal approximation
   | in1 > 20 || in2 > 20 =
     let mean  = n1 * n2 / 2
@@ -196,13 +195,14 @@ mannWhitneyUSignificant test (in1, in2) p (u1, u2)
                 OneTailed -> significant $ z     < quantile standard  p
                 TwoTailed -> significant $ abs z > abs (quantile standard (p/2))
   -- Use exact critical value
-  | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) p
+  | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) pVal
                    return $ case test of
                               OneTailed -> significant $ u2        <= crit
                               TwoTailed -> significant $ min u1 u2 <= crit
   where
     n1 = fromIntegral in1
     n2 = fromIntegral in2
+    p  = getPValue pVal
 
 
 -- | Perform Mann-Whitney U Test for two samples and required
@@ -213,7 +213,7 @@ mannWhitneyUSignificant test (in1, in2) p (u1, u2)
 -- One-tailed test checks whether first sample is significantly larger
 -- than second. Two-tailed whether they are significantly different.
 mannWhitneyUtest :: TestType    -- ^ Perform one-tailed test (see description above).
-                 -> Double      -- ^ The p-value at which to test (e.g. 0.05)
+                 -> CL Double   -- ^ The p-value at which to test (e.g. 0.05)
                  -> Sample      -- ^ First sample
                  -> Sample      -- ^ Second sample
                  -> Maybe TestResult

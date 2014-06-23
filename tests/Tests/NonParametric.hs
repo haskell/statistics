@@ -30,16 +30,16 @@ mannWhitneyTests :: [Test]
 mannWhitneyTests = zipWith test [(0::Int)..] testData ++
   [ testEquality "Mann-Whitney U Critical Values, m=1"
       (replicate (20*3) Nothing)
-      [mannWhitneyUCriticalValue (1,x) p | x <- [1..20], p <- [0.005,0.01,0.025]]
+      [mannWhitneyUCriticalValue (1,x) (pValue p) | x <- [1..20], p <- [0.005,0.01,0.025]]
   , testEquality "Mann-Whitney U Critical Values, m=2, p=0.025"
       (replicate 7 Nothing ++ map Just [0,0,0,0,1,1,1,1,1,2,2,2,2])
-      [mannWhitneyUCriticalValue (2,x) 0.025 | x <- [1..20]]
+      [mannWhitneyUCriticalValue (2,x) (pValue 0.025) | x <- [1..20]]
   , testEquality "Mann-Whitney U Critical Values, m=6, p=0.05"
       (replicate 1 Nothing ++ map Just [0, 2,3,5,7,8,10,12,14,16,17,19,21,23,25,26,28,30,32])
-      [mannWhitneyUCriticalValue (6,x) 0.05 | x <- [1..20]]
+      [mannWhitneyUCriticalValue (6,x) (pValue 0.05) | x <- [1..20]]
   , testEquality "Mann-Whitney U Critical Values, m=20, p=0.025"
       (replicate 1 Nothing ++ map Just [2,8,14,20,27,34,41,48,55,62,69,76,83,90,98,105,112,119,127])
-      [mannWhitneyUCriticalValue (20,x) 0.025 | x <- [1..20]]
+      [mannWhitneyUCriticalValue (20,x) (pValue 0.025) | x <- [1..20]]
   ]
   where
     test n (a, b, c, d)
@@ -48,7 +48,7 @@ mannWhitneyTests = zipWith test [(0::Int)..] testData ++
           assertEqual ("Mann-Whitney U Sig " ++ show n) d ss
       where
         us = mannWhitneyU (U.fromList a) (U.fromList b)
-        ss = mannWhitneyUSignificant TwoTailed (length a, length b) 0.05 us
+        ss = mannWhitneyUSignificant TwoTailed (length a, length b) (pValue 0.05) us
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
     testData :: [([Double], [Double], (Double, Double), Maybe TestResult)]
     testData = [ ( [3,4,2,6,2,5]
