@@ -14,11 +14,16 @@
 module Statistics.Types
     ( -- * Confidence level and intervals
       CL(..)
+      -- ** As confidence level
     , confLevel
     , getCL
     , cl90
     , cl95
     , cl99
+      -- ** As p-value
+    , pValue
+    , getPValue
+      -- ** Normal approximation
     , nSigma
     , getNSigma
       -- * Estimates and upper/lower limits
@@ -80,6 +85,15 @@ confLevel :: (Ord a, Num a) => a -> CL a
 confLevel p
   | p > 0 && p < 1 = CL (1 - p)
   | otherwise      = error "Statistics.Types.confLevel: probability is out if (0,1) range"
+
+-- | Construct p-value
+pValue :: (Ord a, Num a) => a -> CL a
+pValue p
+  | p > 0 && p < 1 = CL p
+  | otherwise      = error "Statistics.Types.pValue: probability is out if (0,1) range"
+
+getPValue :: CL a -> a
+getPValue (CL p) = p
 
 getCL :: (Ord a, Num a) => CL a -> a
 getCL (CL p) = 1 - p
