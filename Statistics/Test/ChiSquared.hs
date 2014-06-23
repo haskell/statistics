@@ -2,10 +2,10 @@
 -- | Pearson's chi squared test.
 module Statistics.Test.ChiSquared (
     chi2test
+  , Chi2Data(..)
   ) where
 
 import Prelude hiding (sum)
-import Control.Monad
 
 import Statistics.Distribution
 import Statistics.Distribution.ChiSquared
