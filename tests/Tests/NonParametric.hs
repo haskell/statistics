@@ -6,6 +6,7 @@ import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.WilcoxonT
 import Statistics.Test.Types (TestType(..),TestResult(..))
+import Statistics.Types (CL(..),pValue)
 
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.HUnit
@@ -106,16 +107,16 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
   , testAssertion "Sig 16, 36" (to4dp 0.0523 $ wilcoxonMatchedPairSignificance 16 36)
   , testEquality   "Wilcoxon critical values, p=0.05"
       (replicate 4 Nothing ++ map Just [0,2,3,5,8,10,13,17,21,25,30,35,41,47,53,60,67,75,83,91,100,110,119])
-      [wilcoxonMatchedPairCriticalValue x 0.05 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.05) | x <- [1..27]]
   , testEquality "Wilcoxon critical values, p=0.025"
       (replicate 5 Nothing ++ map Just [0,2,3,5,8,10,13,17,21,25,29,34,40,46,52,58,65,73,81,89,98,107])
-      [wilcoxonMatchedPairCriticalValue x 0.025 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.025) | x <- [1..27]]
   , testEquality "Wilcoxon critical values, p=0.01"
       (replicate 6 Nothing ++ map Just [0,1,3,5,7,9,12,15,19,23,27,32,37,43,49,55,62,69,76,84,92])
-      [wilcoxonMatchedPairCriticalValue x 0.01 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.01) | x <- [1..27]]
   , testEquality "Wilcoxon critical values, p=0.005"
       (replicate 7 Nothing ++ map Just [0,1,3,5,7,9,12,15,19,23,27,32,37,42,48,54,61,68,75,83])
-      [wilcoxonMatchedPairCriticalValue x 0.005 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.005) | x <- [1..27]]
   ]
   where
     test n (a, b, c) = testEquality ("Wilcoxon Paired " ++ show n) c res
@@ -146,7 +147,7 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
                  , (3, -42)
                  )
                ]
-    to4dp tgt x = x >= tgt - 0.00005 && x < tgt + 0.00005
+    to4dp tgt (CL x) = x >= tgt - 0.00005 && x < tgt + 0.00005
 
 
 
