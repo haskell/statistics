@@ -5,6 +5,8 @@ import Statistics.Distribution.Normal (standard)
 import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.WilcoxonT
+import Statistics.Test.Types (TestType(..),TestResult(..))
+
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual)
