@@ -84,6 +84,7 @@ library
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.KruskalWallis
     Statistics.Test.MannWhitneyU
+    Statistics.Test.StudentT
     Statistics.Test.Types
     Statistics.Test.WilcoxonT
     Statistics.Transform
@@ -130,6 +131,7 @@ test-suite tests
     Tests.Matrix.Types
     Tests.NonParametric
     Tests.NonParametric.Table
+    Tests.Parametric
     Tests.Transform
 
   ghc-options:
