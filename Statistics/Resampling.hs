@@ -25,7 +25,7 @@ module Statistics.Resampling
 
 import Control.Concurrent (forkIO, newChan, readChan, writeChan)
 import Control.Monad (forM_, liftM, replicateM_)
-import Control.Monad.Primitive (PrimMonad, PrimState)
+import Control.Monad.Primitive (PrimState)
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Algorithms.Intro (sort)
