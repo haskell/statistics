@@ -113,10 +113,10 @@ kolmogorovSmirnovCdfD :: (Double -> Double) -- ^ CDF function
                       -> Sample             -- ^ Sample
                       -> Double
 kolmogorovSmirnovCdfD cdf sample
-  | U.null xs = 0
-  | otherwise = U.maximum
-              $ U.zipWith3 (\p a b -> abs (p-a) `max` abs (p-b))
-                  ps steps (U.tail steps)
+  | U.null sample = 0
+  | otherwise     = U.maximum
+                  $ U.zipWith3 (\p a b -> abs (p-a) `max` abs (p-b))
+                    ps steps (U.tail steps)
   where
     xs = sort sample
     n  = U.length xs
