@@ -58,7 +58,6 @@ kolmogorovSmirnovTest :: Distribution d
                       -> Sample -- ^ Data sample
                       -> TestResult
 kolmogorovSmirnovTest d = kolmogorovSmirnovTestCdf (cumulative d)
-{-# INLINE kolmogorovSmirnovTest #-}
 
 -- | Variant of 'kolmogorovSmirnovTest' which uses CFD in form of
 --   function.
@@ -135,7 +134,6 @@ kolmogorovSmirnovD :: (Distribution d)
                    -> Sample    -- ^ Sample
                    -> Double
 kolmogorovSmirnovD d = kolmogorovSmirnovCdfD (cumulative d)
-{-# INLINE kolmogorovSmirnovD #-}
 
 -- | Calculate Kolmogorov's statistic /D/ for two data samples. If
 --   either of samples is empty returns 0.

@@ -48,22 +48,18 @@ instance D.Distribution PoissonDistribution where
       | isInfinite x = 1
       | isNaN      x = error "Statistics.Distribution.Poisson.cumulative: NaN input"
       | otherwise    = 1 - incompleteGamma (fromIntegral (floor x + 1 :: Int)) lambda
-    {-# INLINE cumulative #-}
 
 instance D.DiscreteDistr PoissonDistribution where
     probability (PD lambda) x = I.probability lambda (fromIntegral x)
     logProbability (PD lambda) i
       | i < 0     = m_neg_inf
       | otherwise = log lambda * fromIntegral i - logFactorial i - lambda
-    {-# INLINE probability #-}
 
 instance D.Variance PoissonDistribution where
     variance = poissonLambda
-    {-# INLINE variance #-}
 
 instance D.Mean PoissonDistribution where
     mean = poissonLambda
-    {-# INLINE mean #-}
 
 instance D.MaybeMean PoissonDistribution where
     maybeMean = Just . D.mean
@@ -84,7 +80,6 @@ poisson l
   | otherwise = error $
     "Statistics.Distribution.Poisson.poisson: lambda must be non-negative. Got "
     ++ show l
-{-# INLINE poisson #-}
 
 -- $references
 --

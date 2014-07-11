@@ -107,4 +107,3 @@ instance D.ContGen FDistribution where
 
 sqr :: Double -> Double
 sqr x = x * x
-{-# INLINE sqr #-}

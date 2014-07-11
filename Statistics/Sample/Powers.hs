@@ -100,12 +100,12 @@ powers k
                 loop (i+1) (xk*x)
     fini = Powers . unsafePerformIO . unsafeFreeze
     l    = k + 1
-{-# INLINE powers #-}
+{-# SPECIALIZE powers :: Int -> U.Vector Double -> Powers #-}
+{-# SPECIALIZE powers :: Int -> V.Vector Double -> Powers #-}
 
 -- | The order (number) of simple powers collected from a 'sample'.
 order :: Powers -> Int
 order (Powers pa) = U.length pa - 1
-{-# INLINE order #-}
 
 -- | Compute the /k/th central moment of a sample.  The central
 -- moment is also known as the moment about the mean.
@@ -120,7 +120,6 @@ centralMoment k p@(Powers pa)
     go (i , e) = (k `choose` i) * ((-m) ^ (k-i)) * e
     n = U.head pa
     m = mean p
-{-# INLINE centralMoment #-}
 
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.  This is
@@ -133,13 +132,11 @@ centralMoment k p@(Powers pa)
 -- Requires 'Powers' with 'order' at least 2.
 variance :: Powers -> Double
 variance = centralMoment 2
-{-# INLINE variance #-}
 
 -- | Standard deviation.  This is simply the square root of the
 -- maximum likelihood estimate of the variance.
 stdDev :: Powers -> Double
 stdDev = sqrt . variance
-{-# INLINE stdDev #-}
 
 -- | Unbiased estimate of a sample's variance.  Also known as the
 -- sample variance, where the denominator is /n/-1.
@@ -150,7 +147,6 @@ varianceUnbiased p@(Powers pa)
     | n > 1     = variance p * n / (n-1)
     | otherwise = 0
   where n = U.head pa
-{-# INLINE varianceUnbiased #-}
 
 -- | Compute the skewness of a sample. This is a measure of the
 -- asymmetry of its distribution.
@@ -172,7 +168,6 @@ varianceUnbiased p@(Powers pa)
 -- Requires 'Powers' with 'order' at least 3.
 skewness :: Powers -> Double
 skewness p = centralMoment 3 p * variance p ** (-1.5)
-{-# INLINE skewness #-}
 
 -- | Compute the excess kurtosis of a sample.  This is a measure of
 -- the \"peakedness\" of its distribution.  A high kurtosis indicates
@@ -186,19 +181,16 @@ skewness p = centralMoment 3 p * variance p ** (-1.5)
 kurtosis :: Powers -> Double
 kurtosis p = centralMoment 4 p / (v * v) - 3
     where v = variance p
-{-# INLINE kurtosis #-}
 
 -- | The number of elements in the original 'Sample'.  This is the
 -- sample's zeroth simple power.
 count :: Powers -> Int
 count (Powers pa) = floor $ U.head pa
-{-# INLINE count #-}
 
 -- | The sum of elements in the original 'Sample'.  This is the
 -- sample's first simple power.
 sum :: Powers -> Double
 sum (Powers pa) = pa ! 1
-{-# INLINE sum #-}
 
 -- | The arithmetic mean of elements in the original 'Sample'.
 --
@@ -210,7 +202,6 @@ mean p@(Powers pa)
     | n == 0    = 0
     | otherwise = sum p / n
     where n     = U.head pa
-{-# INLINE mean #-}
 
 -- $references
 --

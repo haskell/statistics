@@ -56,7 +56,6 @@ gammaDistr k theta
   | theta <= 0 = error $ msg ++ "scale must be positive. Got " ++ show theta
   | otherwise  = improperGammaDistr k theta
     where msg = "Statistics.Distribution.Gamma.gammaDistr: "
-{-# INLINE gammaDistr #-}
 
 -- | Create gamma distribution. This constructor do not check whether
 --   parameters are valid
@@ -64,7 +63,6 @@ improperGammaDistr :: Double            -- ^ Shape parameter. /k/
                    -> Double            -- ^ Scale parameter, &#977;.
                    -> GammaDistribution
 improperGammaDistr = GD
-{-# INLINE improperGammaDistr #-}
 
 instance D.Distribution GammaDistribution where
     cumulative = cumulative
@@ -78,11 +76,9 @@ instance D.ContDistr GammaDistribution where
 
 instance D.Variance GammaDistribution where
     variance (GD a l) = a * l * l
-    {-# INLINE variance #-}
 
 instance D.Mean GammaDistribution where
     mean (GD a l) = a * l
-    {-# INLINE mean #-}
 
 instance D.MaybeMean GammaDistribution where
     maybeMean = Just . D.mean
@@ -113,13 +109,11 @@ density (GD a l) x
   | x == 0            = if a < 1 then m_pos_inf else if a > 1 then 0 else 1/l
   | a < 1             = Poisson.probability (x/l) a * a / x
   | otherwise         = Poisson.probability (x/l) (a-1) / l
-{-# INLINE density #-}
 
 cumulative :: GammaDistribution -> Double -> Double
 cumulative (GD k l) x
   | x <= 0    = 0
   | otherwise = incompleteGamma k (x/l)
-{-# INLINE cumulative #-}
 
 quantile :: GammaDistribution -> Double -> Double
 quantile (GD k l) p
@@ -128,4 +122,3 @@ quantile (GD k l) p
   | p > 0 && p < 1 = l * invIncompleteGamma k p
   | otherwise      =
     error $ "Statistics.Distribution.Gamma.quantile: p must be in [0,1] range. Got: "++show p
-{-# INLINE quantile #-}

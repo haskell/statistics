@@ -80,7 +80,6 @@ probability (BD n p) k
   | k < 0 || k > n = 0
   | n == 0         = 1
   | otherwise      = choose n k * p^k * (1-p)^(n-k)
-{-# INLINE probability #-}
 
 -- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
@@ -92,15 +91,12 @@ cumulative (BD n p) x
   | otherwise    = incompleteBeta (fromIntegral (n-k)) (fromIntegral (k+1)) (1 - p)
   where
     k = floor x
-{-# INLINE cumulative #-}
 
 mean :: BinomialDistribution -> Double
 mean (BD n p) = fromIntegral n * p
-{-# INLINE mean #-}
 
 variance :: BinomialDistribution -> Double
 variance (BD n p) = fromIntegral n * p * (1 - p)
-{-# INLINE variance #-}
 
 directEntropy :: BinomialDistribution -> Double
 directEntropy d@(BD n _) =
@@ -121,4 +117,3 @@ binomial n p
     error $ msg++"probability must be in [0,1] range. Got " ++ show p
   | otherwise      = BD n p
     where msg = "Statistics.Distribution.Binomial.binomial: "
-{-# INLINE binomial #-}

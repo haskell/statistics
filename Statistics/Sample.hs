@@ -137,7 +137,8 @@ centralMoment a xs
   where
     go x = (x-m) ^ a
     m    = mean xs
-{-# INLINE centralMoment #-}
+{-# SPECIALIZE centralMoment :: Int -> U.Vector Double -> Double #-}
+{-# SPECIALIZE centralMoment :: Int -> V.Vector Double -> Double #-}
 
 -- | Compute the /k/th and /j/th central moments of a sample.
 --
@@ -155,7 +156,10 @@ centralMoments a b xs
         fini (V i j) = (i / n , j / n)
         m            = mean xs
         n            = fromIntegral (G.length xs)
-{-# INLINE centralMoments #-}
+{-# SPECIALIZE
+    centralMoments :: Int -> Int -> U.Vector Double -> (Double, Double) #-}
+{-# SPECIALIZE
+    centralMoments :: Int -> Int -> V.Vector Double -> (Double, Double) #-}
 
 -- | Compute the skewness of a sample. This is a measure of the
 -- asymmetry of its distribution.
@@ -182,7 +186,8 @@ centralMoments a b xs
 skewness :: (G.Vector v Double) => v Double -> Double
 skewness xs = c3 * c2 ** (-1.5)
     where (c3 , c2) = centralMoments 3 2 xs
-{-# INLINE skewness #-}
+{-# SPECIALIZE skewness :: U.Vector Double -> Double #-}
+{-# SPECIALIZE skewness :: V.Vector Double -> Double #-}
 
 -- | Compute the excess kurtosis of a sample.  This is a measure of
 -- the \"peakedness\" of its distribution.  A high kurtosis indicates
@@ -200,7 +205,8 @@ skewness xs = c3 * c2 ** (-1.5)
 kurtosis :: (G.Vector v Double) => v Double -> Double
 kurtosis xs = c4 / (c2 * c2) - 3
     where (c4 , c2) = centralMoments 4 2 xs
-{-# INLINE kurtosis #-}
+{-# SPECIALIZE kurtosis :: U.Vector Double -> Double #-}
+{-# SPECIALIZE kurtosis :: V.Vector Double -> Double #-}
 
 -- $variance
 --
@@ -226,7 +232,9 @@ variance samp
     | otherwise = 0
     where
       n = G.length samp
-{-# INLINE variance #-}
+{-# SPECIALIZE variance :: U.Vector Double -> Double #-}
+{-# SPECIALIZE variance :: V.Vector Double -> Double #-}
+
 
 -- | Unbiased estimate of a sample's variance.  Also known as the
 -- sample variance, where the denominator is /n/-1.
@@ -236,7 +244,8 @@ varianceUnbiased samp
     | otherwise = 0
     where
       n = G.length samp
-{-# INLINE varianceUnbiased #-}
+{-# SPECIALIZE varianceUnbiased :: U.Vector Double -> Double #-}
+{-# SPECIALIZE varianceUnbiased :: V.Vector Double -> Double #-}
 
 -- | Calculate mean and maximum likelihood estimate of variance. This
 -- function should be used if both mean and variance are required
@@ -248,7 +257,8 @@ meanVariance samp
     where
       n = G.length samp
       m = mean samp
-{-# INLINE meanVariance #-}
+{-# SPECIALIZE meanVariance :: U.Vector Double -> (Double,Double) #-}
+{-# SPECIALIZE meanVariance :: V.Vector Double -> (Double,Double) #-}
 
 -- | Calculate mean and unbiased estimate of variance. This
 -- function should be used if both mean and variance are required
@@ -260,13 +270,15 @@ meanVarianceUnb samp
     where
       n = G.length samp
       m = mean samp
-{-# INLINE meanVarianceUnb #-}
+{-# SPECIALIZE meanVarianceUnb :: U.Vector Double -> (Double,Double) #-}
+{-# SPECIALIZE meanVarianceUnb :: V.Vector Double -> (Double,Double) #-}
 
 -- | Standard deviation.  This is simply the square root of the
 -- unbiased estimate of the variance.
 stdDev :: (G.Vector v Double) => v Double -> Double
 stdDev = sqrt . varianceUnbiased
-{-# INLINE stdDev #-}
+{-# SPECIALIZE stdDev :: U.Vector Double -> Double #-}
+{-# SPECIALIZE stdDev :: V.Vector Double -> Double #-}
 
 robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> V
 robustSumVarWeighted samp = G.foldl' go (V 0 0) samp
@@ -283,7 +295,8 @@ varianceWeighted samp
     | otherwise         = 0
     where
       fini (V s w) = s / w
-{-# INLINE varianceWeighted #-}
+{-# SPECIALIZE varianceWeighted :: U.Vector (Double,Double) -> Double #-}
+{-# SPECIALIZE varianceWeighted :: V.Vector (Double,Double) -> Double #-}
 
 -- $cancellation
 --

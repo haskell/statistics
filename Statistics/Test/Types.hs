@@ -24,4 +24,3 @@ data TestResult = Significant    -- ^ Null hypothesis should be rejected
 significant :: Bool -> TestResult
 significant True  = Significant
 significant False = NotSignificant
-{-# INLINE significant #-}

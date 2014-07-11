@@ -54,38 +54,31 @@ betaDistr a b
             ++ show a
             ++ " b = "
             ++ show b
-{-# INLINE betaDistr #-}
 
 -- | Create beta distribution. This construtor doesn't check parameters.
 improperBetaDistr :: Double             -- ^ Shape parameter alpha
                   -> Double             -- ^ Shape parameter beta
                   -> BetaDistribution
 improperBetaDistr = BD
-{-# INLINE improperBetaDistr #-}
 
 instance D.Distribution BetaDistribution where
   cumulative (BD a b) x
     | x <= 0    = 0
     | x >= 1    = 1
     | otherwise = incompleteBeta a b x
-  {-# INLINE cumulative #-}
 
 instance D.Mean BetaDistribution where
   mean (BD a b) = a / (a + b)
-  {-# INLINE mean #-}
 
 instance D.MaybeMean BetaDistribution where
   maybeMean = Just . D.mean
-  {-# INLINE maybeMean #-}
 
 instance D.Variance BetaDistribution where
   variance (BD a b) = a*b / (apb*apb*(apb+1))
     where apb = a + b
-  {-# INLINE variance #-}
 
 instance D.MaybeVariance BetaDistribution where
   maybeVariance = Just . D.variance
-  {-# INLINE maybeVariance #-}
 
 instance D.Entropy BetaDistribution where
   entropy (BD a b) =
@@ -93,11 +86,9 @@ instance D.Entropy BetaDistribution where
     - (a-1) * digamma a
     - (b-1) * digamma b
     + (a+b-2) * digamma (a+b)
-  {-# INLINE entropy #-}
 
 instance D.MaybeEntropy BetaDistribution where
   maybeEntropy = Just . D.entropy
-  {-# INLINE maybeEntropy #-}
 
 instance D.ContDistr BetaDistribution where
   density (BD a b) x
@@ -105,7 +96,6 @@ instance D.ContDistr BetaDistribution where
    | x <= 0 = 0
    | x >= 1 = 0
    | otherwise = exp $ (a-1)*log x + (b-1)*log (1-x) - logBeta a b
-  {-# INLINE density #-}
 
   quantile (BD a b) p
     | p == 0         = 0
@@ -113,7 +103,6 @@ instance D.ContDistr BetaDistribution where
     | p > 0 && p < 1 = invIncompleteBeta a b p
     | otherwise      =
         error $ "Statistics.Distribution.Gamma.quantile: p must be in [0,1] range. Got: "++show p
-  {-# INLINE quantile #-}
 
 instance D.ContGen BetaDistribution where
   genContVar = D.genContinous
