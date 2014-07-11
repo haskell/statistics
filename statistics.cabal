@@ -105,16 +105,11 @@ library
   if impl(ghc < 7.6)
     build-depends:
       ghc-prim
-  if impl(ghc >= 6.10)
-    build-depends:
-      base >= 4
 
   -- gather extensive profiling data for now
   ghc-prof-options: -auto-all
 
-  ghc-options: -O2 -Wall -funbox-strict-fields
-  if impl(ghc >= 6.8)
-    ghc-options: -fwarn-tabs
+  ghc-options: -O2 -Wall -fwarn-tabs -funbox-strict-fields
 
 test-suite tests
   type:           exitcode-stdio-1.0
