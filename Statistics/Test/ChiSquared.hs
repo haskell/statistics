@@ -10,6 +10,7 @@ module Statistics.Test.ChiSquared (
 import Prelude hiding (sum)
 import Statistics.Distribution
 import Statistics.Distribution.ChiSquared
+import Statistics.Function (square)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Types
 import qualified Data.Vector as V
@@ -36,9 +37,8 @@ chi2test p ndf vec
   | otherwise      = error $ "Statistics.Test.ChiSquare.chi2test: bad p-value: " ++ show p
   where
     n     = G.length vec - ndf - 1
-    chi2  = sum $ G.map (\(o,e) -> sqr (fromIntegral o - e) / e) vec
+    chi2  = sum $ G.map (\(o,e) -> square (fromIntegral o - e) / e) vec
     d     = chiSquared n
-    sqr x = x * x
 {-# SPECIALIZE
     chi2test :: Double -> Int -> U.Vector (Int,Double) -> TestResult #-}
 {-# SPECIALIZE

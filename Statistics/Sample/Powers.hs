@@ -58,6 +58,7 @@ import Prelude hiding (sum)
 import Statistics.Function (indexed)
 import Statistics.Internal (inlinePerformIO)
 import System.IO.Unsafe (unsafePerformIO)
+import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU

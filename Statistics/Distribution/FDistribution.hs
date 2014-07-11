@@ -21,6 +21,7 @@ import Data.Data (Data, Typeable)
 import Numeric.MathFunctions.Constants (m_neg_inf)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
+import Statistics.Function (square)
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
 import Data.Binary (put, get)
@@ -86,7 +87,7 @@ instance D.MaybeMean FDistribution where
 
 instance D.MaybeVariance FDistribution where
   maybeStdDev (F n m _)
-    | m > 4     = Just $ 2 * sqr m * (m + n - 2) / (n * sqr (m - 2) * (m - 4))
+    | m > 4     = Just $ 2 * square m * (m + n - 2) / (n * square (m - 2) * (m - 4))
     | otherwise = Nothing
 
 instance D.Entropy FDistribution where
@@ -104,6 +105,3 @@ instance D.MaybeEntropy FDistribution where
 
 instance D.ContGen FDistribution where
   genContVar = D.genContinous
-
-sqr :: Double -> Double
-sqr x = x * x

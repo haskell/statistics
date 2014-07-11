@@ -25,6 +25,8 @@ module Statistics.Function
     , nextHighestPowerOfTwo
     -- * Comparison
     , within
+    -- * Arithmetic
+    , square
     ) where
 
 #include "MachDeps.h"
@@ -99,3 +101,6 @@ nextHighestPowerOfTwo n
 -- But GHC do not inline foldl (probably because it's recursive) and
 -- as result function walks list of boxed ints. Hand rolled version
 -- uses unboxed arithmetic.
+
+square :: Double -> Double
+square x = x * x

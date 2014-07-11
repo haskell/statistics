@@ -17,8 +17,7 @@ module Statistics.Test.KruskalWallis
 import Data.Ord (comparing)
 import Data.Foldable (foldMap)
 import qualified Data.Vector.Unboxed as U
-import Statistics.Types (Sample)
-import Statistics.Function (sort, sortBy)
+import Statistics.Function (sort, sortBy, square)
 import Statistics.Distribution (quantile)
 import Statistics.Distribution.ChiSquared (chiSquared)
 import Statistics.Test.Types (TestResult(..), significant)
@@ -101,7 +100,3 @@ kruskalWallisTest p samples =
 sumWith :: Num a => [Sample] -> (Sample -> a) -> a
 sumWith samples f = Prelude.sum $ fmap f samples
 {-# INLINE sumWith #-}
-
-square :: Num a => a -> a
-square x = x * x
-{-# INLINE square #-}

@@ -35,6 +35,7 @@ module Statistics.Distribution
 import Control.Applicative ((<$>), Applicative(..))
 import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
+import Statistics.Function (square)
 import Statistics.Sample.Internal (sum)
 import System.Random.MWC (Gen, uniform)
 import qualified Data.Vector.Unboxed as U
@@ -126,7 +127,7 @@ class MaybeMean d => MaybeVariance d where
 --   Minimal complete definition is 'variance' or 'stdDev'
 class (Mean d, MaybeVariance d) => Variance d where
     variance :: d -> Double
-    variance d = x * x where x = stdDev d
+    variance d = square (stdDev d)
     stdDev   :: d -> Double
     stdDev = sqrt . variance
 
