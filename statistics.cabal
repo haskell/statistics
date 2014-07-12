@@ -67,6 +67,7 @@ library
     Statistics.Function
     Statistics.Math
     Statistics.Math.RootFinding
+    Statistics.Matrix
     Statistics.Quantile
     Statistics.Resampling
     Statistics.Resampling.Bootstrap

@@ -34,10 +34,9 @@ import Control.Monad.ST (ST)
 import Prelude hiding (sum)
 import Statistics.Distribution (Distribution(..))
 import Statistics.Function (sort)
-import Statistics.Sample.Internal (sum)
+import Statistics.Matrix
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
 import Statistics.Types (Sample)
-import Text.Printf (printf)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
 
@@ -227,61 +226,6 @@ kolmogorovSmirnovProbability n d
           | otherwise    = loop (i+1)  ss'           eQ
           where ss' = ss * fromIntegral i / fromIntegral n
 
-
-----------------------------------------------------------------
-
--- Maxtrix operations.
---
--- There isn't the matrix package for haskell yet so nessesary minimum
--- is implemented here.
-
--- Square matrix stored in row-major order
-data Matrix = Matrix
-              {-# UNPACK #-} !Int -- Size of matrix
-              !(U.Vector Double)  -- Matrix data
-              {-# UNPACK #-} !Int -- In order to avoid overflows
-                                  -- during matrix multiplication large
-                                  -- exponent is stored seprately
-
--- Show instance useful mostly for debugging
-instance Show Matrix where
-  show (Matrix n vs _) = unlines $ map (unwords . map (printf "%.4f")) $ split $ U.toList vs
-    where
-      split [] = []
-      split xs = row : split rest where (row, rest) = splitAt n xs
-
-
--- Avoid overflow in the matrix
-avoidOverflow :: Matrix -> Matrix
-avoidOverflow m@(Matrix n xs e)
-  | matrixCenter m > 1e140 = Matrix n (U.map (* 1e-140) xs) (e + 140)
-  | otherwise              = m
-
--- Unsafe matrix-matrix multiplication. Matrices must be of the same
--- size. This is not checked.
-matrixMultiply :: Matrix -> Matrix -> Matrix
-matrixMultiply (Matrix n xs e1) (Matrix _ ys e2) =
-  Matrix n (U.generate (n*n) go) (e1 + e2)
-  where
-    go i = sum $ U.zipWith (*) row col
-      where
-        nCol = i `rem` n
-        row  = U.slice (i - nCol) n xs
-        col  = U.backpermute ys $ U.enumFromStepN nCol n n
-
--- Raise matrix to power N. power must be positive it's not checked
-matrixPower :: Matrix -> Int -> Matrix
-matrixPower mat 1 = mat
-matrixPower mat n = avoidOverflow res
-  where
-    mat2 = matrixPower mat (n `quot` 2)
-    pow  = matrixMultiply mat2 mat2
-    res | odd n     = matrixMultiply pow mat
-        | otherwise = pow
-
--- Element in the center of matrix (Not corrected for exponent)
-matrixCenter :: Matrix -> Double
-matrixCenter (Matrix n xs _) = (U.!) xs (k*n + k) where k = n `quot` 2
 
 -- Simple for loop
 for :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
