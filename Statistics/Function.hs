@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP, FlexibleContexts, Rank2Types #-}
+{-# OPTIONS_GHC -fsimpl-tick-factor=200 #-}
 -- |
 -- Module    : Statistics.Function
 -- Copyright : (c) 2009, 2010, 2011 Bryan O'Sullivan
@@ -16,6 +17,7 @@ module Statistics.Function
       minMax
     -- * Sorting
     , sort
+    , gsort
     , sortBy
     , partialSort
     -- * Indexing
@@ -34,12 +36,18 @@ module Statistics.Function
 import Data.Bits ((.|.), shiftR)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
 import Statistics.Function.Comparison (within)
 
 -- | Sort a vector.
-sort :: (Ord e, G.Vector v e) => v e -> v e
+sort :: U.Vector Double -> U.Vector Double
 sort = G.modify I.sort
-{-# INLINE sort #-}
+{-# NOINLINE sort #-}
+
+-- | Sort a vector.
+gsort :: (Ord e, G.Vector v e) => v e -> v e
+gsort = G.modify I.sort
+{-# INLINE gsort #-}
 
 -- | Sort a vector using a custom ordering.
 sortBy :: (G.Vector v e) => I.Comparison e -> v e -> v e
@@ -53,7 +61,7 @@ partialSort :: (G.Vector v e, Ord e) =>
             -> v e
             -> v e
 partialSort k = G.modify (`I.partialSort` k)
-{-# INLINE partialSort #-}
+{-# SPECIALIZE partialSort :: Int -> U.Vector Double -> U.Vector Double #-}
 
 -- | Return the indices of a vector.
 indices :: (G.Vector v a, G.Vector v Int) => v a -> v Int
