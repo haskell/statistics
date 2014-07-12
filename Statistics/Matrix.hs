@@ -11,9 +11,9 @@
 module Statistics.Matrix
     (
       Matrix(..)
-    , matrixCenter
-    , matrixMultiply
-    , matrixPower
+    , center
+    , multiply
+    , power
     ) where
 
 import Prelude hiding (sum)
@@ -45,13 +45,13 @@ instance Show Matrix where
 -- | Avoid overflow in the matrix.
 avoidOverflow :: Matrix -> Matrix
 avoidOverflow m@(Matrix n xs e)
-  | matrixCenter m > 1e140 = Matrix n (U.map (* 1e-140) xs) (e + 140)
-  | otherwise              = m
+  | center m > 1e140 = Matrix n (U.map (* 1e-140) xs) (e + 140)
+  | otherwise        = m
 
 -- | Matrix-matrix multiplication. Matrices must be of the same
 -- size (/note: not checked/).
-matrixMultiply :: Matrix -> Matrix -> Matrix
-matrixMultiply (Matrix n xs e1) (Matrix _ ys e2) =
+multiply :: Matrix -> Matrix -> Matrix
+multiply (Matrix n xs e1) (Matrix _ ys e2) =
   Matrix n (U.generate (n*n) go) (e1 + e2)
   where
     go i = sum $ U.zipWith (*) row col
@@ -62,15 +62,15 @@ matrixMultiply (Matrix n xs e1) (Matrix _ ys e2) =
 
 -- | Raise matrix to /n/th power. Power must be positive
 -- (/note: not checked).
-matrixPower :: Matrix -> Int -> Matrix
-matrixPower mat 1 = mat
-matrixPower mat n = avoidOverflow res
+power :: Matrix -> Int -> Matrix
+power mat 1 = mat
+power mat n = avoidOverflow res
   where
-    mat2 = matrixPower mat (n `quot` 2)
-    pow  = matrixMultiply mat2 mat2
-    res | odd n     = matrixMultiply pow mat
+    mat2 = power mat (n `quot` 2)
+    pow  = multiply mat2 mat2
+    res | odd n     = multiply pow mat
         | otherwise = pow
 
 -- | Element in the center of matrix (not corrected for exponent).
-matrixCenter :: Matrix -> Double
-matrixCenter (Matrix n xs _) = (U.!) xs (k*n + k) where k = n `quot` 2
+center :: Matrix -> Double
+center (Matrix n xs _) = (U.!) xs (k*n + k) where k = n `quot` 2

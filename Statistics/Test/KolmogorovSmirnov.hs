@@ -34,7 +34,7 @@ import Control.Monad.ST (ST)
 import Prelude hiding (sum)
 import Statistics.Distribution (Distribution(..))
 import Statistics.Function (sort)
-import Statistics.Matrix
+import Statistics.Matrix (Matrix(..), center, power)
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
 import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
@@ -182,7 +182,7 @@ kolmogorovSmirnovProbability n d
   -- Avoid potencially lengthy calculations for large N and D > 0.999
   | s > 7.24 || (s > 3.76 && n > 99) = 1 - 2 * exp( -(2.000071 + 0.331 / sqrt n' + 1.409 / n') * s)
   -- Exact computation
-  | otherwise = fini $ matrixPower matrix n
+  | otherwise = fini $ matrix `power` n
   where
     s  = n' * d * d
     n' = fromIntegral n
@@ -218,7 +218,7 @@ kolmogorovSmirnovProbability n d
             return mat
       in Matrix size m 0
     -- Last calculation
-    fini m@(Matrix _ _ e) = loop 1 (matrixCenter m) e
+    fini m@(Matrix _ _ e) = loop 1 (center m) e
       where
         loop i ss eQ
           | i  > n       = ss * 10 ^^ eQ
