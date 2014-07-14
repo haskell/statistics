@@ -29,16 +29,21 @@ module Statistics.Function
     , within
     -- * Arithmetic
     , square
+    -- * Vectors
+    , unsafeModify
     -- * Combinators
     , for
+    , rfor
     ) where
 
 #include "MachDeps.h"
 
+import Control.Monad.ST (ST)
 import Data.Bits ((.|.), shiftR)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as M
 import Statistics.Function.Comparison (within)
 
 -- | Sort a vector.
@@ -116,10 +121,25 @@ nextHighestPowerOfTwo n
 square :: Double -> Double
 square x = x * x
 
--- Simple for loop
+-- | Simple for loop.  Counts from /start/ to /end/-1.
 for :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
 for n0 !n f = loop n0
   where
     loop i | i == n    = return ()
            | otherwise = f i >> loop (i+1)
 {-# INLINE for #-}
+
+-- | Simple reverse-for loop.  Counts from /start/-1 to /end/ (which
+-- must be less than /start/).
+rfor :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
+rfor n0 !n f = loop n0
+  where
+    loop i | i == n    = return ()
+           | otherwise = let i' = i-1 in f i' >> loop i'
+{-# INLINE rfor #-}
+
+unsafeModify :: M.MVector s Double -> Int -> (Double -> Double) -> ST s ()
+unsafeModify v i f = do
+  k <- M.unsafeRead v i
+  M.unsafeWrite v i (f k)
+{-# INLINE unsafeModify #-}

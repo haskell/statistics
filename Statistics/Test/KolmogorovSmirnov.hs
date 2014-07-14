@@ -30,10 +30,9 @@ module Statistics.Test.KolmogorovSmirnov (
   ) where
 
 import Control.Monad (when)
-import Control.Monad.ST (ST)
 import Prelude hiding (exponent, sum)
 import Statistics.Distribution (Distribution(..))
-import Statistics.Function (sort)
+import Statistics.Function (sort, unsafeModify)
 import Statistics.Matrix (center, exponent, for, fromVector, power)
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
 import Statistics.Types (Sample)
@@ -203,16 +202,16 @@ kolmogorovSmirnovProbability n d
             -- Correct left column/bottom row
             for 0 size $ \i -> do
               let delta = h ^^ (i + 1)
-              modify mat (i    * size)         (subtract delta)
-              modify mat (size * size - 1 - i) (subtract delta)
+              unsafeModify mat (i    * size)         (subtract delta)
+              unsafeModify mat (size * size - 1 - i) (subtract delta)
             -- Correct corner element if needed
             when (2*h > 1) $ do
-              modify mat ((size - 1) * size) (+ ((2*h - 1) ^ size))
+              unsafeModify mat ((size - 1) * size) (+ ((2*h - 1) ^ size))
             -- Divide diagonals by factorial
             let divide g num
                   | num == size = return ()
                   | otherwise   = do for num size $ \i ->
-                                       modify mat (i * (size + 1) - num) (/ g)
+                                       unsafeModify mat (i * (size + 1) - num) (/ g)
                                      divide (g * fromIntegral (num+2)) (num+1)
             divide 2 1
             return mat
@@ -225,12 +224,6 @@ kolmogorovSmirnovProbability n d
           | ss' < 1e-140 = loop (i+1) (ss' * 1e140) (eQ - 140)
           | otherwise    = loop (i+1)  ss'           eQ
           where ss' = ss * fromIntegral i / fromIntegral n
-
-modify :: M.MVector s Double -> Int -> (Double -> Double) -> ST s ()
-modify v i f = do
-  k <- M.unsafeRead v i
-  M.unsafeWrite v i (f k)
-{-# INLINE modify #-}
 
 ----------------------------------------------------------------
 
