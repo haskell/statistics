@@ -1,3 +1,11 @@
+Changes in 0.12.0.0
+
+  * Added support for OLS regression.
+
+  * Added basic 2D matrix support.
+
+  * Added the Kruskal-Wallis test.
+
 Changes in 0.11.0.3
 
   * Fixed a subtle bug in calculation of the jackknifed unbiased variance.

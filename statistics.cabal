@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.11.0.3
+version:        0.11.1.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -15,7 +15,7 @@ description:
   .
   * Computing with sample data: quantile estimation, kernel density
     estimation, histograms, bootstrap methods, significance testing,
-    and autocorrelation analysis.
+    and regression and autocorrelation analysis.
   .
   * Random variate generation under several different distributions.
   .
@@ -28,7 +28,7 @@ homepage:       https://github.com/bos/statistics
 bug-reports:    https://github.com/bos/statistics/issues
 author:         Bryan O'Sullivan <bos@serpentine.com>
 maintainer:     Bryan O'Sullivan <bos@serpentine.com>
-copyright:      2009, 2010, 2011 Bryan O'Sullivan
+copyright:      2009-2014 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
 cabal-version:  >= 1.8
