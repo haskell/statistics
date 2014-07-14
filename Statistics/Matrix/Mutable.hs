@@ -41,7 +41,8 @@ unsafeRead mat r c = unsafeBounds mat r c M.unsafeRead
 {-# INLINE unsafeRead #-}
 
 unsafeWrite :: MMatrix s -> Int -> Int -> Double -> ST s ()
-unsafeWrite mat row col k = unsafeBounds mat row col $ \v i -> M.unsafeWrite v i k
+unsafeWrite mat row col k = unsafeBounds mat row col $ \v i ->
+  M.unsafeWrite v i k
 {-# INLINE unsafeWrite #-}
 
 unsafeModify :: MMatrix s -> Int -> Int -> (Double -> Double) -> ST s ()

@@ -94,7 +94,8 @@ power mat n = avoidOverflow res
 
 -- | Element in the center of matrix (not corrected for exponent).
 center :: Matrix -> Double
-center mat@(Matrix r c _ _) = unsafeBounds U.unsafeIndex mat (r `quot` 2) (c `quot` 2)
+center mat@(Matrix r c _ _) =
+    unsafeBounds U.unsafeIndex mat (r `quot` 2) (c `quot` 2)
 
 -- | Calculate the Euclidean norm of a vector.
 norm :: Vector -> Double
