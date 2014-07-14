@@ -18,6 +18,7 @@ module Statistics.Matrix
     , dimension
     , center
     , multiply
+    , multiplyV
     , transpose
     , power
     , norm
@@ -72,14 +73,21 @@ avoidOverflow m@(Matrix r c e v)
   | center m > 1e140 = Matrix r c (e + 140) (U.map (* 1e-140) v)
   | otherwise        = m
 
--- | Matrix-matrix multiplication. Matrices must be of the same
--- size (/note: not checked/).
+-- | Matrix-matrix multiplication. Matrices must be of compatible
+-- sizes (/note: not checked/).
 multiply :: Matrix -> Matrix -> Matrix
 multiply m1@(Matrix r1 _ e1 _) m2@(Matrix _ c2 e2 _) =
   Matrix r1 c2 (e1 + e2) $ U.generate (r1*c2) go
   where
     go t = sum $ U.zipWith (*) (row m1 i) (column m2 j)
       where (i,j) = t `quotRem` c2
+
+-- | Matrix-vector multiplication.
+multiplyV :: Matrix -> Vector -> Vector
+multiplyV m v
+  | cols m == c = U.generate (rows m) (sum . U.zipWith (*) v . row m)
+  | otherwise   = error $ "matrix/vector unconformable " ++ show (cols m,c)
+  where c = U.length v
 
 -- | Raise matrix to /n/th power. Power must be positive
 -- (/note: not checked).
