@@ -8,6 +8,7 @@
 module Statistics.Matrix.Mutable
     (
       MMatrix(..)
+    , MVector
     , replicate
     , thaw
     , bounds

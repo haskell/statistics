@@ -72,6 +72,7 @@ library
     Statistics.Matrix.Mutable
     Statistics.Matrix.Types
     Statistics.Quantile
+    Statistics.Regression
     Statistics.Resampling
     Statistics.Resampling.Bootstrap
     Statistics.Sample

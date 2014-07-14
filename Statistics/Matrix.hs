@@ -11,6 +11,7 @@
 module Statistics.Matrix
     (
       Matrix(..)
+    , Vector
     , fromList
     , fromVector
     , toVector
