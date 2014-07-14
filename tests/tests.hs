@@ -5,6 +5,7 @@ import qualified Tests.KDE as KDE
 import qualified Tests.Matrix as Matrix
 import qualified Tests.NonParametric as NonParametric
 import qualified Tests.Transform as Transform
+import qualified Tests.Correlation as Correlation
 
 main :: IO ()
 main = defaultMain [ Distribution.tests
@@ -13,4 +14,5 @@ main = defaultMain [ Distribution.tests
                    , Matrix.tests
                    , NonParametric.tests
                    , Transform.tests
+                   , Correlation.tests
                    ]
