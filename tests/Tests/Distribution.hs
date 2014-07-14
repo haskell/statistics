@@ -3,7 +3,7 @@
     ViewPatterns #-}
 module Tests.Distribution (tests) where
 
-import Control.Applicative ((<$>), (<*>))
+import Control.Applicative ((<$), (<$>), (<*>))
 import Data.Binary (Binary, decode, encode)
 import Data.List (find)
 import Data.Typeable (Typeable)
@@ -197,7 +197,7 @@ quantileIsInvCDF _ d (snd . properFraction -> p) =
 quantileShouldFail :: (ContDistr d) => T d -> d -> Double -> Property
 quantileShouldFail _ d p =
   p < 0 || p > 1 ==> QC.monadicIO $ do r <- QC.run $ E.catch
-                                              (do { return $! quantile d p; return False })
+                                              (False <$ (return $! quantile d p))
                                               (\(_ :: E.SomeException) -> return True)
                                        QC.assert r
 
