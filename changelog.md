@@ -1,4 +1,11 @@
--*- text -*-
+Changes in 0.11.0.3
+
+  * Fixed a subtle bug in calculation of the jackknifed unbiased variance.
+
+  * The test suite now requires QuickCheck 2.7.
+
+  * We now calculate quantiles for normal distribution in a more
+    numerically stable way (bug #64).
 
 Changes in 0.10.6.0
 
