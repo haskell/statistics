@@ -31,10 +31,10 @@ module Statistics.Test.KolmogorovSmirnov (
 
 import Control.Monad (when)
 import Control.Monad.ST (ST)
-import Prelude hiding (sum)
+import Prelude hiding (exponent, sum)
 import Statistics.Distribution (Distribution(..))
 import Statistics.Function (sort)
-import Statistics.Matrix (Matrix(..), center, power)
+import Statistics.Matrix (center, exponent, for, fromVector, power)
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
 import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
@@ -216,9 +216,9 @@ kolmogorovSmirnovProbability n d
                                      divide (g * fromIntegral (num+2)) (num+1)
             divide 2 1
             return mat
-      in Matrix size m 0
+      in fromVector size size m
     -- Last calculation
-    fini m@(Matrix _ _ e) = loop 1 (center m) e
+    fini m = loop 1 (center m) (exponent m)
       where
         loop i ss eQ
           | i  > n       = ss * 10 ^^ eQ
@@ -226,18 +226,10 @@ kolmogorovSmirnovProbability n d
           | otherwise    = loop (i+1)  ss'           eQ
           where ss' = ss * fromIntegral i / fromIntegral n
 
-
--- Simple for loop
-for :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
-for n0 n f = loop n0
-  where
-    loop i | i == n    = return ()
-           | otherwise = f i >> loop (i+1)
-
--- Modify element in the vector
-modify :: U.Unbox a => M.MVector s a -> Int -> (a -> a) -> ST s ()
-modify arr i f = do x <- M.read arr i
-                    M.write arr i (f x)
+modify :: M.MVector s Double -> Int -> (Double -> Double) -> ST s ()
+modify v i f = do
+  k <- M.unsafeRead v i
+  M.unsafeWrite v i (f k)
 {-# INLINE modify #-}
 
 ----------------------------------------------------------------

@@ -68,6 +68,9 @@ library
     Statistics.Math
     Statistics.Math.RootFinding
     Statistics.Matrix
+    Statistics.Matrix.Algorithms
+    Statistics.Matrix.Mutable
+    Statistics.Matrix.Types
     Statistics.Quantile
     Statistics.Resampling
     Statistics.Resampling.Bootstrap
@@ -118,8 +121,11 @@ test-suite tests
   main-is:        tests.hs
   other-modules:
     Tests.Distribution
+    Tests.ApproxEq
     Tests.Helpers
     Tests.Function
+    Tests.Matrix
+    Tests.Matrix.Types
     Tests.NonParametric
     Tests.NonParametric.Table
     Tests.Transform

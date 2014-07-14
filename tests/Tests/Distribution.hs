@@ -26,7 +26,8 @@ import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
 import Test.QuickCheck.Monadic as QC
-import Tests.Helpers (T(..), (=~), eq, testAssertion, typeName)
+import Tests.ApproxEq (ApproxEq(..))
+import Tests.Helpers (T(..), testAssertion, typeName)
 import Tests.Helpers (monotonicallyIncreasesIEEE)
 import Text.Printf (printf)
 import qualified Control.Exception as E

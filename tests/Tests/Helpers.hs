@@ -3,33 +3,24 @@ module Tests.Helpers (
     -- * helpers
     T(..)
   , typeName
-  , eq
-  , eqC
-  , (=~)
     -- * Generic QC tests
   , monotonicallyIncreases
   , monotonicallyIncreasesIEEE
     -- * HUnit helpers
   , testAssertion
   , testEquality
+    -- * QC helpers
+  , small
+  , unsquare
+  , shrinkFixedList
   ) where
 
-import Data.Complex
 import Data.Typeable
-
-import qualified Numeric.IEEE    as IEEE
-
-import qualified Test.HUnit      as HU
 import Test.Framework
 import Test.Framework.Providers.HUnit
-
-import Numeric.MathFunctions.Constants
-
-
-
-----------------------------------------------------------------
--- Helpers
-----------------------------------------------------------------
+import Test.QuickCheck
+import qualified Numeric.IEEE as IEEE
+import qualified Test.HUnit as HU
 
 -- | Phantom typed value used to select right instance in QC tests
 data T a = T
@@ -40,32 +31,6 @@ typeName = show . typeOf . typeParam
   where
     typeParam :: T a -> a
     typeParam _ = undefined
-
--- | Approximate equality for 'Double'. Doesn't work well for numbers
---   which are almost zero.
-eq :: Double                    -- ^ Relative error
-   -> Double -> Double -> Bool
-eq eps a b 
-  | a == 0 && b == 0 = True
-  | otherwise        = abs (a - b) <= eps * max (abs a) (abs b)
-
--- | Approximate equality for 'Complex Double'
-eqC :: Double                   -- ^ Relative error
-    -> Complex Double
-    -> Complex Double
-    -> Bool
-eqC eps a@(ar :+ ai) b@(br :+ bi)
-  | a == 0 && b == 0 = True
-  | otherwise        = abs (ar - br) <= eps * d
-                    && abs (ai - bi) <= eps * d
-  where
-    d = max (realPart $ abs a) (realPart $ abs b)
-
-
--- | Approximately equal up to 1 ulp
-(=~) :: Double -> Double -> Bool
-(=~) = eq m_epsilon
-
 
 ----------------------------------------------------------------
 -- Generic QC
@@ -98,3 +63,14 @@ testAssertion str cont = testCase str $ HU.assertBool str cont
 
 testEquality :: (Show a, Eq a) => String -> a -> a -> Test
 testEquality msg a b = testCase msg $ HU.assertEqual msg a b
+
+unsquare :: (Arbitrary a, Show a, Testable b) => (a -> b) -> Property
+unsquare = forAll (small arbitrary)
+
+small :: Gen a -> Gen a
+small act = sized $ \n -> resize (smallish n) act
+  where smallish = round . (sqrt :: Double -> Double) . fromIntegral . abs
+
+shrinkFixedList :: (a -> [a]) -> [a] -> [[a]]
+shrinkFixedList shr (x:xs) = map (:xs) (shr x) ++ map (x:) (shrinkFixedList shr xs)
+shrinkFixedList _   []     = []

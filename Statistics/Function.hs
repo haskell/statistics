@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, FlexibleContexts, Rank2Types #-}
+{-# LANGUAGE BangPatterns, CPP, FlexibleContexts, Rank2Types #-}
 {-# OPTIONS_GHC -fsimpl-tick-factor=200 #-}
 -- |
 -- Module    : Statistics.Function
@@ -29,6 +29,8 @@ module Statistics.Function
     , within
     -- * Arithmetic
     , square
+    -- * Combinators
+    , for
     ) where
 
 #include "MachDeps.h"
@@ -110,5 +112,14 @@ nextHighestPowerOfTwo n
 -- as result function walks list of boxed ints. Hand rolled version
 -- uses unboxed arithmetic.
 
+-- | Multiply a number by itself.
 square :: Double -> Double
 square x = x * x
+
+-- Simple for loop
+for :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
+for n0 !n f = loop n0
+  where
+    loop i | i == n    = return ()
+           | otherwise = f i >> loop (i+1)
+{-# INLINE for #-}

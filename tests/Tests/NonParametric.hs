@@ -9,7 +9,8 @@ import Statistics.Test.WilcoxonT
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual)
-import Tests.Helpers (eq, testAssertion, testEquality)
+import Tests.ApproxEq (eq)
+import Tests.Helpers (testAssertion, testEquality)
 import Tests.NonParametric.Table (tableKSD, tableKS2D)
 import qualified Data.Vector.Unboxed as U
 

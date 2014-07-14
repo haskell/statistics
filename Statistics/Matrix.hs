@@ -1,6 +1,6 @@
 -- |
 -- Module    : Statistics.Matrix
--- Copyright : (c) 2011 Aleksey Khudyakov
+-- Copyright : 2011 Aleksey Khudyakov, 2014 Bryan O'Sullivan
 -- License   : BSD3
 --
 -- Basic matrix operations.
@@ -11,54 +11,74 @@
 module Statistics.Matrix
     (
       Matrix(..)
+    , fromList
+    , fromVector
+    , toVector
+    , toList
+    , dimension
     , center
     , multiply
     , power
+    , norm
+    , column
+    , row
+    , map
+    , for
+    , unsafeIndex
+    , hasNaN
+    , bounds
+    , unsafeBounds
     ) where
 
-import Prelude hiding (sum)
+import Prelude hiding (exponent, map, sum)
+import Statistics.Function (for, square)
+import Statistics.Matrix.Types
 import Statistics.Sample.Internal (sum)
-import Text.Printf (printf)
 import qualified Data.Vector.Unboxed as U
 
-----------------------------------------------------------------
+-- | Convert from a row-major list.
+fromList :: Int                 -- ^ Number of rows.
+         -> Int                 -- ^ Number of columns.
+         -> [Double]            -- ^ Flat list of values, in row-major order.
+         -> Matrix
+fromList r c = fromVector r c . U.fromList
 
+-- | Convert from a row-major vector.
+fromVector :: Int               -- ^ Number of rows.
+           -> Int               -- ^ Number of columns.
+           -> U.Vector Double   -- ^ Flat list of values, in row-major order.
+           -> Matrix
+fromVector r c v
+  | r*c /= len = error "input size mismatch"
+  | otherwise  = Matrix r c 0 v
+  where len    = U.length v
 
--- | Square matrix stored in row-major order.
-data Matrix = Matrix
-              {-# UNPACK #-} !Int -- ^ Size of matrix.
-              !(U.Vector Double)  -- ^ Matrix data.
-              {-# UNPACK #-} !Int
-              -- ^ In order to avoid overflows during matrix
-              -- multiplication, a large exponent is stored
-              -- separately.
+-- | Convert to a row-major flat vector.
+toVector :: Matrix -> U.Vector Double
+toVector (Matrix _ _ _ v) = v
 
--- The Show instance is useful mostly for debugging.
-instance Show Matrix where
-  show (Matrix n vs _) = unlines . map (unwords . map (printf "%.4f")) .
-                         split . U.toList $ vs
-    where
-      split [] = []
-      split xs = row : split rest where (row, rest) = splitAt n xs
+-- | Convert to a row-major flat list.
+toList :: Matrix -> [Double]
+toList = U.toList . toVector
 
+-- | Return the dimensions of this matrix, as a (row,column) pair.
+dimension :: Matrix -> (Int, Int)
+dimension (Matrix r c _ _) = (r, c)
 
 -- | Avoid overflow in the matrix.
 avoidOverflow :: Matrix -> Matrix
-avoidOverflow m@(Matrix n xs e)
-  | center m > 1e140 = Matrix n (U.map (* 1e-140) xs) (e + 140)
+avoidOverflow m@(Matrix r c e v)
+  | center m > 1e140 = Matrix r c (e + 140) (U.map (* 1e-140) v)
   | otherwise        = m
 
 -- | Matrix-matrix multiplication. Matrices must be of the same
 -- size (/note: not checked/).
 multiply :: Matrix -> Matrix -> Matrix
-multiply (Matrix n xs e1) (Matrix _ ys e2) =
-  Matrix n (U.generate (n*n) go) (e1 + e2)
+multiply m1@(Matrix r1 _ e1 _) m2@(Matrix _ c2 e2 _) =
+  Matrix r1 c2 (e1 + e2) $ U.generate (r1*c2) go
   where
-    go i = sum $ U.zipWith (*) row col
-      where
-        nCol = i `rem` n
-        row  = U.slice (i - nCol) n xs
-        col  = U.backpermute ys $ U.enumFromStepN nCol n n
+    go t = sum $ U.zipWith (*) (row m1 i) (column m2 j)
+      where (i,j) = t `quotRem` c2
 
 -- | Raise matrix to /n/th power. Power must be positive
 -- (/note: not checked).
@@ -73,4 +93,45 @@ power mat n = avoidOverflow res
 
 -- | Element in the center of matrix (not corrected for exponent).
 center :: Matrix -> Double
-center (Matrix n xs _) = (U.!) xs (k*n + k) where k = n `quot` 2
+center mat@(Matrix r c _ _) = unsafeBounds U.unsafeIndex mat (r `quot` 2) (c `quot` 2)
+
+-- | Calculate the Euclidean norm of a vector.
+norm :: Vector -> Double
+norm = sqrt . sum . U.map square
+
+-- | Return the given column.
+column :: Matrix -> Int -> Vector
+column (Matrix r c _ v) i = U.backpermute v $ U.enumFromStepN i c r
+{-# INLINE column #-}
+
+-- | Return the given row.
+row :: Matrix -> Int -> Vector
+row (Matrix _ c _ v) i = U.slice (c*i) c v
+
+unsafeIndex :: Matrix
+            -> Int              -- ^ Row.
+            -> Int              -- ^ Column.
+            -> Double
+unsafeIndex = unsafeBounds U.unsafeIndex
+
+map :: (Double -> Double) -> Matrix -> Matrix
+map f (Matrix r c e v) = Matrix r c e (U.map f v)
+
+-- | Indicate whether any element of the matrix is @NaN@.
+hasNaN :: Matrix -> Bool
+hasNaN = U.any isNaN . toVector
+
+-- | Given row and column numbers, calculate the offset into the flat
+-- row-major vector.
+bounds :: (Vector -> Int -> r) -> Matrix -> Int -> Int -> r
+bounds k (Matrix rs cs _ v) r c
+  | r < 0 || r >= rs = error "row out of bounds"
+  | c < 0 || c >= cs = error "column out of bounds"
+  | otherwise        = k v $! r * cs + c
+{-# INLINE bounds #-}
+
+-- | Given row and column numbers, calculate the offset into the flat
+-- row-major vector, without checking.
+unsafeBounds :: (Vector -> Int -> r) -> Matrix -> Int -> Int -> r
+unsafeBounds k (Matrix _ cs _ v) r c = k v $! r * cs + c
+{-# INLINE unsafeBounds #-}
