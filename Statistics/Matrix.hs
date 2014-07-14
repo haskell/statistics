@@ -18,6 +18,7 @@ module Statistics.Matrix
     , dimension
     , center
     , multiply
+    , transpose
     , power
     , norm
     , column
@@ -135,3 +136,8 @@ bounds k (Matrix rs cs _ v) r c
 unsafeBounds :: (Vector -> Int -> r) -> Matrix -> Int -> Int -> r
 unsafeBounds k (Matrix _ cs _ v) r c = k v $! r * cs + c
 {-# INLINE unsafeBounds #-}
+
+transpose :: Matrix -> Matrix
+transpose m@(Matrix r0 c0 e _) = Matrix c0 r0 e . U.generate (r0*c0) $ \i ->
+  let (r,c) = i `quotRem` r0
+  in unsafeIndex m c r

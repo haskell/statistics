@@ -23,6 +23,10 @@ t_center :: Mat Double -> Property
 t_center ms@(Mat r c xs) =
   (xs !! (r `quot` 2)) !! (c `quot` 2) === center (fromMat ms)
 
+t_transpose :: Matrix -> Property
+t_transpose m = U.concat (map (column n) [0..rows m-1]) === toVector m
+  where n = transpose m
+
 t_qr :: Matrix -> Property
 t_qr a = hasNaN p .||. eql 1e-10 a p
   where p = uncurry multiply (qr a)
@@ -32,5 +36,6 @@ tests = testGroup "Matrix" [
     testProperty "t_row" t_row
   , testProperty "t_column" t_column
   , testProperty "t_center" t_center
+  , testProperty "t_transpose" t_transpose
   , testProperty "t_qr" t_qr
   ]
