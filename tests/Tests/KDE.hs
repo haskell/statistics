@@ -8,7 +8,7 @@ import Numeric.Sum (kbn, sumVector)
 import Statistics.Sample.KernelDensity
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck (Property, (==>), printTestCase)
+import Test.QuickCheck (Property, (==>), counterexample)
 import Text.Printf (printf)
 import qualified Data.Vector.Unboxed as U
 
@@ -26,7 +26,7 @@ t_densityIsPDF vec
     step     = (xs ! 1) - (xs ! 0)
     integral = integratePDF step ys
     --
-    test = printTestCase (printf "Integral %f" integral)
+    test = counterexample (printf "Integral %f" integral)
          $ abs (1 - integral) <= 1e-3
 
 

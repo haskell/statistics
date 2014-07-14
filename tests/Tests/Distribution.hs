@@ -118,7 +118,7 @@ cdfAtNegInfinity _ d
 -- CDF limit at +∞ is 1
 cdfLimitAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Property
 cdfLimitAtPosInfinity _ d =
-  okForInfLimit d ==> printTestCase ("Last elements: " ++ show (drop 990 probs))
+  okForInfLimit d ==> counterexample ("Last elements: " ++ show (drop 990 probs))
                     $ Just 1.0 == (find (>=1) probs)
   where
     probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1000
@@ -126,7 +126,7 @@ cdfLimitAtPosInfinity _ d =
 -- CDF limit at -∞ is 0
 cdfLimitAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Property
 cdfLimitAtNegInfinity _ d =
-  okForInfLimit d ==> printTestCase ("Last elements: " ++ show (drop 990 probs))
+  okForInfLimit d ==> counterexample ("Last elements: " ++ show (drop 990 probs))
                     $ case find (< IEEE.epsilon) probs of
                         Nothing -> False
                         Just p  -> p >= 0
@@ -140,7 +140,7 @@ cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d 
 -- CDF for discrete distribution uses <= for comparison
 cdfDiscreteIsCorrect :: (DiscreteDistr d) => T d -> d -> Property
 cdfDiscreteIsCorrect _ d
-  = printTestCase (unlines badN)
+  = counterexample (unlines badN)
   $ null badN
   where
     -- We are checking that:
@@ -162,10 +162,10 @@ cdfDiscreteIsCorrect _ d
 
 logDensityCheck :: (ContDistr d) => T d -> d -> Double -> Property
 logDensityCheck _ d x
-  = printTestCase (printf "density    = %g" p)
-  $ printTestCase (printf "logDensity = %g" logP)
-  $ printTestCase (printf "log p      = %g" (log p))
-  $ printTestCase (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+  = counterexample (printf "density    = %g" p)
+  $ counterexample (printf "logDensity = %g" logP)
+  $ counterexample (printf "log p      = %g" (log p))
+  $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
   $ or [ p == 0     && logP == (-1/0)
        , p < 1e-308 && logP < 609
        , eq 1e-14 (log p) logP
@@ -182,10 +182,10 @@ pdfSanityCheck _ d x = p >= 0
 -- Quantile is inverse of CDF
 quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d (snd . properFraction -> p) =
-  p > 0 && p < 1  ==> ( printTestCase (printf "Quantile     = %g" q )
-                      $ printTestCase (printf "Probability  = %g" p )
-                      $ printTestCase (printf "Probability' = %g" p')
-                      $ printTestCase (printf "Error        = %e" (abs $ p - p'))
+  p > 0 && p < 1  ==> ( counterexample (printf "Quantile     = %g" q )
+                      $ counterexample (printf "Probability  = %g" p )
+                      $ counterexample (printf "Probability' = %g" p')
+                      $ counterexample (printf "Error        = %e" (abs $ p - p'))
                       $ abs (p - p') < invQuantilePrec d
                       )
   where
@@ -209,9 +209,9 @@ probSanityCheck _ d x = p >= 0 && p <= 1
 -- Check that discrete CDF is correct
 discreteCDFcorrect :: (DiscreteDistr d) => T d -> d -> Int -> Int -> Property
 discreteCDFcorrect _ d a b
-  = printTestCase (printf "CDF   = %g" p1)
-  $ printTestCase (printf "Sum   = %g" p2)
-  $ printTestCase (printf "Delta = %g" (abs (p1 - p2)))
+  = counterexample (printf "CDF   = %g" p1)
+  $ counterexample (printf "Sum   = %g" p2)
+  $ counterexample (printf "Delta = %g" (abs (p1 - p2)))
   $ abs (p1 - p2) < 3e-10
   -- Avoid too large differeneces. Otherwise there is to much to sum
   --
@@ -225,10 +225,10 @@ discreteCDFcorrect _ d a b
 
 logProbabilityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Property
 logProbabilityCheck _ d x
-  = printTestCase (printf "probability    = %g" p)
-  $ printTestCase (printf "logProbability = %g" logP)
-  $ printTestCase (printf "log p          = %g" (log p))
-  $ printTestCase (printf "eps            = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+  = counterexample (printf "probability    = %g" p)
+  $ counterexample (printf "logProbability = %g" logP)
+  $ counterexample (printf "log p          = %g" (log p))
+  $ counterexample (printf "eps            = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
   $ or [ p == 0     && logP == (-1/0)
        , p < 1e-308 && logP < 609
        , eq 1e-14 (log p) logP

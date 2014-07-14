@@ -133,7 +133,7 @@ test-suite tests
     binary,
     ieee754 >= 0.7.3,
     HUnit,
-    QuickCheck >= 2.7,
+    QuickCheck >= 2.7.5,
     test-framework,
     test-framework-quickcheck2,
     test-framework-hunit,
