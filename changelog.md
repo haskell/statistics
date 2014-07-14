@@ -1,5 +1,15 @@
 Changes in 0.12.0.0
 
+  * The `Statistics.Math` module has been removed, after being
+    deprecated for several years.  Use the
+    [math-functions](http://hackage.haskell.org/package/math-functions)
+    package instead.
+
+  * The `Statistics.Test.NonParametric` module has been removed, after
+    being deprecated for several years.
+
+  * Added support for Kendall's tau.
+
   * Added support for OLS regression.
 
   * Added basic 2D matrix support.
