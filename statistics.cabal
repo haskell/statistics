@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.11.1.0
+version:        0.12.0.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -66,7 +66,6 @@ library
     Statistics.Distribution.Transform
     Statistics.Distribution.Uniform
     Statistics.Function
-    Statistics.Math
     Statistics.Math.RootFinding
     Statistics.Matrix
     Statistics.Matrix.Algorithms
