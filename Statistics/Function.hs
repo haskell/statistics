@@ -1,5 +1,8 @@
 {-# LANGUAGE BangPatterns, CPP, FlexibleContexts, Rank2Types #-}
+#if __GLASGOW_HASKELL__ >= 704
 {-# OPTIONS_GHC -fsimpl-tick-factor=200 #-}
+#endif
+
 -- |
 -- Module    : Statistics.Function
 -- Copyright : (c) 2009, 2010, 2011 Bryan O'Sullivan
