@@ -122,6 +122,7 @@ test-suite tests
   other-modules:
     Tests.Distribution
     Tests.ApproxEq
+    Tests.Correlation
     Tests.Helpers
     Tests.Function
     Tests.Matrix
