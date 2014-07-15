@@ -33,23 +33,23 @@ category:       Math, Statistics
 build-type:     Simple
 cabal-version:  >= 1.8
 extra-source-files:
-  changelog.md
   README.markdown
   benchmark/bench.hs
+  changelog.md
   examples/kde/KDE.hs
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
-  tests/Tests/Math/gen.py
   tests/Tests/Math/Tables.hs
+  tests/Tests/Math/gen.py
   tests/utils/Makefile
   tests/utils/fftw.c
 
 library
   exposed-modules:
     Statistics.Autocorrelation
-    Statistics.Correlation.Kendall
     Statistics.Constants
+    Statistics.Correlation.Kendall
     Statistics.Distribution
     Statistics.Distribution.Beta
     Statistics.Distribution.Binomial
@@ -82,10 +82,10 @@ library
     Statistics.Sample.Powers
     Statistics.Test.ChiSquared
     Statistics.Test.KolmogorovSmirnov
-    Statistics.Test.MannWhitneyU
     Statistics.Test.KruskalWallis
-    Statistics.Test.WilcoxonT
+    Statistics.Test.MannWhitneyU
     Statistics.Test.Types
+    Statistics.Test.WilcoxonT
     Statistics.Transform
     Statistics.Types
   other-modules:
@@ -99,9 +99,9 @@ library
     binary >= 0.5.1.0,
     deepseq >= 1.1.0.2,
     erf,
+    math-functions    >= 0.1.5.2,
     monad-par         >= 0.3.4,
     mwc-random        >= 0.13.0.0,
-    math-functions    >= 0.1.5.2,
     primitive         >= 0.3,
     vector            >= 0.7.1,
     vector-algorithms >= 0.4,
@@ -120,37 +120,37 @@ test-suite tests
   hs-source-dirs: tests
   main-is:        tests.hs
   other-modules:
-    Tests.Distribution
     Tests.ApproxEq
     Tests.Correlation
-    Tests.Helpers
+    Tests.Distribution
     Tests.Function
+    Tests.Helpers
+    Tests.KDE
     Tests.Matrix
     Tests.Matrix.Types
     Tests.NonParametric
     Tests.NonParametric.Table
     Tests.Transform
-    Tests.KDE
 
   ghc-options:
     -Wall -threaded -rtsopts
 
   build-depends:
-    base,
-    binary,
-    ieee754 >= 0.7.3,
     HUnit,
     QuickCheck >= 2.7.5,
-    test-framework,
-    test-framework-quickcheck2,
-    test-framework-hunit,
+    base,
+    binary,
+    erf,
+    ieee754 >= 0.7.3,
     math-functions,
     mwc-random,
-    statistics,
     primitive,
+    statistics,
+    test-framework,
+    test-framework-hunit,
+    test-framework-quickcheck2,
     vector,
-    vector-algorithms,
-    erf
+    vector-algorithms
 
 source-repository head
   type:     git
