@@ -8,12 +8,16 @@
 module Statistics.Regression
     (
       ols
+    , rSquare
     ) where
 
 import Control.Applicative ((<$>))
+import Prelude hiding (sum)
 import Statistics.Function as F
 import Statistics.Matrix
 import Statistics.Matrix.Algorithms (qr)
+import Statistics.Sample (mean)
+import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
 
@@ -43,3 +47,18 @@ solve r b
   return s
   where n = rows r
         l = U.length b
+
+-- | Compute /R&#0178;/, the coefficient of determination that
+-- indicates goodness-of-fit of a regression.
+--
+-- This value will be 1 if the predictors fit perfectly, dropping to 0
+-- if they have no explanatory power.
+rSquare :: Matrix               -- ^ Predictors (regressors).
+        -> Vector               -- ^ Responders.
+        -> Vector               -- ^ Regression coefficients.
+        -> Double
+rSquare pred resp coeff = 1 - r / t
+  where
+    r   = sum $ flip U.imap resp $ \i x -> square (x - p i)
+    t   = sum $ flip U.map resp $ \x -> square (x - mean resp)
+    p i = sum . flip U.imap coeff $ \j -> (* unsafeIndex pred i j)
