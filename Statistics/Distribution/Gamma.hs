@@ -25,6 +25,7 @@ module Statistics.Distribution.Gamma
     , gdScale
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Control.Applicative ((<$>), (<*>))
 import Data.Binary (Binary)
 import Data.Binary (put, get)
@@ -41,6 +42,9 @@ data GammaDistribution = GD {
       gdShape :: {-# UNPACK #-} !Double -- ^ Shape parameter, /k/.
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON GammaDistribution
+instance ToJSON GammaDistribution
 
 instance Binary GammaDistribution where
     put (GD x y) = put x >> put y

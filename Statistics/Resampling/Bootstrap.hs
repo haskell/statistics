@@ -25,6 +25,7 @@ import Control.Applicative ((<$>), (<*>))
 import Control.DeepSeq (NFData)
 import Control.Exception (assert)
 import Control.Monad.Par (parMap, runPar)
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Binary (put, get)
 import Data.Data (Data)
@@ -52,6 +53,9 @@ data Estimate = Estimate {
     , estConfidenceLevel :: {-# UNPACK #-} !Double
     -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON Estimate
+instance ToJSON Estimate
 
 instance Binary Estimate where
     put (Estimate w x y z) = put w >> put x >> put y >> put z

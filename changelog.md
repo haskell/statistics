@@ -1,3 +1,7 @@
+Changes in 0.13.0.0
+
+  * All types now support JSON encoding and decoding.
+
 Changes in 0.12.0.0
 
   * The `Statistics.Math` module has been removed, after being

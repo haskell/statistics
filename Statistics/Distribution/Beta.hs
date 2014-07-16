@@ -20,6 +20,7 @@ module Statistics.Distribution.Beta
   , bdBeta
   ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -37,6 +38,9 @@ data BetaDistribution = BD
  , bdBeta  :: {-# UNPACK #-} !Double
    -- ^ Beta shape parameter
  } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON BetaDistribution
+instance ToJSON BetaDistribution
 
 instance Binary BetaDistribution where
     put (BD x y) = put x >> put y

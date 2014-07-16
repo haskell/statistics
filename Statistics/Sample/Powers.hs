@@ -47,6 +47,7 @@ module Statistics.Sample.Powers
     -- $references
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Binary ()
@@ -66,6 +67,9 @@ import qualified Statistics.Sample.Internal as S
 
 newtype Powers = Powers (U.Vector Double)
     deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON Powers
+instance ToJSON Powers
 
 instance Binary Powers where
     put (Powers v) = put v

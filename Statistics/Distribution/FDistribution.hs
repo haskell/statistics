@@ -16,6 +16,7 @@ module Statistics.Distribution.FDistribution (
   , fDistributionNDF2
   ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import Numeric.MathFunctions.Constants (m_neg_inf)
@@ -27,14 +28,15 @@ import Numeric.SpecFunctions (
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
 
-
-
 -- | F distribution
 data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        , fDistributionNDF2 :: {-# UNPACK #-} !Double
                        , _pdfFactor        :: {-# UNPACK #-} !Double
                        }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
+
+instance FromJSON FDistribution
+instance ToJSON FDistribution
 
 instance Binary FDistribution where
     get = F <$> get <*> get <*> get

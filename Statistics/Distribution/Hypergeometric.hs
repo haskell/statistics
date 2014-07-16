@@ -27,6 +27,7 @@ module Statistics.Distribution.Hypergeometric
     , hdK
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -41,6 +42,9 @@ data HypergeometricDistribution = HD {
     , hdL :: {-# UNPACK #-} !Int
     , hdK :: {-# UNPACK #-} !Int
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON HypergeometricDistribution
+instance ToJSON HypergeometricDistribution
 
 instance Binary HypergeometricDistribution where
     get = HD <$> get <*> get <*> get

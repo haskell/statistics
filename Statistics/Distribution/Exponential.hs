@@ -23,6 +23,7 @@ module Statistics.Distribution.Exponential
     , edLambda
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -37,6 +38,9 @@ import Data.Binary (put, get)
 newtype ExponentialDistribution = ED {
       edLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON ExponentialDistribution
+instance ToJSON ExponentialDistribution
 
 instance Binary ExponentialDistribution where
     put = put . edLambda

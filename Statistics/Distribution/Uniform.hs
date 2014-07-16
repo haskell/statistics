@@ -19,6 +19,7 @@ module Statistics.Distribution.Uniform
     , uniformB
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -33,6 +34,9 @@ data UniformDistribution = UniformDistribution {
       uniformA :: {-# UNPACK #-} !Double -- ^ Low boundary of distribution
     , uniformB :: {-# UNPACK #-} !Double -- ^ Upper boundary of distribution
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON UniformDistribution
+instance ToJSON UniformDistribution
 
 instance Binary UniformDistribution where
     put (UniformDistribution x y) = put x >> put y

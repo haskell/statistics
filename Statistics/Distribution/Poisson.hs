@@ -24,6 +24,7 @@ module Statistics.Distribution.Poisson
     -- $references
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -37,6 +38,9 @@ import Data.Binary (put, get)
 newtype PoissonDistribution = PD {
       poissonLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON PoissonDistribution
+instance ToJSON PoissonDistribution
 
 instance Binary PoissonDistribution where
     get = fmap PD get

@@ -18,6 +18,7 @@ module Statistics.Distribution.ChiSquared (
         , chiSquaredNDF
         ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -32,6 +33,9 @@ import Data.Binary (put, get)
 -- | Chi-squared distribution
 newtype ChiSquared = ChiSquared Int
                      deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON ChiSquared
+instance ToJSON ChiSquared
 
 instance Binary ChiSquared where
     get = fmap ChiSquared get

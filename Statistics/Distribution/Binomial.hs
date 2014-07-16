@@ -23,6 +23,7 @@ module Statistics.Distribution.Binomial
     , bdProbability
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -41,6 +42,9 @@ data BinomialDistribution = BD {
     , bdProbability :: {-# UNPACK #-} !Double
     -- ^ Probability.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON BinomialDistribution
+instance ToJSON BinomialDistribution
 
 instance Binary BinomialDistribution where
     put (BD x y) = put x >> put y

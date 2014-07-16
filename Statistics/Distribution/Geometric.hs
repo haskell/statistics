@@ -30,6 +30,7 @@ module Statistics.Distribution.Geometric
     , gdSuccess0
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Control.Applicative ((<$>))
 import Control.Monad (liftM)
 import Data.Binary (Binary)
@@ -46,6 +47,9 @@ import qualified System.Random.MWC.Distributions as MWC
 newtype GeometricDistribution = GD {
       gdSuccess :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON GeometricDistribution
+instance ToJSON GeometricDistribution
 
 instance Binary GeometricDistribution where
     get = GD <$> get
@@ -113,6 +117,9 @@ cumulative (GD s) x
 newtype GeometricDistribution0 = GD0 {
       gdSuccess0 :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON GeometricDistribution0
+instance ToJSON GeometricDistribution0
 
 instance Binary GeometricDistribution0 where
     get = GD0 <$> get
