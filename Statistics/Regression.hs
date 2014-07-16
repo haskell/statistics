@@ -7,19 +7,54 @@
 
 module Statistics.Regression
     (
-      ols
+      olsRegress
+    , ols
     , rSquare
     ) where
 
 import Control.Applicative ((<$>))
-import Prelude hiding (sum)
+import Prelude hiding (pred, sum)
 import Statistics.Function as F
-import Statistics.Matrix
+import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms (qr)
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
+import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
+
+-- | Perform an ordinary least-squares regression on a set of
+-- predictors, and calculate the goodness-of-fit of the regression.
+--
+-- The returned pair consists of:
+--
+-- * A vector of regression coefficients.  This vector has /one more/
+--   element than the list of predictors; the last element is the
+--   /y/-intercept value.
+--
+-- * /R&#0178;/, the coefficient of determination (see 'rSquare' for
+--   details).
+olsRegress :: [Vector]
+              -- ^ Non-empty list of predictor vectors.  Must all have
+              -- the same length.  These will become the columns of
+              -- the matrix /A/ solved by 'ols'.
+           -> Vector
+              -- ^ Responder vector.  Must have the same length as the
+              -- predictor vectors.
+           -> (Vector, Double)
+olsRegress preds@(_:_) resps
+  | any (/=n) ls        = error $ "predictor vector length mismatch " ++
+                                  show lss
+  | G.length resps /= n = error $ "responder/predictor length mismatch " ++
+                                  show (G.length resps, n)
+  | otherwise           = (coeffs, rSquare mxpreds resps coeffs)
+  where
+    coeffs    = ols mxpreds resps
+    mxpreds   = transpose .
+                fromVector (length lss + 1) n .
+                G.concat $ preds ++ [G.replicate n 1]
+    lss@(n:ls) = map G.length preds
+olsRegress _ _ = error "no predictors given"
 
 -- | Compute the ordinary least-squares solution to /A x = b/.
 ols :: Matrix     -- ^ /A/ has at least as many rows as columns.
