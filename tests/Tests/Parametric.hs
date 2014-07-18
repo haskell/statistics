@@ -20,6 +20,7 @@ tests = testGroup "Parametric tests" studentTTests
 --   student = t.test(sample1, sample2, var.equal=T)
 --   welch = t.test(sample1, sample2)
 --   paired = t.test(sample1, sample2, paired=T)
+sample1, sample2 :: Vector Double
 sample1 = V.fromList [
   1.262954284880793e+00,
  -3.262333607056494e-01,
@@ -66,25 +67,26 @@ sample2 = V.fromList [
 studentTTests :: [Test]
 studentTTests = [
     -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
-    testEquality "two-sample t-test TwoTailed Student" (tTest2 TwoTailed 0.03410 Student sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test TwoTailed Student" (tTest2 TwoTailed 0.03411 Student sample1 sample2) Significant,
+    testEquality "two-sample t-test TwoTailed Student" (studentT2 TwoTailed 0.03410 sample1 sample2) NotSignificant,
+    testEquality "two-sample t-test TwoTailed Student" (studentT2 TwoTailed 0.03411 sample1 sample2) Significant,
 
     -- R: t.test(sample1, sample2, alt="two.sided", var.equal=F)
-    testEquality "two-sample t-test TwoTailed Welch" (tTest2 TwoTailed 0.03483 Welch sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test TwoTailed Welch" (tTest2 TwoTailed 0.03484 Welch sample1 sample2) Significant,
+    testEquality "two-sample t-test TwoTailed Welch" (welchT2 TwoTailed 0.03483 sample1 sample2) NotSignificant,
+    testEquality "two-sample t-test TwoTailed Welch" (welchT2 TwoTailed 0.03484 sample1 sample2) Significant,
 
     -- R: t.test(sample1, sample2, alt="two.sided", paired=T)
-    testEquality "two-sample t-test TwoTailed Paired" (tTest2 TwoTailed 0.03411 Paired sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test TwoTailed Paired" (tTest2 TwoTailed 0.03412 Paired sample1 sample2) Significant,
+    testEquality "two-sample t-test TwoTailed Paired" (pairedT2 TwoTailed 0.03411 sample12) NotSignificant,
+    testEquality "two-sample t-test TwoTailed Paired" (pairedT2 TwoTailed 0.03412 sample12) Significant,
 
     -- R: t.test(sample1, sample2, alt="less", var.equal=T)
-    testEquality "two-sample t-test OneTailed Student" (tTest2 OneTailed 0.01705 Student sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test OneTailed Student" (tTest2 OneTailed 0.01706 Student sample1 sample2) Significant,
+    testEquality "two-sample t-test OneTailed Student" (studentT2 OneTailed 0.01705 sample1 sample2) NotSignificant,
+    testEquality "two-sample t-test OneTailed Student" (studentT2 OneTailed 0.01706 sample1 sample2) Significant,
 
     -- R: t.test(sample1, sample2, alt="less", var.equal=F)
-    testEquality "two-sample t-test OneTailed Welch" (tTest2 OneTailed 0.01741 Welch sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test OneTailed Welch" (tTest2 OneTailed 0.01742 Welch sample1 sample2) Significant,
+    testEquality "two-sample t-test OneTailed Welch" (welchT2 OneTailed 0.01741 sample1 sample2) NotSignificant,
+    testEquality "two-sample t-test OneTailed Welch" (welchT2 OneTailed 0.01742 sample1 sample2) Significant,
 
     -- R: t.test(sample1, sample2, alt="less", paired=F)
-    testEquality "two-sample t-test OneTailed Paired" (tTest2 OneTailed 0.01705 Paired sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test OneTailed Paired" (tTest2 OneTailed 0.01706 Paired sample1 sample2) Significant]
+    testEquality "two-sample t-test OneTailed Paired" (pairedT2 OneTailed 0.01705 sample12) NotSignificant,
+    testEquality "two-sample t-test OneTailed Paired" (pairedT2 OneTailed 0.01706 sample12) Significant]
+  where sample12 = V.zip sample1 sample2
