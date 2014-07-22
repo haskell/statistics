@@ -41,8 +41,9 @@ module Statistics.Types
 
 import Control.Applicative
 import Control.DeepSeq
-import Data.Binary (Binary,put,get)
-import Data.Data   (Data,Typeable)
+import Data.Aeson   (FromJSON, ToJSON)
+import Data.Binary  (Binary,put,get)
+import Data.Data    (Data,Typeable)
 import GHC.Generics (Generic)
 
 import Statistics.Types.Internal
@@ -66,6 +67,9 @@ import Statistics.Distribution.Normal
 --      significance.
 newtype CL a = CL { unCL :: a }
                deriving (Show,Read,Eq, Typeable, Data, Generic, Binary, NFData)
+instance FromJSON a => FromJSON (CL a)
+instance ToJSON   a => ToJSON   (CL a)
+
 
 -- FIXME: is this right instance?
 instance Ord a => Ord (CL a) where
@@ -140,6 +144,9 @@ data Estimate a = Estimate
     , estConfidenceLevel :: !(CL a)
       -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON a => FromJSON (Estimate a)
+instance ToJSON   a => ToJSON   (Estimate a)
 
 -- | Construct estimate and check it for sanity
 estimate :: (Ord a, Num a) => a -> (a,a) -> CL a -> Estimate a
