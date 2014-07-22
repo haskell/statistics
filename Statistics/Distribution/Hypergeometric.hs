@@ -27,6 +27,7 @@ module Statistics.Distribution.Hypergeometric
     , hdK
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -41,6 +42,9 @@ data HypergeometricDistribution = HD {
     , hdL :: {-# UNPACK #-} !Int
     , hdK :: {-# UNPACK #-} !Int
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON HypergeometricDistribution
+instance ToJSON HypergeometricDistribution
 
 instance Binary HypergeometricDistribution where
     get = HD <$> get <*> get <*> get
@@ -77,11 +81,9 @@ variance (HD m l k) = (k' * ml) * (1 - ml) * (l' - k') / (l' - 1)
         l' = fromIntegral l
         k' = fromIntegral k
         ml = m' / l'
-{-# INLINE variance #-}
 
 mean :: HypergeometricDistribution -> Double
 mean (HD m l k) = fromIntegral k * fromIntegral m / fromIntegral l
-{-# INLINE mean #-}
 
 directEntropy :: HypergeometricDistribution -> Double
 directEntropy d@(HD m _ _) =
@@ -102,7 +104,6 @@ hypergeometric m l k
   | otherwise = HD m l k
     where
       msg = "Statistics.Distribution.Hypergeometric.hypergeometric: "
-{-# INLINE hypergeometric #-}
 
 -- Naive implementation
 probability :: HypergeometricDistribution -> Int -> Double
@@ -110,7 +111,6 @@ probability (HD mi li ki) n
   | n < max 0 (mi+ki-li) || n > min mi ki = 0
   | otherwise =
       choose mi n * choose (li - mi) (ki - n) / choose li ki
-{-# INLINE probability #-}
 
 cumulative :: HypergeometricDistribution -> Double -> Double
 cumulative d@(HD mi li ki) x

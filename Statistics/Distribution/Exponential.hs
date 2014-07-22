@@ -23,6 +23,7 @@ module Statistics.Distribution.Exponential
     , edLambda
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -37,6 +38,9 @@ import Data.Binary (put, get)
 newtype ExponentialDistribution = ED {
       edLambda :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON ExponentialDistribution
+instance ToJSON ExponentialDistribution
 
 instance Binary ExponentialDistribution where
     put = put . edLambda
@@ -57,11 +61,9 @@ instance D.ContDistr ExponentialDistribution where
 
 instance D.Mean ExponentialDistribution where
     mean (ED l) = 1 / l
-    {-# INLINE mean #-}
 
 instance D.Variance ExponentialDistribution where
     variance (ED l) = 1 / (l * l)
-    {-# INLINE variance #-}
 
 instance D.MaybeMean ExponentialDistribution where
     maybeMean = Just . D.mean
@@ -82,12 +84,10 @@ instance D.ContGen ExponentialDistribution where
 cumulative :: ExponentialDistribution -> Double -> Double
 cumulative (ED l) x | x <= 0    = 0
                     | otherwise = 1 - exp (-l * x)
-{-# INLINE cumulative #-}
 
 complCumulative :: ExponentialDistribution -> Double -> Double
 complCumulative (ED l) x | x <= 0    = 1
                          | otherwise = exp (-l * x)
-{-# INLINE complCumulative #-}
 
 
 quantile :: ExponentialDistribution -> Double -> Double
@@ -96,7 +96,6 @@ quantile (ED l) p
   | p >= 0 && p < 1 = -log (1 - p) / l
   | otherwise       =
     error $ "Statistics.Distribution.Exponential.quantile: p must be in [0,1] range. Got: "++show p
-{-# INLINE quantile #-}
 
 -- | Create an exponential distribution.
 exponential :: Double            -- ^ &#955; (scale) parameter.
@@ -105,10 +104,8 @@ exponential l
   | l <= 0 =
     error $ "Statistics.Distribution.Exponential.exponential: scale parameter must be positive. Got " ++ show l
   | otherwise = ED l
-{-# INLINE exponential #-}
 
 -- | Create exponential distribution from sample. No tests are made to
 -- check whether it truly is exponential.
 exponentialFromSample :: Sample -> ExponentialDistribution
 exponentialFromSample = ED . S.mean
-{-# INLINE exponentialFromSample #-}

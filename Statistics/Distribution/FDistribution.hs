@@ -16,17 +16,17 @@ module Statistics.Distribution.FDistribution (
   , fDistributionNDF2
   ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import Numeric.MathFunctions.Constants (m_neg_inf)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
+import Statistics.Function (square)
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
-
-
 
 -- | F distribution
 data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
@@ -34,6 +34,9 @@ data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        , _pdfFactor        :: {-# UNPACK #-} !Double
                        }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
+
+instance FromJSON FDistribution
+instance ToJSON FDistribution
 
 instance Binary FDistribution where
     get = F <$> get <*> get <*> get
@@ -86,7 +89,7 @@ instance D.MaybeMean FDistribution where
 
 instance D.MaybeVariance FDistribution where
   maybeStdDev (F n m _)
-    | m > 4     = Just $ 2 * sqr m * (m + n - 2) / (n * sqr (m - 2) * (m - 4))
+    | m > 4     = Just $ 2 * square m * (m + n - 2) / (n * square (m - 2) * (m - 4))
     | otherwise = Nothing
 
 instance D.Entropy FDistribution where
@@ -104,7 +107,3 @@ instance D.MaybeEntropy FDistribution where
 
 instance D.ContGen FDistribution where
   genContVar = D.genContinous
-
-sqr :: Double -> Double
-sqr x = x * x
-{-# INLINE sqr #-}

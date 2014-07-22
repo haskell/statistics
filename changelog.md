@@ -1,4 +1,33 @@
--*- text -*-
+Changes in 0.13.0.0
+
+  * All types now support JSON encoding and decoding.
+
+Changes in 0.12.0.0
+
+  * The `Statistics.Math` module has been removed, after being
+    deprecated for several years.  Use the
+    [math-functions](http://hackage.haskell.org/package/math-functions)
+    package instead.
+
+  * The `Statistics.Test.NonParametric` module has been removed, after
+    being deprecated for several years.
+
+  * Added support for Kendall's tau.
+
+  * Added support for OLS regression.
+
+  * Added basic 2D matrix support.
+
+  * Added the Kruskal-Wallis test.
+
+Changes in 0.11.0.3
+
+  * Fixed a subtle bug in calculation of the jackknifed unbiased variance.
+
+  * The test suite now requires QuickCheck 2.7.
+
+  * We now calculate quantiles for normal distribution in a more
+    numerically stable way (bug #64).
 
 Changes in 0.10.6.0
 

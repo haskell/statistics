@@ -20,6 +20,7 @@ module Statistics.Math.RootFinding
     -- $references
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Control.Applicative (Alternative(..), Applicative(..))
 import Control.Monad (MonadPlus(..), ap)
 import Data.Binary (Binary)
@@ -41,6 +42,9 @@ data Root a = NotBracketed
             | Root a
             -- ^ A root was successfully found.
               deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance (FromJSON a) => FromJSON (Root a)
+instance (ToJSON a) => ToJSON (Root a)
 
 instance (Binary a) => Binary (Root a) where
     put NotBracketed = putWord8 0

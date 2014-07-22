@@ -31,7 +31,6 @@ probability lambda x
   | lambda < x * m_tiny  = exp (-lambda + x * log lambda - logGamma (x+1))
   | otherwise            = exp (-(stirlingError x) - bd0 x lambda) /
                            (m_sqrt_2_pi * sqrt x)
-{-# INLINE probability #-}
 
 -- | Compute entropy using Theorem 1 from "Sharp Bounds on the Entropy
 -- of the Poisson Law".  This function is unused because 'directEntorpy'

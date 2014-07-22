@@ -23,9 +23,10 @@ module Statistics.Resampling
     , estimate
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Control.Concurrent (forkIO, newChan, readChan, writeChan)
 import Control.Monad (forM_, liftM, replicateM_)
-import Control.Monad.Primitive (PrimMonad, PrimState)
+import Control.Monad.Primitive (PrimState)
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Algorithms.Intro (sort)
@@ -49,6 +50,9 @@ import qualified Data.Vector.Unboxed.Mutable as MU
 newtype Resample = Resample {
       fromResample :: U.Vector Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON Resample
+instance ToJSON Resample
 
 instance Binary Resample where
     put = put . fromResample

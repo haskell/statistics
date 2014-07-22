@@ -30,6 +30,7 @@ module Statistics.Distribution.Geometric
     , gdSuccess0
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Control.Applicative ((<$>))
 import Control.Monad (liftM)
 import Data.Binary (Binary)
@@ -46,6 +47,9 @@ import qualified System.Random.MWC.Distributions as MWC
 newtype GeometricDistribution = GD {
       gdSuccess :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON GeometricDistribution
+instance ToJSON GeometricDistribution
 
 instance Binary GeometricDistribution where
     get = GD <$> get
@@ -65,11 +69,9 @@ instance D.DiscreteDistr GeometricDistribution where
 
 instance D.Mean GeometricDistribution where
     mean (GD s) = 1 / s
-    {-# INLINE mean #-}
 
 instance D.Variance GeometricDistribution where
     variance (GD s) = (1 - s) / (s * s)
-    {-# INLINE variance #-}
 
 instance D.MaybeMean GeometricDistribution where
     maybeMean = Just . D.mean
@@ -89,10 +91,9 @@ instance D.MaybeEntropy GeometricDistribution where
 
 instance D.DiscreteGen GeometricDistribution where
   genDiscreteVar (GD s) g = MWC.geometric1 s g
-  {-# INLINE genDiscreteVar #-}
+
 instance D.ContGen GeometricDistribution where
   genContVar d g = fromIntegral `liftM` D.genDiscreteVar d g
-  {-# INLINE genContVar #-}
 
 -- | Create geometric distribution.
 geometric :: Double                -- ^ Success rate
@@ -101,7 +102,6 @@ geometric x
   | x >= 0 && x <= 1 = GD x
   | otherwise        =
     error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
-{-# INLINE geometric #-}
 
 cumulative :: GeometricDistribution -> Double -> Double
 cumulative (GD s) x
@@ -109,7 +109,6 @@ cumulative (GD s) x
   | isInfinite x = 1
   | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
   | otherwise    = 1 - (1-s) ^ (floor x :: Int)
-{-# INLINE cumulative #-}
 
 
 ----------------------------------------------------------------
@@ -118,6 +117,9 @@ cumulative (GD s) x
 newtype GeometricDistribution0 = GD0 {
       gdSuccess0 :: Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON GeometricDistribution0
+instance ToJSON GeometricDistribution0
 
 instance Binary GeometricDistribution0 where
     get = GD0 <$> get
@@ -132,11 +134,9 @@ instance D.DiscreteDistr GeometricDistribution0 where
 
 instance D.Mean GeometricDistribution0 where
     mean (GD0 s) = 1 / s - 1
-    {-# INLINE mean #-}
 
 instance D.Variance GeometricDistribution0 where
     variance (GD0 s) = D.variance (GD s)
-    {-# INLINE variance #-}
 
 instance D.MaybeMean GeometricDistribution0 where
     maybeMean = Just . D.mean
@@ -153,10 +153,9 @@ instance D.MaybeEntropy GeometricDistribution0 where
 
 instance D.DiscreteGen GeometricDistribution0 where
   genDiscreteVar (GD0 s) g = MWC.geometric0 s g
-  {-# INLINE genDiscreteVar #-}
+
 instance D.ContGen GeometricDistribution0 where
   genContVar d g = fromIntegral `liftM` D.genDiscreteVar d g
-  {-# INLINE genContVar #-}
 
 -- | Create geometric distribution.
 geometric0 :: Double                -- ^ Success rate
@@ -165,4 +164,3 @@ geometric0 x
   | x >= 0 && x <= 1 = GD0 x
   | otherwise        =
     error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
-{-# INLINE geometric0 #-}

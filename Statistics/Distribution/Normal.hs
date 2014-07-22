@@ -20,6 +20,7 @@ module Statistics.Distribution.Normal
     , standard
     ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Control.Applicative ((<$>), (<*>))
 import Data.Binary (Binary)
 import Data.Binary (put, get)
@@ -31,7 +32,6 @@ import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 import qualified System.Random.MWC.Distributions as MWC
 
-
 -- | The normal distribution.
 data NormalDistribution = ND {
       mean       :: {-# UNPACK #-} !Double
@@ -39,6 +39,9 @@ data NormalDistribution = ND {
     , ndPdfDenom :: {-# UNPACK #-} !Double
     , ndCdfDenom :: {-# UNPACK #-} !Double
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance FromJSON NormalDistribution
+instance ToJSON NormalDistribution
 
 instance Binary NormalDistribution where
     put (ND w x y z) = put w >> put x >> put y >> put z
@@ -73,7 +76,6 @@ instance D.MaybeEntropy NormalDistribution where
 
 instance D.ContGen NormalDistribution where
     genContVar d = MWC.normal (mean d) (stdDev d)
-    {-# INLINE genContVar #-}
 
 -- | Standard normal distribution with mean equal to 0 and variance equal to 1
 standard :: NormalDistribution

@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFunctor, DeriveDataTypeable,DeriveGeneric  #-}
 module Statistics.Test.Types (
     Test(..)
   , isSignificant
@@ -7,13 +7,15 @@ module Statistics.Test.Types (
   , TestType(..)
   ) where
 
-import Data.Typeable (Typeable)
+import Data.Aeson (FromJSON, ToJSON)
 import Statistics.Types (CL)
+import Data.Data (Typeable, Data)
+import GHC.Generics
 
 -- | Result of hypothesis testing
 data TestResult = Significant    -- ^ Null hypothesis should be rejected
                 | NotSignificant -- ^ Data is compatible with hypothesis
-                  deriving (Eq,Ord,Show,Typeable)
+                  deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
 -- | Result of statistical test. It contains test p-value (probability of encountering
 data Test a = Test
@@ -33,10 +35,15 @@ isSignificant cl t
 -- for 'OneTailed' or whether it too big or too small for 'TwoTailed'
 data TestType = OneTailed
               | TwoTailed
-              deriving (Eq,Ord,Show,Typeable)
+              deriving (Eq,Ord,Show,Typeable,Data,Generic)
+
+instance FromJSON TestType
+instance ToJSON TestType
+
+instance FromJSON TestResult
+instance ToJSON TestResult
 
 -- | Significant if parameter is 'True', not significant otherwiser
 significant :: Bool -> TestResult
 significant True  = Significant
 significant False = NotSignificant
-{-# INLINE significant #-}
