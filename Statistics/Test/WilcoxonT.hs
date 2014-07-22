@@ -48,18 +48,18 @@ import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types
-import Statistics.Types (CL,pValue,getPValue,Sample)
+import Statistics.Types (CL,pValue,getPValue)
 import qualified Data.Vector.Unboxed as U
 
 -- | Calculate (T+,T-) values for both samples.
-wilcoxonMatchedPairSignedRank :: Sample -> Sample -> (Double, Double)
+wilcoxonMatchedPairSignedRank :: (Ord a, Num a, U.Unbox a) => U.Vector a -> U.Vector a -> (Double, Double)
 wilcoxonMatchedPairSignedRank a b = (sum ranks1, negate (sum ranks2))
   where
     (ranks1, ranks2) = splitByTags
                      $ U.zip tags (rank ((==) `on` abs) diffs)
     (tags,diffs) = U.unzip
                  $ U.map (\x -> (x>0 , x))   -- Attach tags to distribution elements
-                 $ U.filter  (/= 0.0)        -- Remove equal elements
+                 $ U.filter  (/= 0)          -- Remove equal elements
                  $ sortBy (comparing abs)    -- Sort the differences by absolute difference
                  $ U.zipWith (-) a b         -- Work out differences
 
@@ -178,13 +178,14 @@ wilcoxonMatchedPairSignificance sampleSize rnk
 --
 -- Check 'wilcoxonMatchedPairSignedRank' and
 -- 'wilcoxonMatchedPairSignificant' for additional information.
-wilcoxonMatchedPairTest :: TestType   -- ^ Perform one-tailed test.
-                        -> CL Double  -- ^ The p-value at which to test (e.g. @pValue 0.05@)
-                        -> Sample     -- ^ First sample
-                        -> Sample     -- ^ Second sample
-                        -> Maybe TestResult
-                        -- ^ Return 'Nothing' if the sample was too
-                        --   small to make a decision.
+wilcoxonMatchedPairTest
+  :: (Ord a, Num a, U.Unbox a)
+  => TestType   -- ^ Perform one-tailed test.
+  -> CL Double  -- ^ The p-value at which to test (e.g. @pValue 0.05@)
+  -> U.Vector a -- ^ First sample
+  -> U.Vector a -- ^ Second sample
+  -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
+                      --   small to make a decision.
 wilcoxonMatchedPairTest test p smp1 smp2 =
     wilcoxonMatchedPairSignificant test (min n1 n2) p
   $ wilcoxonMatchedPairSignedRank smp1 smp2
