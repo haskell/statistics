@@ -34,7 +34,7 @@ import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
-import Statistics.Types (Sample,CL,getPValue)
+import Statistics.Types (CL,getPValue)
 import qualified Data.Vector.Unboxed as U
 
 -- | The Wilcoxon Rank Sums Test.
@@ -48,7 +48,7 @@ import qualified Data.Vector.Unboxed as U
 -- into the Mann-Whitney U test.  You will probably want to use 'mannWhitneyU'
 -- and the related functions for testing significance, but this function is exposed
 -- for completeness.
-wilcoxonRankSums :: Sample -> Sample -> (Double, Double)
+wilcoxonRankSums :: (Ord a, U.Unbox a) => U.Vector a -> U.Vector a -> (Double, Double)
 wilcoxonRankSums xs1 xs2 = (sum ranks1, sum ranks2)
   where
     -- Ranks for each sample
@@ -58,7 +58,7 @@ wilcoxonRankSums xs1 xs2 = (sum ranks1, sum ranks2)
                       $ sortBy (comparing snd)
                       $ tagSample True xs1 U.++ tagSample False xs2
     -- Add tag to a sample
-    tagSample t = U.map ((,) t)
+    tagSample t = U.map (\x -> (t,x))
 
 
 
@@ -81,7 +81,7 @@ wilcoxonRankSums xs1 xs2 = (sum ranks1, sum ranks2)
 -- expressing this using U&#8321;' = n&#8321;n&#8322; - U&#8321; (since U&#8321; + U&#8322; = n&#8321;n&#8322;).
 --
 -- All of which you probably don't care about if you just feed this into 'mannWhitneyUSignificant'.
-mannWhitneyU :: Sample -> Sample -> (Double, Double)
+mannWhitneyU :: (Ord a, U.Unbox a) => U.Vector a -> U.Vector a -> (Double, Double)
 mannWhitneyU xs1 xs2
   = (fst summedRanks - (n1*(n1 + 1))/2
     ,snd summedRanks - (n2*(n2 + 1))/2)
@@ -212,13 +212,14 @@ mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
 --
 -- One-tailed test checks whether first sample is significantly larger
 -- than second. Two-tailed whether they are significantly different.
-mannWhitneyUtest :: TestType    -- ^ Perform one-tailed test (see description above).
-                 -> CL Double   -- ^ The p-value at which to test (e.g. 0.05)
-                 -> Sample      -- ^ First sample
-                 -> Sample      -- ^ Second sample
-                 -> Maybe TestResult
-                 -- ^ Return 'Nothing' if the sample was too small to
-                 --   make a decision.
+mannWhitneyUtest
+  :: (Ord a, U.Unbox a)
+  => TestType         -- ^ Perform one-tailed test (see description above).
+  -> CL Double        -- ^ The p-value at which to test (e.g. 0.05)
+  -> U.Vector a       -- ^ First sample
+  -> U.Vector a       -- ^ Second sample
+  -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too small to
+                      --   make a decision.
 mannWhitneyUtest ontTail p smp1 smp2 =
   mannWhitneyUSignificant ontTail (n1,n2) p $ mannWhitneyU smp1 smp2
     where
