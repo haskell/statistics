@@ -42,9 +42,11 @@ chi2test ndf vec
     chi2  = sum $ G.map (\(o,e) -> square (fromIntegral o - e) / e) vec
     d     = chiSquared n
 {-# SPECIALIZE
-    chi2test :: Double -> Int -> U.Vector (Int,Double) -> TestResult #-}
+    chi2test :: Int -> U.Vector (Int,Double) -> Maybe (Test Chi2Data) #-}
 {-# SPECIALIZE
-    chi2test :: Double -> Int -> V.Vector (Int,Double) -> TestResult #-}
+    chi2test :: Int -> V.Vector (Int,Double) -> Maybe (Test Chi2Data) #-}
+
+
 -- | Extra data returned by chi-square test
 data Chi2Data = Chi2Data
   { chi2DataNDF  :: !Int         -- ^ Number of degrees of freedom
