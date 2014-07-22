@@ -27,14 +27,12 @@ module Statistics.Test.KolmogorovSmirnov (
   ) where
 
 import Control.Monad (when)
-import Control.Monad.ST (ST)
-import Prelude hiding (sum)
+import Prelude hiding (exponent, sum)
 import Statistics.Distribution (Distribution(..))
-import Statistics.Function (sort)
-import Statistics.Sample.Internal (sum)
+import Statistics.Function (sort, unsafeModify)
+import Statistics.Matrix (center, exponent, for, fromVector, power)
 import Statistics.Test.Types
 import Statistics.Types (Sample,confLevel)
-import Text.Printf (printf)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
 
@@ -54,7 +52,6 @@ kolmogorovSmirnovTest :: Distribution d
                       -> Sample -- ^ Data sample
                       -> Test ()
 kolmogorovSmirnovTest d = kolmogorovSmirnovTestCdf (cumulative d)
-{-# INLINE kolmogorovSmirnovTest #-}
 
 -- | Variant of 'kolmogorovSmirnovTest' which uses CFD in form of
 --   function.
@@ -106,10 +103,10 @@ kolmogorovSmirnovCdfD :: (Double -> Double) -- ^ CDF function
                       -> Sample             -- ^ Sample
                       -> Double
 kolmogorovSmirnovCdfD cdf sample
-  | U.null xs = 0
-  | otherwise = U.maximum
-              $ U.zipWith3 (\p a b -> abs (p-a) `max` abs (p-b))
-                  ps steps (U.tail steps)
+  | U.null sample = 0
+  | otherwise     = U.maximum
+                  $ U.zipWith3 (\p a b -> abs (p-a) `max` abs (p-b))
+                    ps steps (U.tail steps)
   where
     xs = sort sample
     n  = U.length xs
@@ -127,7 +124,6 @@ kolmogorovSmirnovD :: (Distribution d)
                    -> Sample    -- ^ Sample
                    -> Double
 kolmogorovSmirnovD d = kolmogorovSmirnovCdfD (cumulative d)
-{-# INLINE kolmogorovSmirnovD #-}
 
 -- | Calculate Kolmogorov's statistic /D/ for two data samples. If
 --   either of samples is empty returns 0.
@@ -177,7 +173,7 @@ kolmogorovSmirnovProbability n d
   -- Avoid potencially lengthy calculations for large N and D > 0.999
   | s > 7.24 || (s > 3.76 && n > 99) = 1 - 2 * exp( -(2.000071 + 0.331 / sqrt n' + 1.409 / n') * s)
   -- Exact computation
-  | otherwise = fini $ matrixPower matrix n
+  | otherwise = fini $ matrix `power` n
   where
     s  = n' * d * d
     n' = fromIntegral n
@@ -198,97 +194,28 @@ kolmogorovSmirnovProbability n d
             -- Correct left column/bottom row
             for 0 size $ \i -> do
               let delta = h ^^ (i + 1)
-              modify mat (i    * size)         (subtract delta)
-              modify mat (size * size - 1 - i) (subtract delta)
+              unsafeModify mat (i    * size)         (subtract delta)
+              unsafeModify mat (size * size - 1 - i) (subtract delta)
             -- Correct corner element if needed
             when (2*h > 1) $ do
-              modify mat ((size - 1) * size) (+ ((2*h - 1) ^ size))
+              unsafeModify mat ((size - 1) * size) (+ ((2*h - 1) ^ size))
             -- Divide diagonals by factorial
             let divide g num
                   | num == size = return ()
                   | otherwise   = do for num size $ \i ->
-                                       modify mat (i * (size + 1) - num) (/ g)
+                                       unsafeModify mat (i * (size + 1) - num) (/ g)
                                      divide (g * fromIntegral (num+2)) (num+1)
             divide 2 1
             return mat
-      in Matrix size m 0
+      in fromVector size size m
     -- Last calculation
-    fini m@(Matrix _ _ e) = loop 1 (matrixCenter m) e
+    fini m = loop 1 (center m) (exponent m)
       where
         loop i ss eQ
           | i  > n       = ss * 10 ^^ eQ
           | ss' < 1e-140 = loop (i+1) (ss' * 1e140) (eQ - 140)
           | otherwise    = loop (i+1)  ss'           eQ
           where ss' = ss * fromIntegral i / fromIntegral n
-
-
-----------------------------------------------------------------
-
--- Maxtrix operations.
---
--- There isn't the matrix package for haskell yet so nessesary minimum
--- is implemented here.
-
--- Square matrix stored in row-major order
-data Matrix = Matrix
-              {-# UNPACK #-} !Int -- Size of matrix
-              !(U.Vector Double)  -- Matrix data
-              {-# UNPACK #-} !Int -- In order to avoid overflows
-                                  -- during matrix multiplication large
-                                  -- exponent is stored seprately
-
--- Show instance useful mostly for debugging
-instance Show Matrix where
-  show (Matrix n vs _) = unlines $ map (unwords . map (printf "%.4f")) $ split $ U.toList vs
-    where
-      split [] = []
-      split xs = row : split rest where (row, rest) = splitAt n xs
-
-
--- Avoid overflow in the matrix
-avoidOverflow :: Matrix -> Matrix
-avoidOverflow m@(Matrix n xs e)
-  | matrixCenter m > 1e140 = Matrix n (U.map (* 1e-140) xs) (e + 140)
-  | otherwise              = m
-
--- Unsafe matrix-matrix multiplication. Matrices must be of the same
--- size. This is not checked.
-matrixMultiply :: Matrix -> Matrix -> Matrix
-matrixMultiply (Matrix n xs e1) (Matrix _ ys e2) =
-  Matrix n (U.generate (n*n) go) (e1 + e2)
-  where
-    go i = sum $ U.zipWith (*) row col
-      where
-        nCol = i `rem` n
-        row  = U.slice (i - nCol) n xs
-        col  = U.backpermute ys $ U.enumFromStepN nCol n n
-
--- Raise matrix to power N. power must be positive it's not checked
-matrixPower :: Matrix -> Int -> Matrix
-matrixPower mat 1 = mat
-matrixPower mat n = avoidOverflow res
-  where
-    mat2 = matrixPower mat (n `quot` 2)
-    pow  = matrixMultiply mat2 mat2
-    res | odd n     = matrixMultiply pow mat
-        | otherwise = pow
-
--- Element in the center of matrix (Not corrected for exponent)
-matrixCenter :: Matrix -> Double
-matrixCenter (Matrix n xs _) = (U.!) xs (k*n + k) where k = n `quot` 2
-
--- Simple for loop
-for :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
-for n0 n f = loop n0
-  where
-    loop i | i == n    = return ()
-           | otherwise = f i >> loop (i+1)
-
--- Modify element in the vector
-modify :: U.Unbox a => M.MVector s a -> Int -> (a -> a) -> ST s ()
-modify arr i f = do x <- M.read arr i
-                    M.write arr i (f x)
-{-# INLINE modify #-}
 
 ----------------------------------------------------------------
 

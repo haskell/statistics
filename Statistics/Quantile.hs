@@ -40,7 +40,9 @@ module Statistics.Quantile
 import Data.Vector.Generic ((!))
 import Numeric.MathFunctions.Constants (m_epsilon)
 import Statistics.Function (partialSort)
+import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
 -- using the weighted average method.
@@ -63,7 +65,8 @@ weightedAvg k q x
     xj1 = sx ! (j+1)
     sx  = partialSort (j+2) x
     n   = G.length x
-{-# INLINE weightedAvg #-}
+{-# SPECIALIZE weightedAvg :: Int -> Int -> U.Vector Double -> Double #-}
+{-# SPECIALIZE weightedAvg :: Int -> Int -> V.Vector Double -> Double #-}
 
 -- | Parameters /a/ and /b/ to the 'continuousBy' function.
 data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
@@ -95,7 +98,10 @@ continuousBy (ContParam a b) k q x
     item            = (sx !) . bracket
     sx              = partialSort (bracket j + 1) x
     bracket m       = min (max m 0) (n - 1)
-{-# INLINE continuousBy #-}
+{-# SPECIALIZE
+    continuousBy :: ContParam -> Int -> Int -> U.Vector Double -> Double #-}
+{-# SPECIALIZE
+    continuousBy :: ContParam -> Int -> Int -> V.Vector Double -> Double #-}
 
 -- | O(/n/ log /n/). Estimate the range between /q/-quantiles 1 and
 -- /q/-1 of a sample /x/, using the continuous sample method with the
@@ -128,35 +134,32 @@ midspread (ContParam a b) k x
     sx                = partialSort (bracket (j (1-frac)) + 1) x
     bracket m         = min (max m 0) (n - 1)
     frac              = 1 / fromIntegral k
-{-# INLINE midspread #-}
+{-# SPECIALIZE midspread :: ContParam -> Int -> U.Vector Double -> Double #-}
+{-# SPECIALIZE midspread :: ContParam -> Int -> V.Vector Double -> Double #-}
 
 -- | California Department of Public Works definition, /a/=0, /b/=1.
 -- Gives a linear interpolation of the empirical CDF.  This
 -- corresponds to method 4 in R and Mathematica.
 cadpw :: ContParam
 cadpw = ContParam 0 1
-{-# INLINE cadpw #-}
 
 -- | Hazen's definition, /a/=0.5, /b/=0.5.  This is claimed to be
 -- popular among hydrologists.  This corresponds to method 5 in R and
 -- Mathematica.
 hazen :: ContParam
 hazen = ContParam 0.5 0.5
-{-# INLINE hazen #-}
 
 -- | Definition used by the SPSS statistics application, with /a/=0,
 -- /b/=0 (also known as Weibull's definition).  This corresponds to
 -- method 6 in R and Mathematica.
 spss :: ContParam
 spss = ContParam 0 0
-{-# INLINE spss #-}
 
 -- | Definition used by the S statistics application, with /a/=1,
 -- /b/=1.  The interpolation points divide the sample range into @n-1@
 -- intervals.  This corresponds to method 7 in R and Mathematica.
 s :: ContParam
 s = ContParam 1 1
-{-# INLINE s #-}
 
 -- | Median unbiased definition, /a/=1\/3, /b/=1\/3. The resulting
 -- quantile estimates are approximately median unbiased regardless of
@@ -165,7 +168,6 @@ s = ContParam 1 1
 medianUnbiased :: ContParam
 medianUnbiased = ContParam third third
     where third = 1/3
-{-# INLINE medianUnbiased #-}
 
 -- | Normal unbiased definition, /a/=3\/8, /b/=3\/8.  An approximately
 -- unbiased estimate if the empirical distribution approximates the
@@ -174,7 +176,6 @@ medianUnbiased = ContParam third third
 normalUnbiased :: ContParam
 normalUnbiased = ContParam ta ta
     where ta = 3/8
-{-# INLINE normalUnbiased #-}
 
 modErr :: String -> String -> a
 modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err

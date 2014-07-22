@@ -9,10 +9,13 @@ import Prelude hiding (sum)
 
 import Statistics.Distribution
 import Statistics.Distribution.ChiSquared
+import Statistics.Function (square)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Types
 import Statistics.Types
+import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
 
 
 -- | Generic form of Pearson chi squared tests for binned data. Data
@@ -36,12 +39,12 @@ chi2test ndf vec
   | otherwise = Nothing
   where
     n     = G.length vec - ndf - 1
-    chi2  = sum $ G.map (\(o,e) -> sqr (fromIntegral o - e) / e) vec
+    chi2  = sum $ G.map (\(o,e) -> square (fromIntegral o - e) / e) vec
     d     = chiSquared n
-    sqr x = x * x
-{-# INLINE chi2test #-}
-
-
+{-# SPECIALIZE
+    chi2test :: Double -> Int -> U.Vector (Int,Double) -> TestResult #-}
+{-# SPECIALIZE
+    chi2test :: Double -> Int -> V.Vector (Int,Double) -> TestResult #-}
 -- | Extra data returned by chi-square test
 data Chi2Data = Chi2Data
   { chi2DataNDF  :: !Int         -- ^ Number of degrees of freedom

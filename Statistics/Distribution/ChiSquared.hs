@@ -18,6 +18,7 @@ module Statistics.Distribution.ChiSquared (
         , chiSquaredNDF
         ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -33,6 +34,9 @@ import Data.Binary (put, get)
 newtype ChiSquared = ChiSquared Int
                      deriving (Eq, Read, Show, Typeable, Data, Generic)
 
+instance FromJSON ChiSquared
+instance ToJSON ChiSquared
+
 instance Binary ChiSquared where
     get = fmap ChiSquared get
     put (ChiSquared x) = put x
@@ -40,7 +44,6 @@ instance Binary ChiSquared where
 -- | Get number of degrees of freedom
 chiSquaredNDF :: ChiSquared -> Int
 chiSquaredNDF (ChiSquared ndf) = ndf
-{-# INLINE chiSquaredNDF #-}
 
 -- | Construct chi-squared distribution. Number of degrees of freedom
 --   must be positive.
@@ -49,7 +52,6 @@ chiSquared n
   | n <= 0    = error $
      "Statistics.Distribution.ChiSquared.chiSquared: N.D.F. must be positive. Got " ++ show n
   | otherwise = ChiSquared n
-{-# INLINE chiSquared #-}
 
 instance D.Distribution ChiSquared where
   cumulative = cumulative
@@ -60,11 +62,9 @@ instance D.ContDistr ChiSquared where
 
 instance D.Mean ChiSquared where
     mean (ChiSquared ndf) = fromIntegral ndf
-    {-# INLINE mean #-}
 
 instance D.Variance ChiSquared where
     variance (ChiSquared ndf) = fromIntegral (2*ndf)
-    {-# INLINE variance #-}
 
 instance D.MaybeMean ChiSquared where
     maybeMean = Just . D.mean
@@ -94,7 +94,6 @@ cumulative chi x
   | otherwise = incompleteGamma (ndf/2) (x/2)
   where
     ndf = fromIntegral $ chiSquaredNDF chi
-{-# INLINE cumulative #-}
 
 density :: ChiSquared -> Double -> Double
 density chi x
@@ -104,7 +103,6 @@ density chi x
     ndf  = fromIntegral $ chiSquaredNDF chi
     ndf2 = ndf/2
     x2   = x/2
-{-# INLINE density #-}
 
 quantile :: ChiSquared -> Double -> Double
 quantile (ChiSquared ndf) p
@@ -113,4 +111,3 @@ quantile (ChiSquared ndf) p
   | p > 0 && p < 1 = 2 * invIncompleteGamma (fromIntegral ndf / 2) p
   | otherwise      =
     error $ "Statistics.Distribution.ChiSquared.quantile: p must be in [0,1] range. Got: "++show p
-{-# INLINE quantile #-}

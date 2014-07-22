@@ -35,6 +35,7 @@ module Statistics.Distribution
 import Control.Applicative ((<$>), Applicative(..))
 import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
+import Statistics.Function (square)
 import Statistics.Sample.Internal (sum)
 import System.Random.MWC (Gen, uniform)
 import qualified Data.Vector.Unboxed as U
@@ -68,12 +69,10 @@ class Distribution  d => DiscreteDistr d where
     -- | Probability of n-th outcome.
     probability :: d -> Int -> Double
     probability d = exp . logProbability d
-    {-# INLINE probability #-}
 
     -- | Logarithm of probability of n-th outcome
     logProbability :: d -> Int -> Double
     logProbability d = log . probability d
-    {-# INLINE logProbability #-}
 
 
 -- | Continuous probability distributuion.
@@ -86,7 +85,6 @@ class Distribution d => ContDistr d where
     -- [/x/,/x+/&#948;/x/) equal to /density(x)/&#8901;&#948;/x/
     density :: d -> Double -> Double
     density d = exp . logDensity d
-    {-# INLINE density #-}
 
     -- | Inverse of the cumulative distribution function. The value
     -- /x/ for which P(/X/&#8804;/x/) = /p/. If probability is outside
@@ -96,7 +94,6 @@ class Distribution d => ContDistr d where
     -- | Natural logarithm of density.
     logDensity :: d -> Double -> Double
     logDensity d = log . density d
-    {-# INLINE logDensity #-}
 
 
 -- | Type class for distributions with mean. 'maybeMean' should return
@@ -130,7 +127,7 @@ class MaybeMean d => MaybeVariance d where
 --   Minimal complete definition is 'variance' or 'stdDev'
 class (Mean d, MaybeVariance d) => Variance d where
     variance :: d -> Double
-    variance d = x * x where x = stdDev d
+    variance d = square (stdDev d)
     stdDev   :: d -> Double
     stdDev = sqrt . variance
 
@@ -168,7 +165,6 @@ genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
 genContinous d gen = do
   x <- uniform gen
   return $! quantile d x
-{-# INLINE genContinous #-}
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
@@ -210,4 +206,3 @@ sumProbabilities d low hi =
   -- Return value is forced to be less than 1 to guard againist roundoff errors.
   -- ATTENTION! this check should be removed for testing or it could mask bugs.
   min 1 . sum . U.map (probability d) $ U.enumFromTo low hi
-{-# INLINE sumProbabilities #-}

@@ -43,13 +43,11 @@ type CD = Complex Double
 
 -- | Discrete cosine transform (DCT-II).
 dct :: U.Vector Double -> U.Vector Double
-{-# INLINE dct #-}
 dct = dctWorker . G.map (:+0)
 
 -- | Discrete cosine transform (DCT-II). Only real part of vector is
 --   transformed, imaginary part is ignored.
 dct_ :: U.Vector CD -> U.Vector Double
-{-# INLINE dct_ #-}
 dct_ = dctWorker . G.map (\(i :+ _) -> i :+ 0)
 
 dctWorker :: U.Vector CD -> U.Vector Double
@@ -73,13 +71,11 @@ dctWorker xs
 --
 -- > (idct . dct) x = (* length x)
 idct :: U.Vector Double -> U.Vector Double
-{-# INLINE idct #-}
 idct = idctWorker . G.map (:+0)
 
 -- | Inverse discrete cosine transform (DCT-III). Only real part of vector is
 --   transformed, imaginary part is ignored.
 idct_ :: U.Vector CD -> U.Vector Double
-{-# INLINE idct_ #-}
 idct_ = idctWorker . G.map (\(i :+ _) -> i :+ 0)
 
 idctWorker :: U.Vector CD -> U.Vector Double

@@ -16,6 +16,7 @@ module Statistics.Resampling.Bootstrap
     ) where
 
 import Control.Monad.Par (parMap, runPar)
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Vector.Unboxed ((!))
 import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
@@ -25,6 +26,9 @@ import Statistics.Types (Estimator, Sample, Estimate(..), estimate, CL, getNSigm
 import qualified Data.Vector.Unboxed as U
 import qualified Statistics.Resampling as R
 
+
+instance FromJSON Estimate
+instance ToJSON Estimate
 
 data T = {-# UNPACK #-} !Double :< {-# UNPACK #-} !Double
 infixl 2 :<

@@ -18,11 +18,11 @@ module Statistics.Sample.Internal
 
 import Numeric.Sum (kbn, sumVector)
 import Prelude hiding (sum)
+import Statistics.Function (square)
 import qualified Data.Vector.Generic as G
 
 robustSumVar :: (G.Vector v Double) => Double -> v Double -> Double
 robustSumVar m = sum . G.map (square . subtract m)
-  where square x = x * x
 {-# INLINE robustSumVar #-}
 
 sum :: (G.Vector v Double) => v Double -> Double

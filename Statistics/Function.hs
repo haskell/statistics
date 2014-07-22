@@ -1,4 +1,8 @@
-{-# LANGUAGE CPP, FlexibleContexts, Rank2Types #-}
+{-# LANGUAGE BangPatterns, CPP, FlexibleContexts, Rank2Types #-}
+#if __GLASGOW_HASKELL__ >= 704
+{-# OPTIONS_GHC -fsimpl-tick-factor=200 #-}
+#endif
+
 -- |
 -- Module    : Statistics.Function
 -- Copyright : (c) 2009, 2010, 2011 Bryan O'Sullivan
@@ -16,6 +20,7 @@ module Statistics.Function
       minMax
     -- * Sorting
     , sort
+    , gsort
     , sortBy
     , partialSort
     -- * Indexing
@@ -25,19 +30,34 @@ module Statistics.Function
     , nextHighestPowerOfTwo
     -- * Comparison
     , within
+    -- * Arithmetic
+    , square
+    -- * Vectors
+    , unsafeModify
+    -- * Combinators
+    , for
+    , rfor
     ) where
 
 #include "MachDeps.h"
 
+import Control.Monad.ST (ST)
 import Data.Bits ((.|.), shiftR)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as M
 import Statistics.Function.Comparison (within)
 
 -- | Sort a vector.
-sort :: (Ord e, G.Vector v e) => v e -> v e
+sort :: U.Vector Double -> U.Vector Double
 sort = G.modify I.sort
-{-# INLINE sort #-}
+{-# NOINLINE sort #-}
+
+-- | Sort a vector.
+gsort :: (Ord e, G.Vector v e) => v e -> v e
+gsort = G.modify I.sort
+{-# INLINE gsort #-}
 
 -- | Sort a vector using a custom ordering.
 sortBy :: (G.Vector v e) => I.Comparison e -> v e -> v e
@@ -51,7 +71,7 @@ partialSort :: (G.Vector v e, Ord e) =>
             -> v e
             -> v e
 partialSort k = G.modify (`I.partialSort` k)
-{-# INLINE partialSort #-}
+{-# SPECIALIZE partialSort :: Int -> U.Vector Double -> U.Vector Double #-}
 
 -- | Return the indices of a vector.
 indices :: (G.Vector v a, G.Vector v Int) => v a -> v Int
@@ -99,3 +119,30 @@ nextHighestPowerOfTwo n
 -- But GHC do not inline foldl (probably because it's recursive) and
 -- as result function walks list of boxed ints. Hand rolled version
 -- uses unboxed arithmetic.
+
+-- | Multiply a number by itself.
+square :: Double -> Double
+square x = x * x
+
+-- | Simple for loop.  Counts from /start/ to /end/-1.
+for :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
+for n0 !n f = loop n0
+  where
+    loop i | i == n    = return ()
+           | otherwise = f i >> loop (i+1)
+{-# INLINE for #-}
+
+-- | Simple reverse-for loop.  Counts from /start/-1 to /end/ (which
+-- must be less than /start/).
+rfor :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
+rfor n0 !n f = loop n0
+  where
+    loop i | i == n    = return ()
+           | otherwise = let i' = i-1 in f i' >> loop i'
+{-# INLINE rfor #-}
+
+unsafeModify :: M.MVector s Double -> Int -> (Double -> Double) -> ST s ()
+unsafeModify v i f = do
+  k <- M.unsafeRead v i
+  M.unsafeWrite v i (f k)
+{-# INLINE unsafeModify #-}

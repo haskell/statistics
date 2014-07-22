@@ -4,6 +4,7 @@ module Tests.NonParametric (tests) where
 import Statistics.Distribution.Normal (standard)
 import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
+import Statistics.Test.KruskalWallis
 import Statistics.Test.WilcoxonT
 import Statistics.Test.Types (TestType(..),TestResult(..))
 import Statistics.Types (CL(..),pValue)
@@ -11,7 +12,8 @@ import Statistics.Types (CL(..),pValue)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual)
-import Tests.Helpers (eq, testAssertion, testEquality)
+import Tests.ApproxEq (eq)
+import Tests.Helpers (testAssertion, testEquality)
 import Tests.NonParametric.Table (tableKSD, tableKS2D)
 import qualified Data.Vector.Unboxed as U
 
@@ -21,6 +23,8 @@ tests = testGroup "Nonparametric tests"
         $ concat [ mannWhitneyTests
                  , wilcoxonSumTests
                  , wilcoxonPairTests
+                 , kruskalWallisRankTests
+                 , kruskalWallisTests
                  , kolmogorovSmirnovDTest
                  ]
 
@@ -149,6 +153,69 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
                ]
     to4dp tgt (CL x) = x >= tgt - 0.00005 && x < tgt + 0.00005
 
+----------------------------------------------------------------
+
+kruskalWallisRankTests :: [Test]
+kruskalWallisRankTests = zipWith test [(0::Int)..] testData
+  where
+    test n (a, b) = testCase "Kruskal-Wallis Ranking"
+                  $ assertEqual ("Kruskal-Wallis " ++ show n) (map U.fromList b) (kruskalWallisRank $ map U.fromList a)
+    testData = [ ( [ [68,93,123,83,108,122]
+                   , [119,116,101,103,113,84]
+                   , [70,68,54,73,81,68]
+                   , [61,54,59,67,59,70]
+                   ]
+                 , [ [8.0,14.0,16.0,19.0,23.0,24.0]
+                   , [15.0,17.0,18.0,20.0,21.0,22.0]
+                   , [1.5,8.0,8.0,10.5,12.0,13.0]
+                   , [1.5,3.5,3.5,5.0,6.0,10.5]
+                   ]
+                 )
+               ]
+
+kruskalWallisTests :: [Test]
+kruskalWallisTests = zipWith test [(0::Int)..] testData
+  where
+    test n (a, b, c) = testCase "Kruskal-Wallis" $ do
+        assertEqual ("Kruskal-Wallis " ++ show n) (round100 b) (round100 kw)
+        assertEqual ("Kruskal-Wallis Sig " ++ show n) c kwt
+      where
+        kw = kruskalWallis $ map U.fromList a
+        kwt = kruskalWallisTest 0.05 $ map U.fromList a
+        round100 :: Double -> Integer
+        round100 = round . (*100)
+
+    testData = [ ( [ [68,93,123,83,108,122]
+                   , [119,116,101,103,113,84]
+                   , [70,68,54,73,81,68]
+                   , [61,54,59,67,59,70]
+                   ]
+                 , 16.03
+                 , Just Significant
+                 )
+               , ( [ [5,5,3,5,5,5,5]
+                   , [5,5,5,5,7,5,5]
+                   , [5,5,6,5,5,5,5]
+                   , [4,5,5,5,6,5,5]
+                   ]
+               , 2.24
+               , Just NotSignificant
+               )
+               , ( [ [36,48,5,67,53]
+                   , [49,33,60,2,55]
+                   , [71,31,140,59,42]
+                   ]
+                 , 1.22
+                 , Just NotSignificant
+                 )
+               , ( [ [6,38,3,17,11,30,15,16,25,5]
+                   , [34,28,42,13,40,31,9,32,39,27]
+                   , [13,35,19,4,29,0,7,33,18,24]
+                   ]
+                 , 6.10
+                 , Just Significant
+                 )
+               ]
 
 
 ----------------------------------------------------------------

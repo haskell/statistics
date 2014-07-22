@@ -21,6 +21,7 @@ module Statistics.Distribution.CauchyLorentz (
   , standardCauchy
   ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -40,6 +41,9 @@ data CauchyDistribution = CD {
   , cauchyDistribScale  :: {-# UNPACK #-} !Double
   }
   deriving (Eq, Show, Read, Typeable, Data, Generic)
+
+instance FromJSON CauchyDistribution
+instance ToJSON CauchyDistribution
 
 instance Binary CauchyDistribution where
     put (CD x y) = put x >> put y

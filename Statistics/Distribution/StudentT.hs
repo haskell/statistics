@@ -16,6 +16,7 @@ module Statistics.Distribution.StudentT (
   , studentTUnstandardized
   ) where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
@@ -28,6 +29,9 @@ import Data.Binary (put, get)
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
                    deriving (Eq, Show, Read, Typeable, Data, Generic)
+
+instance FromJSON StudentT
+instance ToJSON StudentT
 
 instance Binary StudentT where
     put = put . studentTndf

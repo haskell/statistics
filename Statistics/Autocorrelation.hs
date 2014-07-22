@@ -18,6 +18,7 @@ module Statistics.Autocorrelation
     ) where
 
 import Prelude hiding (sum)
+import Statistics.Function (square)
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Generic as G
@@ -46,4 +47,3 @@ autocorrelation a = (r, ci (-), ci (+))
       where f v = 1.96 * sqrt ((v * 2 + 1) / l)
     l           = fromIntegral (G.length a)
     ci f        = G.cons 1 . G.tail . G.map (f (-1/l)) $ dllse
-    square x    = x * x
