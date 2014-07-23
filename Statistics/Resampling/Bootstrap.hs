@@ -98,7 +98,8 @@ bootstrapBCA confidenceLevel sample estimators resamples
   | otherwise = error "Statistics.Resampling.Bootstrap.bootstrapBCA: confidence level outside (0,1) range"
   where
     e est (Resample resample)
-      | U.length sample == 1 = estimate pt pt pt confidenceLevel
+      | U.length sample == 1 || isInfinite bias =
+          estimate pt pt pt confidenceLevel
       | otherwise =
           estimate pt (resample ! lo) (resample ! hi) confidenceLevel
       where
