@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, DeriveDataTypeable, DeriveGeneric #-}
 -- | Pearson's chi squared test.
 module Statistics.Test.ChiSquared (
     chi2test
@@ -13,9 +13,14 @@ import Statistics.Function (square)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Types
 import Statistics.Types
+import Control.DeepSeq (NFData(..))
+import Data.Aeson  (FromJSON,ToJSON)
+import Data.Binary (Binary)
+import Data.Data   (Typeable,Data)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
+import GHC.Generics (Generic)
 
 
 -- | Generic form of Pearson chi squared tests for binned data. Data
@@ -52,3 +57,9 @@ data Chi2Data = Chi2Data
   { chi2DataNDF  :: !Int         -- ^ Number of degrees of freedom
   , chi2DataChi2 :: !Double      -- ^ Calculated χ²
   }
+  deriving (Show,Eq,Typeable,Data,Generic)
+
+instance Binary   Chi2Data
+instance FromJSON Chi2Data
+instance ToJSON   Chi2Data
+instance NFData   Chi2Data
