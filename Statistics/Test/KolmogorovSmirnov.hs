@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable,DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Test.KolmogorovSmirnov
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -12,8 +13,10 @@
 -- two samples have the same distribution. It's only applicable to
 -- continous distributions.
 module Statistics.Test.KolmogorovSmirnov (
+    -- * Data types
+    StatisticKS(..)
     -- * Kolmogorov-Smirnov test
-    kolmogorovSmirnovTest
+  , kolmogorovSmirnovTest
   , kolmogorovSmirnovTestCdf
   , kolmogorovSmirnovTest2
     -- * Evaluate statistics
@@ -27,39 +30,41 @@ module Statistics.Test.KolmogorovSmirnov (
   ) where
 
 import Control.Monad (when)
+import Control.DeepSeq (NFData)
 import Prelude hiding (exponent, sum)
 import Statistics.Distribution (Distribution(..))
 import Statistics.Function (sort, unsafeModify)
 import Statistics.Matrix (center, exponent, for, fromVector, power)
 import Statistics.Test.Types
 import Statistics.Types (Sample,confLevel)
+import Data.Aeson  (FromJSON,ToJSON)
+import Data.Binary (Binary)
+import Data.Data   (Typeable,Data)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
-
+import GHC.Generics (Generic)
 
 ----------------------------------------------------------------
 -- Test
 ----------------------------------------------------------------
 
--- | Check that sample could be described by
---   distribution. 'Significant' means distribution is not compatible
---   with data for given p-value.
+-- | Check that sample could be described by distribution.
 --
 --   This test uses Marsaglia-Tsang-Wang exact alogorithm for
 --   calculation of p-value.
 kolmogorovSmirnovTest :: Distribution d
                       => d      -- ^ Distribution
                       -> Sample -- ^ Data sample
-                      -> Test ()
+                      -> Test StatisticKS
 kolmogorovSmirnovTest d = kolmogorovSmirnovTestCdf (cumulative d)
 
 -- | Variant of 'kolmogorovSmirnovTest' which uses CFD in form of
 --   function.
 kolmogorovSmirnovTestCdf :: (Double -> Double) -- ^ CDF of distribution
                          -> Sample             -- ^ Data sample
-                         -> Test ()
+                         -> Test StatisticKS
 kolmogorovSmirnovTestCdf cdf sample
-  = Test (confLevel prob) ()
+  = Test (confLevel prob) (StatisticKS d)
   where
     d    = kolmogorovSmirnovCdfD cdf sample
     prob = kolmogorovSmirnovProbability (U.length sample) d
@@ -71,9 +76,9 @@ kolmogorovSmirnovTestCdf cdf sample
 --   This test uses approxmate formula for computing p-value.
 kolmogorovSmirnovTest2 :: Sample -- ^ Sample 1
                        -> Sample -- ^ Sample 2
-                       -> Test ()
+                       -> Test StatisticKS
 kolmogorovSmirnovTest2 xs1 xs2
-  = Test (confLevel $ prob $ d * (en + 0.12 + 0.11/en)) ()
+  = Test (confLevel $ prob $ d * (en + 0.12 + 0.11/en)) (StatisticKS d)
   where
     d    = kolmogorovSmirnov2D xs1 xs2
     -- Effective number of data points
@@ -89,6 +94,14 @@ kolmogorovSmirnovTest2 xs1 xs2
       | otherwise = let x = exp(-2 * z * z)
                     in  1 - 2*(x - x**4 + x**9)
 -- FIXME: Find source for approximation for D
+
+-- | Test statistics for Kolmogorov-Smirnov test.
+data StatisticKS = StatisticKS { statisticKS :: Double }
+                   deriving (Show,Eq,Typeable,Data,Generic)
+instance Binary   StatisticKS
+instance FromJSON StatisticKS
+instance ToJSON   StatisticKS
+instance NFData   StatisticKS
 
 
 
