@@ -36,7 +36,6 @@ chi2test :: (G.Vector v (Int,Double), G.Vector v Double)
          -> Maybe (Test Chi2Data)
 chi2test ndf vec
   | ndf <  0  = error $ "Statistics.Test.ChiSquare.chi2test: negative NDF " ++ show ndf
-  | n   <= 0  = error $ "Statistics.Test.ChiSquare.chi2test: too short data sample"
   | n > 0     = Just $ Test
               { testSignificance = CL (complCumulative d chi2)
               , testExtraData    = Chi2Data n chi2
