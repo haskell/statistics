@@ -5,6 +5,7 @@ module Statistics.Test.Types (
   , TestResult(..)
   , significant
   , TestType(..)
+  , TestStatistics(..)
   ) where
 
 import Control.DeepSeq  (NFData(..))
@@ -26,6 +27,8 @@ instance FromJSON TestResult
 instance ToJSON   TestResult
 instance NFData   TestResult
 
+
+
 -- | Result of statistical test. It contains test p-value (probability of encountering
 data Test a = Test
   { testSignificance :: CL Double
@@ -45,6 +48,8 @@ isSignificant cl t
   -- FIXME: check what Ord instance have correct meaning
   = significant $ cl <= testSignificance t
 
+
+
 -- | Test type. Exact meaning depends on a specific test. But
 -- generally it's tested whether some statistics is too big (small)
 -- for 'OneTailed' or whether it too big or too small for 'TwoTailed'
@@ -61,3 +66,18 @@ instance NFData   TestType
 significant :: Bool -> TestResult
 significant True  = Significant
 significant False = NotSignificant
+
+
+
+-- | Test statistics.
+data TestStatistics a = TestStatistics
+  { testStatistics   :: !Double
+  , testDistribution :: !a
+  }
+  deriving (Eq,Ord,Show,Typeable,Data,Generic,Functor)
+
+instance Binary   a => Binary   (TestStatistics a)
+instance FromJSON a => FromJSON (TestStatistics a)
+instance ToJSON   a => ToJSON   (TestStatistics a)
+instance NFData   a => NFData   (TestStatistics a) where
+  rnf (TestStatistics a b) = rnf a `seq` rnf b
