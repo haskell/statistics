@@ -32,7 +32,7 @@ import qualified Statistics.Sample.Internal as Sample(sum)
 --
 -- The samples and values need not to be ordered but the values in the result
 -- are ordered. Assigned ranks (ties are given their average rank).
-kruskalWallisRank :: [Sample] -> [Sample]
+kruskalWallisRank :: (U.Unbox a, Ord a) => [U.Vector a] -> [Sample]
 kruskalWallisRank samples = groupByTags
                           . sortBy (comparing fst)
                           . U.zip tags
@@ -54,7 +54,7 @@ kruskalWallisRank samples = groupByTags
 --
 -- In textbooks the output value is usually represented by 'K' or 'H'. This
 -- function already does the ranking.
-kruskalWallis :: [Sample] -> Double
+kruskalWallis :: (U.Unbox a, Ord a) => [U.Vector a] -> Double
 kruskalWallis samples = (nTot - 1) * numerator / denominator
   where
     -- Total number of elements in all samples
