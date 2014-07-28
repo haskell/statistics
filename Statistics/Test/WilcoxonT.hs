@@ -52,8 +52,8 @@ import Statistics.Types (CL,pValue,getPValue)
 import qualified Data.Vector.Unboxed as U
 
 -- | Calculate (T+,T-) values for both samples.
-wilcoxonMatchedPairSignedRank :: (Ord a, Num a, U.Unbox a) => U.Vector a -> U.Vector a -> (Double, Double)
-wilcoxonMatchedPairSignedRank a b = (sum ranks1, negate (sum ranks2))
+wilcoxonMatchedPairSignedRank :: (Ord a, Num a, U.Unbox a) => U.Vector (a,a) -> (Double, Double)
+wilcoxonMatchedPairSignedRank ab = (sum ranks1, negate (sum ranks2))
   where
     (ranks1, ranks2) = splitByTags
                      $ U.zip tags (rank ((==) `on` abs) diffs)
@@ -61,7 +61,7 @@ wilcoxonMatchedPairSignedRank a b = (sum ranks1, negate (sum ranks2))
                  $ U.map (\x -> (x>0 , x))   -- Attach tags to distribution elements
                  $ U.filter  (/= 0)          -- Remove equal elements
                  $ sortBy (comparing abs)    -- Sort the differences by absolute difference
-                 $ U.zipWith (-) a b         -- Work out differences
+                 $ U.map (uncurry (-)) ab    -- Work out differences
 
 
 -- | The coefficients for x^0, x^1, x^2, etc, in the expression
@@ -91,6 +91,8 @@ summedCoefficients n
   | n < 1     = error "Statistics.Test.WilcoxonT.summedCoefficients: nonpositive sample size"
   | n > 1023  = error "Statistics.Test.WilcoxonT.summedCoefficients: sample is too large (see bug #18)"
   | otherwise = map fromIntegral $ scanl1 (+) $ coefficients n
+
+
 
 -- | Tests whether a given result from a Wilcoxon signed-rank matched-pairs test
 -- is significant at the given level.
@@ -157,6 +159,8 @@ wilcoxonMatchedPairCriticalValue sampleSize pVal
     m = (2 ** fromIntegral sampleSize) * p
     critical = subtract 1 <$> findIndex (> m) (summedCoefficients sampleSize)
 
+
+
 -- | Works out the significance level (p-value) of a T value, given a sample
 -- size and a T value from the Wilcoxon signed-rank matched-pairs test.
 --
@@ -167,6 +171,8 @@ wilcoxonMatchedPairSignificance
   -> CL Double -- ^ The significance (p-value).
 wilcoxonMatchedPairSignificance sampleSize rnk
   = pValue $ (summedCoefficients sampleSize !! floor rnk) / 2 ** fromIntegral sampleSize
+
+
 
 -- | The Wilcoxon matched-pairs signed-rank test. The samples are
 -- zipped together: if one is longer than the other, both are
@@ -182,13 +188,9 @@ wilcoxonMatchedPairTest
   :: (Ord a, Num a, U.Unbox a)
   => TestType   -- ^ Perform one-tailed test.
   -> CL Double  -- ^ The p-value at which to test (e.g. @pValue 0.05@)
-  -> U.Vector a -- ^ First sample
-  -> U.Vector a -- ^ Second sample
+  -> U.Vector (a,a) -- ^ First sample
   -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
-wilcoxonMatchedPairTest test p smp1 smp2 =
-    wilcoxonMatchedPairSignificant test (min n1 n2) p
-  $ wilcoxonMatchedPairSignedRank smp1 smp2
-  where
-    n1 = U.length smp1
-    n2 = U.length smp2
+wilcoxonMatchedPairTest test p pairs =
+    wilcoxonMatchedPairSignificant test (U.length pairs) p
+  $ wilcoxonMatchedPairSignedRank pairs
