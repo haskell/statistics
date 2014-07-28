@@ -124,7 +124,7 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
   ]
   where
     test n (a, b, c) = testEquality ("Wilcoxon Paired " ++ show n) c res
-      where res = (wilcoxonMatchedPairSignedRank (U.fromList a) (U.fromList b))
+      where res = wilcoxonMatchedPairSignedRank (U.zip (U.fromList a) (U.fromList b))
 
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
     testData :: [([Double], [Double], (Double, Double))]
@@ -160,6 +160,7 @@ kruskalWallisRankTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b) = testCase "Kruskal-Wallis Ranking"
                   $ assertEqual ("Kruskal-Wallis " ++ show n) (map U.fromList b) (kruskalWallisRank $ map U.fromList a)
+    testData :: [([[Int]],[[Double]])]
     testData = [ ( [ [68,93,123,83,108,122]
                    , [119,116,101,103,113,84]
                    , [70,68,54,73,81,68]
