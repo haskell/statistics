@@ -28,12 +28,14 @@ chi2test :: (G.Vector v (Int,Double), G.Vector v Double)
                                 --   N observation in total and
                                 --   accounted for automatically.
          -> v (Int,Double)      -- ^ Observation and expectation.
-         -> Maybe (Test (TestStatistics ChiSquared))
+         -> Maybe (Test ChiSquared ())
 chi2test ndf vec
   | ndf <  0  = error $ "Statistics.Test.ChiSquare.chi2test: negative NDF " ++ show ndf
   | n > 0     = Just $ Test
-              { testSignificance = CL (complCumulative d chi2)
-              , testExtraData    = TestStatistics chi2 (chiSquared ndf)
+              { testSignificance = pValue $ complCumulative d chi2
+              , testStatistics   = chi2
+              , testDistribution = chiSquared ndf
+              , testExtraData    = ()
               }
   | otherwise = Nothing
   where
@@ -41,6 +43,6 @@ chi2test ndf vec
     chi2  = sum $ G.map (\(o,e) -> square (fromIntegral o - e) / e) vec
     d     = chiSquared n
 {-# SPECIALIZE
-    chi2test :: Int -> U.Vector (Int,Double) -> Maybe (Test (TestStatistics ChiSquared)) #-}
+    chi2test :: Int -> U.Vector (Int,Double) -> Maybe (Test ChiSquared ()) #-}
 {-# SPECIALIZE
-    chi2test :: Int -> V.Vector (Int,Double) -> Maybe (Test (TestStatistics ChiSquared)) #-}
+    chi2test :: Int -> V.Vector (Int,Double) -> Maybe (Test ChiSquared ()) #-}
