@@ -5,7 +5,6 @@ module Statistics.Test.Types (
   , TestResult(..)
   , significant
   , TestType(..)
-  , TestStatistics(..)
   ) where
 
 import Control.DeepSeq  (NFData(..))
@@ -30,20 +29,22 @@ instance NFData   TestResult
 
 
 -- | Result of statistical test. It contains test p-value (probability of encountering
-data Test a = Test
-  { testSignificance :: CL Double
+data Test d a = Test
+  { testSignificance :: !(CL Double)
+  , testStatistics   :: !Double
+  , testDistribution :: d
   , testExtraData    :: a
   }
   deriving (Eq,Ord,Show,Typeable,Data,Generic,Functor)
 
-instance Binary   a => Binary   (Test a)
-instance FromJSON a => FromJSON (Test a)
-instance ToJSON   a => ToJSON   (Test a)
-instance NFData   a => NFData   (Test a) where
-  rnf (Test a b) = rnf a `seq` rnf b
+instance (Binary   a, Binary   d) => Binary   (Test d a)
+instance (FromJSON a, FromJSON d) => FromJSON (Test d a)
+instance (ToJSON   a, ToJSON   d) => ToJSON   (Test d a)
+instance (NFData   a, NFData   d) => NFData   (Test d a) where
+  rnf (Test _ _ a b) = rnf a `seq` rnf b
 
 -- | Check whether test is significant for given p-value.
-isSignificant :: CL Double -> Test a -> TestResult
+isSignificant :: CL Double -> Test d a -> TestResult
 isSignificant cl t
   -- FIXME: check what Ord instance have correct meaning
   = significant $ cl <= testSignificance t
@@ -66,18 +67,3 @@ instance NFData   TestType
 significant :: Bool -> TestResult
 significant True  = Significant
 significant False = NotSignificant
-
-
-
--- | Test statistics.
-data TestStatistics a = TestStatistics
-  { testStatistics   :: !Double
-  , testDistribution :: !a
-  }
-  deriving (Eq,Ord,Show,Typeable,Data,Generic,Functor)
-
-instance Binary   a => Binary   (TestStatistics a)
-instance FromJSON a => FromJSON (TestStatistics a)
-instance ToJSON   a => ToJSON   (TestStatistics a)
-instance NFData   a => NFData   (TestStatistics a) where
-  rnf (TestStatistics a b) = rnf a `seq` rnf b
