@@ -118,7 +118,12 @@ bootstrapRegress :: GenIO
                  -> [Vector]    -- ^ Predictor vectors.
                  -> Vector      -- ^ Responder vector.
                  -> IO (V.Vector Estimate, Estimate)
-bootstrapRegress gen0 numResamples ci rgrss preds0 resp0 = do
+bootstrapRegress gen0 numResamples ci rgrss preds0 resp0
+  | numResamples < 1   = error $ "bootstrapRegress: number of resamples " ++
+                                 "must be positive"
+  | ci <= 0 || ci >= 1 = error $ "bootstrapRegress: confidence interval " ++
+                                 "must lie between 0 and 1"
+  | otherwise = do
   caps <- getNumCapabilities
   gens <- splitGen caps gen0
   done <- newChan
