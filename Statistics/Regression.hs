@@ -10,15 +10,25 @@ module Statistics.Regression
       olsRegress
     , ols
     , rSquare
+    , bootstrapRegress
     ) where
 
 import Control.Applicative ((<$>))
+import Control.Concurrent (forkIO)
+import Control.Concurrent.Chan (newChan, readChan, writeChan)
+import Control.DeepSeq (rnf)
+import Control.Monad (forM_, replicateM)
+import Data.Word (Word32)
+import GHC.Conc (getNumCapabilities)
 import Prelude hiding (pred, sum)
 import Statistics.Function as F
 import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms (qr)
+import Statistics.Resampling.Bootstrap (Estimate(..))
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
+import System.Random.MWC (GenIO, initialize, uniformR, uniformVector)
+import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
@@ -97,3 +107,46 @@ rSquare pred resp coeff = 1 - r / t
     r   = sum $ flip U.imap resp $ \i x -> square (x - p i)
     t   = sum $ flip U.map resp $ \x -> square (x - mean resp)
     p i = sum . flip U.imap coeff $ \j -> (* unsafeIndex pred i j)
+
+-- | Bootstrap a regression function.  Returns both the results of the
+-- regression and the requested confidence interval values.
+bootstrapRegress :: GenIO
+                 -> Int         -- ^ Number of resamples to compute.
+                 -> Double      -- ^ Confidence interval.
+                 -> ([Vector] -> Vector -> (Vector, Double))
+                 -- ^ Regression function.
+                 -> [Vector]    -- ^ Predictor vectors.
+                 -> Vector      -- ^ Responder vector.
+                 -> IO (V.Vector Estimate, Estimate)
+bootstrapRegress gen0 numResamples ci rgrss preds0 resp0 = do
+  caps <- getNumCapabilities
+  gens <- fmap (gen0:) . replicateM (caps-1) $
+          initialize =<< (uniformVector gen0 256 :: IO (U.Vector Word32))
+  done <- newChan
+  forM_ (zip gens (balance caps numResamples)) $ \(gen,count) -> do
+    forkIO $ do
+      v <- V.replicateM count $ do
+           let n = U.length resp0
+           ixs <- U.replicateM n $ uniformR (0,n-1) gen
+           let resp  = U.backpermute resp0 ixs
+               preds = map (flip U.backpermute ixs) preds0
+           return $ rgrss preds resp
+      rnf v `seq` writeChan done v
+  (coeffsv, r2v) <- (G.unzip . V.concat) <$> replicateM caps (readChan done)
+  let coeffs  = flip G.imap (G.convert coeffss) $ \i x ->
+                est x . U.generate numResamples $ \k -> ((coeffsv G.! k) G.! i)
+      r2      = est r2s (G.convert r2v)
+      (coeffss, r2s) = rgrss preds0 resp0
+      est s v = Estimate s (w G.! lo) (w G.! hi) ci
+        where w  = F.sort v
+              lo = round c
+              hi = truncate (n - c)
+              n  = fromIntegral numResamples
+              c  = n * ((1 - ci) / 2)
+  return (coeffs, r2)
+
+-- | Balance units of work across workers.
+balance :: Int -> Int -> [Int]
+balance numSlices numItems = zipWith (+) (replicate numSlices q)
+                                         (replicate r 1 ++ repeat 0)
+ where (q,r) = numItems `quotRem` numSlices
