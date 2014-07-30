@@ -83,8 +83,8 @@ resample gen ests numResamples samples = do
           where (q,r) = numResamples `quotRem` numCapabilities
   results <- mapM (const (MU.new numResamples)) ests
   done <- newChan
-  forM_ (zip ixs (tail ixs)) $ \ (start,!end) -> do
-    gen' <- initialize =<< (uniformVector gen 256 :: IO (U.Vector Word32))
+  gens <- splitGen numCapabilities gen
+  forM_ (zip3 ixs (tail ixs) gens) $ \ (start,!end,gen') -> do
     forkIO $ do
       let loop k ers | k >= end = writeChan done ()
                      | otherwise = do
