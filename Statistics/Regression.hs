@@ -18,16 +18,16 @@ import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (newChan, readChan, writeChan)
 import Control.DeepSeq (rnf)
 import Control.Monad (forM_, replicateM)
-import Data.Word (Word32)
 import GHC.Conc (getNumCapabilities)
 import Prelude hiding (pred, sum)
 import Statistics.Function as F
 import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms (qr)
+import Statistics.Resampling (splitGen)
 import Statistics.Resampling.Bootstrap (Estimate(..))
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
-import System.Random.MWC (GenIO, initialize, uniformR, uniformVector)
+import System.Random.MWC (GenIO, uniformR)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -120,8 +120,7 @@ bootstrapRegress :: GenIO
                  -> IO (V.Vector Estimate, Estimate)
 bootstrapRegress gen0 numResamples ci rgrss preds0 resp0 = do
   caps <- getNumCapabilities
-  gens <- fmap (gen0:) . replicateM (caps-1) $
-          initialize =<< (uniformVector gen0 256 :: IO (U.Vector Word32))
+  gens <- splitGen caps gen0
   done <- newChan
   forM_ (zip gens (balance caps numResamples)) $ \(gen,count) -> do
     forkIO $ do
