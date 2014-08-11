@@ -66,8 +66,10 @@ significance test t df = case test of
   OneTailed -> tailArea
   TwoTailed -> tailArea * 2
   where
-    tailArea = let area = cumulative (studentT df) t
-      in if t < 0 then area else 1 - area
+    tailArea | t < 0     = area
+             | otherwise = 1 - area
+      where area = cumulative (studentT df) t
+
 
 tStatistics :: (G.Vector v Double)
             => Bool               -- variance equality
@@ -98,15 +100,12 @@ tStatistics varequal sample1 sample2 = (t, df)
 tStatisticsPaired :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
                   => v (Double, Double)
                   -> (Double, Double)
-tStatisticsPaired sample = (t, df)
+tStatisticsPaired sample = (t, ndf)
   where
     -- t-statistics
-    t = let
-      d = G.map (uncurry (-)) sample
-      sumd = G.sum d
-      in sumd / sqrt ((n * G.sum (G.map square d) - square sumd) / df)
-
+    t = let d    = G.map (uncurry (-)) sample
+            sumd = G.sum d
+        in sumd / sqrt ((n * G.sum (G.map square d) - square sumd) / ndf)
     -- degree of freedom
-    df = n - 1
-
-    n = fromIntegral $ G.length sample
+    ndf = n - 1
+    n   = fromIntegral $ G.length sample
