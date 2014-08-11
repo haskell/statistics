@@ -5,6 +5,7 @@ module Statistics.Test.Types (
   , TestResult(..)
   , significant
   , TestType(..)
+  , PositionTest(..)
   ) where
 
 import Control.DeepSeq  (NFData(..))
@@ -63,7 +64,22 @@ instance FromJSON TestType
 instance ToJSON   TestType
 instance NFData   TestType
 
--- | Significant if parameter is 'True', not significant otherwiser
+-- | Test type for test which compare positional information of samples.
+data PositionTest
+  = SamplesDiffer
+    -- ^ If test is significant then samples are different.
+  | AGreater
+    -- ^ If test is significant then first sample greater than second.
+  | BGreater
+    -- ^ If test is significant then second sample greater than first.
+  deriving (Eq,Ord,Show,Typeable,Data,Generic)
+
+instance Binary   PositionTest
+instance FromJSON PositionTest
+instance ToJSON   PositionTest
+instance NFData   PositionTest
+
+-- | significant if parameter is 'True', not significant otherwiser
 significant :: Bool -> TestResult
 significant True  = Significant
 significant False = NotSignificant
