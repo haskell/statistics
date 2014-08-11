@@ -107,8 +107,8 @@ summedCoefficients n
 -- in the opposite direction, you can either pass the parameters in a different
 -- order to 'wilcoxonMatchedPairSignedRank', or simply swap the values in the resulting
 -- pair before passing them to this function.
-wilcoxonMatchedPairSignificant ::
-     TestType            -- ^ Perform one- or two-tailed test (see description below).
+wilcoxonMatchedPairSignificant
+  :: PositionTest        -- ^ How to compare two samples
   -> Int                 -- ^ The sample size from which the (T+,T-) values were derived.
   -> CL Double           -- ^ The p-value at which to test (e.g. @pValue 0.05@)
   -> (Double, Double)    -- ^ The (T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
@@ -119,9 +119,13 @@ wilcoxonMatchedPairSignificant test sampleSize pVal (tPlus, tMinus) =
     -- According to my nearest book (Understanding Research Methods and Statistics
     -- by Gary W. Heiman, p590), to check that the first sample is bigger you must
     -- use the absolute value of T- for a one-tailed check:
-    OneTailed ->  (significant . (abs tMinus <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize pVal
+    AGreater      -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize pVal
+                        return $ significant $ abs tMinus <= fromIntegral crit
+    BGreater      -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize pVal
+                        return $ significant $ abs tPlus <= fromIntegral crit
     -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
-    TwoTailed -> (significant . (t <=) . fromIntegral) <$> wilcoxonMatchedPairCriticalValue sampleSize (pValue $ p/2)
+    SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (pValue $ p/2)
+                        return $ significant $ t <= fromIntegral crit
   where
     t = min (abs tPlus) (abs tMinus)
     p = getPValue pVal
@@ -186,9 +190,9 @@ wilcoxonMatchedPairSignificance sampleSize rnk
 -- 'wilcoxonMatchedPairSignificant' for additional information.
 wilcoxonMatchedPairTest
   :: (Ord a, Num a, U.Unbox a)
-  => TestType   -- ^ Perform one-tailed test.
-  -> CL Double  -- ^ The p-value at which to test (e.g. @pValue 0.05@)
-  -> U.Vector (a,a) -- ^ First sample
+  => PositionTest     -- ^ Perform one-tailed test.
+  -> CL Double        -- ^ The p-value at which to test (e.g. @pValue 0.05@)
+  -> U.Vector (a,a)   -- ^ First sample
   -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
 wilcoxonMatchedPairTest test p pairs =
