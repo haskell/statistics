@@ -5,13 +5,14 @@ module Statistics.Test.StudentT (
   welchT2,
   pairedT2,
   TestResult(..),
-  TestType(..)
+  PositionTest(..)
 ) where
 
 import Statistics.Distribution hiding (mean)
 import Statistics.Distribution.StudentT
 import Statistics.Sample (mean, varianceUnbiased)
 import Statistics.Test.Types
+import Statistics.Types    (pValue)
 import Statistics.Function (square)
 import qualified Data.Vector.Generic as G
 
@@ -19,42 +20,51 @@ import qualified Data.Vector.Generic as G
 -- The variance equality of two samples is assumed.
 studentT2 :: (G.Vector v Double)
           => TestType      -- ^ one- or two-tailed test
-          -> Double        -- ^ p-value
           -> v Double      -- ^ Sample 1
-          -> v Double      -- ^ Smaple 2
-          -> TestResult
-studentT2 test p sample1 sample2
+          -> v Double      -- ^ Sample 2
+          -> Test StudentT ()
+studentT2 test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient samples"
-  | otherwise = significant $ significance test t df < p
+  | otherwise = Test { testSignificance = pValue $ significance test t ndf
+                     , testStatistics   = t
+                     , testDistribution = studentT ndf
+                     , testExtraData    = ()
+                     }
   where
-    (t, df) = tStatistics True sample1 sample2
+    (t, ndf) = tStatistics True sample1 sample2
 
 -- | Two-sample Welch's t-test.
 -- The variance equality of two samples is not assumed.
 welchT2 :: (G.Vector v Double)
         => TestType      -- ^ one- or two-tailed test
-        -> Double        -- ^ p-value
         -> v Double      -- ^ Sample 1
         -> v Double      -- ^ Sample 2
-        -> TestResult
-welchT2 test p sample1 sample2
+        -> Test StudentT ()
+welchT2 test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient samples"
-  | otherwise = significant $ significance test t df < p
+  | otherwise = Test { testSignificance = pValue $ significance test t ndf
+                     , testStatistics   = t
+                     , testDistribution = studentT ndf
+                     , testExtraData    = ()
+                     }
   where
-    (t, df) = tStatistics False sample1 sample2
+    (t, ndf) = tStatistics False sample1 sample2
 
 -- | Paired two-sample t-test.
 -- Two samples are paired in a within-subject design.
 pairedT2 :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
          => TestType              -- ^ one- or two-tailed test
-         -> Double                -- ^ p-value
          -> v (Double, Double)    -- ^ paired samples
-         -> TestResult
-pairedT2 test p sample
+         -> Test StudentT ()
+pairedT2 test sample
   | G.length sample < 2 = error "Statistics.Test.StudentT: insufficient samples"
-  | otherwise = significant $ significance test t df < p
+  | otherwise = Test { testSignificance = pValue $ significance test t ndf
+                     , testStatistics   = t
+                     , testDistribution = studentT ndf
+                     , testExtraData    = ()
+                     }
   where
-    (t, df) = tStatisticsPaired sample
+    (t, ndf) = tStatisticsPaired sample
 
 -------------------------------------------------------------------------------
 
@@ -76,7 +86,7 @@ tStatistics :: (G.Vector v Double)
             -> v Double
             -> v Double
             -> (Double, Double)
-tStatistics varequal sample1 sample2 = (t, df)
+tStatistics varequal sample1 sample2 = (t, ndf)
   where
     -- t-statistics
     t = (m1 - m2) / sqrt (
@@ -85,7 +95,7 @@ tStatistics varequal sample1 sample2 = (t, df)
         else s1 / n1 + s2 / n2)
 
     -- degree of freedom
-    df = if varequal
+    ndf = if varequal
       then n1 + n2 - 2
       else square (s1 / n1 + s2 / n2) / (square s1 / (square n1 * (n1 - 1)) + square s2 / (square n2 * (n2 - 1)))
 
