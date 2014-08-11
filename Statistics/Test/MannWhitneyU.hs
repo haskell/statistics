@@ -33,7 +33,7 @@ import Statistics.Distribution.Normal (standard)
 import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
-import Statistics.Test.Types (TestResult(..), TestType(..), significant)
+import Statistics.Test.Types (TestResult(..), PositionTest(..), significant)
 import Statistics.Types (CL,getPValue)
 import qualified Data.Vector.Unboxed as U
 
@@ -178,27 +178,29 @@ alookup = gen 2 [1 : repeat 2]
 -- If you use a one-tailed test, the test indicates whether the first sample is
 -- significantly larger than the second.  If you want the opposite, simply reverse
 -- the order in both the sample size and the (U&#8321;, U&#8322;) pairs.
-mannWhitneyUSignificant ::
-     TestType         -- ^ Perform one-tailed test (see description above).
+mannWhitneyUSignificant
+  :: PositionTest     -- ^ Perform one-tailed test (see description above).
   -> (Int, Int)       -- ^ The samples' size from which the (U&#8321;,U&#8322;) values were derived.
   -> CL Double        -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double) -- ^ The (U&#8321;, U&#8322;) values from 'mannWhitneyU'.
   -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
 mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
-   --Use normal approximation
+  -- Use normal approximation
   | in1 > 20 || in2 > 20 =
-    let mean  = n1 * n2 / 2
+    let mean  = n1 * n2 / 2     -- (u1+u2) / 2
         sigma = sqrt $ n1*n2*(n1 + n2 + 1) / 12
         z     = (mean - u1) / sigma
     in Just $ case test of
-                OneTailed -> significant $ z     < quantile standard  p
-                TwoTailed -> significant $ abs z > abs (quantile standard (p/2))
+                AGreater      -> significant $ z     < quantile standard p
+                BGreater      -> significant $ (-z)  < quantile standard p
+                SamplesDiffer -> significant $ abs z > abs (quantile standard (p/2))
   -- Use exact critical value
   | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) pVal
                    return $ case test of
-                              OneTailed -> significant $ u2        <= crit
-                              TwoTailed -> significant $ min u1 u2 <= crit
+                              AGreater      -> significant $ u2        <= crit
+                              BGreater      -> significant $ u1        <= crit
+                              SamplesDiffer -> significant $ min u1 u2 <= crit
   where
     n1 = fromIntegral in1
     n2 = fromIntegral in2
@@ -214,7 +216,7 @@ mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
 -- than second. Two-tailed whether they are significantly different.
 mannWhitneyUtest
   :: (Ord a, U.Unbox a)
-  => TestType         -- ^ Perform one-tailed test (see description above).
+  => PositionTest     -- ^ Perform one-tailed test (see description above).
   -> CL Double        -- ^ The p-value at which to test (e.g. 0.05)
   -> U.Vector a       -- ^ First sample
   -> U.Vector a       -- ^ Second sample
