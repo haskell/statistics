@@ -24,7 +24,9 @@ module Statistics.Types
     , getPValue
       -- ** Normal approximation
     , nSigma
+    , nSigma1
     , getNSigma
+    , getNSigma1
       -- * Estimates and upper/lower limits
     , Estimate(..)
     , estimate
@@ -125,9 +127,18 @@ nSigma n
   | n > 0     = CL $ 2 * cumulative standard (-n)
   | otherwise = error "Statistics.Extra.Error.nSigma: non-positive number of sigma"
 
+nSigma1 :: Double -> CL Double
+nSigma1 n
+  | n > 0     = CL $ cumulative standard (-n)
+  | otherwise = error "Statistics.Extra.Error.nSigma1: non-positive number of sigma"
+
 -- | Express confidence level in sigmas
 getNSigma :: CL Double -> Double
 getNSigma (CL p) = negate $ quantile standard (p / 2)
+
+-- | Express confidence level in sigmas
+getNSigma1 :: CL Double -> Double
+getNSigma1 (CL p) = negate $ quantile standard p
 
 
 
