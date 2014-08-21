@@ -42,15 +42,15 @@ import qualified Data.Vector.Unboxed as U
 type CD = Complex Double
 
 -- | Discrete cosine transform (DCT-II).
-dct :: U.Vector Double -> U.Vector Double
+dct :: (G.Vector v CD, G.Vector v Double, G.Vector v Int) => v Double -> v Double
 dct = dctWorker . G.map (:+0)
 
 -- | Discrete cosine transform (DCT-II). Only real part of vector is
 --   transformed, imaginary part is ignored.
-dct_ :: U.Vector CD -> U.Vector Double
+dct_ :: (G.Vector v CD, G.Vector v Double, G.Vector v Int) => v CD -> v Double
 dct_ = dctWorker . G.map (\(i :+ _) -> i :+ 0)
 
-dctWorker :: U.Vector CD -> U.Vector Double
+dctWorker :: (G.Vector v CD, G.Vector v Double, G.Vector v Int) => v CD -> v Double
 dctWorker xs
   -- length 1 is special cased because shuffle algorithms fail for it.
   | G.length xs == 1 = G.map ((2*) . realPart) xs
@@ -70,7 +70,7 @@ dctWorker xs
 -- 'dct' only up to scale parameter:
 --
 -- > (idct . dct) x = (* length x)
-idct :: U.Vector Double -> U.Vector Double
+idct :: (G.Vector v CD, G.Vector v Double) => v Double -> v Double
 idct = idctWorker . G.map (:+0)
 
 -- | Inverse discrete cosine transform (DCT-III). Only real part of vector is
@@ -78,7 +78,7 @@ idct = idctWorker . G.map (:+0)
 idct_ :: U.Vector CD -> U.Vector Double
 idct_ = idctWorker . G.map (\(i :+ _) -> i :+ 0)
 
-idctWorker :: U.Vector CD -> U.Vector Double
+idctWorker :: (G.Vector v CD, G.Vector v Double) => v CD -> v Double
 idctWorker xs
   | vectorOK xs = G.generate len interleave
   | otherwise   = error "Statistics.Transform.dct: bad vector length"
@@ -94,13 +94,13 @@ idctWorker xs
 
 
 -- | Inverse fast Fourier transform.
-ifft :: U.Vector CD -> U.Vector CD
+ifft :: G.Vector v CD => v CD -> v CD
 ifft xs
   | vectorOK xs = G.map ((/fi (G.length xs)) . conjugate) . fft . G.map conjugate $ xs
   | otherwise   = error "Statistics.Transform.ifft: bad vector length"
 
 -- | Radix-2 decimation-in-time fast Fourier transform.
-fft :: U.Vector CD -> U.Vector CD
+fft :: G.Vector v CD => v CD -> v CD
 fft v | vectorOK v  = G.create $ do mv <- G.thaw v
                                     mfft mv
                                     return mv
@@ -145,6 +145,6 @@ halve :: Int -> Int
 halve = (`shiftR` 1)
 
 
-vectorOK :: U.Unbox a => U.Vector a -> Bool
+vectorOK :: G.Vector v a => v a -> Bool
 {-# INLINE vectorOK #-}
 vectorOK v = (1 `shiftL` log2 n) == n where n = G.length v

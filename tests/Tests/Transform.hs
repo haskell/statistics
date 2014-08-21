@@ -60,7 +60,7 @@ tests = testGroup "fft" [
 -- vector should be replicated in every real component of the result,
 -- and all the imaginary components should be zero.
 t_impulse :: Double -> Positive Int -> Bool
-t_impulse k (Positive m) = G.all (c_near i) (fft v)
+t_impulse k (Positive m) = U.all (c_near i) (fft v)
   where v = i `G.cons` G.replicate (n-1) 0
         i = k :+ 0
         n = 1 `shiftL` (m .&. 6)
@@ -69,7 +69,7 @@ t_impulse k (Positive m) = G.all (c_near i) (fft v)
 -- otherwise zero vector, the sum-of-squares of each component of the
 -- result should equal the square of the impulse.
 t_impulse_offset :: Double -> Positive Int -> Positive Int -> Bool
-t_impulse_offset k (Positive x) (Positive m) = G.all ok (fft v)
+t_impulse_offset k (Positive x) (Positive m) = U.all ok (fft v)
   where v = G.concat [G.replicate xn 0, G.singleton i, G.replicate (n-xn-1) 0]
         ok (re :+ im) = within ulps (re*re + im*im) (k*k)
         i  = k :+ 0
