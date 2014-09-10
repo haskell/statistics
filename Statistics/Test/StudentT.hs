@@ -1,5 +1,8 @@
 {-# LANGUAGE FlexibleContexts, Rank2Types, ScopedTypeVariables #-}
--- | Two-sample t-test is a parametric test for assesing the difference of the means between two samples.
+-- | Student's T-test is for assesing whether two samples have
+--   different mean. This module contain several variations of
+--   T-test. It's a parametric tests and assumes that samples are
+--   normally distributed.
 module Statistics.Test.StudentT
     (
       studentT2
@@ -18,15 +21,15 @@ import Statistics.Function (square)
 import qualified Data.Vector.Generic as G
 
 
--- | Two-sample Student's t-test.
--- The variance equality of two samples is assumed.
+-- | Two-sample Student's t-test. It assumes that both samples are
+--   normally distributed and have same variance.
 studentT2 :: (G.Vector v Double)
           => TestType      -- ^ one- or two-tailed test
-          -> v Double      -- ^ Sample 1
-          -> v Double      -- ^ Sample 2
+          -> v Double      -- ^ Sample A
+          -> v Double      -- ^ Sample B
           -> Test StudentT ()
 studentT2 test sample1 sample2
-  | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient samples"
+  | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
   | otherwise = Test { testSignificance = pValue $ significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
@@ -35,15 +38,16 @@ studentT2 test sample1 sample2
   where
     (t, ndf) = tStatistics True sample1 sample2
 
--- | Two-sample Welch's t-test.
--- The variance equality of two samples is not assumed.
+-- | Two-sample Welch's t-test. It assumes that both samples are
+--   normally distributed but doesn't assume that they have same
+--   variance.
 welchT2 :: (G.Vector v Double)
         => TestType      -- ^ one- or two-tailed test
-        -> v Double      -- ^ Sample 1
-        -> v Double      -- ^ Sample 2
+        -> v Double      -- ^ Sample A
+        -> v Double      -- ^ Sample B
         -> Test StudentT ()
 welchT2 test sample1 sample2
-  | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient samples"
+  | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
   | otherwise = Test { testSignificance = pValue $ significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
@@ -52,8 +56,7 @@ welchT2 test sample1 sample2
   where
     (t, ndf) = tStatistics False sample1 sample2
 
--- | Paired two-sample t-test.
--- Two samples are paired in a within-subject design.
+-- | Paired two-sample t-test. Two samples are paired in a within-subject design.
 pairedT2 :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
          => TestType              -- ^ one- or two-tailed test
          -> v (Double, Double)    -- ^ paired samples
