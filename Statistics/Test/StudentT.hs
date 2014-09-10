@@ -102,6 +102,7 @@ significance test t df = case test of
       where area = cumulative (studentT df) t
 
 
+-- Calculate T statistics
 tStatistics :: (G.Vector v Double)
             => Bool               -- variance equality
             -> v Double
@@ -116,10 +117,9 @@ tStatistics varequal sample1 sample2 = (t, ndf)
         else s1 / n1 + s2 / n2)
 
     -- degree of freedom
-    ndf = if varequal
-      then n1 + n2 - 2
-      else square (s1 / n1 + s2 / n2) / (square s1 / (square n1 * (n1 - 1)) + square s2 / (square n2 * (n2 - 1)))
-
+    ndf | varequal  = n1 + n2 - 2
+        | otherwise = square (s1 / n1 + s2 / n2)
+                    / (square s1 / (square n1 * (n1 - 1)) + square s2 / (square n2 * (n2 - 1)))
     -- statistics of two samples
     n1 = fromIntegral $ G.length sample1
     n2 = fromIntegral $ G.length sample2
@@ -127,6 +127,7 @@ tStatistics varequal sample1 sample2 = (t, ndf)
     m2 = mean sample2
     s1 = varianceUnbiased sample1
     s2 = varianceUnbiased sample2
+
 
 tStatisticsPaired :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
                   => v (Double, Double)
