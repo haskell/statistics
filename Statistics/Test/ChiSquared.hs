@@ -21,6 +21,9 @@ import qualified Data.Vector.Unboxed as U
 -- | Generic form of Pearson chi squared tests for binned data. Data
 --   sample is supplied in form of tuples (observed quantity,
 --   expected number of events). Both must be positive.
+--
+--   This test should be used only if all bins have expected values of
+--   at least 5.
 chi2test :: (G.Vector v (Int,Double), G.Vector v Double)
          => Int                 -- ^ Number of additional degrees of
                                 --   freedom. One degree of freedom
@@ -42,6 +45,7 @@ chi2test ndf vec
     n     = G.length vec - ndf - 1
     chi2  = sum $ G.map (\(o,e) -> square (fromIntegral o - e) / e) vec
     d     = chiSquared n
+{-# INLINABLE  chi2test #-}
 {-# SPECIALIZE
     chi2test :: Int -> U.Vector (Int,Double) -> Maybe (Test ChiSquared ()) #-}
 {-# SPECIALIZE
