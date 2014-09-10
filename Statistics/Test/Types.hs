@@ -64,14 +64,17 @@ instance FromJSON TestType
 instance ToJSON   TestType
 instance NFData   TestType
 
--- | Test type for test which compare positional information of samples.
+-- | Test type for test which compare positional (mean,median etc.)
+--   information of samples.
 data PositionTest
   = SamplesDiffer
-    -- ^ If test is significant then samples are different.
+    -- ^ Test whether samples differ in position. Null hypothesis is
+    --   samples are not different
   | AGreater
-    -- ^ If test is significant then first sample greater than second.
+    -- ^ Test if first sample (A) is larger than second (B). Null
+    --   hypothesis is first sample is not larger than second.
   | BGreater
-    -- ^ If test is significant then second sample greater than first.
+    -- ^ Test if second sample is larger than first.
   deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
 instance Binary   PositionTest
