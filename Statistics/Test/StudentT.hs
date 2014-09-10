@@ -18,7 +18,11 @@ import Statistics.Sample (mean, varianceUnbiased)
 import Statistics.Test.Types
 import Statistics.Types    (pValue)
 import Statistics.Function (square)
-import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Generic  as G
+import qualified Data.Vector.Unboxed  as U
+import qualified Data.Vector.Storable as S
+import qualified Data.Vector          as V
+
 
 
 -- | Two-sample Student's t-test. It assumes that both samples are
@@ -37,6 +41,10 @@ studentT2 test sample1 sample2
                      }
   where
     (t, ndf) = tStatistics True sample1 sample2
+{-# INLINABLE  studentT2 #-}
+{-# SPECIALIZE studentT2 :: TestType -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE studentT2 :: TestType -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE studentT2 :: TestType -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
 
 -- | Two-sample Welch's t-test. It assumes that both samples are
 --   normally distributed but doesn't assume that they have same
@@ -55,6 +63,10 @@ welchT2 test sample1 sample2
                      }
   where
     (t, ndf) = tStatistics False sample1 sample2
+{-# INLINABLE  welchT2 #-}
+{-# SPECIALIZE welchT2 :: TestType -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE welchT2 :: TestType -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE welchT2 :: TestType -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
 
 -- | Paired two-sample t-test. Two samples are paired in a within-subject design.
 pairedT2 :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
@@ -70,6 +82,10 @@ pairedT2 test sample
                      }
   where
     (t, ndf) = tStatisticsPaired sample
+{-# INLINABLE  pairedT2 #-}
+{-# SPECIALIZE pairedT2 :: TestType -> U.Vector (Double,Double) -> Test StudentT () #-}
+{-# SPECIALIZE pairedT2 :: TestType -> V.Vector (Double,Double) -> Test StudentT () #-}
+
 
 -------------------------------------------------------------------------------
 
