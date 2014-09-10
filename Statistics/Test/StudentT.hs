@@ -5,9 +5,9 @@
 --   normally distributed.
 module Statistics.Test.StudentT
     (
-      studentT2
-    , welchT2
-    , pairedT2
+      studentTTest
+    , welchTTest
+    , pairedTTest
     , TestResult(..)
     , PositionTest(..)
     ) where
@@ -27,12 +27,12 @@ import qualified Data.Vector          as V
 
 -- | Two-sample Student's t-test. It assumes that both samples are
 --   normally distributed and have same variance.
-studentT2 :: (G.Vector v Double)
-          => PositionTest  -- ^ one- or two-tailed test
-          -> v Double      -- ^ Sample A
-          -> v Double      -- ^ Sample B
-          -> Test StudentT ()
-studentT2 test sample1 sample2
+studentTTest :: (G.Vector v Double)
+             => PositionTest  -- ^ one- or two-tailed test
+             -> v Double      -- ^ Sample A
+             -> v Double      -- ^ Sample B
+             -> Test StudentT ()
+studentTTest test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
   | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
@@ -41,20 +41,20 @@ studentT2 test sample1 sample2
                      }
   where
     (t, ndf) = tStatistics True sample1 sample2
-{-# INLINABLE  studentT2 #-}
-{-# SPECIALIZE studentT2 :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE studentT2 :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE studentT2 :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
+{-# INLINABLE  studentTTest #-}
+{-# SPECIALIZE studentTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE studentTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE studentTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
 
 -- | Two-sample Welch's t-test. It assumes that both samples are
 --   normally distributed but doesn't assume that they have same
 --   variance.
-welchT2 :: (G.Vector v Double)
-        => PositionTest  -- ^ one- or two-tailed test
-        -> v Double      -- ^ Sample A
-        -> v Double      -- ^ Sample B
-        -> Test StudentT ()
-welchT2 test sample1 sample2
+welchTTest :: (G.Vector v Double)
+           => PositionTest  -- ^ one- or two-tailed test
+           -> v Double      -- ^ Sample A
+           -> v Double      -- ^ Sample B
+           -> Test StudentT ()
+welchTTest test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
   | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
@@ -63,17 +63,17 @@ welchT2 test sample1 sample2
                      }
   where
     (t, ndf) = tStatistics False sample1 sample2
-{-# INLINABLE  welchT2 #-}
-{-# SPECIALIZE welchT2 :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE welchT2 :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE welchT2 :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
+{-# INLINABLE  welchTTest #-}
+{-# SPECIALIZE welchTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE welchTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE welchTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
 
 -- | Paired two-sample t-test. Two samples are paired in a within-subject design.
-pairedT2 :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
-         => PositionTest          -- ^ one- or two-tailed test
-         -> v (Double, Double)    -- ^ paired samples
-         -> Test StudentT ()
-pairedT2 test sample
+pairedTTest :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
+            => PositionTest          -- ^ one- or two-tailed test
+            -> v (Double, Double)    -- ^ paired samples
+            -> Test StudentT ()
+pairedTTest test sample
   | G.length sample < 2 = error "Statistics.Test.StudentT: insufficient samples"
   | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
@@ -82,9 +82,9 @@ pairedT2 test sample
                      }
   where
     (t, ndf) = tStatisticsPaired sample
-{-# INLINABLE  pairedT2 #-}
-{-# SPECIALIZE pairedT2 :: PositionTest -> U.Vector (Double,Double) -> Test StudentT () #-}
-{-# SPECIALIZE pairedT2 :: PositionTest -> V.Vector (Double,Double) -> Test StudentT () #-}
+{-# INLINABLE  pairedTTest #-}
+{-# SPECIALIZE pairedTTest :: PositionTest -> U.Vector (Double,Double) -> Test StudentT () #-}
+{-# SPECIALIZE pairedTTest :: PositionTest -> V.Vector (Double,Double) -> Test StudentT () #-}
 
 
 -------------------------------------------------------------------------------
