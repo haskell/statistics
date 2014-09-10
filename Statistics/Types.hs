@@ -90,14 +90,14 @@ instance Ord a => Ord (CL a) where
 --   >>> CL { unCL = 0.10 }
 confLevel :: (Ord a, Num a) => a -> CL a
 confLevel p
-  | p > 0 && p < 1 = CL (1 - p)
-  | otherwise      = error "Statistics.Types.confLevel: probability is out if (0,1) range"
+  | p >= 0 && p <= 1 = CL (1 - p)
+  | otherwise        = error "Statistics.Types.confLevel: probability is out if [0,1] range"
 
 -- | Construct p-value
 pValue :: (Ord a, Num a) => a -> CL a
 pValue p
-  | p > 0 && p < 1 = CL p
-  | otherwise      = error "Statistics.Types.pValue: probability is out if (0,1) range"
+  | p >= 0 && p <= 1 = CL p
+  | otherwise        = error "Statistics.Types.pValue: probability is out if [0,1] range"
 
 getPValue :: CL a -> a
 getPValue (CL p) = p
