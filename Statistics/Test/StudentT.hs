@@ -16,7 +16,7 @@ import Statistics.Distribution hiding (mean)
 import Statistics.Distribution.StudentT
 import Statistics.Sample (mean, varianceUnbiased)
 import Statistics.Test.Types
-import Statistics.Types    (pValue)
+import Statistics.Types    (pValue,CL)
 import Statistics.Function (square)
 import qualified Data.Vector.Generic  as G
 import qualified Data.Vector.Unboxed  as U
@@ -34,7 +34,7 @@ studentT2 :: (G.Vector v Double)
           -> Test StudentT ()
 studentT2 test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
-  | otherwise = Test { testSignificance = pValue $ significance test t ndf
+  | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
                      , testExtraData    = ()
@@ -56,7 +56,7 @@ welchT2 :: (G.Vector v Double)
         -> Test StudentT ()
 welchT2 test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
-  | otherwise = Test { testSignificance = pValue $ significance test t ndf
+  | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
                      , testExtraData    = ()
@@ -75,7 +75,7 @@ pairedT2 :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
          -> Test StudentT ()
 pairedT2 test sample
   | G.length sample < 2 = error "Statistics.Test.StudentT: insufficient samples"
-  | otherwise = Test { testSignificance = pValue $ significance test t ndf
+  | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
                      , testExtraData    = ()
@@ -89,13 +89,13 @@ pairedT2 test sample
 
 -------------------------------------------------------------------------------
 
-significance :: TestType -- ^ one- or two-tailed
-             -> Double -- ^ t statistics
-             -> Double -- ^ degree of freedom
-             -> Double -- ^ p-value
+significance :: TestType        -- ^ one- or two-tailed
+             -> Double          -- ^ t statistics
+             -> Double          -- ^ degree of freedom
+             -> CL Double       -- ^ p-value
 significance test t df = case test of
-  OneTailed -> tailArea
-  TwoTailed -> tailArea * 2
+  OneTailed -> pValue $ tailArea
+  TwoTailed -> pValue $ tailArea * 2
   where
     tailArea | t < 0     = area
              | otherwise = 1 - area
