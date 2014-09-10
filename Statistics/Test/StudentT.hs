@@ -1,12 +1,13 @@
 {-# LANGUAGE FlexibleContexts, Rank2Types, ScopedTypeVariables #-}
 -- | Two-sample t-test is a parametric test for assesing the difference of the means between two samples.
-module Statistics.Test.StudentT (
-  studentT2,
-  welchT2,
-  pairedT2,
-  TestResult(..),
-  PositionTest(..)
-) where
+module Statistics.Test.StudentT
+    (
+      studentT2
+    , welchT2
+    , pairedT2
+    , TestResult(..)
+    , PositionTest(..)
+    ) where
 
 import Statistics.Distribution hiding (mean)
 import Statistics.Distribution.StudentT
@@ -15,6 +16,7 @@ import Statistics.Test.Types
 import Statistics.Types    (pValue)
 import Statistics.Function (square)
 import qualified Data.Vector.Generic as G
+
 
 -- | Two-sample Student's t-test.
 -- The variance equality of two samples is assumed.
