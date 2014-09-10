@@ -3,18 +3,38 @@
 module Tests.Correlation
     ( tests ) where
 
+import qualified Data.Vector as V
+import Statistics.Matrix hiding (map)
+import Statistics.Correlation.Pearson
+import Statistics.Correlation.Spearman
+import Statistics.Correlation.Kendall
+import Tests.Correlation.Data
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework.Providers.HUnit
-import Test.HUnit (Assertion, (@=?))
-import qualified Data.Vector as V
-import Statistics.Correlation.Kendall
+import Test.HUnit (Assertion, (@=?), assertBool)
 
 tests :: Test
 tests = testGroup "Correlation"
-    [ testProperty "Kendall test -- general" testKendall
+    [ testCase "Pearson's Correlation" testPearson
+    , testCase "Spearman's Correlation" testSpearman
+    , testProperty "Kendall test -- general" testKendall
     , testCase "Kendall test -- special cases" testKendallSpecial
     ]
+
+testPearson :: Assertion
+testPearson = assertBool "Fail" $ and $ zipWith f expect actual
+  where
+    f a b = abs (a - b) < 0.00000000000001
+    expect = concat pearsonR
+    actual = concat . toLists . pearsonMatByRow . fromLists $ sample
+
+testSpearman :: Assertion
+testSpearman = assertBool "Fail" $ and $ zipWith f expect actual
+  where
+    f a b = abs (a - b) < 0.00000000000001
+    expect = concat spearmanR
+    actual = concat . toLists . spearmanMatByRow . fromLists $ sample
 
 testKendall :: [(Double, Double)] -> Bool
 testKendall xy | isNaN r1 = isNaN r2
@@ -24,12 +44,12 @@ testKendall xy | isNaN r1 = isNaN r2
     r2 = kendall $ V.fromList xy
 
 testKendallSpecial :: Assertion
-testKendallSpecial = ys @=? map (kendall.V.fromList) xs
+testKendallSpecial = vs @=? map (\(xs, ys) -> kendall $ V.fromList $ zip xs ys) d
   where 
-    (xs, ys) = unzip testData
-    testData :: [([(Double, Double)], Double)]
-    testData = [ ( [(1,1), (2,2), (3,1), (1,5), (2,2)], -0.375 )
-               , ( [(1,3), (1,3), (1,3), (3,2), (3,5)], 0)
+    (d, vs) = unzip testData
+    testData :: [(([Double], [Double]), Double)]
+    testData = [ (([1, 2, 3, 1, 2], [1, 2, 1, 5, 2]), -0.375)
+               , (([1, 1, 1, 3, 3], [3, 3, 3, 2, 5]), 0)
                ]
                 
 
