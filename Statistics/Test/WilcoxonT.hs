@@ -43,13 +43,15 @@ import Control.Applicative ((<$>))
 import Data.Function (on)
 import Data.List (findIndex)
 import Data.Ord (comparing)
+import qualified Data.Vector.Unboxed as U
 import Prelude hiding (sum)
 import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types
 import Statistics.Types -- (CL,pValue,getPValue)
-import qualified Data.Vector.Unboxed as U
+import Statistics.Distribution
+import Statistics.Distribution.Normal
 
 
 -- | Calculate (n,T+,T-) values for both samples. Where /n/ is reduced
@@ -172,6 +174,13 @@ wilcoxonMatchedPairCriticalValue sampleSize pVal
     critical = subtract 1 <$> findIndex (> m) (summedCoefficients sampleSize)
 
 
+normalApprox :: Int -> NormalDistribution
+normalApprox ni
+  = normalDistr m s
+  where
+    m = n * (n + 1) / 4
+    s = sqrt $ (n * (n + 1) * (2*n + 1)) / 24
+    n = fromIntegral ni
 
 -- | Works out the significance level (p-value) of a T value, given a sample
 -- size and a T value from the Wilcoxon signed-rank matched-pairs test.
