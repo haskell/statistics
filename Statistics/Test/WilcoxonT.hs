@@ -48,20 +48,29 @@ import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types
-import Statistics.Types (CL,pValue,getPValue)
+import Statistics.Types -- (CL,pValue,getPValue)
 import qualified Data.Vector.Unboxed as U
 
--- | Calculate (T+,T-) values for both samples.
-wilcoxonMatchedPairSignedRank :: (Ord a, Num a, U.Unbox a) => U.Vector (a,a) -> (Double, Double)
-wilcoxonMatchedPairSignedRank ab = (sum ranks1, negate (sum ranks2))
+
+-- | Calculate (n,T+,T-) values for both samples. Where /n/ is reduced
+--   sample where equal pairs are removed.
+wilcoxonMatchedPairSignedRank :: (Ord a, Num a, U.Unbox a) => U.Vector (a,a) -> (Int, Double, Double)
+wilcoxonMatchedPairSignedRank ab
+  = (nRed, sum ranks1, negate (sum ranks2))
   where
+    -- Positive and negative ranks
     (ranks1, ranks2) = splitByTags
                      $ U.zip tags (rank ((==) `on` abs) diffs)
+    -- Sorted list of differences
+    diffsSorted = sortBy (comparing abs)    -- Sort the differences by absolute difference
+                $ U.filter  (/= 0)          -- Remove equal elements
+                $ U.map (uncurry (-)) ab    -- Work out differences
+    nRed = U.length diffsSorted
+    -- Sign tags and differences
     (tags,diffs) = U.unzip
                  $ U.map (\x -> (x>0 , x))   -- Attach tags to distribution elements
-                 $ U.filter  (/= 0)          -- Remove equal elements
-                 $ sortBy (comparing abs)    -- Sort the differences by absolute difference
-                 $ U.map (uncurry (-)) ab    -- Work out differences
+                 $ diffsSorted
+
 
 
 -- | The coefficients for x^0, x^1, x^2, etc, in the expression
@@ -108,13 +117,12 @@ summedCoefficients n
 -- order to 'wilcoxonMatchedPairSignedRank', or simply swap the values in the resulting
 -- pair before passing them to this function.
 wilcoxonMatchedPairSignificant
-  :: PositionTest        -- ^ How to compare two samples
-  -> Int                 -- ^ The sample size from which the (T+,T-) values were derived.
-  -> CL Double           -- ^ The p-value at which to test (e.g. @pValue 0.05@)
-  -> (Double, Double)    -- ^ The (T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
-  -> Maybe TestResult    -- ^ Return 'Nothing' if the sample was too
-                         --   small to make a decision.
-wilcoxonMatchedPairSignificant test sampleSize pVal (tPlus, tMinus) =
+  :: PositionTest          -- ^ How to compare two samples
+  -> CL Double             -- ^ The p-value at which to test (e.g. @pValue 0.05@)
+  -> (Int, Double, Double) -- ^ The (n,T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
+  -> Maybe TestResult      -- ^ Return 'Nothing' if the sample was too
+                           --   small to make a decision.
+wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
   case test of
     -- According to my nearest book (Understanding Research Methods and Statistics
     -- by Gary W. Heiman, p590), to check that the first sample is bigger you must
@@ -196,5 +204,5 @@ wilcoxonMatchedPairTest
   -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
 wilcoxonMatchedPairTest test p pairs =
-    wilcoxonMatchedPairSignificant test (U.length pairs) p
+    wilcoxonMatchedPairSignificant test p
   $ wilcoxonMatchedPairSignedRank pairs
