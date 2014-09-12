@@ -20,9 +20,10 @@ import Data.Ord (comparing)
 import Data.Foldable (foldMap)
 import qualified Data.Vector.Unboxed as U
 import Statistics.Function (sort, sortBy, square)
-import Statistics.Distribution (quantile)
+import Statistics.Distribution (quantile,complCumulative)
 import Statistics.Distribution.ChiSquared (chiSquared)
-import Statistics.Test.Types (TestResult(..), significant)
+import Statistics.Types
+import Statistics.Test.Types
 import Statistics.Test.Internal (rank)
 import Statistics.Sample
 import qualified Statistics.Sample.Internal as Sample(sum)
@@ -34,7 +35,7 @@ import qualified Statistics.Sample.Internal as Sample(sum)
 --
 -- The samples and values need not to be ordered but the values in the result
 -- are ordered. Assigned ranks (ties are given their average rank).
-kruskalWallisRank :: (U.Unbox a, Ord a) => [U.Vector a] -> [Sample]
+kruskalWallisRank :: (U.Unbox a, Ord a) => [U.Vector a] -> [U.Vector Double]
 kruskalWallisRank samples = groupByTags
                           . sortBy (comparing fst)
                           . U.zip tags
@@ -93,9 +94,20 @@ kruskalWallisSignificant ns p k
 -- | Perform Kruskal-Wallis Test for the given samples and required
 -- significance. For additional information check 'kruskalWallis'. This is just
 -- a helper function.
-kruskalWallisTest :: Double -> [Sample] -> Maybe TestResult
-kruskalWallisTest p samples =
-    kruskalWallisSignificant (map U.length samples) p $ kruskalWallis samples
+kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test () ())
+kruskalWallisTest []      = Nothing
+kruskalWallisTest samples
+  -- We use chi-squared approximation here
+  | all (>4) ns = Just $ Test { testSignificance = pValue $ complCumulative d k
+                              , testStatistics   = k
+                              , testDistribution = ()
+                              , testExtraData    = ()
+                              }
+  | otherwise   = Nothing
+  where
+    k  = kruskalWallis samples
+    ns = map U.length samples
+    d  = chiSquared (length ns - 1)
 
 -- * Helper functions
 
