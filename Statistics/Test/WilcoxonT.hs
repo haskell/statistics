@@ -214,13 +214,25 @@ normalApprox ni
 wilcoxonMatchedPairTest
   :: (Ord a, Num a, U.Unbox a)
   => PositionTest     -- ^ Perform one-tailed test.
-  -> CL Double        -- ^ The p-value at which to test (e.g. @pValue 0.05@)
   -> U.Vector (a,a)   -- ^ First sample
-  -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
+  -> Test () ()       -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
-wilcoxonMatchedPairTest test p pairs =
-    wilcoxonMatchedPairSignificant test p
-  $ wilcoxonMatchedPairSignedRank pairs
+wilcoxonMatchedPairTest test pairs =
+  Test { testSignificance = pVal
+       , testStatistics   = t
+       , testDistribution = ()
+       , testExtraData    = ()
+       }
+  where
+    (n,tPlus,tMinus) = wilcoxonMatchedPairSignedRank pairs
+    (t,pVal) = case test of
+                 AGreater      -> (abs tMinus, wilcoxonMatchedPairSignificance n (abs tMinus))
+                 BGreater      -> (abs tPlus,  wilcoxonMatchedPairSignificance n (abs tPlus ))
+                 -- Since we take minimum of T+,T- we can't get more
+                 -- that p=0.5 and can freely multiply it by 2.
+                 SamplesDiffer -> let t' = min (abs tMinus) (abs tPlus)
+                                      p  = wilcoxonMatchedPairSignificance n t'
+                                  in (t', pValue $ min 1 $ 2 * getPValue p)
 
 
 -- $references
