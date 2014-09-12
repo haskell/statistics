@@ -8,10 +8,12 @@
 -- Portability : portable
 --
 module Statistics.Test.KruskalWallis
-  ( kruskalWallisRank
+  ( -- * Kruskal-Wallis test
+    kruskalWallisTest
+    -- ** Building blocks
+  , kruskalWallisRank
   , kruskalWallis
   , kruskalWallisSignificant
-  , kruskalWallisTest
   ) where
 
 import Data.Ord (comparing)
