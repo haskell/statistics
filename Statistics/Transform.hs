@@ -34,23 +34,30 @@ import Control.Monad.ST (ST)
 import Data.Bits (shiftL, shiftR)
 import Data.Complex (Complex(..), conjugate, realPart)
 import Numeric.SpecFunctions (log2)
-import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Generic         as G
 import qualified Data.Vector.Generic.Mutable as M
-import qualified Data.Vector.Unboxed as U
-
+import qualified Data.Vector.Unboxed         as U
+import qualified Data.Vector                 as V
 
 type CD = Complex Double
 
 -- | Discrete cosine transform (DCT-II).
 dct :: (G.Vector v CD, G.Vector v Double, G.Vector v Int) => v Double -> v Double
 dct = dctWorker . G.map (:+0)
+{-# INLINABLE  dct #-}
+{-# SPECIAlIZE dct :: U.Vector Double -> U.Vector Double #-}
+{-# SPECIAlIZE dct :: V.Vector Double -> V.Vector Double #-}
 
 -- | Discrete cosine transform (DCT-II). Only real part of vector is
 --   transformed, imaginary part is ignored.
 dct_ :: (G.Vector v CD, G.Vector v Double, G.Vector v Int) => v CD -> v Double
 dct_ = dctWorker . G.map (\(i :+ _) -> i :+ 0)
+{-# INLINABLE  dct_ #-}
+{-# SPECIAlIZE dct_ :: U.Vector CD -> U.Vector Double #-}
+{-# SPECIAlIZE dct_ :: V.Vector CD -> V.Vector Double#-}
 
 dctWorker :: (G.Vector v CD, G.Vector v Double, G.Vector v Int) => v CD -> v Double
+{-# INLINE dctWorker #-}
 dctWorker xs
   -- length 1 is special cased because shuffle algorithms fail for it.
   | G.length xs == 1 = G.map ((2*) . realPart) xs
@@ -72,13 +79,20 @@ dctWorker xs
 -- > (idct . dct) x = (* length x)
 idct :: (G.Vector v CD, G.Vector v Double) => v Double -> v Double
 idct = idctWorker . G.map (:+0)
+{-# INLINABLE  idct #-}
+{-# SPECIAlIZE idct :: U.Vector Double -> U.Vector Double #-}
+{-# SPECIAlIZE idct :: V.Vector Double -> V.Vector Double #-}
 
 -- | Inverse discrete cosine transform (DCT-III). Only real part of vector is
 --   transformed, imaginary part is ignored.
-idct_ :: U.Vector CD -> U.Vector Double
+idct_ :: (G.Vector v CD, G.Vector v Double) => v CD -> v Double
 idct_ = idctWorker . G.map (\(i :+ _) -> i :+ 0)
+{-# INLINABLE  idct_ #-}
+{-# SPECIAlIZE idct_ :: U.Vector CD -> U.Vector Double #-}
+{-# SPECIAlIZE idct_ :: V.Vector CD -> V.Vector Double #-}
 
 idctWorker :: (G.Vector v CD, G.Vector v Double) => v CD -> v Double
+{-# INLINE idctWorker #-}
 idctWorker xs
   | vectorOK xs = G.generate len interleave
   | otherwise   = error "Statistics.Transform.dct: bad vector length"
@@ -93,11 +107,15 @@ idctWorker xs
     len = G.length xs
 
 
+
 -- | Inverse fast Fourier transform.
 ifft :: G.Vector v CD => v CD -> v CD
 ifft xs
   | vectorOK xs = G.map ((/fi (G.length xs)) . conjugate) . fft . G.map conjugate $ xs
   | otherwise   = error "Statistics.Transform.ifft: bad vector length"
+{-# INLINABLE  ifft #-}
+{-# SPECIAlIZE ifft :: U.Vector CD -> U.Vector CD #-}
+{-# SPECIAlIZE ifft :: V.Vector CD -> V.Vector CD #-}
 
 -- | Radix-2 decimation-in-time fast Fourier transform.
 fft :: G.Vector v CD => v CD -> v CD
@@ -105,9 +123,13 @@ fft v | vectorOK v  = G.create $ do mv <- G.thaw v
                                     mfft mv
                                     return mv
       | otherwise   = error "Statistics.Transform.fft: bad vector length"
+{-# INLINABLE  fft #-}
+{-# SPECIAlIZE fft :: U.Vector CD -> U.Vector CD #-}
+{-# SPECIAlIZE fft :: V.Vector CD -> V.Vector CD #-}
 
 -- Vector length must be power of two. It's not checked
 mfft :: (M.MVector v CD) => v s CD -> ST s ()
+{-# INLINE mfft #-}
 mfft vec = bitReverse 0 0
  where
   bitReverse i j | i == len-1 = stage 0 1
@@ -138,12 +160,16 @@ mfft vec = bitReverse 0 0
   len = M.length vec
   m   = log2 len
 
+
+----------------------------------------------------------------
+-- Helpers
+----------------------------------------------------------------
+
 fi :: Int -> CD
 fi = fromIntegral
 
 halve :: Int -> Int
 halve = (`shiftR` 1)
-
 
 vectorOK :: G.Vector v a => v a -> Bool
 {-# INLINE vectorOK #-}
