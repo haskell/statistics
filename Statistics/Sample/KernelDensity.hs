@@ -32,8 +32,9 @@ import Statistics.Math.RootFinding (fromRoot, ridders)
 import Statistics.Sample.Histogram (histogram_)
 import Statistics.Sample.Internal (sum)
 import Statistics.Transform (CD, dct, idct)
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic  as G
+import qualified Data.Vector.Unboxed  as U
+import qualified Data.Vector          as V
 
 
 -- | Gaussian kernel density estimator for one-dimensional data, using
@@ -58,6 +59,10 @@ kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
     range   | G.length xs <= 1 = 1       -- Unreasonable guess
             | lo == hi         = 1       -- All elements are equal
             | otherwise        = hi - lo
+{-# INLINABLE  kde #-}
+{-# SPECIAlIZE kde :: Int -> U.Vector Double -> (U.Vector Double, U.Vector Double) #-}
+{-# SPECIAlIZE kde :: Int -> V.Vector Double -> (V.Vector Double, V.Vector Double) #-}
+
 
 -- | Gaussian kernel density estimator for one-dimensional data, using
 -- the method of Botev et al.
@@ -106,6 +111,10 @@ kde_ n0 min max xs
                 const = (1 + 0.5 ** (s+0.5)) / 3
                 k0    = U.product (G.enumFromThenTo 1 3 (2*s-1)) / m_sqrt_2_pi
     sqr x = x * x
+{-# INLINABLE  kde_ #-}
+{-# SPECIAlIZE kde_ :: Int -> Double -> Double -> U.Vector Double -> (U.Vector Double, U.Vector Double) #-}
+{-# SPECIAlIZE kde_ :: Int -> Double -> Double -> V.Vector Double -> (V.Vector Double, V.Vector Double) #-}
+
 
 -- $references
 --
