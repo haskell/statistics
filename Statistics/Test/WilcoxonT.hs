@@ -10,10 +10,6 @@
 -- The Wilcoxon matched-pairs signed-rank test is non-parametric test
 -- which could be used to test whether two related samples have
 -- different means.
---
--- WARNING: current implementation contain serious bug and couldn't be
--- used with samples larger than 1023.
--- <https://github.com/bos/statistics/issues/18>
 module Statistics.Test.WilcoxonT (
     -- * Wilcoxon signed-rank matched-pair test
     -- ** Test
@@ -136,6 +132,10 @@ wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
     BGreater      -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize pVal
                         return $ significant $ abs tPlus <= fromIntegral crit
     -- Otherwise you must use the value of T+ and T- with the smallest absolute value:
+    --
+    -- Note that in absence of ties sum of |T+| and |T-| is constant
+    -- so by selecting minimal we are performing two-tailed test and
+    -- look and both tails of distribution of T.
     SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (pValue $ p/2)
                         return $ significant $ t <= fromIntegral crit
   where
@@ -163,24 +163,20 @@ wilcoxonMatchedPairCriticalValue ::
   -> CL Double          -- ^ The p-value (e.g. @pValue 0.05@) for which you want the critical value.
   -> Maybe Int          -- ^ The critical value (of T), or Nothing if
                         --   the sample is too small to make a decision.
-wilcoxonMatchedPairCriticalValue sampleSize pVal
-  = case critical of
-      Just n | n < 0 -> Nothing
-             | otherwise -> Just n
-      Nothing -> Just maxBound -- shouldn't happen: beyond end of list
+wilcoxonMatchedPairCriticalValue n pVal
+  | n < 100   =
+      case subtract 1 <$> findIndex (> m) (summedCoefficients n) of
+        Just k | k < 0     -> Nothing
+               | otherwise -> Just k
+        Nothing  -> error "Statistics.Test.WilcoxonT.wilcoxonMatchedPairCriticalValue: impossible happened"
+  | otherwise =
+     case quantile (normalApprox n) p of
+       z | z < 0     -> Nothing
+         | otherwise -> Just (round z)
   where
     p = getPValue pVal
-    m = (2 ** fromIntegral sampleSize) * p
-    critical = subtract 1 <$> findIndex (> m) (summedCoefficients sampleSize)
+    m = (2 ** fromIntegral n) * p
 
-
-normalApprox :: Int -> NormalDistribution
-normalApprox ni
-  = normalDistr m s
-  where
-    m = n * (n + 1) / 4
-    s = sqrt $ (n * (n + 1) * (2*n + 1)) / 24
-    n = fromIntegral ni
 
 -- | Works out the significance level (p-value) of a T value, given a sample
 -- size and a T value from the Wilcoxon signed-rank matched-pairs test.
@@ -190,9 +186,19 @@ wilcoxonMatchedPairSignificance
   :: Int       -- ^ The sample size
   -> Double    -- ^ The value of T for which you want the significance.
   -> CL Double -- ^ The significance (p-value).
-wilcoxonMatchedPairSignificance sampleSize rnk
-  = pValue $ (summedCoefficients sampleSize !! floor rnk) / 2 ** fromIntegral sampleSize
+wilcoxonMatchedPairSignificance n t
+  | n < 100   = pValue $ (summedCoefficients n !! floor t) / 2 ** fromIntegral n
+  | otherwise = pValue $ cumulative (normalApprox n) t
 
+
+-- | Normal approximation for Wilcoxon T statistics
+normalApprox :: Int -> NormalDistribution
+normalApprox ni
+  = normalDistr m s
+  where
+    m = n * (n + 1) / 4
+    s = sqrt $ (n * (n + 1) * (2*n + 1)) / 24
+    n = fromIntegral ni
 
 
 -- | The Wilcoxon matched-pairs signed-rank test. The samples are
