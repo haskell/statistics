@@ -23,6 +23,8 @@ module Statistics.Test.WilcoxonT (
   , wilcoxonMatchedPairSignificant
   , wilcoxonMatchedPairSignificance
   , wilcoxonMatchedPairCriticalValue
+    -- * References
+    -- $references
   ) where
 
 
@@ -152,12 +154,10 @@ wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
 --  However, this function is useful, for example, for generating lookup tables
 -- for Wilcoxon signed rank critical values.
 --
--- The return values of this function are generated using the method detailed in
--- the paper \"Critical Values for the Wilcoxon Signed Rank Statistic\", Peter
--- Mitic, The Mathematica Journal, volume 6, issue 3, 1996, which can be found
--- here: <http://www.mathematica-journal.com/issue/v6i3/article/mitic/contents/63mitic.pdf>.
--- According to that paper, the results may differ from other published lookup tables, but
--- (Mitic claims) the values obtained by this function will be the correct ones.
+-- The return values of this function are generated using the method
+-- detailed in the Mitic's paper. According to that paper, the results
+-- may differ from other published lookup tables, but (Mitic claims)
+-- the values obtained by this function will be the correct ones.
 wilcoxonMatchedPairCriticalValue ::
      Int                -- ^ The sample size
   -> CL Double          -- ^ The p-value (e.g. @pValue 0.05@) for which you want the critical value.
@@ -215,3 +215,10 @@ wilcoxonMatchedPairTest
 wilcoxonMatchedPairTest test p pairs =
     wilcoxonMatchedPairSignificant test p
   $ wilcoxonMatchedPairSignedRank pairs
+
+
+-- $references
+--
+-- * \"Critical Values for the Wilcoxon Signed Rank Statistic\", Peter
+--   Mitic, The Mathematica Journal, volume 6, issue 3, 1996
+--   (<http://www.mathematica-journal.com/issue/v6i3/article/mitic/contents/63mitic.pdf>)
