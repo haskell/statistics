@@ -13,14 +13,13 @@ module Statistics.Test.KruskalWallis
     -- ** Building blocks
   , kruskalWallisRank
   , kruskalWallis
-  , kruskalWallisSignificant
   ) where
 
 import Data.Ord (comparing)
 import Data.Foldable (foldMap)
 import qualified Data.Vector.Unboxed as U
 import Statistics.Function (sort, sortBy, square)
-import Statistics.Distribution (quantile,complCumulative)
+import Statistics.Distribution (complCumulative)
 import Statistics.Distribution.ChiSquared (chiSquared)
 import Statistics.Types
 import Statistics.Test.Types
@@ -74,26 +73,12 @@ kruskalWallis samples = (nTot - 1) * numerator / denominator
     rsamples = kruskalWallisRank samples
 
 
--- | Calculates whether the Kruskal-Wallis test is significant.
---
--- It uses /Chi-Squared/ distribution for aproximation as long as the sizes are
--- larger than 5. Otherwise the test returns 'Nothing'.
-kruskalWallisSignificant ::
-       [Int]  -- ^ The samples' size
-    -> Double -- ^ The p-value at which to test (e.g. 0.05)
-    -> Double -- ^ K value from 'kruskallWallis'
-    -> Maybe TestResult
-kruskalWallisSignificant ns p k
-    -- Use chi-squared approximation
-    | all (>4) ns = Just . significant $ k > x
-    -- TODO: Implement critical value calculation: kruskalWallisCriticalValue
-    | otherwise = Nothing
-  where
-    x = quantile (chiSquared (length ns - 1)) (1 - p)
-
 -- | Perform Kruskal-Wallis Test for the given samples and required
 -- significance. For additional information check 'kruskalWallis'. This is just
 -- a helper function.
+--
+-- It uses /Chi-Squared/ distribution for aproximation as long as the sizes are
+-- larger than 5. Otherwise the test returns 'Nothing'.
 kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test () ())
 kruskalWallisTest []      = Nothing
 kruskalWallisTest samples
