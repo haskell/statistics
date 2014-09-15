@@ -37,6 +37,7 @@ module Statistics.Function
     -- * Combinators
     , for
     , rfor
+    , forStep
     ) where
 
 #include "MachDeps.h"
@@ -131,6 +132,14 @@ for n0 !n f = loop n0
     loop i | i == n    = return ()
            | otherwise = f i >> loop (i+1)
 {-# INLINE for #-}
+
+-- | For loop.  Counts from /start/ with /step/ increments while /< end/.
+forStep :: Monad m => Int -> Int -> Int -> (Int -> m ()) -> m ()
+forStep n0 !n step f = loop n0
+  where
+    loop !i | i >= n    = return ()
+            | otherwise = f i >> loop (i+step)
+{-# INLINE forStep #-}
 
 -- | Simple reverse-for loop.  Counts from /start/-1 to /end/ (which
 -- must be less than /start/).
