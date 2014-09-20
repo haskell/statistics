@@ -21,15 +21,16 @@ testKendall xy | isNaN r1 = isNaN r2
                | otherwise = r1 == r2
   where
     r1 = kendallBruteForce xy 
-    r2 = kendall $ V.fromList xy
+    r2 = kendall (V.fromList xs) (V.fromList ys)
+    (xs, ys) = unzip xy
 
 testKendallSpecial :: Assertion
-testKendallSpecial = ys @=? map (kendall.V.fromList) xs
+testKendallSpecial = vs @=? map (\(xs, ys) -> kendall (V.fromList xs) (V.fromList ys)) d
   where 
-    (xs, ys) = unzip testData
-    testData :: [([(Double, Double)], Double)]
-    testData = [ ( [(1,1), (2,2), (3,1), (1,5), (2,2)], -0.375 )
-               , ( [(1,3), (1,3), (1,3), (3,2), (3,5)], 0)
+    (d, vs) = unzip testData
+    testData :: [(([Double], [Double]), Double)]
+    testData = [ (([1, 2, 3, 1, 2], [1, 2, 1, 5, 2]), -0.375)
+               , (([1, 1, 1, 3, 3], [3, 3, 3, 2, 5]), 0)
                ]
                 
 
