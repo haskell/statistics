@@ -12,10 +12,19 @@ module Statistics.Matrix
     (
       Matrix(..)
     , Vector
-    , fromList
     , fromVector
+    , fromList
+    , fromLists
+    , fromRows
+    , fromColumns
+    , ident
+    , diag
+    , diagRect
     , toVector
     , toList
+    , toRows
+    , toColumns
+    , toLists
     , dimension
     , center
     , multiply
@@ -38,6 +47,7 @@ import Statistics.Function (for, square)
 import Statistics.Matrix.Types
 import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as UM
 
 -- | Convert from a row-major list.
 fromList :: Int                 -- ^ Number of rows.
@@ -45,6 +55,13 @@ fromList :: Int                 -- ^ Number of rows.
          -> [Double]            -- ^ Flat list of values, in row-major order.
          -> Matrix
 fromList r c = fromVector r c . U.fromList
+
+-- | create a matrix from a list of lists, as rows
+fromLists :: [[Double]] -> Matrix
+fromLists xs = fromVector nrow ncol . U.fromList . concat $ xs
+  where
+    nrow = length xs
+    ncol = length . head $ xs
 
 -- | Convert from a row-major vector.
 fromVector :: Int               -- ^ Number of rows.
@@ -56,6 +73,41 @@ fromVector r c v
   | otherwise  = Matrix r c 0 v
   where len    = U.length v
 
+-- | create a matrix from a list of vectors, as rows
+fromRows :: [Vector] -> Matrix
+fromRows xs = fromVector r c . U.concat $ xs
+  where
+    r = length xs
+    c = U.length . head $ xs
+
+-- FIXME: could be faster, if without calling fromRows
+-- | create a matrix from a list of vectors, as columns
+fromColumns :: [Vector] -> Matrix
+fromColumns = transpose . fromRows
+
+-- | create the identity matrix with give dimension
+ident :: Int -> Matrix
+ident n = diagRect 0 n n $ U.replicate n 1.0
+
+-- | create a square matrix with given diagonal, other entries default to 0
+diag :: Vector -> Matrix
+diag v = diagRect 0 n n v
+  where n = U.length v
+
+-- | creates a rectangular matrix with default values and given diagonal 
+diagRect :: Double              -- ^ Default value
+         -> Int                 -- ^ Number of rows
+         -> Int                 -- ^ Number of columns
+         -> Vector              -- ^ Diagonal
+         -> Matrix
+diagRect z0 r c d = fromVector r c $ U.create $ UM.replicate n z0 >>= loop 0
+  where
+    loop i v | i >= l = return v
+             | otherwise = UM.write v (i*(c+1)) (d U.! i) >> loop (i+1) v
+    l = U.length d
+    n = r * c
+{-# INLINE diagRect #-}
+
 -- | Convert to a row-major flat vector.
 toVector :: Matrix -> U.Vector Double
 toVector (Matrix _ _ _ v) = v
@@ -63,6 +115,24 @@ toVector (Matrix _ _ _ v) = v
 -- | Convert to a row-major flat list.
 toList :: Matrix -> [Double]
 toList = U.toList . toVector
+
+-- | Convert to a list of lists, as rows
+toLists :: Matrix -> [[Double]]
+toLists (Matrix _ c _ v) = chunksOf' c . U.toList $ v
+  where
+    chunksOf' _ [] = []
+    chunksOf' i xs = take i xs : chunksOf' i (drop i xs)
+
+-- | Convert to a list of vectors, as rows
+toRows :: Matrix -> [Vector]
+toRows (Matrix _ c _ v) = chunksOf' c v
+  where
+    chunksOf' i xs | U.length xs > 0 = U.take i xs : chunksOf' i (U.drop i xs)
+                   | otherwise = []
+
+-- | Convert to a list of vectors, as columns
+toColumns :: Matrix -> [Vector]
+toColumns = toRows . transpose
 
 -- | Return the dimensions of this matrix, as a (row,column) pair.
 dimension :: Matrix -> (Int, Int)
