@@ -6,16 +6,18 @@
 
 module Statistics.Correlation.Spearman
     ( spearman
+    , spearmanMatByRow
     , ranking
     ) where
 
-import Statistics.Test.Internal (rank)
-import Statistics.Correlation.Pearson (pearson)
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Generic.Mutable as GM
 import Data.Function (on)
 import Data.Ord
+import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Generic.Mutable as GM
+import Statistics.Correlation.Pearson
 import Statistics.Function
+import Statistics.Matrix hiding (map)
+import Statistics.Test.Internal (rank)
 
 spearman :: ( Ord a
             , G.Vector v a
@@ -29,6 +31,11 @@ spearman :: ( Ord a
 spearman x y | G.length x /= G.length y = error "Statistics.Correlation.Spearman.spearman: Incompatible dimensions"
              | otherwise = (pearson `on` ranking) x y
 {-# INLINE spearman #-}
+
+-- | compute pairwise spearman correlation between rows of a matrix
+spearmanMatByRow :: Matrix -> Matrix
+spearmanMatByRow = pearsonMatByRow . fromRows . map ranking . toRows
+{-# INLINE spearmanMatByRow #-}
 
 ranking :: ( Ord a
            , G.Vector v a
