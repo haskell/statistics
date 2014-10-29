@@ -7,7 +7,6 @@
 module Statistics.Correlation.Pearson
     ( pearson
     , pearsonMatByRow
-    , pearson'
 
     -- * References
     -- $references
@@ -64,6 +63,7 @@ pearsonMatByRow m = fromVector n n $ U.create $ UM.replicate (n*n) 1.0 >>= loopR
     n = rows m
 {-# INLINE pearsonMatByRow #-}
 
+-- calculate pearson correlation by definition, for testing purpose
 pearson' :: G.Vector v Double => v Double -> v Double -> Double
 pearson' x y | n /= G.length y = error errMsg
              | n <= 1 = 0/0

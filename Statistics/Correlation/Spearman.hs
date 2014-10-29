@@ -19,6 +19,7 @@ import Statistics.Function
 import Statistics.Matrix hiding (map)
 import Statistics.Test.Internal (rank)
 
+-- | compute spearman correlation between two samples
 spearman :: ( Ord a
             , G.Vector v a
             , G.Vector v Double
@@ -37,6 +38,7 @@ spearmanMatByRow :: Matrix -> Matrix
 spearmanMatByRow = pearsonMatByRow . fromRows . map ranking . toRows
 {-# INLINE spearmanMatByRow #-}
 
+-- calculate rank of sample. Sample could be unsorted
 ranking :: ( Ord a
            , G.Vector v a
            , G.Vector v Double
@@ -47,7 +49,7 @@ ranking :: ( Ord a
         -> v Double
 ranking xs = G.create $ GM.replicate n 0 >>= loop 0
   where
-    (index, xs') = G.unzip . sortBy (comparing snd) . G.zip (G.fromList [0..n-1]) $ xs
+    (index, xs') = G.unzip . sortBy (comparing snd) . G.zip (G.enumFromN 0 n) $ xs
     ranks = rank (==) xs'
     loop x v | x < n = do GM.unsafeWrite v (index G.! x) (ranks G.! x)
                           loop (x + 1) v
