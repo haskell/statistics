@@ -32,12 +32,11 @@ import qualified Data.Vector.Generic.Mutable as GM
 -- | /O(nlogn)/ Compute the Kendall's tau from a vector of paired data.
 -- Return NaN when number of pairs <= 1.
 kendall :: (Ord a, Ord b, G.Vector v a, G.Vector v b, G.Vector v (a, b))
-        => v a -> v b -> Double
-kendall x y
-  | n /= G.length y = error "Statistics.Correlation.Kendall.kendall: Incompatible dimensions"
+        => v (a, b) -> Double
+kendall xy'
   | n <= 1 = 0/0
   | otherwise  = runST $ do
-    xy <- G.unsafeThaw $ G.zip x y
+    xy <- G.thaw xy'
     n_dRef <- newSTRef 0
     I.sort xy
     tieX <- numOfTiesBy ((==) `on` fst) xy
@@ -51,7 +50,7 @@ kendall x y
     return $ fromIntegral (n_c - n_d) /
              (sqrt.fromIntegral) ((n_0 - tieX) * (n_0 - tieY))
   where
-    n = G.length x
+    n = G.length xy'
 {-# INLINE kendall #-}
 
 -- calculate number of tied pairs in a sorted vector

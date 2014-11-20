@@ -41,11 +41,10 @@ testKendall xy | isNaN r1 = isNaN r2
                | otherwise = r1 == r2
   where
     r1 = kendallBruteForce xy 
-    r2 = kendall (V.fromList xs) (V.fromList ys)
-    (xs, ys) = unzip xy
+    r2 = kendall $ V.fromList xy
 
 testKendallSpecial :: Assertion
-testKendallSpecial = vs @=? map (\(xs, ys) -> kendall (V.fromList xs) (V.fromList ys)) d
+testKendallSpecial = vs @=? map (\(xs, ys) -> kendall $ V.fromList $ zip xs ys) d
   where 
     (d, vs) = unzip testData
     testData :: [(([Double], [Double]), Double)]

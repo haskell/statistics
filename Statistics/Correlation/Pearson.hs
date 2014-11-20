@@ -20,26 +20,24 @@ import Statistics.Sample
 
 -- | use Welford's one-pass algorithm to calculate the Pearson's correlation 
 -- between two samples.
-pearson :: G.Vector v Double => v Double -> v Double -> Double
-pearson x y | n /= G.length y = error errMsg
-            | n <= 1 = 0/0
-            | otherwise = sum_cross / (sqrt sum_xsq * sqrt sum_ysq)
+pearson :: G.Vector v (Double, Double) => v (Double, Double) -> Double
+pearson xy | n <= 1 = 0/0
+           | otherwise = sum_cross / (sqrt sum_xsq * sqrt sum_ysq)
   where
-    (sum_cross, sum_xsq, sum_ysq) = loop (G.head x, G.head y, 0, 0, 0) 1
-    loop (!mx, !my, !vx, !vy, !xy) i 
-      | i >= n = (xy, vx, vy)
-      | otherwise = loop ( mx + delta_x / fromIntegral (i+1)
-                         , my + delta_y / fromIntegral (i+1)
-                         , vx + delta_x * delta_x * ratio
-                         , vy + delta_y * delta_y * ratio
-                         , xy + delta_x * delta_y * ratio
-                         ) (i+1)
+    (sum_cross, sum_xsq, sum_ysq, _, _, _) = G.foldl step (0,0,0,0,0,0::Int) xy
+    step (!vxy, !vx, !vy, !mx, !my, !i) (x, y) =
+        ( vxy + delta_x * delta_y * ratio
+        , vx + delta_x * delta_x * ratio
+        , vy + delta_y * delta_y * ratio
+        , mx + delta_x / fromIntegral (i+1)
+        , my + delta_y / fromIntegral (i+1)
+        , i + 1
+        )
       where
-        delta_x = x G.! i - mx
-        delta_y = y G.! i - my
+        delta_x = x - mx
+        delta_y = y - my
         ratio = fromIntegral i / fromIntegral (i+1)
-    n = G.length x
-    errMsg = "Statistics.Correlation.Pearson.pearson: Incompatible dimensions"
+    n = G.length xy
 {-# INLINE pearson #-}
 
 -- | compute pairwise pearson correlation between rows of a matrix
@@ -55,7 +53,7 @@ pearsonMatByRow m = fromVector n n $ U.create $ UM.replicate (n*n) 1.0 >>= loopR
               r <- case () of
                      _ | i == j -> return 1
                        | i > j -> UM.unsafeRead v (j*n+i)
-                       | i < j -> return $ pearson vx $ m `row` j
+                       | i < j -> return . pearson . G.zip vx $ m `row` j
                        | otherwise -> undefined
               UM.unsafeWrite v (i*n+j) r
               loopC (j+1)
@@ -63,12 +61,12 @@ pearsonMatByRow m = fromVector n n $ U.create $ UM.replicate (n*n) 1.0 >>= loopR
     n = rows m
 {-# INLINE pearsonMatByRow #-}
 
--- calculate pearson correlation by definition, for testing purpose
-pearson' :: G.Vector v Double => v Double -> v Double -> Double
-pearson' x y | n /= G.length y = error errMsg
-             | n <= 1 = 0/0
-             | otherwise = cov / sqrt (var_x * var_y)
+-- calculate pearson correlation by definition, just for testing purpose
+pearson' :: (G.Vector v Double, G.Vector v (Double, Double)) => v (Double, Double) -> Double
+pearson' xy | n <= 1 = 0/0
+            | otherwise = cov / sqrt (var_x * var_y)
   where
+    (x, y) = G.unzip xy
     m_x = mean x
     m_y = mean y
     (cov, var_x, var_y) = loop (0, 0, 0) 0
@@ -80,7 +78,6 @@ pearson' x y | n /= G.length y = error errMsg
                                                  , vy + t2 * t2
                                                  ) (i+1)
     n = G.length x
-    errMsg = "Statistics.Correlation.Pearson.pearson: Incompatible dimensions"
 {-# INLINE pearson' #-}
 
 -- $references
