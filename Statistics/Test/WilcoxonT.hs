@@ -229,7 +229,8 @@ wilcoxonMatchedPairTest test pairs =
                  AGreater      -> (abs tMinus, wilcoxonMatchedPairSignificance n (abs tMinus))
                  BGreater      -> (abs tPlus,  wilcoxonMatchedPairSignificance n (abs tPlus ))
                  -- Since we take minimum of T+,T- we can't get more
-                 -- that p=0.5 and can freely multiply it by 2.
+                 -- that p=0.5 and can multiply it by 2 without risk
+                 -- of error.
                  SamplesDiffer -> let t' = min (abs tMinus) (abs tPlus)
                                       p  = wilcoxonMatchedPairSignificance n t'
                                   in (t', pValue $ min 1 $ 2 * getPValue p)
