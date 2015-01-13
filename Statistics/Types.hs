@@ -65,7 +65,7 @@ import Statistics.Distribution.Normal
 --
 --   2. In context of statistical tests it's p-value of test
 --      significance.
-newtype CL a = CL { unCL :: a }
+newtype CL a = CL a
                deriving (Show,Read,Eq, Typeable, Data, Generic)
 
 instance Binary   a => Binary   (CL a)
@@ -87,7 +87,7 @@ instance Ord a => Ord (CL a) where
 -- | Construct confidence level.
 --
 --   > confLevel 0.90
---   >>> CL { unCL = 0.10 }
+--   >>> CL = 0.10
 confLevel :: (Ord a, Num a) => a -> CL a
 confLevel p
   | p >= 0 && p <= 1 = CL (1 - p)
@@ -99,9 +99,11 @@ pValue p
   | p >= 0 && p <= 1 = CL p
   | otherwise        = error "Statistics.Types.pValue: probability is out if [0,1] range"
 
+-- | Get p-value
 getPValue :: CL a -> a
 getPValue (CL p) = p
 
+-- | Get confidence level
 getCL :: (Ord a, Num a) => CL a -> a
 getCL (CL p) = 1 - p
 
