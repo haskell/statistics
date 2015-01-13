@@ -121,14 +121,19 @@ cl99 = CL 0.01
 
 -- | CL expressed in sigma. This is convention widely used in
 --   experimental physics. N sigma confidence level corresponds to
---   probability within N sigma of normal distribution. Note that
---   there's no direct correspondence between standard deviation and
---   CL expressed in sigma.
+--   probability within N sigma of normal distribution.
+--
+--   Note that this correspondence is for normal distribution. Other
+--   distribution will have different dependency. Also experimental
+--   distribution usually only approximately normal (especially at
+--   extreme tails).
 nSigma :: Double -> CL Double
 nSigma n
   | n > 0     = CL $ 2 * cumulative standard (-n)
   | otherwise = error "Statistics.Extra.Error.nSigma: non-positive number of sigma"
 
+-- | CL expressed in sigma for one-tail hypothesis. This correspond to
+--   probability of obtaining value less than @N·σ@.
 nSigma1 :: Double -> CL Double
 nSigma1 n
   | n > 0     = CL $ cumulative standard (-n)
