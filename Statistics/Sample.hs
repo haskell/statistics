@@ -50,7 +50,8 @@ module Statistics.Sample
     , fastVarianceUnbiased
     , fastStdDev
 
-    -- * Combinators
+    -- * Joint distirbutions
+    , covariance
     , pair
     -- * References
     -- $references
@@ -341,6 +342,24 @@ fastVarianceUnbiased = fini . fastVar
 fastStdDev :: (G.Vector v Double) => v Double -> Double
 fastStdDev = sqrt . fastVariance
 {-# INLINE fastStdDev #-}
+
+-- | Covariance of sample of pairs.
+covariance :: (G.Vector v (Double,Double), G.Vector v Double)
+           => v (Double,Double)
+           -> Double
+covariance xy
+  | n == 0    = 0
+  | otherwise = mean $ G.zipWith (*)
+                         (G.map (\x -> x - muX) xs)
+                         (G.map (\y -> y - muY) ys)
+  where
+    n       = G.length xy
+    (xs,ys) = G.unzip xy
+    muX     = mean xs
+    muY     = mean ys
+{-# SPECIALIZE covariance :: U.Vector (Double,Double) -> Double #-}
+{-# SPECIALIZE covariance :: V.Vector (Double,Double) -> Double #-}
+
 
 -- | Pair two samples. It's like 'G.zip' but requires that both
 --   samples have equal size.
