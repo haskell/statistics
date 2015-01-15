@@ -52,6 +52,7 @@ module Statistics.Sample
 
     -- * Joint distirbutions
     , covariance
+    , correlation
     , pair
     -- * References
     -- $references
@@ -343,7 +344,8 @@ fastStdDev :: (G.Vector v Double) => v Double -> Double
 fastStdDev = sqrt . fastVariance
 {-# INLINE fastStdDev #-}
 
--- | Covariance of sample of pairs.
+-- | Covariance of sample of pairs. For empty sample it's set to
+--   zero
 covariance :: (G.Vector v (Double,Double), G.Vector v Double)
            => v (Double,Double)
            -> Double
@@ -359,6 +361,25 @@ covariance xy
     muY     = mean ys
 {-# SPECIALIZE covariance :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE covariance :: V.Vector (Double,Double) -> Double #-}
+
+-- | Correlation coefficient for sample of pairs. Also known as
+--   Pearson's correlation. For empty sample it's set to zero.
+correlation :: (G.Vector v (Double,Double), G.Vector v Double)
+           => v (Double,Double)
+           -> Double
+correlation xy
+  | n == 0    = 0
+  | otherwise = cov / sqrt (sigmaX * sigmaY)
+  where
+    n       = G.length xy
+    (xs,ys) = G.unzip xy
+    (muX,sigmaX) = meanVarianceUnb xs
+    (muY,sigmaY) = meanVarianceUnb ys
+    cov = mean $ G.zipWith (*)
+            (G.map (\x -> x - muX) xs)
+            (G.map (\y -> y - muY) ys)
+{-# SPECIALIZE correlation :: U.Vector (Double,Double) -> Double #-}
+{-# SPECIALIZE correlation :: V.Vector (Double,Double) -> Double #-}
 
 
 -- | Pair two samples. It's like 'G.zip' but requires that both
