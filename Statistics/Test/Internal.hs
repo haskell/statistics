@@ -16,7 +16,14 @@ data Rank v a = Rank {
     , rankVec :: v a                        -- Remaining vector
     }
 
--- | Calculate rank of sample. Sample should be already sorted.
+-- | Calculate rank of every element of sample. In case of ties ranks
+--   are averaged. Sample should be already sorted.
+--
+-- >>> rank (==) (fromList [10,20,30::Int])
+-- > fromList [1.0,2.0,3.0]
+--
+-- >>> rank (==) (fromList [10,10,10,30::Int])
+-- > fromList [2.0,2.0,2.0,4.0]
 rank :: (G.Vector v a, G.Vector v Double)
      => (a -> a -> Bool)        -- ^ Equivalence relation
      -> v a                     -- ^ Vector to rank
