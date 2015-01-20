@@ -22,19 +22,20 @@ spearman :: ( Ord a
             , G.Vector v Int
             , G.Vector v Double
             , G.Vector v (Double, Double)
-            , G.Vector v (Int, Double)
             , G.Vector v (Int, a)
             , G.Vector v (Int, b)
             )
          => v (a, b)
          -> Double
-spearman xy = pearson xy'
+spearman xy
+  = pearson
+  $ G.zip (rankUnsorted x) (rankUnsorted y)
   where
-    xy' = G.zip (rankUnsorted x) $ rankUnsorted y
     (x, y) = G.unzip xy
 {-# INLINE spearman #-}
 
 -- | compute pairwise spearman correlation between rows of a matrix
 spearmanMatByRow :: Matrix -> Matrix
-spearmanMatByRow = pearsonMatByRow . fromRows . map rankUnsorted . toRows
+spearmanMatByRow
+  = pearsonMatByRow . fromRows . map rankUnsorted . toRows
 {-# INLINE spearmanMatByRow #-}
