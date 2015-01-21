@@ -49,9 +49,8 @@ library
   exposed-modules:
     Statistics.Autocorrelation
     Statistics.Constants
+    Statistics.Correlation
     Statistics.Correlation.Kendall
-    Statistics.Correlation.Pearson
-    Statistics.Correlation.Spearman
     Statistics.Distribution
     Statistics.Distribution.Beta
     Statistics.Distribution.Binomial
