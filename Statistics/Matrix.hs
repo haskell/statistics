@@ -18,15 +18,15 @@ module Statistics.Matrix
     , fromLists
     , fromRows
     , fromColumns
-      -- * Other
-    , ident
-    , diag
-    , diagRect
     , toVector
     , toList
     , toRows
     , toColumns
-    , toLists
+    , toRowLists
+      -- * Other
+    , ident
+    , diag
+    , diagRect
     , dimension
     , center
     , multiply
@@ -102,18 +102,23 @@ toList :: Matrix -> [Double]
 toList = U.toList . toVector
 
 -- | Convert to a list of lists, as rows
-toLists :: Matrix -> [[Double]]
-toLists (Matrix _ c _ v) = chunksOf' c . U.toList $ v
+toRowLists :: Matrix -> [[Double]]
+toRowLists (Matrix _ nCol _ v)
+  = chunks $ U.toList v
   where
-    chunksOf' _ [] = []
-    chunksOf' i xs = take i xs : chunksOf' i (drop i xs)
+    chunks [] = []
+    chunks xs = case splitAt nCol xs of
+      (rowE,rest) -> rowE : chunks rest
+
 
 -- | Convert to a list of vectors, as rows
 toRows :: Matrix -> [Vector]
-toRows (Matrix _ c _ v) = chunksOf' c v
+toRows (Matrix _ nCol _ v) = chunks v
   where
-    chunksOf' i xs | U.length xs > 0 = U.take i xs : chunksOf' i (U.drop i xs)
-                   | otherwise = []
+    chunks xs
+      | U.null xs = []
+      | otherwise = case U.splitAt nCol xs of
+          (rowE,rest) -> rowE : chunks rest
 
 -- | Convert to a list of vectors, as columns
 toColumns :: Matrix -> [Vector]
