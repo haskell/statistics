@@ -28,7 +28,6 @@ module Statistics.Matrix
     , generateSym
     , ident
     , diag
-    , diagRect
     , dimension
     , center
     , multiply
@@ -49,6 +48,7 @@ module Statistics.Matrix
 import Prelude hiding (exponent, map, sum)
 import Control.Applicative ((<$>))
 import qualified Data.Vector.Unboxed as U
+import           Data.Vector.Unboxed   ((!))
 import qualified Data.Vector.Unboxed.Mutable as UM
 
 import Statistics.Function (for, square)
@@ -157,26 +157,18 @@ generateSym n f = generate n n f
 
 -- | Create the square identity matrix with given dimensions.
 ident :: Int -> Matrix
-ident n = diagRect 0 n n $ U.replicate n 1.0
+ident n = diag $ U.replicate n 1.0
 
--- | create a square matrix with given diagonal, other entries default to 0
+-- | Create a square matrix with given diagonal, other entries default to 0
 diag :: Vector -> Matrix
-diag v = diagRect 0 n n v
-  where n = U.length v
-
--- | creates a rectangular matrix with default values and given diagonal 
-diagRect :: Double              -- ^ Default value
-         -> Int                 -- ^ Number of rows
-         -> Int                 -- ^ Number of columns
-         -> Vector              -- ^ Diagonal
-         -> Matrix
-diagRect z0 r c d = fromVector r c $ U.create $ UM.replicate n z0 >>= loop 0
+diag v
+  = Matrix n n 0 $ U.create $ do
+      arr <- UM.replicate (n*n) 0
+      for 0 n $ \i ->
+        UM.unsafeWrite arr (i*n + i) (v ! i)
+      return arr
   where
-    loop i v | i >= l = return v
-             | otherwise = UM.write v (i*(c+1)) (d U.! i) >> loop (i+1) v
-    l = U.length d
-    n = r * c
-{-# INLINE diagRect #-}
+    n = U.length v
 
 -- | Return the dimensions of this matrix, as a (row,column) pair.
 dimension :: Matrix -> (Int, Int)
