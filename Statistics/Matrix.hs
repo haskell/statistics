@@ -45,11 +45,13 @@ module Statistics.Matrix
     ) where
 
 import Prelude hiding (exponent, map, sum)
+import Control.Applicative ((<$>))
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as UM
+
 import Statistics.Function (for, square)
 import Statistics.Matrix.Types
 import Statistics.Sample.Internal (sum)
-import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Unboxed.Mutable as UM
 
 
 ----------------------------------------------------------------
@@ -65,11 +67,7 @@ fromList r c = fromVector r c . U.fromList
 
 -- | create a matrix from a list of lists, as rows
 fromLists :: [[Double]] -> Matrix
--- FIXME: doesn't check that matrix is correct
-fromLists xs = fromVector nrow ncol . U.fromList . concat $ xs
-  where
-    nrow = length xs
-    ncol = length . head $ xs
+fromLists = fromRows . fmap U.fromList
 
 -- | Convert from a row-major vector.
 fromVector :: Int               -- ^ Number of rows.
@@ -83,11 +81,15 @@ fromVector r c v
 
 -- | create a matrix from a list of vectors, as rows
 fromRows :: [Vector] -> Matrix
--- FIXME: doesn't check that matrix is correct
-fromRows xs = fromVector r c . U.concat $ xs
+fromRows [] = error "Statistics.Matrix.fromRows: empty list of rows!"
+fromRows xs
+  | any (/=nCol) ns = error "Statistics.Matrix.fromRows: row sizes do not match"
+  | nCol == 0       = error "Statistics.Matrix.fromRows: zero columns in matrix"
+  | otherwise       = fromVector nRow nCol (U.concat xs)
   where
-    r = length xs
-    c = U.length . head $ xs
+    nCol:ns = U.length <$> xs
+    nRow    = length xs
+
 
 -- | create a matrix from a list of vectors, as columns
 fromColumns :: [Vector] -> Matrix
