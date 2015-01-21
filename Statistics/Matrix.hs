@@ -9,14 +9,16 @@
 -- we implement the necessary minimum here.
 
 module Statistics.Matrix
-    (
+    ( -- * Data types
       Matrix(..)
     , Vector
+      -- * Conversion from/to lists/vectors
     , fromVector
     , fromList
     , fromLists
     , fromRows
     , fromColumns
+      -- * Other
     , ident
     , diag
     , diagRect
@@ -49,6 +51,11 @@ import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as UM
 
+
+----------------------------------------------------------------
+-- Conversion to/from vectors/lists
+----------------------------------------------------------------
+
 -- | Convert from a row-major list.
 fromList :: Int                 -- ^ Number of rows.
          -> Int                 -- ^ Number of columns.
@@ -58,6 +65,7 @@ fromList r c = fromVector r c . U.fromList
 
 -- | create a matrix from a list of lists, as rows
 fromLists :: [[Double]] -> Matrix
+-- FIXME: doesn't check that matrix is correct
 fromLists xs = fromVector nrow ncol . U.fromList . concat $ xs
   where
     nrow = length xs
@@ -75,38 +83,15 @@ fromVector r c v
 
 -- | create a matrix from a list of vectors, as rows
 fromRows :: [Vector] -> Matrix
+-- FIXME: doesn't check that matrix is correct
 fromRows xs = fromVector r c . U.concat $ xs
   where
     r = length xs
     c = U.length . head $ xs
 
--- FIXME: could be faster, if without calling fromRows
 -- | create a matrix from a list of vectors, as columns
 fromColumns :: [Vector] -> Matrix
 fromColumns = transpose . fromRows
-
--- | create the identity matrix with give dimension
-ident :: Int -> Matrix
-ident n = diagRect 0 n n $ U.replicate n 1.0
-
--- | create a square matrix with given diagonal, other entries default to 0
-diag :: Vector -> Matrix
-diag v = diagRect 0 n n v
-  where n = U.length v
-
--- | creates a rectangular matrix with default values and given diagonal 
-diagRect :: Double              -- ^ Default value
-         -> Int                 -- ^ Number of rows
-         -> Int                 -- ^ Number of columns
-         -> Vector              -- ^ Diagonal
-         -> Matrix
-diagRect z0 r c d = fromVector r c $ U.create $ UM.replicate n z0 >>= loop 0
-  where
-    loop i v | i >= l = return v
-             | otherwise = UM.write v (i*(c+1)) (d U.! i) >> loop (i+1) v
-    l = U.length d
-    n = r * c
-{-# INLINE diagRect #-}
 
 -- | Convert to a row-major flat vector.
 toVector :: Matrix -> U.Vector Double
@@ -133,6 +118,35 @@ toRows (Matrix _ c _ v) = chunksOf' c v
 -- | Convert to a list of vectors, as columns
 toColumns :: Matrix -> [Vector]
 toColumns = toRows . transpose
+
+
+
+----------------------------------------------------------------
+-- Other
+----------------------------------------------------------------
+
+-- | Create the square identity matrix with given dimensions.
+ident :: Int -> Matrix
+ident n = diagRect 0 n n $ U.replicate n 1.0
+
+-- | create a square matrix with given diagonal, other entries default to 0
+diag :: Vector -> Matrix
+diag v = diagRect 0 n n v
+  where n = U.length v
+
+-- | creates a rectangular matrix with default values and given diagonal 
+diagRect :: Double              -- ^ Default value
+         -> Int                 -- ^ Number of rows
+         -> Int                 -- ^ Number of columns
+         -> Vector              -- ^ Diagonal
+         -> Matrix
+diagRect z0 r c d = fromVector r c $ U.create $ UM.replicate n z0 >>= loop 0
+  where
+    loop i v | i >= l = return v
+             | otherwise = UM.write v (i*(c+1)) (d U.! i) >> loop (i+1) v
+    l = U.length d
+    n = r * c
+{-# INLINE diagRect #-}
 
 -- | Return the dimensions of this matrix, as a (row,column) pair.
 dimension :: Matrix -> (Int, Int)
@@ -195,6 +209,7 @@ unsafeIndex :: Matrix
             -> Double
 unsafeIndex = unsafeBounds U.unsafeIndex
 
+-- | Apply function to every element of matrix
 map :: (Double -> Double) -> Matrix -> Matrix
 map f (Matrix r c e v) = Matrix r c e (U.map f v)
 
