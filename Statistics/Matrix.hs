@@ -24,6 +24,8 @@ module Statistics.Matrix
     , toColumns
     , toRowLists
       -- * Other
+    , generate
+    , generateSym
     , ident
     , diag
     , diagRect
@@ -131,6 +133,27 @@ toColumns = toRows . transpose
 ----------------------------------------------------------------
 -- Other
 ----------------------------------------------------------------
+
+-- | Generate matrix using function
+generate :: Int                 -- ^ Number of rows
+         -> Int                 -- ^ Number of columns
+         -> (Int -> Int -> Double)
+            -- ^ Function which takes /row/ and /column/ as argument.
+         -> Matrix
+generate nRow nCol f
+  = Matrix nRow nCol 0 $ U.generate (nRow*nCol) $ \i ->
+      let (r,c) = i `quotRem` nCol in f r c
+
+-- | Generate symmetric square matrix using function
+generateSym
+  :: Int                 -- ^ Number of rows and columns
+  -> (Int -> Int -> Double)
+     -- ^ Function which takes /row/ and /column/ as argument. It must
+     --   be symmetric in arguments: @f i j == f j i@
+  -> Matrix
+generateSym n f = generate n n f
+-- FIXME: we do not exploit symmetry
+
 
 -- | Create the square identity matrix with given dimensions.
 ident :: Int -> Matrix
