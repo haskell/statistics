@@ -31,20 +31,19 @@ studentTTest :: (G.Vector v Double)
              => PositionTest  -- ^ one- or two-tailed test
              -> v Double      -- ^ Sample A
              -> v Double      -- ^ Sample B
-             -> Test StudentT ()
+             -> Test StudentT
 studentTTest test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
   | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
-                     , testExtraData    = ()
                      }
   where
     (t, ndf) = tStatistics True sample1 sample2
 {-# INLINABLE  studentTTest #-}
-{-# SPECIALIZE studentTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE studentTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE studentTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE studentTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT #-}
+{-# SPECIALIZE studentTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT #-}
+{-# SPECIALIZE studentTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT #-}
 
 -- | Two-sample Welch's t-test. It assumes that both samples are
 --   normally distributed but doesn't assume that they have same
@@ -53,38 +52,36 @@ welchTTest :: (G.Vector v Double)
            => PositionTest  -- ^ one- or two-tailed test
            -> v Double      -- ^ Sample A
            -> v Double      -- ^ Sample B
-           -> Test StudentT ()
+           -> Test StudentT
 welchTTest test sample1 sample2
   | G.length sample1 < 2 || G.length sample2 < 2 = error "Statistics.Test.StudentT: insufficient sample size"
   | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
-                     , testExtraData    = ()
                      }
   where
     (t, ndf) = tStatistics False sample1 sample2
 {-# INLINABLE  welchTTest #-}
-{-# SPECIALIZE welchTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE welchTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT () #-}
-{-# SPECIALIZE welchTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT () #-}
+{-# SPECIALIZE welchTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Test StudentT #-}
+{-# SPECIALIZE welchTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Test StudentT #-}
+{-# SPECIALIZE welchTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Test StudentT #-}
 
 -- | Paired two-sample t-test. Two samples are paired in a within-subject design.
 pairedTTest :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
             => PositionTest          -- ^ one- or two-tailed test
             -> v (Double, Double)    -- ^ paired samples
-            -> Test StudentT ()
+            -> Test StudentT
 pairedTTest test sample
   | G.length sample < 2 = error "Statistics.Test.StudentT: insufficient samples"
   | otherwise = Test { testSignificance = significance test t ndf
                      , testStatistics   = t
                      , testDistribution = studentT ndf
-                     , testExtraData    = ()
                      }
   where
     (t, ndf) = tStatisticsPaired sample
 {-# INLINABLE  pairedTTest #-}
-{-# SPECIALIZE pairedTTest :: PositionTest -> U.Vector (Double,Double) -> Test StudentT () #-}
-{-# SPECIALIZE pairedTTest :: PositionTest -> V.Vector (Double,Double) -> Test StudentT () #-}
+{-# SPECIALIZE pairedTTest :: PositionTest -> U.Vector (Double,Double) -> Test StudentT #-}
+{-# SPECIALIZE pairedTTest :: PositionTest -> V.Vector (Double,Double) -> Test StudentT #-}
 
 
 -------------------------------------------------------------------------------
