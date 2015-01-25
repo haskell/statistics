@@ -52,7 +52,7 @@ import qualified Data.Vector.Unboxed.Mutable as M
 kolmogorovSmirnovTest :: (Distribution d, G.Vector v Double)
                       => d        -- ^ Distribution
                       -> v Double -- ^ Data sample
-                      -> Test () ()
+                      -> Test ()
 {-# INLINE kolmogorovSmirnovTest #-}
 kolmogorovSmirnovTest d
   = kolmogorovSmirnovTestCdf (cumulative d)
@@ -63,13 +63,12 @@ kolmogorovSmirnovTest d
 kolmogorovSmirnovTestCdf :: (G.Vector v Double)
                          => (Double -> Double) -- ^ CDF of distribution
                          -> v Double           -- ^ Data sample
-                         -> Test () ()
+                         -> Test ()
 {-# INLINE kolmogorovSmirnovTestCdf #-}
 kolmogorovSmirnovTestCdf cdf sample
   = Test { testSignificance = confLevel prob
          , testStatistics   = d
          , testDistribution = ()
-         , testExtraData    = ()
          }
   where
     d    = kolmogorovSmirnovCdfD cdf sample
@@ -84,12 +83,11 @@ kolmogorovSmirnovTestCdf cdf sample
 kolmogorovSmirnovTest2 :: (G.Vector v Double)
                        => v Double -- ^ Sample 1
                        -> v Double -- ^ Sample 2
-                       -> Test () ()
+                       -> Test ()
 kolmogorovSmirnovTest2 xs1 xs2
   = Test { testSignificance = confLevel (prob d)
          , testStatistics   = d
          , testDistribution = ()
-         , testExtraData    = ()
          }
   where
     d    = kolmogorovSmirnov2D xs1 xs2
@@ -107,9 +105,9 @@ kolmogorovSmirnovTest2 xs1 xs2
       | otherwise = let x = exp(-2 * z * z)
                     in  1 - 2*(x - x**4 + x**9)
 {-# INLINABLE  kolmogorovSmirnovTest2 #-}
-{-# SPECIALIZE kolmogorovSmirnovTest2 :: U.Vector Double -> U.Vector Double -> Test () () #-}
-{-# SPECIALIZE kolmogorovSmirnovTest2 :: V.Vector Double -> V.Vector Double -> Test () () #-}
-{-# SPECIALIZE kolmogorovSmirnovTest2 :: S.Vector Double -> S.Vector Double -> Test () () #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: U.Vector Double -> U.Vector Double -> Test () #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: V.Vector Double -> V.Vector Double -> Test () #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: S.Vector Double -> S.Vector Double -> Test () #-}
 -- FIXME: Find source for approximation for D
 
 

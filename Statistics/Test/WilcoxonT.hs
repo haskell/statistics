@@ -215,13 +215,12 @@ wilcoxonMatchedPairTest
   :: (Ord a, Num a, U.Unbox a)
   => PositionTest     -- ^ Perform one-tailed test.
   -> U.Vector (a,a)   -- ^ First sample
-  -> Test () ()       -- ^ Return 'Nothing' if the sample was too
+  -> Test ()          -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
 wilcoxonMatchedPairTest test pairs =
   Test { testSignificance = pVal
        , testStatistics   = t
        , testDistribution = ()
-       , testExtraData    = ()
        }
   where
     (n,tPlus,tMinus) = wilcoxonMatchedPairSignedRank pairs

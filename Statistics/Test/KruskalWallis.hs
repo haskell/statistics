@@ -79,14 +79,13 @@ kruskalWallis samples = (nTot - 1) * numerator / denominator
 --
 -- It uses /Chi-Squared/ distribution for aproximation as long as the sizes are
 -- larger than 5. Otherwise the test returns 'Nothing'.
-kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test () ())
+kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test ())
 kruskalWallisTest []      = Nothing
 kruskalWallisTest samples
   -- We use chi-squared approximation here
   | all (>4) ns = Just $ Test { testSignificance = pValue $ complCumulative d k
                               , testStatistics   = k
                               , testDistribution = ()
-                              , testExtraData    = ()
                               }
   | otherwise   = Nothing
   where

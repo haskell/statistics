@@ -30,22 +30,21 @@ instance NFData   TestResult
 
 
 -- | Result of statistical test. It contains test p-value (probability of encountering
-data Test d a = Test
+data Test distr = Test
   { testSignificance :: !(CL Double)
   , testStatistics   :: !Double
-  , testDistribution :: d
-  , testExtraData    :: a
+  , testDistribution :: distr
   }
   deriving (Eq,Ord,Show,Typeable,Data,Generic,Functor)
 
-instance (Binary   a, Binary   d) => Binary   (Test d a)
-instance (FromJSON a, FromJSON d) => FromJSON (Test d a)
-instance (ToJSON   a, ToJSON   d) => ToJSON   (Test d a)
-instance (NFData   a, NFData   d) => NFData   (Test d a) where
-  rnf (Test _ _ a b) = rnf a `seq` rnf b
+instance (Binary   d) => Binary   (Test d)
+instance (FromJSON d) => FromJSON (Test d)
+instance (ToJSON   d) => ToJSON   (Test d)
+instance (NFData   d) => NFData   (Test d) where
+  rnf (Test _ _ a) = rnf a
 
 -- | Check whether test is significant for given p-value.
-isSignificant :: CL Double -> Test d a -> TestResult
+isSignificant :: CL Double -> Test d -> TestResult
 isSignificant cl t
   -- FIXME: check what Ord instance have correct meaning
   = significant $ cl <= testSignificance t
