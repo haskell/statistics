@@ -46,7 +46,6 @@ instance (NFData   d) => NFData   (Test d) where
 -- | Check whether test is significant for given p-value.
 isSignificant :: CL Double -> Test d -> TestResult
 isSignificant cl t
-  -- FIXME: check what Ord instance have correct meaning
   = significant $ cl <= testSignificance t
 
 
