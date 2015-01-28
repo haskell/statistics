@@ -74,7 +74,9 @@ instance ToJSON   a => ToJSON   (CL a)
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
 
--- FIXME: is this right instance?
+-- | This instance is inverted relative to instance of underlying
+--   type. In other words is larger if it describes greater confidence
+--   or significance. This corresponds to smaller wrapped probability.
 instance Ord a => Ord (CL a) where
   CL a <  CL b = a >  b
   CL a <= CL b = a >= b
