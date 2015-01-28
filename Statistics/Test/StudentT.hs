@@ -100,12 +100,13 @@ significance test t df =
     tailArea = cumulative (studentT df)
 
 
--- Calculate T statistics
+-- Calculate T statistics for two samples
 tStatistics :: (G.Vector v Double)
             => Bool               -- variance equality
             -> v Double
             -> v Double
             -> (Double, Double)
+{-# INLINE tStatistics #-}
 tStatistics varequal sample1 sample2 = (t, ndf)
   where
     -- t-statistics
@@ -127,9 +128,11 @@ tStatistics varequal sample1 sample2 = (t, ndf)
     s2 = varianceUnbiased sample2
 
 
-tStatisticsPaired :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
+-- Calculate T-statistics for paired sample
+tStatisticsPaired :: (G.Vector v (Double, Double), G.Vector v Double)
                   => v (Double, Double)
                   -> (Double, Double)
+{-# INLINE tStatisticsPaired #-}
 tStatisticsPaired sample = (t, ndf)
   where
     -- t-statistics
