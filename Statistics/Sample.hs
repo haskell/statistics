@@ -369,12 +369,12 @@ correlation :: (G.Vector v (Double,Double), G.Vector v Double)
            -> Double
 correlation xy
   | n == 0    = 0
-  | otherwise = cov / sqrt (sigmaX * sigmaY)
+  | otherwise = cov / sqrt (varX * varY)
   where
     n       = G.length xy
     (xs,ys) = G.unzip xy
-    (muX,sigmaX) = meanVariance xs
-    (muY,sigmaY) = meanVariance ys
+    (muX,varX) = meanVariance xs
+    (muY,varY) = meanVariance ys
     cov = mean $ G.zipWith (*)
             (G.map (\x -> x - muX) xs)
             (G.map (\y -> y - muY) ys)
