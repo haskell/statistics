@@ -5,10 +5,8 @@ module Tests.Correlation
 
 import qualified Data.Vector as V
 import Statistics.Matrix hiding (map)
-import Statistics.Correlation.Pearson
-import Statistics.Correlation.Spearman
+import Statistics.Correlation
 import Statistics.Correlation.Kendall
-import Tests.Correlation.Data
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework.Providers.HUnit
@@ -16,25 +14,9 @@ import Test.HUnit (Assertion, (@=?), assertBool)
 
 tests :: Test
 tests = testGroup "Correlation"
-    [ testCase "Pearson's Correlation" testPearson
-    , testCase "Spearman's Correlation" testSpearman
-    , testProperty "Kendall test -- general" testKendall
-    , testCase "Kendall test -- special cases" testKendallSpecial
+    [ testProperty "Kendall test -- general"       testKendall
+    , testCase     "Kendall test -- special cases" testKendallSpecial
     ]
-
-testPearson :: Assertion
-testPearson = assertBool "Fail" $ and $ zipWith f expect actual
-  where
-    f a b = abs (a - b) < 0.00000000000001
-    expect = concat pearsonR
-    actual = concat . toLists . pearsonMatByRow . fromLists $ sample
-
-testSpearman :: Assertion
-testSpearman = assertBool "Fail" $ and $ zipWith f expect actual
-  where
-    f a b = abs (a - b) < 0.00000000000001
-    expect = concat spearmanR
-    actual = concat . toLists . spearmanMatByRow . fromLists $ sample
 
 testKendall :: [(Double, Double)] -> Bool
 testKendall xy | isNaN r1 = isNaN r2
