@@ -48,6 +48,7 @@ module Statistics.Matrix
 
 import Prelude hiding (exponent, map, sum)
 import Control.Applicative ((<$>))
+import Control.Monad.ST
 import qualified Data.Vector.Unboxed as U
 import           Data.Vector.Unboxed   ((!))
 import qualified Data.Vector.Unboxed.Mutable as UM

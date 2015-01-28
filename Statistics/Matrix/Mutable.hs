@@ -12,6 +12,7 @@ module Statistics.Matrix.Mutable
     , replicate
     , thaw
     , bounds
+    , unsafeNew
     , unsafeFreeze
     , unsafeRead
     , unsafeWrite
@@ -36,6 +37,17 @@ thaw (Matrix r c e v) = MMatrix r c e <$> U.thaw v
 
 unsafeFreeze :: MMatrix s -> ST s Matrix
 unsafeFreeze (MMatrix r c e mv) = Matrix r c e <$> U.unsafeFreeze mv
+
+-- | Allocate new matrix. Matrix content is not initialized hence unsafe.
+unsafeNew :: Int                -- ^ Number of row
+          -> Int                -- ^ Number of columns
+          -> ST s (MMatrix s)
+unsafeNew r c
+  | r < 0     = error "Statistics.Matrix.Mutable.unsafeNew: negative number of rows"
+  | c < 0     = error "Statistics.Matrix.Mutable.unsafeNew: negative number of columns"
+  | otherwise = do
+      vec <- M.new (r*c)
+      return $ MMatrix r c 0 vec
 
 unsafeRead :: MMatrix s -> Int -> Int -> ST s Double
 unsafeRead mat r c = unsafeBounds mat r c M.unsafeRead
