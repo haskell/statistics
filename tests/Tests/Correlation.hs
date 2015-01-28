@@ -8,7 +8,7 @@ import qualified Data.Vector as V
 import Statistics.Matrix hiding (map)
 import Statistics.Correlation
 import Statistics.Correlation.Kendall
-import Test.QuickCheck ((==>),Property)
+import Test.QuickCheck ((==>),Property,counterexample)
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework.Providers.HUnit
@@ -23,6 +23,8 @@ import Tests.ApproxEq
 tests :: Test
 tests = testGroup "Correlation"
     [ testProperty "Pearson correlation"           testPearson
+    , testProperty "Spearman correlation is scale invariant" testSpearmanScale
+    , testProperty "Spearman correlation, nonlinear"         testSpearmanNonlinear
     , testProperty "Kendall test -- general"       testKendall
     , testCase     "Kendall test -- special cases" testKendallSpecial
     ]
@@ -58,6 +60,77 @@ exactPearson sample
     varY = muY2 - muY*muY
 
 ----------------------------------------------------------------
+-- Spearman's correlation
+----------------------------------------------------------------
+
+-- Test that Spearman correlation is scale invariant
+testSpearmanScale :: [(Double,Double)] -> Double -> Property
+testSpearmanScale xs a
+  = and [ length xs > 1       -- Enough to calculate underflow
+        , a /= 0
+        , not (isNaN c1)
+        , not (isNaN c2)
+        , not (isNaN c3)
+        , not (isNaN c4)
+        ]
+  ==> ( counterexample (show xs2)
+      $ counterexample (show xs3)
+      $ counterexample (show xs4)
+      $ counterexample (show (c1,c2,c3,c4))
+      $ and [ c1 == c4
+           , c1 == signum a * c2
+           , c1 == signum a * c3
+           ]
+      )
+  where
+    xs2 = map ((*a) *** id  ) xs
+    xs3 = map (id   *** (*a)) xs
+    xs4 = map ((*a) *** (*a)) xs
+    c1 = spearman $ V.fromList xs
+    c2 = spearman $ V.fromList xs2
+    c3 = spearman $ V.fromList xs3
+    c4 = spearman $ V.fromList xs4
+
+-- Test that Spearman correlation allows to transform sample with
+testSpearmanNonlinear :: [(Double,Double)] -> Property
+testSpearmanNonlinear sample0
+  = and [ length sample0 > 1
+        , not (isNaN c1)
+        , not (isNaN c2)
+        , not (isNaN c3)
+        , not (isNaN c4)
+        ]
+  ==> ( counterexample (show sample0)
+      $ counterexample (show sample1)
+      $ counterexample (show sample2)
+      $ counterexample (show sample3)
+      $ counterexample (show sample4)
+      $ counterexample (show (c1,c2,c3,c4))
+      $ and [ c1 == c2
+            , c1 == c3
+            , c1 == c4
+            ]
+      )
+  where
+    -- We need to stretch sample into [-10 .. 10] range to avoid
+    -- problems with under/overflows etc.
+    stretch xs
+      | a == b = xs
+      | otherwise = [ (x - a - 10) * 20 / (a - b) | x <- xs ]
+      where
+        a = minimum xs
+        b = maximum xs
+    sample1 = uncurry zip $ (stretch *** stretch) $ unzip sample0
+    sample2 = map (exp *** id ) sample1
+    sample3 = map (id  *** exp) sample1
+    sample4 = map (exp *** exp) sample1
+    c1 = spearman $ V.fromList sample1
+    c2 = spearman $ V.fromList sample2
+    c3 = spearman $ V.fromList sample3
+    c4 = spearman $ V.fromList sample4
+
+
+----------------------------------------------------------------
 -- Kendall's correlation
 ----------------------------------------------------------------
 
@@ -65,18 +138,18 @@ testKendall :: [(Double, Double)] -> Bool
 testKendall xy | isNaN r1 = isNaN r2
                | otherwise = r1 == r2
   where
-    r1 = kendallBruteForce xy 
+    r1 = kendallBruteForce xy
     r2 = kendall $ V.fromList xy
 
 testKendallSpecial :: Assertion
 testKendallSpecial = vs @=? map (\(xs, ys) -> kendall $ V.fromList $ zip xs ys) d
-  where 
+  where
     (d, vs) = unzip testData
     testData :: [(([Double], [Double]), Double)]
     testData = [ (([1, 2, 3, 1, 2], [1, 2, 1, 5, 2]), -0.375)
                , (([1, 1, 1, 3, 3], [3, 3, 3, 2, 5]), 0)
                ]
-                
+
 
 kendallBruteForce :: [(Double, Double)] -> Double
 kendallBruteForce xy = (n_c - n_d) / sqrt ((n_0 - n_1) * (n_0 - n_2))
