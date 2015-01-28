@@ -6,7 +6,9 @@ module Statistics.Test.Internal (
   ) where
 
 import Data.Ord
-import qualified Data.Vector.Generic as G
+import           Data.Vector.Generic           ((!))
+import qualified Data.Vector.Generic         as G
+import qualified Data.Vector.Generic.Mutable as M
 import Statistics.Function
 
 
@@ -19,7 +21,7 @@ data Rank v a = Rank {
     }
 
 -- | Calculate rank of every element of sample. In case of ties ranks
---   are averaged. Sample should be already sorted.
+--   are averaged. Sample should be already sorted in ascending order.
 --
 -- >>> rank (==) (fromList [10,20,30::Int])
 -- > fromList [1.0,2.0,3.0]
@@ -57,10 +59,18 @@ rankUnsorted :: ( Ord a
                 )
              => v a
              -> v Double
-rankUnsorted xs
-  = G.backpermute (rank (==) sorted) index
+rankUnsorted xs = G.create $ do
+    -- Put ranks into their original positions
+    -- NOTE: backpermute will do wrong thing
+    vec <- M.new n
+    for 0 n $ \i ->
+      M.unsafeWrite vec (index ! i) (ranks ! i)
+    return vec
   where
-    -- Sort vector and retain their original positions
+    n = G.length xs
+    -- Calculate ranks for sorted array
+    ranks = rank (==) sorted
+    -- Sort vector and retain original indices of elements
     (index, sorted)
       = G.unzip
       $ sortBy (comparing snd)
