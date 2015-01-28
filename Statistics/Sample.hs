@@ -373,8 +373,8 @@ correlation xy
   where
     n       = G.length xy
     (xs,ys) = G.unzip xy
-    (muX,sigmaX) = meanVarianceUnb xs
-    (muY,sigmaY) = meanVarianceUnb ys
+    (muX,sigmaX) = meanVariance xs
+    (muY,sigmaY) = meanVariance ys
     cov = mean $ G.zipWith (*)
             (G.map (\x -> x - muX) xs)
             (G.map (\y -> y - muY) ys)
