@@ -55,6 +55,7 @@ import qualified Data.Vector.Unboxed.Mutable as UM
 
 import Statistics.Function (for, square)
 import Statistics.Matrix.Types
+import Statistics.Matrix.Mutable  (unsafeNew,unsafeWrite,unsafeFreeze)
 import Statistics.Sample.Internal (sum)
 
 
@@ -153,8 +154,15 @@ generateSym
      -- ^ Function which takes /row/ and /column/ as argument. It must
      --   be symmetric in arguments: @f i j == f j i@
   -> Matrix
-generateSym n f = generate n n f
--- FIXME: we do not exploit symmetry
+generateSym n f = runST $ do
+  m <- unsafeNew n n
+  for 0 n $ \r -> do
+    unsafeWrite m r r (f r r)
+    for (r+1) n $ \c -> do
+      let x = f r c
+      unsafeWrite m r c x
+      unsafeWrite m c r x
+  unsafeFreeze m
 
 
 -- | Create the square identity matrix with given dimensions.
