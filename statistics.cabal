@@ -135,7 +135,7 @@ test-suite tests
     Tests.Transform
 
   ghc-options:
-    -Wall -threaded -rtsopts
+    -Wall -threaded -rtsopts -fsimpl-tick-factor=500
 
   build-depends:
     HUnit,
