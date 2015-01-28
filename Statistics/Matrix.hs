@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternGuards #-}
 -- |
 -- Module    : Statistics.Matrix
 -- Copyright : 2011 Aleksey Khudyakov, 2014 Bryan O'Sullivan
@@ -15,7 +16,7 @@ module Statistics.Matrix
       -- * Conversion from/to lists/vectors
     , fromVector
     , fromList
-    , fromLists
+    , fromRowLists
     , fromRows
     , fromColumns
     , toVector
@@ -68,8 +69,8 @@ fromList :: Int                 -- ^ Number of rows.
 fromList r c = fromVector r c . U.fromList
 
 -- | create a matrix from a list of lists, as rows
-fromLists :: [[Double]] -> Matrix
-fromLists = fromRows . fmap U.fromList
+fromRowLists :: [[Double]] -> Matrix
+fromRowLists = fromRows . fmap U.fromList
 
 -- | Convert from a row-major vector.
 fromVector :: Int               -- ^ Number of rows.
@@ -83,8 +84,8 @@ fromVector r c v
 
 -- | create a matrix from a list of vectors, as rows
 fromRows :: [Vector] -> Matrix
-fromRows [] = error "Statistics.Matrix.fromRows: empty list of rows!"
 fromRows xs
+  | [] <- xs        = error "Statistics.Matrix.fromRows: empty list of rows!"
   | any (/=nCol) ns = error "Statistics.Matrix.fromRows: row sizes do not match"
   | nCol == 0       = error "Statistics.Matrix.fromRows: zero columns in matrix"
   | otherwise       = fromVector nRow nCol (U.concat xs)
