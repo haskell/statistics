@@ -3,20 +3,63 @@
 module Tests.Correlation
     ( tests ) where
 
+import Control.Arrow (Arrow(..))
 import qualified Data.Vector as V
 import Statistics.Matrix hiding (map)
 import Statistics.Correlation
 import Statistics.Correlation.Kendall
+import Test.QuickCheck ((==>),Property)
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework.Providers.HUnit
 import Test.HUnit (Assertion, (@=?), assertBool)
 
+import Tests.ApproxEq
+
+----------------------------------------------------------------
+-- Tests list
+----------------------------------------------------------------
+
 tests :: Test
 tests = testGroup "Correlation"
-    [ testProperty "Kendall test -- general"       testKendall
+    [ testProperty "Pearson correlation"           testPearson
+    , testProperty "Kendall test -- general"       testKendall
     , testCase     "Kendall test -- special cases" testKendallSpecial
     ]
+
+
+----------------------------------------------------------------
+-- Pearson's correlation
+----------------------------------------------------------------
+
+testPearson :: [(Double,Double)] -> Property
+testPearson sample
+  = (length sample > 1) ==> (exact ~= fast)
+  where
+    (~=) = eql 1e-12
+    exact = exactPearson $ map (realToFrac *** realToFrac) sample
+    fast  = pearson $ V.fromList sample
+
+exactPearson :: [(Rational,Rational)] -> Double
+exactPearson sample
+  = realToFrac cov / sqrt (realToFrac (varX * varY))
+  where
+    (xs,ys) = unzip sample
+    n       = fromIntegral $ length sample
+    -- Mean
+    muX  = sum xs / n
+    muY  = sum ys / n
+    -- Mean of squares
+    muX2 = sum (map (\x->x*x) xs) / n
+    muY2 = sum (map (\x->x*x) ys) / n
+    -- Covariance
+    cov  = sum (zipWith (*) [x - muX | x<-xs] [y - muY | y<-ys]) / n
+    varX = muX2 - muX*muX
+    varY = muY2 - muY*muY
+
+----------------------------------------------------------------
+-- Kendall's correlation
+----------------------------------------------------------------
 
 testKendall :: [(Double, Double)] -> Bool
 testKendall xy | isNaN r1 = isNaN r2
