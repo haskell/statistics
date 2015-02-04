@@ -19,6 +19,7 @@ module Statistics.Test.WilcoxonT (
   , wilcoxonMatchedPairSignificant
   , wilcoxonMatchedPairSignificance
   , wilcoxonMatchedPairCriticalValue
+  , module Statistics.Test.Types
     -- * References
     -- $references
   ) where

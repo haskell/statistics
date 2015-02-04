@@ -13,6 +13,7 @@ module Statistics.Test.KruskalWallis
     -- ** Building blocks
   , kruskalWallisRank
   , kruskalWallis
+  , module Statistics.Test.Types
   ) where
 
 import Data.Ord (comparing)

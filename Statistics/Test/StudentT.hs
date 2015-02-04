@@ -8,8 +8,7 @@ module Statistics.Test.StudentT
       studentTTest
     , welchTTest
     , pairedTTest
-    , TestResult(..)
-    , PositionTest(..)
+    , module Statistics.Test.Types
     ) where
 
 import Statistics.Distribution hiding (mean)

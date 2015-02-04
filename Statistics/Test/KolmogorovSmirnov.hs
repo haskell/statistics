@@ -25,6 +25,7 @@ module Statistics.Test.KolmogorovSmirnov (
   , kolmogorovSmirnovProbability
     -- * References
     -- $references
+  , module Statistics.Test.Types
   ) where
 
 import Control.Monad (when)

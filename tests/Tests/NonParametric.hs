@@ -6,11 +6,11 @@ import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.KruskalWallis
 import Statistics.Test.WilcoxonT
-import Statistics.Test.Types (PositionTest(..),TestResult(..),isSignificant)
 import Statistics.Types (CL(..),pValue)
 
-import Test.Framework (Test, testGroup)
+import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit
+import qualified Test.Framework as Tst
 import Test.HUnit (assertEqual)
 import Tests.ApproxEq (eq)
 import Tests.Helpers (testAssertion, testEquality)
@@ -18,7 +18,7 @@ import Tests.NonParametric.Table (tableKSD, tableKS2D)
 import qualified Data.Vector.Unboxed as U
 
 
-tests :: Test
+tests :: Tst.Test
 tests = testGroup "Nonparametric tests"
         $ concat [ mannWhitneyTests
                  , wilcoxonSumTests
@@ -30,7 +30,7 @@ tests = testGroup "Nonparametric tests"
 
 ----------------------------------------------------------------
 
-mannWhitneyTests :: [Test]
+mannWhitneyTests :: [Tst.Test]
 mannWhitneyTests = zipWith test [(0::Int)..] testData ++
   [ testEquality "Mann-Whitney U Critical Values, m=1"
       (replicate (20*3) Nothing)
@@ -87,7 +87,7 @@ mannWhitneyTests = zipWith test [(0::Int)..] testData ++
                  )
                ]
 
-wilcoxonSumTests :: [Test]
+wilcoxonSumTests :: [Tst.Test]
 wilcoxonSumTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b, c) = testCase "Wilcoxon Sum"
@@ -104,7 +104,7 @@ wilcoxonSumTests = zipWith test [(0::Int)..] testData
                  )
                ]
 
-wilcoxonPairTests :: [Test]
+wilcoxonPairTests :: [Tst.Test]
 wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
   -- Taken from the Mitic paper:
   [ testAssertion "Sig 16, 35" (to4dp 0.0467 $ wilcoxonMatchedPairSignificance 16 35)
@@ -157,7 +157,7 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
 
 ----------------------------------------------------------------
 
-kruskalWallisRankTests :: [Test]
+kruskalWallisRankTests :: [Tst.Test]
 kruskalWallisRankTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b) = testCase "Kruskal-Wallis Ranking"
@@ -176,7 +176,7 @@ kruskalWallisRankTests = zipWith test [(0::Int)..] testData
                  )
                ]
 
-kruskalWallisTests :: [Test]
+kruskalWallisTests :: [Tst.Test]
 kruskalWallisTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b, c) = testCase "Kruskal-Wallis" $ do
@@ -227,7 +227,7 @@ kruskalWallisTests = zipWith test [(0::Int)..] testData
 ----------------------------------------------------------------
 
 
-kolmogorovSmirnovDTest :: [Test]
+kolmogorovSmirnovDTest :: [Tst.Test]
 kolmogorovSmirnovDTest =
   [ testAssertion "K-S D statistics" $
     and [ eq 1e-6 (kolmogorovSmirnovD standard (toU sample)) reference

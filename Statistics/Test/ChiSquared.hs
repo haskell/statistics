@@ -2,6 +2,7 @@
 -- | Pearson's chi squared test.
 module Statistics.Test.ChiSquared (
     chi2test
+  , module Statistics.Test.Types
   ) where
 
 import Prelude hiding (sum)
