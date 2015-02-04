@@ -4,7 +4,6 @@ module Statistics.Test.Types (
   , isSignificant
   , TestResult(..)
   , significant
-  , TestType(..)
   , PositionTest(..)
   ) where
 
@@ -48,19 +47,6 @@ isSignificant :: CL Double -> Test d -> TestResult
 isSignificant cl t
   = significant $ cl <= testSignificance t
 
-
-
--- | Test type. Exact meaning depends on a specific test. But
--- generally it's tested whether some statistics is too big (small)
--- for 'OneTailed' or whether it too big or too small for 'TwoTailed'
-data TestType = OneTailed
-              | TwoTailed
-              deriving (Eq,Ord,Show,Typeable,Data,Generic)
-
-instance Binary   TestType
-instance FromJSON TestType
-instance ToJSON   TestType
-instance NFData   TestType
 
 -- | Test type for test which compare positional (mean,median etc.)
 --   information of samples.

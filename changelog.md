@@ -20,6 +20,7 @@ Changes in NEXT_VERSION
     than second, second larger than first or whether they differ significantly.
 	Affects Wilcoxon-T, Mann-Whitney-U, and Student-T tests.
 
+  * Statistics.Tests.Types.TestType data type dropped
 
 
 Changes in 0.13.0.0
