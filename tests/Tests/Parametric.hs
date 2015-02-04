@@ -1,11 +1,14 @@
 module Tests.Parametric (tests) where
 
 import Statistics.Test.StudentT
-import Data.Vector.Unboxed as V
-import Test.Framework (Test, testGroup)
-import Tests.Helpers (testEquality)
+import Statistics.Test.Types
+import Statistics.Types
+import qualified Data.Vector.Unboxed as U
+import Test.Framework (testGroup)
+import Tests.Helpers  (testEquality)
+import qualified Test.Framework as Tst
 
-tests :: Test
+tests :: Tst.Test
 tests = testGroup "Parametric tests" studentTTests
 
 -- 2 samples x 20 obs data
@@ -20,8 +23,8 @@ tests = testGroup "Parametric tests" studentTTests
 --   student = t.test(sample1, sample2, var.equal=T)
 --   welch = t.test(sample1, sample2)
 --   paired = t.test(sample1, sample2, paired=T)
-sample1, sample2 :: Vector Double
-sample1 = V.fromList [
+sample1, sample2 :: U.Vector Double
+sample1 = U.fromList [
   1.262954284880793e+00,
  -3.262333607056494e-01,
   1.329799262922501e+00,
@@ -42,7 +45,7 @@ sample1 = V.fromList [
  -8.919211272845686e-01,
   4.356832993557186e-01,
  -1.237538421929958e+00]
-sample2 = V.fromList [
+sample2 = U.fromList [
   2.757321147216907e-01,
   8.773956459817011e-01,
   6.333363608148415e-01,
@@ -64,29 +67,35 @@ sample2 = V.fromList [
   1.738304100853380e+00,
   2.206537181457307e-01]
 
-studentTTests :: [Test]
-studentTTests = [
-    -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
-    testEquality "two-sample t-test TwoTailed Student" (studentT2 TwoTailed 0.03410 sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test TwoTailed Student" (studentT2 TwoTailed 0.03411 sample1 sample2) Significant,
 
+testTTest :: String
+          -> CL Double
+          -> Test d
+          -> [Tst.Test]
+testTTest name pVal test =
+  [ testEquality name (isSignificant pVal test) NotSignificant
+  , testEquality name (isSignificant (pValue $ getPValue pVal + 1e-5) test) Significant
+  ]
+  
+studentTTests :: [Tst.Test]
+studentTTests = concat
+  [ -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
+    testTTest "two-sample t-test SamplesDiffer Student"
+      (pValue 0.03410) (studentTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", var.equal=F)
-    testEquality "two-sample t-test TwoTailed Welch" (welchT2 TwoTailed 0.03483 sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test TwoTailed Welch" (welchT2 TwoTailed 0.03484 sample1 sample2) Significant,
-
+  , testTTest "two-sample t-test SamplesDiffer Welch"
+      (pValue 0.03483) (welchTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", paired=T)
-    testEquality "two-sample t-test TwoTailed Paired" (pairedT2 TwoTailed 0.03411 sample12) NotSignificant,
-    testEquality "two-sample t-test TwoTailed Paired" (pairedT2 TwoTailed 0.03412 sample12) Significant,
-
+  , testTTest "two-sample t-test SamplesDiffer Paired"
+      (pValue 0.03411) (pairedTTest SamplesDiffer sample12)
     -- R: t.test(sample1, sample2, alt="less", var.equal=T)
-    testEquality "two-sample t-test OneTailed Student" (studentT2 OneTailed 0.01705 sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test OneTailed Student" (studentT2 OneTailed 0.01706 sample1 sample2) Significant,
-
+  , testTTest "two-sample t-test BGreater Student"
+      (pValue 0.01705) (studentTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", var.equal=F)
-    testEquality "two-sample t-test OneTailed Welch" (welchT2 OneTailed 0.01741 sample1 sample2) NotSignificant,
-    testEquality "two-sample t-test OneTailed Welch" (welchT2 OneTailed 0.01742 sample1 sample2) Significant,
-
+  , testTTest "two-sample t-test BGreater Welch"
+      (pValue 0.01741) (welchTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", paired=F)
-    testEquality "two-sample t-test OneTailed Paired" (pairedT2 OneTailed 0.01705 sample12) NotSignificant,
-    testEquality "two-sample t-test OneTailed Paired" (pairedT2 OneTailed 0.01706 sample12) Significant]
-  where sample12 = V.zip sample1 sample2
+  , testTTest "two-sample t-test BGreater Paired"
+      (pValue 0.01705) (pairedTTest BGreater sample12)
+  ]
+  where sample12 = U.zip sample1 sample2
