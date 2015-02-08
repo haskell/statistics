@@ -22,6 +22,8 @@ Changes in NEXT_VERSION
 
   * Statistics.Tests.Types.TestType data type dropped
 
+  * Runs test added in Statistics.Tests.Runs
+
 
 Changes in 0.13.0.0
 
