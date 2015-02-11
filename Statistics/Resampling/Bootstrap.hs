@@ -11,18 +11,23 @@
 
 module Statistics.Resampling.Bootstrap
     ( bootstrapBCA
+    , basicBootstrap
     -- * References
     -- $references
     ) where
 
 import Control.Monad.Par (parMap, runPar)
-import Data.Vector.Unboxed ((!))
+import           Data.Vector.Generic ((!))
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic as G
+
 import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
 import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
-import Statistics.Types (Estimator, Sample, Estimate(..), estimate, CL, getNSigma)
-import qualified Data.Vector.Unboxed as U
+import Statistics.Types (Estimator, Sample, Estimate(..), estimate, estimateInt, CL, getNSigma, getPValue)
+import Statistics.Function (gsort)
+
 import qualified Statistics.Resampling as R
 
 
@@ -37,7 +42,9 @@ bootstrapBCA :: CL Double       -- ^ Confidence level
              -> [Resample]      -- ^ Resampled data
              -> [Estimate Double]
 bootstrapBCA confidenceLevel sample estimators resamples
-  = runPar $ parMap (uncurry e) (zip estimators resamples)
+  = runPar $ parMap (uncurry e)
+                    -- WAIT??? Does it make sense???!!!
+                    (zip estimators resamples)
   where
     e est (Resample resample)
       | U.length sample == 1 || isInfinite bias =
@@ -65,6 +72,24 @@ bootstrapBCA confidenceLevel sample estimators resamples
                           d2 = d * d
                 jackMean     = mean jack
         jack  = jackknife est sample
+
+
+-- | Basic bootstrap. This method simply
+basicBootstrap
+  :: (G.Vector v a, Ord a, Num a)
+  => CL Double       -- ^ Confidence vector
+  -> (a,v a)         -- ^ Estimate from full sample and vector of
+                     --   estimates obtained from resamples
+  -> Estimate a
+{-# INLINE basicBootstrap #-}
+basicBootstrap cl (e,ests)
+  = estimateInt e (sorted ! lo, sorted ! hi) cl
+  where
+    sorted = gsort ests
+    n  = fromIntegral $ G.length ests
+    c  = n * (getPValue cl / 2)
+    lo = round c
+    hi = truncate (n - c)
 
 -- $references
 --
