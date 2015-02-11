@@ -12,14 +12,17 @@
 -- Resampling statistics.
 
 module Statistics.Resampling
-    (
+    ( -- * Data types
       Resample(..)
+      -- * Jackknife
     , jackknife
     , jackknifeMean
     , jackknifeVariance
     , jackknifeVarianceUnb
     , jackknifeStdDev
+      -- * Resampling
     , resample
+      -- * Helper functions
     , estimate
     , splitGen
     ) where
