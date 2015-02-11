@@ -164,7 +164,7 @@ data Estimate a = Estimate
       -- ^ Point estimate.
     , estErrors          :: !(a,a)
       -- ^ Estimate's error. They are given relative to central estimate.
-    , estConfidenceLevel :: !(CL a)
+    , estConfidenceLevel :: !(CL Double)
       -- ^ Confidence level of the confidence intervals.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
@@ -176,7 +176,7 @@ instance NFData a => NFData (Estimate a) where
 
 
 -- | Construct estimate and check it for sanity
-estimate :: (Ord a, Num a) => a -> (a,a) -> CL a -> Estimate a
+estimate :: (Ord a, Num a) => a -> (a,a) -> CL Double -> Estimate a
 estimate x dx@(ldx,udx) p
   | ldx <= 0 && udx >= 0 = Estimate x dx p
   | otherwise            = error
@@ -187,7 +187,7 @@ confidenceInterval Estimate{ estPoint = x, estErrors = (ldx,udx) }
   = (x + ldx, x + udx)
 
 -- | Construct estimate from central estimate and confidence interval
-estimateInt :: (Ord a, Num a) => a -> (a,a) -> CL a -> Estimate a
+estimateInt :: (Ord a, Num a) => a -> (a,a) -> CL Double -> Estimate a
 estimateInt x (lo,hi) p
   | lo <= x && hi >= x = Estimate x (lo - x, hi - x) p
   | otherwise          = error
@@ -207,7 +207,7 @@ scaleEstimate a (Estimate x (ldx,udx) cl)
 data UpperLimit a = UpperLimit
     { upperLimit        :: !a
       -- ^ Upper limit
-    , ulConfidenceLevel :: !(CL a)
+    , ulConfidenceLevel :: !(CL Double)
       -- ^ Confidence level for which limit was calculated
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
@@ -223,7 +223,7 @@ instance NFData   a => NFData   (UpperLimit a) where
 data LowerLimit a = LowerLimit {
     lowerLimit        :: !a
     -- ^ Lower limit
-  , llConfidenceLevel :: !(CL a)
+  , llConfidenceLevel :: !(CL Double)
     -- ^ Confidence level for which limit was calculated
   } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
