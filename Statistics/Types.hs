@@ -31,6 +31,7 @@ module Statistics.Types
     , Estimate(..)
     , estimate
     , confidenceInterval
+    , estimateInt
     , scaleEstimate
     , UpperLimit(..)
     , LowerLimit(..)
@@ -184,6 +185,13 @@ estimate x dx@(ldx,udx) p
 confidenceInterval :: Num a => Estimate a -> (a,a)
 confidenceInterval Estimate{ estPoint = x, estErrors = (ldx,udx) }
   = (x + ldx, x + udx)
+
+-- | Construct estimate from central estimate and confidence interval
+estimateInt :: (Ord a, Num a) => a -> (a,a) -> CL a -> Estimate a
+estimateInt x (lo,hi) p
+  | lo <= x && hi >= x = Estimate x (lo - x, hi - x) p
+  | otherwise          = error
+      "Statistics.Types.estimateInt: invalid error values"
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'
 scaleEstimate :: (Ord a, Num a) => a -> Estimate a -> Estimate a
