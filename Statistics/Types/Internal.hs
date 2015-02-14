@@ -19,17 +19,6 @@ type Sample = U.Vector Double
 -- | Sample with weights. First element of sample is data, second is weight
 type WeightedSample = U.Vector (Double,Double)
 
--- | An estimator of a property of a sample, such as its 'mean'.
---
--- The use of an algebraic data type here allows functions such as
--- 'jackknife' and 'bootstrapBCA' to use more efficient algorithms
--- when possible.
-data Estimator = Mean
-               | Variance
-               | VarianceUnbiased
-               | StdDev
-               | Function (Sample -> Double)
-
 -- | Weights for affecting the importance of elements of a sample.
 type Weights = U.Vector Double
 

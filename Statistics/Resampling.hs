@@ -23,6 +23,7 @@ module Statistics.Resampling
       -- * Resampling
     , resample
       -- * Helper functions
+    , Estimator
     , estimate
     , splitGen
     ) where
@@ -41,7 +42,7 @@ import GHC.Generics (Generic)
 import Numeric.Sum (Summation(..), kbn)
 import Statistics.Function (indices)
 import Statistics.Sample (mean, stdDev, variance, varianceUnbiased)
-import Statistics.Types (Estimator(..), Sample)
+import Statistics.Types (Sample)
 import System.Random.MWC (GenIO, initialize, uniform, uniformVector)
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -103,6 +104,17 @@ resample gen ests numResamples samples = do
   mapM (liftM Resample . unsafeFreeze) results
  where
   ests' = map estimate ests
+
+-- | An estimator of a property of a sample, such as its 'mean'.
+--
+-- The use of an algebraic data type here allows functions such as
+-- 'jackknife' and 'bootstrapBCA' to use more efficient algorithms
+-- when possible.
+data Estimator = Mean
+               | Variance
+               | VarianceUnbiased
+               | StdDev
+               | Function (Sample -> Double)
 
 -- | Run an 'Estimator' over a sample.
 estimate :: Estimator -> Sample -> Double

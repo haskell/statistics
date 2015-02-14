@@ -25,7 +25,7 @@ import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
 import Statistics.Resampling (Resample(..), jackknife)
 import Statistics.Sample (mean)
-import Statistics.Types (Estimator, Sample, Estimate(..), estimate, estimateInt, CL, getNSigma, getPValue)
+import Statistics.Types (Sample, Estimate(..), estimate, estimateInt, CL, getNSigma, getPValue)
 import Statistics.Function (gsort)
 
 import qualified Statistics.Resampling as R
@@ -38,7 +38,7 @@ infixl 2 :<
 -- bias and skewness in the resampled distribution.
 bootstrapBCA :: CL Double       -- ^ Confidence level
              -> Sample          -- ^ Sample data
-             -> [Estimator]     -- ^ Estimators
+             -> [R.Estimator]   -- ^ Estimators
              -> [Resample]      -- ^ Resampled data
              -> [Estimate Double]
 bootstrapBCA confidenceLevel sample estimators resamples

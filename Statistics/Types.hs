@@ -36,7 +36,6 @@ module Statistics.Types
     , UpperLimit(..)
     , LowerLimit(..)
       -- * Other
-    , Estimator(..)
     , Sample
     , WeightedSample
     , Weights
