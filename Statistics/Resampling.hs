@@ -14,17 +14,17 @@
 module Statistics.Resampling
     ( -- * Data types
       Resample(..)
+    , Estimator
+    , estimate
+      -- * Resampling
+    , resample
       -- * Jackknife
     , jackknife
     , jackknifeMean
     , jackknifeVariance
     , jackknifeVarianceUnb
     , jackknifeStdDev
-      -- * Resampling
-    , resample
       -- * Helper functions
-    , Estimator
-    , estimate
     , splitGen
     ) where
 
@@ -48,6 +48,11 @@ import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as MU
 
+
+----------------------------------------------------------------
+-- Data types
+----------------------------------------------------------------
+
 -- | A resample drawn randomly, with replacement, from a set of data
 -- points.  Distinct from a normal array to make it harder for your
 -- humble author's brain to go wrong.
@@ -61,6 +66,30 @@ instance ToJSON Resample
 instance Binary Resample where
     put = put . fromResample
     get = fmap Resample get
+
+-- | An estimator of a property of a sample, such as its 'mean'.
+--
+-- The use of an algebraic data type here allows functions such as
+-- 'jackknife' and 'bootstrapBCA' to use more efficient algorithms
+-- when possible.
+data Estimator = Mean
+               | Variance
+               | VarianceUnbiased
+               | StdDev
+               | Function (Sample -> Double)
+
+-- | Run an 'Estimator' over a sample.
+estimate :: Estimator -> Sample -> Double
+estimate Mean             = mean
+estimate Variance         = variance
+estimate VarianceUnbiased = varianceUnbiased
+estimate StdDev           = stdDev
+estimate (Function est) = est
+
+
+----------------------------------------------------------------
+-- Resampling
+----------------------------------------------------------------
 
 -- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
 -- computing each estimate over the resampled data.
@@ -88,7 +117,7 @@ resample gen ests numResamples samples = do
   results <- mapM (const (MU.new numResamples)) ests
   done <- newChan
   gens <- splitGen numCapabilities gen
-  forM_ (zip3 ixs (tail ixs) gens) $ \ (start,!end,gen') -> do
+  forM_ (zip3 ixs (tail ixs) gens) $ \ (start,!end,gen') ->
     forkIO $ do
       let loop k ers | k >= end = writeChan done ()
                      | otherwise = do
@@ -105,24 +134,10 @@ resample gen ests numResamples samples = do
  where
   ests' = map estimate ests
 
--- | An estimator of a property of a sample, such as its 'mean'.
---
--- The use of an algebraic data type here allows functions such as
--- 'jackknife' and 'bootstrapBCA' to use more efficient algorithms
--- when possible.
-data Estimator = Mean
-               | Variance
-               | VarianceUnbiased
-               | StdDev
-               | Function (Sample -> Double)
 
--- | Run an 'Estimator' over a sample.
-estimate :: Estimator -> Sample -> Double
-estimate Mean             = mean
-estimate Variance         = variance
-estimate VarianceUnbiased = varianceUnbiased
-estimate StdDev           = stdDev
-estimate (Function est) = est
+----------------------------------------------------------------
+-- Jackknife
+----------------------------------------------------------------
 
 -- | /O(n) or O(n^2)/ Compute a statistical estimate repeatedly over a
 -- sample, each time omitting a successive element.
