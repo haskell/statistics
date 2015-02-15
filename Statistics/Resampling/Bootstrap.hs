@@ -44,21 +44,25 @@ bootstrapBCA :: CL Double       -- ^ Confidence level
 bootstrapBCA confidenceLevel sample estimators resamples
   = runPar $ parMap (uncurry e)
                     -- WAIT??? Does it make sense???!!!
+                    -- It does. Types are confusing and API is error prone
                     (zip estimators resamples)
   where
     e est (Resample resample)
       | U.length sample == 1 || isInfinite bias =
           estimate pt (0,0) confidenceLevel
       | otherwise =
-          estimate pt ((resample ! lo) - pt, (resample ! hi) - pt) confidenceLevel
+          estimateInt pt (resample ! lo, resample ! hi) confidenceLevel
       where
+        -- Point estimate for whole data set
         pt    = R.estimate est sample
+        -- Quantile estimates for given CL
         lo    = max (cumn a1) 0
           where a1 = bias + b1 / (1 - accel * b1)
                 b1 = bias + z1
         hi    = min (cumn a2) (ni - 1)
           where a2 = bias + b2 / (1 - accel * b2)
                 b2 = bias - z1
+        -- Bias-correcting stuff
         z1    = getNSigma confidenceLevel
         cumn  = round . (*n) . cumulative standard
         bias  = quantile standard (probN / n)
@@ -74,7 +78,8 @@ bootstrapBCA confidenceLevel sample estimators resamples
         jack  = jackknife est sample
 
 
--- | Basic bootstrap. This method simply
+-- | Basic bootstrap. This method simply uses empirical quantiles for
+--   confidence interval.
 basicBootstrap
   :: (G.Vector v a, Ord a, Num a)
   => CL Double       -- ^ Confidence vector
