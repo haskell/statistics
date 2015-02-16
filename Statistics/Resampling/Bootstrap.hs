@@ -93,6 +93,10 @@ basicBootstrap cl (Bootstrap e ests)
     sorted = gsort ests
     n  = fromIntegral $ G.length ests
     c  = n * (getPValue cl / 2)
+    -- FIXME: can we have better estimates of quantiles in case when p
+    --        is not multiple of 1/N
+    --
+    -- FIXME: we could have undercoverage here
     lo = round c
     hi = truncate (n - c)
 
