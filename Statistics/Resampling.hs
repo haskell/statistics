@@ -125,8 +125,8 @@ estimate (Function est) = est
 resample :: GenIO
          -> [Estimator]         -- ^ Estimation functions.
          -> Int                 -- ^ Number of resamples to compute.
-         -> Sample              -- ^ Original sample.
-         -> IO [Resample]
+         -> U.Vector Double     -- ^ Original sample.
+         -> IO [Bootstrap U.Vector Double]
 resample gen ests numResamples samples = do
   let !numSamples = U.length samples
       ixs = scanl (+) 0 $
@@ -149,7 +149,10 @@ resample gen ests numResamples samples = do
       loop start (zip ests' results)
   replicateM_ numCapabilities $ readChan done
   mapM_ sort results
-  mapM (liftM Resample . unsafeFreeze) results
+  -- Build resamples
+  res <- mapM unsafeFreeze results
+  return $ zipWith Bootstrap [estimate e samples | e <- ests]
+                             res
  where
   ests' = map estimate ests
 
