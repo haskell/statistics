@@ -23,7 +23,7 @@ import qualified Data.Vector.Generic as G
 
 import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
-import Statistics.Resampling (Resample(..), jackknife)
+import Statistics.Resampling (Bootstrap(..), Resample(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Sample, Estimate(..), estimate, estimateInt, CL, getNSigma, getPValue)
 import Statistics.Function (gsort)
@@ -83,11 +83,11 @@ bootstrapBCA confidenceLevel sample estimators resamples
 basicBootstrap
   :: (G.Vector v a, Ord a, Num a)
   => CL Double       -- ^ Confidence vector
-  -> (a,v a)         -- ^ Estimate from full sample and vector of
+  -> Bootstrap v a   -- ^ Estimate from full sample and vector of
                      --   estimates obtained from resamples
   -> Estimate a
 {-# INLINE basicBootstrap #-}
-basicBootstrap cl (e,ests)
+basicBootstrap cl (Bootstrap e ests)
   = estimateInt e (sorted ! lo, sorted ! hi) cl
   where
     sorted = gsort ests
