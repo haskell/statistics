@@ -1,4 +1,7 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, FlexibleContexts #-}
 
 -- |
 -- Module    : Statistics.Resampling
@@ -14,6 +17,7 @@
 module Statistics.Resampling
     ( -- * Data types
       Resample(..)
+    , Bootstrap(..)
     , Estimator
     , estimate
       -- * Resampling
@@ -37,6 +41,12 @@ import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Binary ()
 import Data.Vector.Generic (unsafeFreeze)
 import Data.Word (Word32)
+import qualified Data.Foldable as T
+import qualified Data.Traversable as T
+import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as MU
+
 import GHC.Conc (numCapabilities)
 import GHC.Generics (Generic)
 import Numeric.Sum (Summation(..), kbn)
@@ -44,9 +54,6 @@ import Statistics.Function (indices)
 import Statistics.Sample (mean, stdDev, variance, varianceUnbiased)
 import Statistics.Types (Sample)
 import System.Random.MWC (GenIO, initialize, uniform, uniformVector)
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Unboxed.Mutable as MU
 
 
 ----------------------------------------------------------------
@@ -66,6 +73,18 @@ instance ToJSON Resample
 instance Binary Resample where
     put = put . fromResample
     get = fmap Resample get
+
+data Bootstrap v a = Bootstrap
+  { fullSample :: !a
+  , resamples  :: v a
+  }
+  deriving (Eq, Read, Show, Typeable, Data, Generic, Functor, T.Foldable, T.Traversable)
+
+instance (Binary a,   Binary   (v a)) => Binary   (Bootstrap v a)
+instance (FromJSON a, FromJSON (v a)) => FromJSON (Bootstrap v a)
+instance (ToJSON a,   ToJSON   (v a)) => ToJSON   (Bootstrap v a)
+
+
 
 -- | An estimator of a property of a sample, such as its 'mean'.
 --
