@@ -152,8 +152,7 @@ resample :: GenIO
          -> U.Vector Double     -- ^ Original sample.
          -> IO [Bootstrap U.Vector Double]
 resample gen ests numResamples samples = do
-  let !numSamples = U.length samples
-      ixs = scanl (+) 0 $
+  let ixs = scanl (+) 0 $
             zipWith (+) (replicate numCapabilities q)
                         (replicate r 1 ++ repeat 0)
           where (q,r) = numResamples `quotRem` numCapabilities
@@ -164,9 +163,7 @@ resample gen ests numResamples samples = do
     forkIO $ do
       let loop k ers | k >= end = writeChan done ()
                      | otherwise = do
-            re <- U.replicateM numSamples $ do
-                    r <- uniform gen'
-                    return (U.unsafeIndex samples (r `mod` numSamples))
+            re <- resampleVector gen' samples
             forM_ ers $ \(est,arr) ->
                 MU.write arr k . est $ re
             loop (k+1) ers
