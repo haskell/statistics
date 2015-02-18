@@ -23,7 +23,7 @@ import qualified Data.Vector.Generic as G
 
 import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
-import Statistics.Resampling (Bootstrap(..), Resample(..), jackknife)
+import Statistics.Resampling (Bootstrap(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Sample, Estimate(..), estimate, estimateInt, CL, getNSigma, getPValue)
 import Statistics.Function (gsort)
@@ -36,25 +36,24 @@ infixl 2 :<
 
 -- | Bias-corrected accelerated (BCA) bootstrap. This adjusts for both
 -- bias and skewness in the resampled distribution.
-bootstrapBCA :: CL Double       -- ^ Confidence level
-             -> Sample          -- ^ Sample data
-             -> [R.Estimator]   -- ^ Estimators
-             -> [Resample]      -- ^ Resampled data
-             -> [Estimate Double]
-bootstrapBCA confidenceLevel sample estimators resamples
-  = runPar $ parMap (uncurry e)
-                    -- WAIT??? Does it make sense???!!!
-                    -- It does. Types are confusing and API is error prone
-                    (zip estimators resamples)
+bootstrapBCA
+  :: CL Double       -- ^ Confidence level
+  -> Sample          -- ^ Full data sample
+  -> [(R.Estimator, Bootstrap U.Vector Double)]
+  -- ^ Estimates obtained from resampled data and estimator used for
+  --   this.
+  -> [Estimate Double]
+-- BCA algorithm is described in ch. 5 of Davison, Hinkley "Confidence
+-- intervals" in section 5.3 "Percentile method"
+bootstrapBCA confidenceLevel sample resampledData
+  = runPar $ parMap e resampledData
   where
-    e est (Resample resample)
+    e (est, Bootstrap pt resample)
       | U.length sample == 1 || isInfinite bias =
           estimate pt (0,0) confidenceLevel
       | otherwise =
           estimateInt pt (resample ! lo, resample ! hi) confidenceLevel
       where
-        -- Point estimate for whole data set
-        pt    = R.estimate est sample
         -- Quantile estimates for given CL
         lo    = max (cumn a1) 0
           where a1 = bias + b1 / (1 - accel * b1)
@@ -62,13 +61,14 @@ bootstrapBCA confidenceLevel sample estimators resamples
         hi    = min (cumn a2) (ni - 1)
           where a2 = bias + b2 / (1 - accel * b2)
                 b2 = bias - z1
-        -- Bias-correcting stuff
+        -- Number of resamples
+        ni    = U.length resample
+        n     = fromIntegral ni
+        -- Corrections
         z1    = getNSigma confidenceLevel
         cumn  = round . (*n) . cumulative standard
         bias  = quantile standard (probN / n)
           where probN = fromIntegral . U.length . U.filter (<pt) $ resample
-        ni    = U.length resample
-        n     = fromIntegral ni
         accel = sumCubes / (6 * (sumSquares ** 1.5))
           where (sumSquares :< sumCubes) = U.foldl' f (0 :< 0) jack
                 f (s :< c) j = s + d2 :< c + d2 * d
