@@ -61,6 +61,7 @@ library
     Statistics.Distribution.Gamma
     Statistics.Distribution.Geometric
     Statistics.Distribution.Hypergeometric
+    Statistics.Distribution.Laplace
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
     Statistics.Distribution.StudentT
