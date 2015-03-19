@@ -14,7 +14,7 @@
 -- It is used in differential privacy (Laplace Method), speech
 -- recognition and least absolute deviations method (Laplace's first
 -- law of errors, giving a robust regression method)
--- 
+--
 
 module Statistics.Distribution.Laplace
     (
@@ -27,12 +27,11 @@ module Statistics.Distribution.Laplace
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
+import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution         as D
 import Control.Applicative ((<$>), (<*>))
-import Data.Binary (put, get)
 
 
 data LaplaceDistribution = LD {
@@ -81,25 +80,31 @@ instance D.ContGen LaplaceDistribution where
   genContVar = D.genContinous
 
 cumulative :: LaplaceDistribution -> Double -> Double
-cumulative (LD l s) x = let d = x - l in 0.5 + 0.5 * signum d * (1 - exp (- abs d / s))
+cumulative (LD l s) x
+  | x <= l    = 0.5 * exp ( (x - l) / s)
+  | otherwise = 1 - 0.5 * exp ( - (x - l) / s )
 
 complCumulative :: LaplaceDistribution -> Double -> Double
-complCumulative (LD l s) x = let d = x - l in 0.5 - 0.5 * signum d * (1 - exp (- abs d / s))
+complCumulative (LD l s) x
+  | x <= l    = 1 - 0.5 * exp ( (x - l) / s)
+  | otherwise = 0.5 * exp ( - (x - l) / s )
 
 quantile :: LaplaceDistribution -> Double -> Double
 quantile (LD l s) p
-  | p == 0         = -inf
-  | p == 1         = inf
-  | p == 0.5       = l
-  | p > 0 && p < 1 = let d = p - 0.5 in l - s * signum d * log (1 - 2 * abs d)
-  | otherwise      =
+  | p == 0             = -inf
+  | p == 1             = inf
+  | p == 0.5           = l
+  | p > 0   && p < 0.5 = l + s * log (2 * p)
+  | p > 0.5 && p < 1   = l - s * log (2 - 2 * p)
+  | otherwise          =
     error $ "Statistics.Distribution.Laplace.quantile: p must be in [0,1] range. Got: "++show p
-  where inf        = 1 / 0
+  where
+    inf = 1 / 0
 
--- | Create an laplace distribution.
-laplace :: Double            -- ^ Location
-            -> Double        -- ^ Scale
-            -> LaplaceDistribution
+-- | Create an Laplace distribution.
+laplace :: Double         -- ^ Location
+        -> Double        -- ^ Scale
+        -> LaplaceDistribution
 laplace l s
   | s <= 0 =
     error $ "Statistics.Distribution.Laplace.laplace: scale parameter must be positive. Got " ++ show s
