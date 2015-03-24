@@ -104,7 +104,7 @@ library
     monad-par         >= 0.3.4,
     mwc-random        >= 0.13.0.0,
     primitive         >= 0.3,
-    vector            >= 0.10,
+    vector            >= 0.9,
     vector-algorithms >= 0.4,
     vector-binary-instances >= 0.2.1
   if impl(ghc < 7.6)
