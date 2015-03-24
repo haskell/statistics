@@ -41,7 +41,7 @@ bootstrapBCA confidenceLevel sample estimators resamples
   where
     e est (Resample resample)
       | U.length sample == 1 || isInfinite bias =
-          estimate pt pt pt confidenceLevel
+          estimate pt (pt,pt) confidenceLevel
       | otherwise =
           estimate pt ((resample ! lo) - pt, (resample ! hi) - pt) confidenceLevel
       where

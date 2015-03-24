@@ -160,7 +160,7 @@ getNSigma1 (CL p) = negate $ quantile standard p
 data Estimate a = Estimate
     { estPoint           :: !a
       -- ^ Point estimate.
-    , estErrors          :: !(a,a)
+    , estErrors          :: (a,a)
       -- ^ Estimate's error. They are given relative to central estimate.
     , estConfidenceLevel :: !(CL a)
       -- ^ Confidence level of the confidence intervals.
