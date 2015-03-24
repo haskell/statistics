@@ -31,9 +31,10 @@ import Statistics.Function (minMax, nextHighestPowerOfTwo)
 import Statistics.Math.RootFinding (fromRoot, ridders)
 import Statistics.Sample.Histogram (histogram_)
 import Statistics.Sample.Internal (sum)
-import Statistics.Transform (dct, idct)
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Unboxed as U
+import Statistics.Transform (CD, dct, idct)
+import qualified Data.Vector.Generic  as G
+import qualified Data.Vector.Unboxed  as U
+import qualified Data.Vector          as V
 
 
 -- | Gaussian kernel density estimator for one-dimensional data, using
@@ -46,17 +47,22 @@ import qualified Data.Vector.Unboxed as U
 --   mesh interval, use 'kde_'.)
 --
 -- * Density estimates at each mesh point.
-kde :: Int
+kde :: (G.Vector v CD, G.Vector v Double, G.Vector v Int)
+    => Int
     -- ^ The number of mesh points to use in the uniform discretization
     -- of the interval @(min,max)@.  If this value is not a power of
     -- two, then it is rounded up to the next power of two.
-    -> U.Vector Double -> (U.Vector Double, U.Vector Double)
+    -> v Double -> (v Double, v Double)
 kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
   where
     (lo,hi) = minMax xs
-    range   | U.length xs <= 1 = 1       -- Unreasonable guess
+    range   | G.length xs <= 1 = 1       -- Unreasonable guess
             | lo == hi         = 1       -- All elements are equal
             | otherwise        = hi - lo
+{-# INLINABLE  kde #-}
+{-# SPECIAlIZE kde :: Int -> U.Vector Double -> (U.Vector Double, U.Vector Double) #-}
+{-# SPECIAlIZE kde :: Int -> V.Vector Double -> (V.Vector Double, V.Vector Double) #-}
+
 
 -- | Gaussian kernel density estimator for one-dimensional data, using
 -- the method of Botev et al.
@@ -66,7 +72,8 @@ kde n0 xs = kde_ n0 (lo - range / 10) (hi + range / 10) xs
 -- * The coordinates of each mesh point.
 --
 -- * Density estimates at each mesh point.
-kde_ :: Int
+kde_ :: (G.Vector v CD, G.Vector v Double, G.Vector v Int)
+     => Int
      -- ^ The number of mesh points to use in the uniform discretization
      -- of the interval @(min,max)@.  If this value is not a power of
      -- two, then it is rounded up to the next power of two.
@@ -74,9 +81,10 @@ kde_ :: Int
      -- ^ Lower bound (@min@) of the mesh range.
      -> Double
      -- ^ Upper bound (@max@) of the mesh range.
-     -> U.Vector Double -> (U.Vector Double, U.Vector Double)
+     -> v Double
+     -> (v Double, v Double)
 kde_ n0 min max xs
-  | U.null xs = error "Statistics.KernelDensity.kde: empty sample"
+  | G.null xs = error "Statistics.KernelDensity.kde: empty sample"
   | n0 <= 1   = error "Statistics.KernelDensity.kde: invalid number of points"
   | otherwise = (mesh, density)
   where
@@ -103,6 +111,10 @@ kde_ n0 min max xs
                 const = (1 + 0.5 ** (s+0.5)) / 3
                 k0    = U.product (G.enumFromThenTo 1 3 (2*s-1)) / m_sqrt_2_pi
     sqr x = x * x
+{-# INLINABLE  kde_ #-}
+{-# SPECIAlIZE kde_ :: Int -> Double -> Double -> U.Vector Double -> (U.Vector Double, U.Vector Double) #-}
+{-# SPECIAlIZE kde_ :: Int -> Double -> Double -> V.Vector Double -> (V.Vector Double, V.Vector Double) #-}
+
 
 -- $references
 --
