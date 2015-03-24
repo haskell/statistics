@@ -21,6 +21,7 @@ module Statistics.Distribution.Laplace
       LaplaceDistribution
     -- * Constructors
     , laplace
+    , laplaceFromSample
     -- * Accessors
     , ldLocation
     , ldScale
@@ -30,7 +31,11 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
+import qualified Data.Vector.Generic             as G
 import qualified Statistics.Distribution         as D
+import qualified Statistics.Quantile             as Q
+import qualified Statistics.Sample               as S
+import Statistics.Types (Sample)
 import Control.Applicative ((<$>), (<*>))
 
 
@@ -109,3 +114,11 @@ laplace l s
   | s <= 0 =
     error $ "Statistics.Distribution.Laplace.laplace: scale parameter must be positive. Got " ++ show s
   | otherwise = LD l s
+
+-- | Create Laplace distribution from sample. No tests are made to
+-- check whether it truly is Laplace.
+laplaceFromSample :: Sample -> LaplaceDistribution
+laplaceFromSample xs = LD s l
+  where
+    s = Q.continuousBy Q.medianUnbiased 1 2 xs
+    l = S.mean $ G.map (\x -> abs $ x - s) xs
