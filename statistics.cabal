@@ -48,6 +48,7 @@ extra-source-files:
 library
   exposed-modules:
     Statistics.Autocorrelation
+    Statistics.ConfidenceInt
     Statistics.Constants
     Statistics.Correlation
     Statistics.Correlation.Kendall
@@ -86,6 +87,7 @@ library
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.KruskalWallis
     Statistics.Test.MannWhitneyU
+    Statistics.Test.StudentT
     Statistics.Test.Types
     Statistics.Test.WilcoxonT
     Statistics.Transform
@@ -96,6 +98,7 @@ library
     Statistics.Internal
     Statistics.Sample.Internal
     Statistics.Test.Internal
+    Statistics.Types.Internal
   build-depends:
     aeson >= 0.6.0.0,
     base >= 4.4 && < 5,
@@ -133,6 +136,7 @@ test-suite tests
     Tests.Matrix.Types
     Tests.NonParametric
     Tests.NonParametric.Table
+    Tests.Parametric
     Tests.Transform
 
   ghc-options:
