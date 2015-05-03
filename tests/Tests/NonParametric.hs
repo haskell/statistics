@@ -6,7 +6,7 @@ import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.KruskalWallis
 import Statistics.Test.WilcoxonT
-import Statistics.Test.Types (TestType(..),TestResult(..))
+import Statistics.Test.Types (TestResult(..),PositionTest(..),isSignificant)
 import Statistics.Types (CL(..),pValue)
 
 import Test.Framework (Test, testGroup)
@@ -52,7 +52,7 @@ mannWhitneyTests = zipWith test [(0::Int)..] testData ++
           assertEqual ("Mann-Whitney U Sig " ++ show n) d ss
       where
         us = mannWhitneyU (U.fromList a) (U.fromList b)
-        ss = mannWhitneyUSignificant TwoTailed (length a, length b) (pValue 0.05) us
+        ss = mannWhitneyUSignificant SamplesDiffer (length a, length b) (pValue 0.05) us
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
     testData :: [([Double], [Double], (Double, Double), Maybe TestResult)]
     testData = [ ( [3,4,2,6,2,5]
@@ -183,10 +183,11 @@ kruskalWallisTests = zipWith test [(0::Int)..] testData
         assertEqual ("Kruskal-Wallis Sig " ++ show n) c kwt
       where
         kw = kruskalWallis $ map U.fromList a
-        kwt = kruskalWallisTest 0.05 $ map U.fromList a
+        kwt = fmap (isSignificant $ pValue 0.05) $ kruskalWallisTest $ map U.fromList a
         round100 :: Double -> Integer
         round100 = round . (*100)
 
+    testData :: [([[Int]], Double, Maybe TestResult)]
     testData = [ ( [ [68,93,123,83,108,122]
                    , [119,116,101,103,113,84]
                    , [70,68,54,73,81,68]
