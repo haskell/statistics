@@ -50,13 +50,17 @@ module Statistics.Sample
     , fastVarianceUnbiased
     , fastStdDev
 
+    -- * Joint distirbutions
+    , covariance
+    , correlation
+    , pair
     -- * References
     -- $references
     ) where
 
 import Statistics.Function (minMax)
 import Statistics.Sample.Internal (robustSumVar, sum)
-import Statistics.Types (Sample,WeightedSample)
+import Statistics.Types.Internal  (Sample,WeightedSample)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -339,6 +343,52 @@ fastVarianceUnbiased = fini . fastVar
 fastStdDev :: (G.Vector v Double) => v Double -> Double
 fastStdDev = sqrt . fastVariance
 {-# INLINE fastStdDev #-}
+
+-- | Covariance of sample of pairs. For empty sample it's set to
+--   zero
+covariance :: (G.Vector v (Double,Double), G.Vector v Double)
+           => v (Double,Double)
+           -> Double
+covariance xy
+  | n == 0    = 0
+  | otherwise = mean $ G.zipWith (*)
+                         (G.map (\x -> x - muX) xs)
+                         (G.map (\y -> y - muY) ys)
+  where
+    n       = G.length xy
+    (xs,ys) = G.unzip xy
+    muX     = mean xs
+    muY     = mean ys
+{-# SPECIALIZE covariance :: U.Vector (Double,Double) -> Double #-}
+{-# SPECIALIZE covariance :: V.Vector (Double,Double) -> Double #-}
+
+-- | Correlation coefficient for sample of pairs. Also known as
+--   Pearson's correlation. For empty sample it's set to zero.
+correlation :: (G.Vector v (Double,Double), G.Vector v Double)
+           => v (Double,Double)
+           -> Double
+correlation xy
+  | n == 0    = 0
+  | otherwise = cov / sqrt (varX * varY)
+  where
+    n       = G.length xy
+    (xs,ys) = G.unzip xy
+    (muX,varX) = meanVariance xs
+    (muY,varY) = meanVariance ys
+    cov = mean $ G.zipWith (*)
+            (G.map (\x -> x - muX) xs)
+            (G.map (\y -> y - muY) ys)
+{-# SPECIALIZE correlation :: U.Vector (Double,Double) -> Double #-}
+{-# SPECIALIZE correlation :: V.Vector (Double,Double) -> Double #-}
+
+
+-- | Pair two samples. It's like 'G.zip' but requires that both
+--   samples have equal size.
+pair :: (G.Vector v a, G.Vector v b, G.Vector v (a,b)) => v a -> v b -> v (a,b)
+pair va vb
+  | G.length va == G.length vb = G.zip va vb
+  | otherwise = error "Statistics.Sample.pair: vector must have same length"
+{-# INLINE pair #-}
 
 ------------------------------------------------------------------------
 -- Helper code. Monomorphic unpacked accumulators.

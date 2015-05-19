@@ -6,6 +6,9 @@ import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.KruskalWallis
 import Statistics.Test.WilcoxonT
+import Statistics.Test.Types (TestResult(..),PositionTest(..),isSignificant)
+import Statistics.Types (CL(..),pValue)
+
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.HUnit
 import Test.HUnit (assertEqual)
@@ -31,16 +34,16 @@ mannWhitneyTests :: [Test]
 mannWhitneyTests = zipWith test [(0::Int)..] testData ++
   [ testEquality "Mann-Whitney U Critical Values, m=1"
       (replicate (20*3) Nothing)
-      [mannWhitneyUCriticalValue (1,x) p | x <- [1..20], p <- [0.005,0.01,0.025]]
+      [mannWhitneyUCriticalValue (1,x) (pValue p) | x <- [1..20], p <- [0.005,0.01,0.025]]
   , testEquality "Mann-Whitney U Critical Values, m=2, p=0.025"
       (replicate 7 Nothing ++ map Just [0,0,0,0,1,1,1,1,1,2,2,2,2])
-      [mannWhitneyUCriticalValue (2,x) 0.025 | x <- [1..20]]
+      [mannWhitneyUCriticalValue (2,x) (pValue 0.025) | x <- [1..20]]
   , testEquality "Mann-Whitney U Critical Values, m=6, p=0.05"
       (replicate 1 Nothing ++ map Just [0, 2,3,5,7,8,10,12,14,16,17,19,21,23,25,26,28,30,32])
-      [mannWhitneyUCriticalValue (6,x) 0.05 | x <- [1..20]]
+      [mannWhitneyUCriticalValue (6,x) (pValue 0.05) | x <- [1..20]]
   , testEquality "Mann-Whitney U Critical Values, m=20, p=0.025"
       (replicate 1 Nothing ++ map Just [2,8,14,20,27,34,41,48,55,62,69,76,83,90,98,105,112,119,127])
-      [mannWhitneyUCriticalValue (20,x) 0.025 | x <- [1..20]]
+      [mannWhitneyUCriticalValue (20,x) (pValue 0.025) | x <- [1..20]]
   ]
   where
     test n (a, b, c, d)
@@ -49,7 +52,7 @@ mannWhitneyTests = zipWith test [(0::Int)..] testData ++
           assertEqual ("Mann-Whitney U Sig " ++ show n) d ss
       where
         us = mannWhitneyU (U.fromList a) (U.fromList b)
-        ss = mannWhitneyUSignificant TwoTailed (length a, length b) 0.05 us
+        ss = mannWhitneyUSignificant SamplesDiffer (length a, length b) (pValue 0.05) us
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
     testData :: [([Double], [Double], (Double, Double), Maybe TestResult)]
     testData = [ ( [3,4,2,6,2,5]
@@ -108,47 +111,48 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
   , testAssertion "Sig 16, 36" (to4dp 0.0523 $ wilcoxonMatchedPairSignificance 16 36)
   , testEquality   "Wilcoxon critical values, p=0.05"
       (replicate 4 Nothing ++ map Just [0,2,3,5,8,10,13,17,21,25,30,35,41,47,53,60,67,75,83,91,100,110,119])
-      [wilcoxonMatchedPairCriticalValue x 0.05 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.05) | x <- [1..27]]
   , testEquality "Wilcoxon critical values, p=0.025"
       (replicate 5 Nothing ++ map Just [0,2,3,5,8,10,13,17,21,25,29,34,40,46,52,58,65,73,81,89,98,107])
-      [wilcoxonMatchedPairCriticalValue x 0.025 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.025) | x <- [1..27]]
   , testEquality "Wilcoxon critical values, p=0.01"
       (replicate 6 Nothing ++ map Just [0,1,3,5,7,9,12,15,19,23,27,32,37,43,49,55,62,69,76,84,92])
-      [wilcoxonMatchedPairCriticalValue x 0.01 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.01) | x <- [1..27]]
   , testEquality "Wilcoxon critical values, p=0.005"
       (replicate 7 Nothing ++ map Just [0,1,3,5,7,9,12,15,19,23,27,32,37,42,48,54,61,68,75,83])
-      [wilcoxonMatchedPairCriticalValue x 0.005 | x <- [1..27]]
+      [wilcoxonMatchedPairCriticalValue x (pValue 0.005) | x <- [1..27]]
   ]
   where
     test n (a, b, c) = testEquality ("Wilcoxon Paired " ++ show n) c res
-      where res = (wilcoxonMatchedPairSignedRank (U.fromList a) (U.fromList b))
+      where res = wilcoxonMatchedPairSignedRank (U.zip (U.fromList a) (U.fromList b))
 
-    -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
-    testData :: [([Double], [Double], (Double, Double))]
-    testData = [ ([1..10], [1..10], (0, 0     ))
-               , ([1..5],  [6..10], (0, 5*(-3)))
+    -- List of (Sample A, Sample B, (# Distinct Pairs, Positive Rank, Negative Rank))
+    testData :: [([Double], [Double], (Int, Double, Double))]
+    testData = [ ([1..10], [1..10], (0, 0, 0     ))
+               , ([1..5],  [6..10], (5, 0, 5*(-3)))
                -- Worked example from the Internet:
                , ( [125,115,130,140,140,115,140,125,140,135]
                  , [110,122,125,120,140,124,123,137,135,145]
-                 , ( sum $ filter (> 0) [7,-3,1.5,9,0,-4,8,-6,1.5,-5]
+                 , ( 9
+                   , sum $ filter (> 0) [7,-3,1.5,9,0,-4,8,-6,1.5,-5]
                    , sum $ filter (< 0) [7,-3,1.5,9,0,-4,8,-6,1.5,-5]
                    )
                  )
                -- Worked examples from books/papers:
                , ( [2.4,1.9,2.3,1.9,2.4,2.5]
                  , [2.0,2.1,2.0,2.0,1.8,2.0]
-                 , (18, -3)
+                 , (6, 18, -3)
                  )
                , ( [130,170,125,170,130,130,145,160]
                  , [120,163,120,135,143,136,144,120]
-                 , (27, -9)
+                 , (8, 27, -9)
                  )
                , ( [540,580,600,680,430,740,600,690,605,520]
                  , [760,710,1105,880,500,990,1050,640,595,520]
-                 , (3, -42)
+                 , (9, 3, -42)
                  )
                ]
-    to4dp tgt x = x >= tgt - 0.00005 && x < tgt + 0.00005
+    to4dp tgt (CL x) = x >= tgt - 0.00005 && x < tgt + 0.00005
 
 ----------------------------------------------------------------
 
@@ -157,6 +161,7 @@ kruskalWallisRankTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b) = testCase "Kruskal-Wallis Ranking"
                   $ assertEqual ("Kruskal-Wallis " ++ show n) (map U.fromList b) (kruskalWallisRank $ map U.fromList a)
+    testData :: [([[Int]],[[Double]])]
     testData = [ ( [ [68,93,123,83,108,122]
                    , [119,116,101,103,113,84]
                    , [70,68,54,73,81,68]
@@ -178,10 +183,11 @@ kruskalWallisTests = zipWith test [(0::Int)..] testData
         assertEqual ("Kruskal-Wallis Sig " ++ show n) c kwt
       where
         kw = kruskalWallis $ map U.fromList a
-        kwt = kruskalWallisTest 0.05 $ map U.fromList a
+        kwt = fmap (isSignificant $ pValue 0.05) $ kruskalWallisTest $ map U.fromList a
         round100 :: Double -> Integer
         round100 = round . (*100)
 
+    testData :: [([[Int]], Double, Maybe TestResult)]
     testData = [ ( [ [68,93,123,83,108,122]
                    , [119,116,101,103,113,84]
                    , [70,68,54,73,81,68]
