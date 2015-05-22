@@ -116,7 +116,8 @@ laplace l s
   | otherwise = LD l s
 
 -- | Create Laplace distribution from sample. No tests are made to
--- check whether it truly is Laplace.
+--   check whether it truly is Laplace. Location of distribution
+--   estimated as median of sample.
 laplaceFromSample :: Sample -> LaplaceDistribution
 laplaceFromSample xs = LD s l
   where
