@@ -49,6 +49,7 @@ library
   exposed-modules:
     Statistics.Autocorrelation
     Statistics.Constants
+    Statistics.Correlation
     Statistics.Correlation.Kendall
     Statistics.Distribution
     Statistics.Distribution.Beta
@@ -60,6 +61,7 @@ library
     Statistics.Distribution.Gamma
     Statistics.Distribution.Geometric
     Statistics.Distribution.Hypergeometric
+    Statistics.Distribution.Laplace
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
     Statistics.Distribution.StudentT
@@ -134,7 +136,7 @@ test-suite tests
     Tests.Transform
 
   ghc-options:
-    -Wall -threaded -rtsopts
+    -Wall -threaded -rtsopts -fsimpl-tick-factor=500
 
   build-depends:
     HUnit,

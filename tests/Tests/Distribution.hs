@@ -17,6 +17,7 @@ import Statistics.Distribution.FDistribution (FDistribution, fDistribution)
 import Statistics.Distribution.Gamma (GammaDistribution, gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
+import Statistics.Distribution.Laplace (LaplaceDistribution, laplace)
 import Statistics.Distribution.Normal (NormalDistribution, normalDistr)
 import Statistics.Distribution.Poisson (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
@@ -42,6 +43,7 @@ tests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T ChiSquared              )
   , contDistrTests (T :: T ExponentialDistribution )
   , contDistrTests (T :: T GammaDistribution       )
+  , contDistrTests (T :: T LaplaceDistribution     )
   , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
   , contDistrTests (T :: T StudentT                )
@@ -252,6 +254,8 @@ instance QC.Arbitrary BinomialDistribution where
   arbitrary = binomial <$> QC.choose (1,100) <*> QC.choose (0,1)
 instance QC.Arbitrary ExponentialDistribution where
   arbitrary = exponential <$> QC.choose (0,100)
+instance QC.Arbitrary LaplaceDistribution where
+  arbitrary = laplace <$> QC.choose (-10,10) <*> QC.choose (0, 2)
 instance QC.Arbitrary GammaDistribution where
   arbitrary = gammaDistr <$> QC.choose (0.1,10) <*> QC.choose (0.1,10)
 instance QC.Arbitrary BetaDistribution where

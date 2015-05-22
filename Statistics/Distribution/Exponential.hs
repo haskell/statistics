@@ -98,7 +98,7 @@ quantile (ED l) p
     error $ "Statistics.Distribution.Exponential.quantile: p must be in [0,1] range. Got: "++show p
 
 -- | Create an exponential distribution.
-exponential :: Double            -- ^ &#955; (scale) parameter.
+exponential :: Double            -- ^ Rate parameter.
             -> ExponentialDistribution
 exponential l
   | l <= 0 =

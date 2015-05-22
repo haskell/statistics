@@ -3,6 +3,7 @@ import Criterion.Main
 import Data.Complex
 import Statistics.Sample
 import Statistics.Transform
+import Statistics.Correlation.Pearson
 import System.Random.MWC
 import qualified Data.Vector.Unboxed as U
 
@@ -35,6 +36,10 @@ main =
     , bench "variance"         $ nf (\x -> variance x)         sample
     , bench "varianceUnbiased" $ nf (\x -> varianceUnbiased x) sample
     , bench "varianceWeighted" $ nf (\x -> varianceWeighted x) sampleW
+      -- Correlation
+    , bench "pearson"          $ nf (\x -> pearson (U.reverse sample) x) sample
+    , bench "pearson'"          $ nf (\x -> pearson' (U.reverse sample) x) sample
+    , bench "pearsonFast"      $ nf (\x -> pearsonFast (U.reverse sample) x) sample
       -- Other
     , bench "stdDev"           $ nf (\x -> stdDev x)           sample
     , bench "skewness"         $ nf (\x -> skewness x)         sample
