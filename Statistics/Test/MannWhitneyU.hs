@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- |
 -- Module    : Statistics.Test.MannWhitneyU
 -- Copyright : (c) 2010 Neil Brown
@@ -26,7 +28,6 @@ module Statistics.Test.MannWhitneyU (
     -- $references
   ) where
 
-import Control.Applicative ((<$>))
 import Data.List (findIndex)
 import Data.Ord (comparing)
 import Numeric.SpecFunctions (choose)
@@ -39,6 +40,10 @@ import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
 import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 
 -- | The Wilcoxon Rank Sums Test.
 --

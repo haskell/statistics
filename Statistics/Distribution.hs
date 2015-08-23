@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns, CPP, ScopedTypeVariables #-}
 -- |
 -- Module    : Statistics.Distribution
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -32,7 +32,6 @@ module Statistics.Distribution
     , sumProbabilities
     ) where
 
-import Control.Applicative ((<$>), Applicative(..))
 import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
 import Statistics.Function (square)
@@ -40,6 +39,9 @@ import Statistics.Sample.Internal (sum)
 import System.Random.MWC (Gen, uniform)
 import qualified Data.Vector.Unboxed as U
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>), Applicative(..))
+#endif
 
 -- | Type class common to all distributions. Only c.d.f. could be
 -- defined for both discrete and continous distributions.

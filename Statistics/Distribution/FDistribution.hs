@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.FDistribution
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -26,7 +26,10 @@ import Statistics.Function (square)
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
 import Data.Binary (put, get)
+
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | F distribution
 data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double

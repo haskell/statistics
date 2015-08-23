@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Laplace
 -- Copyright : (c) 2015 Mihai Maruseac
@@ -36,8 +36,10 @@ import qualified Statistics.Distribution         as D
 import qualified Statistics.Quantile             as Q
 import qualified Statistics.Sample               as S
 import Statistics.Types (Sample)
-import Control.Applicative ((<$>), (<*>))
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 data LaplaceDistribution = LD {
       ldLocation :: {-# UNPACK #-} !Double

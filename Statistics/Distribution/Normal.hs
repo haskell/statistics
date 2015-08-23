@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE BangPatterns, CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Normal
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -21,7 +21,6 @@ module Statistics.Distribution.Normal
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<$>), (<*>))
 import Data.Binary (Binary)
 import Data.Binary (put, get)
 import Data.Data (Data, Typeable)
@@ -31,6 +30,10 @@ import Numeric.SpecFunctions (erfc, invErfc)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 import qualified System.Random.MWC.Distributions as MWC
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | The normal distribution.
 data NormalDistribution = ND {

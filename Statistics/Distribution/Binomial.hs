@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Binomial
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -32,8 +32,10 @@ import qualified Statistics.Distribution.Poisson.Internal as I
 import Numeric.SpecFunctions (choose,incompleteBeta)
 import Numeric.MathFunctions.Constants (m_epsilon)
 import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | The binomial distribution.
 data BinomialDistribution = BD {

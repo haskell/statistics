@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Geometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -31,7 +31,6 @@ module Statistics.Distribution.Geometric
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<$>))
 import Control.Monad (liftM)
 import Data.Binary (Binary)
 import Data.Binary (put, get)
@@ -40,6 +39,10 @@ import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_neg_inf)
 import qualified Statistics.Distribution as D
 import qualified System.Random.MWC.Distributions as MWC
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 
 ----------------------------------------------------------------
 -- Distribution over [1..]

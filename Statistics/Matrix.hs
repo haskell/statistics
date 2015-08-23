@@ -1,4 +1,4 @@
-{-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE CPP, PatternGuards #-}
 -- |
 -- Module    : Statistics.Matrix
 -- Copyright : 2011 Aleksey Khudyakov, 2014 Bryan O'Sullivan
@@ -47,7 +47,6 @@ module Statistics.Matrix
     ) where
 
 import Prelude hiding (exponent, map, sum)
-import Control.Applicative ((<$>))
 import Control.Monad.ST
 import qualified Data.Vector.Unboxed as U
 import           Data.Vector.Unboxed   ((!))
@@ -58,6 +57,9 @@ import Statistics.Matrix.Types
 import Statistics.Matrix.Mutable  (unsafeNew,unsafeWrite,unsafeFreeze)
 import Statistics.Sample.Internal (sum)
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 
 ----------------------------------------------------------------
 -- Conversion to/from vectors/lists

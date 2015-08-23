@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts,
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, FlexibleContexts,
     FlexibleInstances, UndecidableInstances #-}
 -- |
 -- Module    : Statistics.Distribution.Transform
@@ -18,13 +18,16 @@ module Statistics.Distribution.Transform
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<*>))
 import Data.Binary (Binary)
 import Data.Binary (put, get)
 import Data.Data (Data, Typeable)
-import Data.Functor ((<$>))
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<*>))
+import Data.Functor ((<$>))
+#endif
 
 -- | Linear transformation applied to distribution.
 --
