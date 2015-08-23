@@ -16,7 +16,7 @@ module Statistics.Distribution.Poisson.Internal
 
 import Data.List (unfoldr)
 import Numeric.MathFunctions.Constants (m_sqrt_2_pi, m_tiny, m_epsilon)
-import Numeric.SpecFunctions (logGamma, stirlingError, choose, logFactorial)
+import Numeric.SpecFunctions (logGamma, stirlingError {-, choose, logFactorial -})
 import Numeric.SpecFunctions.Extra (bd0)
 
 -- | An unchecked, non-integer-valued version of Loader's saddle point
@@ -32,23 +32,23 @@ probability lambda x
   | otherwise            = exp (-(stirlingError x) - bd0 x lambda) /
                            (m_sqrt_2_pi * sqrt x)
 
--- | Compute entropy using Theorem 1 from "Sharp Bounds on the Entropy
--- of the Poisson Law".  This function is unused because 'directEntorpy'
--- is just as accurate and is faster by about a factor of 4.
-alyThm1 :: Double -> Double
-alyThm1 lambda =
-  sum (takeWhile (\x -> abs x >= m_epsilon * lll) alySeries) + lll
-  where lll = lambda * (1 - log lambda)
-        alySeries =
-          [ alyc k * exp (fromIntegral k * log lambda - logFactorial k)
-          | k <- [2..] ]
+-- -- | Compute entropy using Theorem 1 from "Sharp Bounds on the Entropy
+-- -- of the Poisson Law".  This function is unused because 'directEntorpy'
+-- -- is just as accurate and is faster by about a factor of 4.
+-- alyThm1 :: Double -> Double
+-- alyThm1 lambda =
+--   sum (takeWhile (\x -> abs x >= m_epsilon * lll) alySeries) + lll
+--   where lll = lambda * (1 - log lambda)
+--         alySeries =
+--           [ alyc k * exp (fromIntegral k * log lambda - logFactorial k)
+--           | k <- [2..] ]
 
-alyc :: Int -> Double
-alyc k =
-  sum [ parity j * choose (k-1) j * log (fromIntegral j+1) | j <- [0..k-1] ]
-  where parity j
-          | even (k-j) = -1
-          | otherwise  = 1
+-- alyc :: Int -> Double
+-- alyc k =
+--   sum [ parity j * choose (k-1) j * log (fromIntegral j+1) | j <- [0..k-1] ]
+--   where parity j
+--           | even (k-j) = -1
+--           | otherwise  = 1
 
 -- | Returns [x, x^2, x^3, x^4, ...]
 powers :: Double -> [Double]
