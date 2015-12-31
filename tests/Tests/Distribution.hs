@@ -23,6 +23,7 @@ import Statistics.Distribution.Poisson (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform (LinearTransform, linTransDistr)
 import Statistics.Distribution.Uniform (UniformDistribution, uniformDistr)
+import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
@@ -55,6 +56,7 @@ tests = testGroup "Tests for all distributions"
   , discreteDistrTests (T :: T GeometricDistribution0     )
   , discreteDistrTests (T :: T HypergeometricDistribution )
   , discreteDistrTests (T :: T PoissonDistribution        )
+  , discreteDistrTests (T :: T DiscreteUniform            )
 
   , unitTests
   ]
@@ -252,6 +254,8 @@ p_binary _ a = a == (decode . encode) a
 
 instance QC.Arbitrary BinomialDistribution where
   arbitrary = binomial <$> QC.choose (1,100) <*> QC.choose (0,1)
+instance QC.Arbitrary DiscreteUniform where
+  arbitrary = discreteUniformAB <$> QC.choose (1,1000) <*> QC.choose(1,1000)
 instance QC.Arbitrary ExponentialDistribution where
   arbitrary = exponential <$> QC.choose (0,100)
 instance QC.Arbitrary LaplaceDistribution where
