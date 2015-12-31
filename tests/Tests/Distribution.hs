@@ -25,6 +25,7 @@ import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform, linTransDistr)
 import Statistics.Distribution.Uniform        (UniformDistribution)
+import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
@@ -56,6 +57,7 @@ tests = testGroup "Tests for all distributions"
   , discreteDistrTests (T :: T GeometricDistribution0     )
   , discreteDistrTests (T :: T HypergeometricDistribution )
   , discreteDistrTests (T :: T PoissonDistribution        )
+  , discreteDistrTests (T :: T DiscreteUniform            )
 
   , unitTests
   ]
@@ -266,6 +268,8 @@ logProbabilityCheck _ d x
     logP = logProbability d x
 
 
+instance QC.Arbitrary DiscreteUniform where
+  arbitrary = discreteUniformAB <$> QC.choose (1,1000) <*> QC.choose(1,1000)
 
 -- Parameters for distribution testing. Some distribution require
 -- relaxing parameters a bit
