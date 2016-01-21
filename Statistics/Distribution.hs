@@ -8,7 +8,7 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Types classes for probability distrubutions
+-- Types classes for probability distributions
 
 module Statistics.Distribution
     (
