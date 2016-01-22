@@ -82,7 +82,7 @@ instance D.ContDistr CauchyDistribution where
       error $ "Statistics.Distribution.CauchyLorentz.complQuantile: p must be in [0,1] range. Got: "++show p
 
 instance D.ContGen CauchyDistribution where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous
 
 instance D.Entropy CauchyDistribution where
   entropy (CD _ s) = log s + log (4*pi)

@@ -8,10 +8,10 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Kolmogov-Smirnov tests are non-parametric tests for assesing
+-- Kolmogov-Smirnov tests are non-parametric tests for assessing
 -- whether given sample could be described by distribution or whether
 -- two samples have the same distribution. It's only applicable to
--- continous distributions.
+-- continuous distributions.
 module Statistics.Test.KolmogorovSmirnov (
     -- * Kolmogorov-Smirnov test
     kolmogorovSmirnovTest
