@@ -82,7 +82,7 @@ instance D.MaybeEntropy LaplaceDistribution where
   maybeEntropy = Just . D.entropy
 
 instance D.ContGen LaplaceDistribution where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous
 
 cumulative :: LaplaceDistribution -> Double -> Double
 cumulative (LD l s) x

@@ -106,4 +106,4 @@ instance D.MaybeEntropy FDistribution where
   maybeEntropy = Just . D.entropy
 
 instance D.ContGen FDistribution where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous

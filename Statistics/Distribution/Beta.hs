@@ -109,4 +109,4 @@ instance D.ContDistr BetaDistribution where
         error $ "Statistics.Distribution.Gamma.quantile: p must be in [0,1] range. Got: "++show p
 
 instance D.ContGen BetaDistribution where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous
