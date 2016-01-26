@@ -90,7 +90,7 @@ instance D.MaybeEntropy StudentT where
   maybeEntropy = Just . D.entropy
 
 instance D.ContGen StudentT where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous
 
 -- | Create an unstandardized Student-t distribution.
 studentTUnstandardized :: Double -- ^ Number of degrees of freedom

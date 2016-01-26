@@ -63,7 +63,7 @@ tests = testGroup "Tests for all distributions"
 -- Tests
 ----------------------------------------------------------------
 
--- Tests for continous distribution
+-- Tests for continuous distribution
 contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d, Binary d, Eq d) => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
