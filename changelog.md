@@ -1,3 +1,30 @@
+Changes in NEXT_VERSION
+
+  * Data type for confidence level/test significance (CL) added.
+
+  * Helper function for interpreting CL in terms of sigma (common in physics)
+
+  * Data types for central estimate and upper/lower limits added in
+    Statistics.Types
+
+  * Statistics.Resample.Bootstrap uses new data type for central estimates. Old
+    one is removed. This is API breaking change.
+
+  * Function for calculation of confidence intervals for Poisson and binomial
+    distribution added in Statistics.ConfidenceInt
+
+  * New API for statistical tests. Test result returns p-value, test statistics
+    and optionally distribution of test statistics.
+
+  * Tests of position now allow to ask whether first sample on average larger
+    than second, second larger than first or whether they differ significantly.
+	Affects Wilcoxon-T, Mann-Whitney-U, and Student-T tests.
+
+  * Statistics.Tests.Types.TestType data type dropped
+
+  * Runs test added in Statistics.Tests.Runs
+
+
 Changes in 0.13.0.0
 
   * All types now support JSON encoding and decoding.

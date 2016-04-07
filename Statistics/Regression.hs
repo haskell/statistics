@@ -24,7 +24,7 @@ import Statistics.Function as F
 import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms (qr)
 import Statistics.Resampling (splitGen)
-import Statistics.Resampling.Bootstrap (Estimate(..))
+import Statistics.Types      (Estimate(..),estimate,CL(..))
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
 import System.Random.MWC (GenIO, uniformR)
@@ -117,7 +117,8 @@ bootstrapRegress :: GenIO
                  -- ^ Regression function.
                  -> [Vector]    -- ^ Predictor vectors.
                  -> Vector      -- ^ Responder vector.
-                 -> IO (V.Vector Estimate, Estimate)
+                 -> IO (V.Vector (Estimate Double), Estimate Double)
+-- FIXME: newtype for confidence level
 bootstrapRegress gen0 numResamples ci rgrss preds0 resp0
   | numResamples < 1   = error $ "bootstrapRegress: number of resamples " ++
                                  "must be positive"
@@ -141,7 +142,8 @@ bootstrapRegress gen0 numResamples ci rgrss preds0 resp0
                 est x . U.generate numResamples $ \k -> ((coeffsv G.! k) G.! i)
       r2      = est r2s (G.convert r2v)
       (coeffss, r2s) = rgrss preds0 resp0
-      est s v = Estimate s (w G.! lo) (w G.! hi) ci
+      -- FIXME: CL semantics!
+      est s v = estimate s ((w G.! lo) - s, (w G.! hi) - s) (CL ci)
         where w  = F.sort v
               lo = round c
               hi = truncate (n - c)

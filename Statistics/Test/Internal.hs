@@ -23,6 +23,10 @@ data Rank v a = Rank {
 -- | Calculate rank of every element of sample. In case of ties ranks
 --   are averaged. Sample should be already sorted in ascending order.
 --
+--   Rank is index of element in the sample, numeration starts from 1.
+--   In case of ties average of ranks of equal elements is assigned
+--   to each
+--
 -- >>> rank (==) (fromList [10,20,30::Int])
 -- > fromList [1.0,2.0,3.0]
 --
