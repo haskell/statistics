@@ -30,6 +30,7 @@ module Statistics.Types
       -- * Estimates and upper/lower limits
     , Estimate(..)
     , estimate
+    , confidenceInterval
     , scaleEstimate
     , UpperLimit(..)
     , LowerLimit(..)
@@ -179,6 +180,10 @@ estimate x dx@(ldx,udx) p
   | ldx <= 0 && udx >= 0 = Estimate x dx p
   | otherwise            = error
       "Statistics.Types.estimate: invalid error values"
+
+confidenceInterval :: Num a => Estimate a -> (a,a)
+confidenceInterval Estimate{ estPoint = x, estErrors = (ldx,udx) }
+  = (x + ldx, x + udx)
 
 -- | Multiply the point, lower bound, and upper bound in an 'Estimate'
 scaleEstimate :: (Ord a, Num a) => a -> Estimate a -> Estimate a
