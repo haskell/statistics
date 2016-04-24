@@ -29,7 +29,7 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
-import Numeric.SpecFunctions (choose,incompleteBeta)
+import Numeric.SpecFunctions           (choose,logChoose,incompleteBeta,log1p)
 import Numeric.MathFunctions.Constants (m_epsilon)
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
@@ -83,7 +83,14 @@ probability :: BinomialDistribution -> Int -> Double
 probability (BD n p) k
   | k < 0 || k > n = 0
   | n == 0         = 1
-  | otherwise      = choose n k * p^k * (1-p)^(n-k)
+    -- choose could overflow Double for n >= 1030 so we switch to
+    -- log-domain to calculate probability
+  | n < 1000       = choose n k * p^k * (1-p)^(n-k)
+  | otherwise      = exp $ logChoose n k + log p * k' + log1p (-p) * nk'
+  where
+    k'  = fromIntegral k
+    nk' = fromIntegral $ n - k
+
 
 -- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
