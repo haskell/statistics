@@ -106,7 +106,7 @@ library
     binary >= 0.5.1.0,
     deepseq >= 1.1.0.2,
     erf,
-    math-functions    >= 0.1.5.2,
+    math-functions    >= 0.1.6,
     monad-par         >= 0.3.4,
     mwc-random        >= 0.13.0.0,
     primitive         >= 0.3,
