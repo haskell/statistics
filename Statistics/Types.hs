@@ -12,7 +12,7 @@
 
 module Statistics.Types
     ( -- * Confidence level and intervals
-      CL(..)
+      CL
       -- ** As confidence level
     , confLevel
     , getCL
@@ -53,7 +53,7 @@ import Statistics.Distribution.Normal
 
 
 ----------------------------------------------------------------
--- Confidence level and estimates
+-- Data type for confidence level
 ----------------------------------------------------------------
 
 -- | Confidence level. This data type serve two purposes:
