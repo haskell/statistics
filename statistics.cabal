@@ -49,7 +49,6 @@ library
   exposed-modules:
     Statistics.Autocorrelation
     Statistics.ConfidenceInt
-    Statistics.Constants
     Statistics.Correlation
     Statistics.Correlation.Kendall
     Statistics.Distribution
