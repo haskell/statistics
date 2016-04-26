@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Types
@@ -29,12 +30,19 @@ module Statistics.Types
     , getNSigma1
       -- * Estimates and upper/lower limits
     , Estimate(..)
-    , estimate
-    , confidenceInterval
-    , estimateInt
-    , scaleEstimate
+    , NormalErr(..)
+    , ConfInt(..)
     , UpperLimit(..)
     , LowerLimit(..)
+      -- ** Constructor
+    , estimateNormErr
+    , (±)
+    , estimateFromInterval
+    , estimateFromErr
+      -- ** Accessors
+    , confidenceInterval
+    , asymErrors
+    , Scale(..)
       -- * Other
     , Sample
     , WeightedSample
@@ -153,53 +161,99 @@ getNSigma1 (CL p) = negate $ quantile standard p
 
 
 ----------------------------------------------------------------
--- Estimates and limits
+-- Point estimates
 ----------------------------------------------------------------
 
 -- | A point estimate and its confidence interval. Latter is
 --   frequently referred to as error estimate.
-data Estimate a = Estimate
+data Estimate e a = Estimate
     { estPoint           :: !a
       -- ^ Point estimate.
-    , estErrors          :: !(a,a)
-      -- ^ Estimate's error. They are given relative to central estimate.
-    , estConfidenceLevel :: !(CL Double)
-      -- ^ Confidence level of the confidence intervals.
+    , estError           :: !(e a)
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary   a => Binary   (Estimate a)
-instance FromJSON a => FromJSON (Estimate a)
-instance ToJSON   a => ToJSON   (Estimate a)
-instance NFData a => NFData (Estimate a) where
-    rnf (Estimate x dx cl) = rnf x `seq` rnf dx `seq` rnf cl
+instance (Binary   (e a), Binary   a) => Binary   (Estimate e a)
+instance (FromJSON (e a), FromJSON a) => FromJSON (Estimate e a)
+instance (ToJSON   (e a), ToJSON   a) => ToJSON   (Estimate e a)
+instance (NFData   (e a), NFData   a) => NFData (Estimate e a) where
+    rnf (Estimate x dx) = rnf x `seq` rnf dx
 
 
--- | Construct estimate and check it for sanity
-estimate :: (Ord a, Num a) => a -> (a,a) -> CL Double -> Estimate a
-estimate x dx@(ldx,udx) p
-  | ldx <= 0 && udx >= 0 = Estimate x dx p
-  | otherwise            = error
-      "Statistics.Types.estimate: invalid error values"
+-- | Normal errors. They are stored as 1σ errors. Since we can
+-- recalculate them to any confidence level if needed we don't store
+-- it.
+newtype NormalErr a = NormalErr { normalError :: a }
+                    deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-confidenceInterval :: Num a => Estimate a -> (a,a)
-confidenceInterval Estimate{ estPoint = x, estErrors = (ldx,udx) }
-  = (x + ldx, x + udx)
+instance Binary   a => Binary   (NormalErr a)
+instance FromJSON a => FromJSON (NormalErr a)
+instance ToJSON   a => ToJSON   (NormalErr a)
+instance NFData   a => NFData   (NormalErr a) where
+    rnf (NormalErr x) = rnf x
 
--- | Construct estimate from central estimate and confidence interval
-estimateInt :: (Ord a, Num a) => a -> (a,a) -> CL Double -> Estimate a
-estimateInt x (lo,hi) p
-  | lo <= x && hi >= x = Estimate x (lo - x, hi - x) p
-  | otherwise          = error
-      "Statistics.Types.estimateInt: invalid error values"
 
--- | Multiply the point, lower bound, and upper bound in an 'Estimate'
-scaleEstimate :: (Ord a, Num a) => a -> Estimate a -> Estimate a
-scaleEstimate a (Estimate x (ldx,udx) cl)
-  = Estimate (x * a) dx cl
-  where
-    dx | a > 0     = (ldx * a, udx * a)
-       | otherwise = (udx * a, ldx * a)
+-- | Confidence interval
+data ConfInt a = ConfInt !a !a !(CL Double)
+  deriving (Read,Show,Typeable,Data,Generic)
 
+instance Binary   a => Binary   (ConfInt a)
+instance FromJSON a => FromJSON (ConfInt a)
+instance ToJSON   a => ToJSON   (ConfInt a)
+instance NFData   a => NFData   (ConfInt a) where
+    rnf (ConfInt x y _) = rnf x `seq` rnf y
+
+
+----------------------------------------
+-- Constructors
+
+estimateNormErr :: a            -- ^ Central estimate
+                -> a            -- ^ 1σ error
+                -> Estimate NormalErr a
+estimateNormErr x dx = Estimate x (NormalErr dx)
+
+
+(±) :: a -> a -> Estimate NormalErr a
+(±) = estimateNormErr
+
+estimateFromErr :: a -> (a,a) -> CL Double -> Estimate ConfInt a
+estimateFromErr x (ldx,udx) cl = Estimate x (ConfInt ldx udx cl)
+
+estimateFromInterval :: Num a => a -> (a,a) -> CL Double -> Estimate ConfInt a
+estimateFromInterval x (lx,ux) cl
+  = Estimate x (ConfInt (x-lx) (ux-x) cl)
+
+
+----------------------------------------
+-- Accessors
+
+confidenceInterval :: Num a => Estimate ConfInt a -> (a,a)
+confidenceInterval (Estimate x (ConfInt ldx udx _))
+  = (x - ldx, x + udx)
+
+asymErrors :: Estimate ConfInt a -> (a,a)
+asymErrors (Estimate _ (ConfInt ldx udx _)) = (ldx,udx)
+
+
+
+-- | Scale by exactly known value
+class Scale e where
+  scale :: (Ord a, Num a) => a -> e a -> e a
+
+instance Scale NormalErr where
+  scale a (NormalErr e) = NormalErr (abs a * e)
+
+instance Scale ConfInt where
+  scale a (ConfInt l u cl) | a >= 0    = ConfInt  (a*l)  (a*u) cl
+                           | otherwise = ConfInt (-a*u) (-a*l) cl
+
+instance Scale e => Scale (Estimate e) where
+  scale a (Estimate x dx) = Estimate (a*x) (scale a dx)
+
+
+
+----------------------------------------------------------------
+-- Upper/lower limit
+----------------------------------------------------------------
 
 -- | Upper limit. They are usually given for small non-negative values
 --   when it's not possible detect difference from zero.

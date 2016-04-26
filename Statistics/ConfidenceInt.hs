@@ -7,7 +7,6 @@ module Statistics.ConfidenceInt (
   ) where
 
 import Statistics.Distribution
-import Statistics.Distribution.Normal
 import Statistics.Distribution.ChiSquared
 import Statistics.Distribution.Beta
 import Statistics.Types
@@ -16,11 +15,11 @@ import Statistics.Types
 
 -- | Calculate confidence intervals for Poisson-distributed value for
 --   single measurement. These are exact confidence intervals
-poissonCI :: CL Double -> Int -> Estimate Double
+poissonCI :: CL Double -> Int -> Estimate ConfInt Double
 poissonCI cl@(getPValue -> p) n
   | n <  0    = error "Statistics.ConfidenceInt.poissonErr: negative number of trials"
-  | n == 0    = estimate m (0     , m2 - m) cl
-  | otherwise = estimate m (m1 - m, m2 - m) cl
+  | n == 0    = estimateFromInterval m (m1,m2) cl
+  | otherwise = estimateFromInterval m (m1,m2) cl
   where
     m  = fromIntegral n
     m1 = 0.5 * quantile (chiSquared (2*n  )) (p/2)
@@ -30,41 +29,37 @@ poissonCI cl@(getPValue -> p) n
 --   that this approximation breaks down when /p/ is either close to 0
 --   or to 1. In particular if @np < 5@ or @1 - np < 5@ this
 --   approximation shouldn't be used.
-naiveBinomialCI :: CL Double
-                -> Int         -- ^ Number of trials
+naiveBinomialCI :: Int         -- ^ Number of trials
                 -> Int         -- ^ Number of successes
-                -> Estimate Double
-naiveBinomialCI cl@(getPValue -> p) n k
+                -> Estimate NormalErr Double
+naiveBinomialCI n k
   | n <= 0 || k < 0 = error "Statistics.ConfidenceInt.naiveBinomialCI: negative number of events"
   | k > n           = error "Statistics.ConfidenceInt.naiveBinomialCI: more successes than trials"
-  | otherwise       = estimate eff (-dx,dx) cl
+  | otherwise       = estimateNormErr eff σ
   where
     eff = fromIntegral k / fromIntegral n
-    -- 1-sigma error. We need to scale it according to desired CL
     σ   = eff * (1 - eff) / fromIntegral n
-    s   = negate $ quantile standard (p / 2)
-    dx  = σ * s
+
 
 -- | Clopper-Pearson confidence interval also known as exact
 --   confidence intervals.
 binomialCI :: CL Double
            -> Int               -- ^ Number of trials
            -> Int               -- ^ Number of successes
-           -> Estimate Double
+           -> Estimate ConfInt Double
 binomialCI cl@(getPValue -> p) ni ki
   | ni <= 0 || ki < 0 = error "Statistics.ConfidenceInt.binomialCI: negative number of events"
   | ki > ni           = error "Statistics.ConfidenceInt.binomialCI: more successes than trials"
-  | ki == 0           = estimate eff (0,udx)   cl
-  | ni == ki          = estimate eff (ldx,0)   cl
-  | otherwise         = estimate eff (ldx,udx) cl
+  | ki == 0           = estimateFromInterval eff (0, ub) cl
+  | ni == ki          = estimateFromInterval eff (lb,0 ) cl
+  | otherwise         = estimateFromInterval eff (lb,ub) cl
   where
     k   = fromIntegral ki
     n   = fromIntegral ni
     eff = k / n
     ub  = 1 - quantile (betaDistr (n - k)     (k + 1)) (p/2)
     lb  = 1 - quantile (betaDistr (n - k + 1)  k     ) (1 - p/2)
-    ldx = lb - eff
-    udx = ub - eff
+
 
 {-
 Brown, Lawrence D.; Cai, T. Tony; DasGupta, Anirban

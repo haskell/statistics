@@ -25,7 +25,8 @@ import Statistics.Distribution (cumulative, quantile)
 import Statistics.Distribution.Normal
 import Statistics.Resampling (Bootstrap(..), jackknife)
 import Statistics.Sample (mean)
-import Statistics.Types (Sample, Estimate(..), estimate, estimateInt, CL, getNSigma, getPValue)
+import Statistics.Types (Sample, CL, Estimate, ConfInt, estimateFromInterval,
+                         estimateFromErr, CL, getNSigma, getPValue)
 import Statistics.Function (gsort)
 
 import qualified Statistics.Resampling as R
@@ -42,7 +43,7 @@ bootstrapBCA
   -> [(R.Estimator, Bootstrap U.Vector Double)]
   -- ^ Estimates obtained from resampled data and estimator used for
   --   this.
-  -> [Estimate Double]
+  -> [Estimate ConfInt Double]
 -- BCA algorithm is described in ch. 5 of Davison, Hinkley "Confidence
 -- intervals" in section 5.3 "Percentile method"
 bootstrapBCA confidenceLevel sample resampledData
@@ -50,9 +51,9 @@ bootstrapBCA confidenceLevel sample resampledData
   where
     e (est, Bootstrap pt resample)
       | U.length sample == 1 || isInfinite bias =
-          estimate pt (0,0) confidenceLevel
+          estimateFromErr      pt (0,0) confidenceLevel
       | otherwise =
-          estimateInt pt (resample ! lo, resample ! hi) confidenceLevel
+          estimateFromInterval pt (resample ! lo, resample ! hi) confidenceLevel
       where
         -- Quantile estimates for given CL
         lo    = max (cumn a1) 0
@@ -85,10 +86,10 @@ basicBootstrap
   => CL Double       -- ^ Confidence vector
   -> Bootstrap v a   -- ^ Estimate from full sample and vector of
                      --   estimates obtained from resamples
-  -> Estimate a
+  -> Estimate ConfInt a
 {-# INLINE basicBootstrap #-}
 basicBootstrap cl (Bootstrap e ests)
-  = estimateInt e (sorted ! lo, sorted ! hi) cl
+  = estimateFromInterval e (sorted ! lo, sorted ! hi) cl
   where
     sorted = gsort ests
     n  = fromIntegral $ G.length ests
