@@ -71,6 +71,7 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   , testProperty "Quantile is CDF inverse" $ quantileIsInvCDF   t
   , testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
   , testProperty "log density check"       $ logDensityCheck    t
+  , testProperty "complQuantile"           $ complQuantileCheck t
   ]
 
 -- Tests for discrete distribution
@@ -181,6 +182,16 @@ logDensityCheck _ d x
 pdfSanityCheck :: (ContDistr d) => T d -> d -> Double -> Bool
 pdfSanityCheck _ d x = p >= 0
   where p = density d x
+
+complQuantileCheck :: (ContDistr d) => T d -> d -> Double -> Property
+complQuantileCheck _ d (snd . properFraction -> p) =
+  -- We avoid extreme tails of distributions
+  --
+  -- FIXME: all parameters are arbitrary at the moment
+  p > 0.01 && p < 0.99 ==> (abs (x1 - x0) < 1e-6)
+  where
+    x0 = quantile      d (1 - p)
+    x1 = complQuantile d p
 
 -- Quantile is inverse of CDF
 quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
