@@ -91,6 +91,12 @@ class Distribution d => ContDistr d where
     -- of [0,1] range function should call 'error'
     quantile :: d -> Double -> Double
 
+    -- | 1-complement of @quantile@:
+    --
+    -- > complQuantile x ≡ quantile (1 - x)
+    complQuantile :: d -> Double -> Double
+    complQuantile d x = quantile d (1 - x)
+
     -- | Natural logarithm of density.
     logDensity :: d -> Double -> Double
     logDensity d = log . density d
