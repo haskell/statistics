@@ -7,6 +7,7 @@ import Control.Applicative ((<$), (<$>), (<*>))
 import Data.Binary (Binary, decode, encode)
 import Data.List (find)
 import Data.Typeable (Typeable)
+import Numeric.MathFunctions.Constants (m_tiny)
 import Statistics.Distribution
 import Statistics.Distribution.Beta (BetaDistribution, betaDistr)
 import Statistics.Distribution.Binomial (BinomialDistribution, binomial)
@@ -170,8 +171,8 @@ logDensityCheck _ d x
   $ counterexample (printf "logDensity = %g" logP)
   $ counterexample (printf "log p      = %g" (log p))
   $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
-  $ or [ p == 0     && logP == (-1/0)
-       , p < 1e-308 && logP < 609
+  $ or [ p == 0      && logP == (-1/0)
+       , p <= m_tiny && logP < log(m_tiny)
        , eq 1e-14 (log p) logP
        ]
   where
