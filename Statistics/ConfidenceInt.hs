@@ -45,10 +45,10 @@ naiveBinomialCI :: Int         -- ^ Number of trials
 naiveBinomialCI n k
   | n <= 0 || k < 0 = error "Statistics.ConfidenceInt.naiveBinomialCI: negative number of events"
   | k > n           = error "Statistics.ConfidenceInt.naiveBinomialCI: more successes than trials"
-  | otherwise       = estimateNormErr eff σ
+  | otherwise       = estimateNormErr p σ
   where
-    eff = fromIntegral k / fromIntegral n
-    σ   = eff * (1 - eff) / fromIntegral n
+    p = fromIntegral k / fromIntegral n
+    σ = sqrt $ p * (1 - p) / fromIntegral n
 
 
 -- | Clopper-Pearson confidence interval also known as exact
@@ -67,8 +67,8 @@ binomialCI cl@(getPValue -> p) ni ki
     k   = fromIntegral ki
     n   = fromIntegral ni
     eff = k / n
-    ub  = 1 - quantile (betaDistr (n - k)     (k + 1)) (p/2)
-    lb  = 1 - quantile (betaDistr (n - k + 1)  k     ) (1 - p/2)
+    lb  = quantile      (betaDistr  k      (n - k + 1)) (p/2)
+    ub  = complQuantile (betaDistr (k + 1) (n - k)    ) (p/2)
 
 
 {-
