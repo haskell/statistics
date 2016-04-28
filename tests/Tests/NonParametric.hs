@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ViewPatterns     #-}
 -- Tests for Statistics.Test.NonParametric
 module Tests.NonParametric (tests) where
 
@@ -6,7 +8,7 @@ import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.KruskalWallis
 import Statistics.Test.WilcoxonT
-import Statistics.Types (CL(..),pValue)
+import Statistics.Types (CL(..),pValue,getPValue)
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit
@@ -153,7 +155,7 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
                  , (0, 3, -42)
                  )
                ]
-    to4dp tgt (CL x) = x >= tgt - 0.00005 && x < tgt + 0.00005
+    to4dp tgt (getPValue -> x) = x >= tgt - 0.00005 && x < tgt + 0.00005
 
 ----------------------------------------------------------------
 
