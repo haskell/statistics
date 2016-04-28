@@ -32,7 +32,7 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.MathFunctions.Constants (m_epsilon)
-import Numeric.SpecFunctions (choose)
+import Numeric.SpecFunctions (choose,logChoose)
 import qualified Statistics.Distribution as D
 import Data.Binary (put, get)
 import Control.Applicative ((<$>), (<*>))
@@ -100,7 +100,7 @@ hypergeometric :: Int               -- ^ /m/
 hypergeometric m l k
   | not (l > 0)            = error $ msg ++ "l must be positive"
   | not (m >= 0 && m <= l) = error $ msg ++ "m must lie in [0,l] range"
-  | not (k > 0 && k <= l)  = error $ msg ++ "k must lie in (0,l] range"
+  | not (k > 0  && k <= l) = error $ msg ++ "k must lie in (0,l] range"
   | otherwise = HD m l k
     where
       msg = "Statistics.Distribution.Hypergeometric.hypergeometric: "
@@ -109,8 +109,12 @@ hypergeometric m l k
 probability :: HypergeometricDistribution -> Int -> Double
 probability (HD mi li ki) n
   | n < max 0 (mi+ki-li) || n > min mi ki = 0
-  | otherwise =
-      choose mi n * choose (li - mi) (ki - n) / choose li ki
+    -- No overflow
+  | li < 1000 = choose mi n * choose (li - mi) (ki - n)
+              / choose li ki
+  | otherwise = exp $ logChoose mi n
+                    + logChoose (li - mi) (ki - n)
+                    - logChoose li ki
 
 cumulative :: HypergeometricDistribution -> Double -> Double
 cumulative d@(HD mi li ki) x
