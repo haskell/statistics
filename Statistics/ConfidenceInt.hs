@@ -32,8 +32,8 @@ poissonCI cl@(getPValue -> p) n
   | otherwise = estimateFromInterval m (m1,m2) cl
   where
     m  = fromIntegral n
-    m1 = 0.5 * quantile (chiSquared (2*n  )) (p/2)
-    m2 = 0.5 * quantile (chiSquared (2*n+2)) (1 - p/2)
+    m1 = 0.5 * quantile      (chiSquared (2*n  )) (p/2)
+    m2 = 0.5 * complQuantile (chiSquared (2*n+2)) (p/2)
 
 -- | Calculate confidence interval using normal approximation. Note
 --   that this approximation breaks down when /p/ is either close to 0
