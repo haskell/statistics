@@ -98,7 +98,7 @@ logProbability (BD n p) k
   | n == 0                  = 0
   | otherwise               = logChoose n k + log p * k' + log1p (-p) * nk'
   where
-    k'  = fromIntegral $ min k (n-k)
+    k'  = fromIntegral   k
     nk' = fromIntegral $ n - k
 
 -- Summation from different sides required to reduce roundoff errors
