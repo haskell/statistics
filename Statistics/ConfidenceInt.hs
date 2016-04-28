@@ -5,6 +5,8 @@ module Statistics.ConfidenceInt (
   , poissonNormalCI
   , binomialCI
   , naiveBinomialCI
+    -- * References
+    -- $references
   ) where
 
 import Statistics.Distribution
@@ -71,9 +73,13 @@ binomialCI cl@(getPValue -> p) ni ki
     ub  = complQuantile (betaDistr (k + 1) (n - k)    ) (p/2)
 
 
-{-
-Brown, Lawrence D.; Cai, T. Tony; DasGupta, Anirban
-(2001). "Interval Estimation for a Binomial Proportion". Statistical
-Science 16 (2): 101–133. doi:10.1214/ss/1009213286. MR 1861069. Zbl
-02068924.
--}
+-- $references
+--
+--  * Clopper, C.; Pearson, E. S. (1934). "The use of confidence or
+--    fiducial limits illustrated in the case of the
+--    binomial". Biometrika 26: 404–413. doi:10.1093/biomet/26.4.404
+--
+--  * Brown, Lawrence D.; Cai, T. Tony; DasGupta, Anirban
+--    (2001). "Interval Estimation for a Binomial Proportion". Statistical
+--    Science 16 (2): 101–133. doi:10.1214/ss/1009213286. MR 1861069.
+--    Zbl 02068924.
