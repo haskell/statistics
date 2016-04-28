@@ -52,8 +52,9 @@ instance D.Distribution NormalDistribution where
     complCumulative = complCumulative
 
 instance D.ContDistr NormalDistribution where
-    logDensity = logDensity
-    quantile   = quantile
+    logDensity    = logDensity
+    quantile      = quantile
+    complQuantile = complQuantile
 
 instance D.MaybeMean NormalDistribution where
     maybeMean = Just . D.mean
@@ -130,4 +131,15 @@ quantile d p
   | otherwise      =
     error $ "Statistics.Distribution.Normal.quantile: p must be in [0,1] range. Got: "++show p
   where x          = - invErfc (2 * p)
+        inf        = 1/0
+
+complQuantile :: NormalDistribution -> Double -> Double
+complQuantile d p
+  | p == 0         = inf
+  | p == 1         = -inf
+  | p == 0.5       = mean d
+  | p > 0 && p < 1 = x * ndCdfDenom d + mean d
+  | otherwise      =
+    error $ "Statistics.Distribution.Normal.complQuantile: p must be in [0,1] range. Got: "++show p
+  where x          = invErfc (2 * p)
         inf        = 1/0
