@@ -2,6 +2,7 @@
 -- | Calculation of confidence intervals
 module Statistics.ConfidenceInt (
     poissonCI
+  , poissonNormalCI
   , binomialCI
   , naiveBinomialCI
   ) where
@@ -13,11 +14,20 @@ import Statistics.Types
 
 
 
+-- | Calculate confidence intervals for Poisson-distributed value
+-- using normal approximation
+poissonNormalCI :: Int -> Estimate NormalErr Double
+poissonNormalCI n
+  | n < 0     = error "Statistics.ConfidenceInt.poissonNormalCI negative number of trials"
+  | otherwise = estimateNormErr n' (sqrt n')
+  where
+    n' = fromIntegral n
+
 -- | Calculate confidence intervals for Poisson-distributed value for
 --   single measurement. These are exact confidence intervals
 poissonCI :: CL Double -> Int -> Estimate ConfInt Double
 poissonCI cl@(getPValue -> p) n
-  | n <  0    = error "Statistics.ConfidenceInt.poissonErr: negative number of trials"
+  | n <  0    = error "Statistics.ConfidenceInt.poissonCI: negative number of trials"
   | n == 0    = estimateFromInterval m (m1,m2) cl
   | otherwise = estimateFromInterval m (m1,m2) cl
   where
