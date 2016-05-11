@@ -24,6 +24,7 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.SpecFunctions (
   incompleteGamma,invIncompleteGamma,logGamma,digamma)
+import Numeric.MathFunctions.Constants (m_neg_inf)
 
 import qualified Statistics.Distribution         as D
 import qualified System.Random.MWC.Distributions as MWC
@@ -57,7 +58,22 @@ instance D.Distribution ChiSquared where
   cumulative = cumulative
 
 instance D.ContDistr ChiSquared where
-  density  = density
+  density chi x
+    | x <= 0    = 0
+    | otherwise = exp $ log x * (ndf2 - 1) - x2 - logGamma ndf2 - log 2 * ndf2
+    where
+      ndf  = fromIntegral $ chiSquaredNDF chi
+      ndf2 = ndf/2
+      x2   = x/2
+
+  logDensity chi x
+    | x <= 0    = m_neg_inf
+    | otherwise = log x * (ndf2 - 1) - x2 - logGamma ndf2 - log 2 * ndf2
+    where
+      ndf  = fromIntegral $ chiSquaredNDF chi
+      ndf2 = ndf/2
+      x2   = x/2
+
   quantile = quantile
 
 instance D.Mean ChiSquared where
@@ -94,15 +110,6 @@ cumulative chi x
   | otherwise = incompleteGamma (ndf/2) (x/2)
   where
     ndf = fromIntegral $ chiSquaredNDF chi
-
-density :: ChiSquared -> Double -> Double
-density chi x
-  | x <= 0    = 0
-  | otherwise = exp $ log x * (ndf2 - 1) - x2 - logGamma ndf2 - log 2 * ndf2
-  where
-    ndf  = fromIntegral $ chiSquaredNDF chi
-    ndf2 = ndf/2
-    x2   = x/2
 
 quantile :: ChiSquared -> Double -> Double
 quantile (ChiSquared ndf) p

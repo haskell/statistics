@@ -31,7 +31,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-import Numeric.MathFunctions.Constants (m_epsilon)
+import Numeric.MathFunctions.Constants (m_epsilon,m_neg_inf)
 import Numeric.SpecFunctions (choose,logChoose)
 import qualified Statistics.Distribution as D
 import Data.Binary (put, get)
@@ -115,6 +115,13 @@ probability (HD mi li ki) n
   | otherwise = exp $ logChoose mi n
                     + logChoose (li - mi) (ki - n)
                     - logChoose li ki
+
+logProbability :: HypergeometricDistribution -> Int -> Double
+logProbability (HD mi li ki) n
+  | n < max 0 (mi+ki-li) || n > min mi ki = m_neg_inf
+  | otherwise = logChoose mi n
+              + logChoose (li - mi) (ki - n)
+              - logChoose li ki
 
 cumulative :: HypergeometricDistribution -> Double -> Double
 cumulative d@(HD mi li ki) x
