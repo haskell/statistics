@@ -111,6 +111,7 @@ library
     primitive         >= 0.3,
     vector            >= 0.10,
     vector-algorithms >= 0.4,
+    vector-th-unbox,
     vector-binary-instances >= 0.2.1
   if impl(ghc < 7.6)
     build-depends:

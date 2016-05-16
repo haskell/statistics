@@ -1,3 +1,7 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
@@ -53,6 +57,8 @@ import Control.DeepSeq
 import Data.Aeson   (FromJSON, ToJSON)
 import Data.Binary  (Binary)
 import Data.Data    (Data,Typeable)
+import Data.Vector.Unboxed          (Unbox)
+import Data.Vector.Unboxed.Deriving (derivingUnbox)
 import GHC.Generics (Generic)
 
 import Statistics.Types.Internal
@@ -82,6 +88,11 @@ instance FromJSON a => FromJSON (CL a)
 instance ToJSON   a => ToJSON   (CL a)
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
+
+derivingUnbox "CL"
+  [t| forall a. Unbox a => CL a -> a |]
+  [| \(CL a) -> a |]
+  [| CL           |]
 
 -- | This instance is inverted relative to instance of underlying
 --   type. In other words is larger if it describes greater confidence
@@ -178,6 +189,10 @@ instance (ToJSON   (e a), ToJSON   a) => ToJSON   (Estimate e a)
 instance (NFData   (e a), NFData   a) => NFData (Estimate e a) where
     rnf (Estimate x dx) = rnf x `seq` rnf dx
 
+derivingUnbox "Estimate"
+  [t| forall a e. (Unbox a, Unbox (e a)) => Estimate e a -> (a, e a) |]
+  [| \(Estimate x dx) -> (x,dx) |]
+  [| \(x,dx) -> (Estimate x dx) |]
 
 -- | Normal errors. They are stored as 1σ errors. Since we can
 -- recalculate them to any confidence level if needed we don't store
@@ -191,6 +206,11 @@ instance ToJSON   a => ToJSON   (NormalErr a)
 instance NFData   a => NFData   (NormalErr a) where
     rnf (NormalErr x) = rnf x
 
+derivingUnbox "NormalErr"
+  [t| forall a. Unbox a => NormalErr a -> a |]
+  [| \(NormalErr a) -> a |]
+  [| NormalErr           |]
+
 
 -- | Confidence interval
 data ConfInt a = ConfInt !a !a !(CL Double)
@@ -201,6 +221,11 @@ instance FromJSON a => FromJSON (ConfInt a)
 instance ToJSON   a => ToJSON   (ConfInt a)
 instance NFData   a => NFData   (ConfInt a) where
     rnf (ConfInt x y _) = rnf x `seq` rnf y
+
+derivingUnbox "ConfInt"
+  [t| forall a. Unbox a => ConfInt a -> (a, a, CL Double) |]
+  [| \(ConfInt a b c) -> (a,b,c) |]
+  [| \(a,b,c) -> ConfInt a b c   |]
 
 
 ----------------------------------------
@@ -271,6 +296,12 @@ instance ToJSON   a => ToJSON   (UpperLimit a)
 instance NFData   a => NFData   (UpperLimit a) where
     rnf (UpperLimit x cl) = rnf x `seq` rnf cl
 
+derivingUnbox "UpperLimit"
+  [t| forall a. Unbox a => UpperLimit a -> (a, CL Double) |]
+  [| \(UpperLimit a b) -> (a,b) |]
+  [| \(a,b) -> UpperLimit a b   |]
+
+
 -- | Lower limit. They are usually given for large quantities when
 --   it's not possible to measure them. For example: proton half-life
 data LowerLimit a = LowerLimit {
@@ -285,3 +316,8 @@ instance FromJSON a => FromJSON (LowerLimit a)
 instance ToJSON   a => ToJSON   (LowerLimit a)
 instance NFData   a => NFData   (LowerLimit a) where
     rnf (LowerLimit x cl) = rnf x `seq` rnf cl
+
+derivingUnbox "LowerLimit"
+  [t| forall a. Unbox a => LowerLimit a -> (a, CL Double) |]
+  [| \(LowerLimit a b) -> (a,b) |]
+  [| \(a,b) -> LowerLimit a b   |]
