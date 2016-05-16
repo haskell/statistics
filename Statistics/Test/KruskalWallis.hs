@@ -84,10 +84,10 @@ kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test ())
 kruskalWallisTest []      = Nothing
 kruskalWallisTest samples
   -- We use chi-squared approximation here
-  | all (>4) ns = Just $ Test { testSignificance = pValue $ complCumulative d k
-                              , testStatistics   = k
-                              , testDistribution = ()
-                              }
+  | all (>4) ns = Just Test { testSignificance = pValue $ complCumulative d k
+                            , testStatistics   = k
+                            , testDistribution = ()
+                            }
   | otherwise   = Nothing
   where
     k  = kruskalWallis samples

@@ -215,7 +215,7 @@ normalApprox ni
 wilcoxonMatchedPairTest
   :: (Ord a, Num a, U.Unbox a)
   => PositionTest     -- ^ Perform one-tailed test.
-  -> U.Vector (a,a)   -- ^ First sample
+  -> U.Vector (a,a)   -- ^ Sample of pairs
   -> Test ()          -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
 wilcoxonMatchedPairTest test pairs =

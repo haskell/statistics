@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 -- | Pearson's chi squared test.
 module Statistics.Test.ChiSquared (
     chi2test
@@ -35,7 +35,7 @@ chi2test :: (G.Vector v (Int,Double), G.Vector v Double)
          -> Maybe (Test ChiSquared)
 chi2test ndf vec
   | ndf <  0  = error $ "Statistics.Test.ChiSquare.chi2test: negative NDF " ++ show ndf
-  | n > 0     = Just $ Test
+  | n > 0     = Just Test
               { testSignificance = pValue $ complCumulative d chi2
               , testStatistics   = chi2
               , testDistribution = chiSquared ndf
