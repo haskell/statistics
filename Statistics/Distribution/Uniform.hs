@@ -65,6 +65,10 @@ instance D.ContDistr UniformDistribution where
     | p >= 0 && p <= 1 = a + (b - a) * p
     | otherwise        =
       error $ "Statistics.Distribution.Uniform.quantile: p must be in [0,1] range. Got: "++show p
+  complQuantile (UniformDistribution a b) p
+    | p >= 0 && p <= 1 = b + (a - b) * p
+    | otherwise        =
+      error $ "Statistics.Distribution.Uniform.complQuantile: p must be in [0,1] range. Got: "++show p
 
 instance D.Mean UniformDistribution where
   mean (UniformDistribution a b) = 0.5 * (a + b)
