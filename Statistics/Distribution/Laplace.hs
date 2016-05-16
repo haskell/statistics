@@ -60,7 +60,8 @@ instance D.Distribution LaplaceDistribution where
 instance D.ContDistr LaplaceDistribution where
     density    (LD l s) x = exp (- abs (x - l) / s) / (2 * s)
     logDensity (LD l s) x = - abs (x - l) / s - log 2 - log s
-    quantile = quantile
+    quantile      = quantile
+    complQuantile = complQuantile
 
 instance D.Mean LaplaceDistribution where
     mean (LD l _) = l
@@ -101,6 +102,18 @@ quantile (LD l s) p
   | p == 0.5           = l
   | p > 0   && p < 0.5 = l + s * log (2 * p)
   | p > 0.5 && p < 1   = l - s * log (2 - 2 * p)
+  | otherwise          =
+    error $ "Statistics.Distribution.Laplace.quantile: p must be in [0,1] range. Got: "++show p
+  where
+    inf = 1 / 0
+
+complQuantile :: LaplaceDistribution -> Double -> Double
+complQuantile (LD l s) p
+  | p == 0             = inf
+  | p == 1             = -inf
+  | p == 0.5           = l
+  | p > 0   && p < 0.5 = l + s * log (2 - 2 * p)
+  | p > 0.5 && p < 1   = l - s * log (2 * p)
   | otherwise          =
     error $ "Statistics.Distribution.Laplace.quantile: p must be in [0,1] range. Got: "++show p
   where
