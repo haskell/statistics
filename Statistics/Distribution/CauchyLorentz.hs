@@ -73,7 +73,13 @@ instance D.ContDistr CauchyDistribution where
     | p == 0         = -1 / 0
     | p == 1         =  1 / 0
     | otherwise      =
-      error $ "Statistics.Distribution.CauchyLorentz..quantile: p must be in [0,1] range. Got: "++show p
+      error $ "Statistics.Distribution.CauchyLorentz.quantile: p must be in [0,1] range. Got: "++show p
+  complQuantile (CD m s) p
+    | p > 0 && p < 1 = m + s * tan( pi * (0.5 - p) )
+    | p == 0         =  1 / 0
+    | p == 1         = -1 / 0
+    | otherwise      =
+      error $ "Statistics.Distribution.CauchyLorentz.complQuantile: p must be in [0,1] range. Got: "++show p
 
 instance D.ContGen CauchyDistribution where
   genContVar = D.genContinous
