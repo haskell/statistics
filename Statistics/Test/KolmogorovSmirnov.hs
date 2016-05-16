@@ -39,6 +39,7 @@ import qualified Data.Vector          as V
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Unboxed  as U
 import qualified Data.Vector.Generic  as G
+import           Data.Vector.Generic    ((!))
 import qualified Data.Vector.Unboxed.Mutable as M
 
 
@@ -172,15 +173,15 @@ kolmogorovSmirnov2D sample1 sample2
     -- Find new index
     skip x i xs = go (i+1)
       where go n | n >= G.length xs = n
-                 | xs G.! n == x    = go (n+1)
+                 | xs ! n == x      = go (n+1)
                  | otherwise        = n
     -- Main loop
     worker d i1 i2
       | i1 >= n1 || i2 >= n2 = d
       | otherwise            = worker d' i1' i2'
       where
-        d1  = xs1 G.! i1
-        d2  = xs2 G.! i2
+        d1  = xs1 ! i1
+        d2  = xs2 ! i2
         i1' | d1 <= d2  = skip d1 i1 xs1
             | otherwise = i1
         i2' | d2 <= d1  = skip d2 i2 xs2
