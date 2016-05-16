@@ -101,7 +101,7 @@ kolmogorovSmirnovTest2 xs1 xs2
     --
     prob z
       | z <  0    = error "kolmogorovSmirnov2D: internal error"
-      | z == 0    = 1
+      | z == 0    = 0
       | z <  1.18 = let y = exp( -1.23370055013616983 / (z*z) )
                     in  2.25675833419102515 * sqrt( -log(y) ) * (y + y**9 + y**25 + y**49)
       | otherwise = let x = exp(-2 * z * z)
