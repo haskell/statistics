@@ -66,7 +66,8 @@ instance D.Distribution d => D.Distribution (LinearTransform d) where
 instance D.ContDistr d => D.ContDistr (LinearTransform d) where
   density    (LinearTransform loc sc dist) x = D.density    dist ((x-loc) / sc) / sc
   logDensity (LinearTransform loc sc dist) x = D.logDensity dist ((x-loc) / sc) - log sc
-  quantile (LinearTransform loc sc dist) p = loc + sc * D.quantile dist p
+  quantile      (LinearTransform loc sc dist) p = loc + sc * D.quantile      dist p
+  complQuantile (LinearTransform loc sc dist) p = loc + sc * D.complQuantile dist p
 
 instance D.MaybeMean d => D.MaybeMean (LinearTransform d) where
   maybeMean (LinearTransform loc _ dist) = (+loc) <$> D.maybeMean dist
