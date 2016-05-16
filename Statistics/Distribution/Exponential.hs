@@ -27,6 +27,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Binary (Binary, put, get)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
+import Numeric.SpecFunctions           (log1p)
 import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
@@ -92,7 +93,7 @@ complCumulative (ED l) x | x <= 0    = 1
 
 quantile :: ExponentialDistribution -> Double -> Double
 quantile (ED l) p
-  | p >= 0 && p <= 1 = -log (1 - p) / l
+  | p >= 0 && p <= 1 = - log1p(-p) / l
   | otherwise        =
     error $ "Statistics.Distribution.Exponential.quantile: p must be in [0,1] range. Got: "++show p
 
