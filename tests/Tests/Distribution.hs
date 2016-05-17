@@ -7,7 +7,8 @@ import Control.Applicative ((<$), (<$>), (<*>))
 import Data.Binary (Binary, decode, encode)
 import Data.List (find)
 import Data.Typeable (Typeable)
-import Numeric.MathFunctions.Constants (m_tiny)
+import Numeric.MathFunctions.Constants (m_tiny,m_epsilon)
+import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
 import Statistics.Distribution.Beta (BetaDistribution, betaDistr)
 import Statistics.Distribution.Binomial (BinomialDistribution, binomial)
@@ -197,15 +198,28 @@ complQuantileCheck _ d (snd . properFraction -> p) =
 -- Quantile is inverse of CDF
 quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d (snd . properFraction -> p) =
-  p > 0 && p < 1  ==> ( counterexample (printf "Quantile     = %g" q )
-                      $ counterexample (printf "Probability  = %g" p )
-                      $ counterexample (printf "Probability' = %g" p')
-                      $ counterexample (printf "Error        = %e" (abs $ p - p'))
-                      $ abs (p - p') < invQuantilePrec d
-                      )
+  and [ p > m_tiny
+      , p < 1
+      , x > m_tiny
+      , dens > 0
+      ] ==>
+    ( counterexample (printf "Quantile      = %g" x )
+    $ counterexample (printf "Probability   = %g" p )
+    $ counterexample (printf "Probability'  = %g" p')
+    $ counterexample (printf "Expected err. = %g" err)
+    $ counterexample (printf "Rel. error    = %g" (relativeError p p'))
+    $ counterexample (printf "Abs. error    = %e" (abs $ p - p'))
+    $ eqRelErr err p p'
+    )
   where
-    q  = quantile   d p
-    p' = cumulative d q
+    -- Algorithm for error estimation is taken from here
+    --
+    -- http://sepulcarium.org/posts/2012-07-19-rounding_effect_on_inverse.html
+    dens = density    d x
+    err  = m_epsilon * (1 + x * dens)
+    --
+    x    = quantile   d p
+    p'   = cumulative d x
 
 -- Test that quantile fails if p<0 or p>1
 quantileShouldFail :: (ContDistr d) => T d -> d -> Double -> Property
