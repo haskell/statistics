@@ -176,6 +176,7 @@ genContinuous d gen = do
 -- | Backwards compatibility with genContinuous.
 genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
 genContinous = genContinuous
+{-# DEPRECATED genContinous "Use genContinuous" #-}
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
