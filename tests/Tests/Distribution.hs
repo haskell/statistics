@@ -198,7 +198,7 @@ complQuantileCheck _ d (snd . properFraction -> p) =
 -- Quantile is inverse of CDF
 quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d (snd . properFraction -> p) =
-  and [ p > m_tiny
+  and [ p > 1e-250
       , p < 1
       , x > m_tiny
       , dens > 0
@@ -216,7 +216,7 @@ quantileIsInvCDF _ d (snd . properFraction -> p) =
     --
     -- http://sepulcarium.org/posts/2012-07-19-rounding_effect_on_inverse.html
     dens = density    d x
-    err  = m_epsilon * (1 + x * dens)
+    err  = 64 * m_epsilon * (1 + (x / p) * dens)
     --
     x    = quantile   d p
     p'   = cumulative d x
