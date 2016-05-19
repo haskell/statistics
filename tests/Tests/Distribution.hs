@@ -216,7 +216,7 @@ quantileIsInvCDF _ d (snd . properFraction -> p) =
     --
     -- http://sepulcarium.org/posts/2012-07-19-rounding_effect_on_inverse.html
     dens = density    d x
-    err  = 64 * m_epsilon * (1 + (x / p) * dens)
+    err  = 64 * m_epsilon * (1 + abs (x / p) * dens)
     --
     x    = quantile   d p
     p'   = cumulative d x
