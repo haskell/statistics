@@ -23,7 +23,7 @@ import Statistics.Distribution.Laplace (LaplaceDistribution, laplace)
 import Statistics.Distribution.Normal (NormalDistribution, normalDistr)
 import Statistics.Distribution.Poisson (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform (LinearTransform, linTransDistr)
+import Statistics.Distribution.Transform (LinearTransform, scaleAround, linTransDistr)
 import Statistics.Distribution.Uniform (UniformDistribution, uniformDistr)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
@@ -49,7 +49,7 @@ tests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
   , contDistrTests (T :: T StudentT                )
-  , contDistrTests (T :: T (LinearTransform StudentT) )
+  , contDistrTests (T :: T (LinearTransform NormalDistribution))
   , contDistrTests (T :: T FDistribution           )
 
   , discreteDistrTests (T :: T BinomialDistribution       )
@@ -311,11 +311,12 @@ instance QC.Arbitrary CauchyDistribution where
                 <*> ((abs <$> arbitrary) `suchThat` (> 0))
 instance QC.Arbitrary StudentT where
   arbitrary = studentT <$> ((abs <$> arbitrary) `suchThat` (>0))
-instance QC.Arbitrary (LinearTransform StudentT) where
-  arbitrary = studentTUnstandardized
-           <$> ((abs <$> arbitrary) `suchThat` (>0))
-           <*> ((abs <$> arbitrary))
-           <*> ((abs <$> arbitrary) `suchThat` (>0))
+instance QC.Arbitrary d => QC.Arbitrary (LinearTransform d) where
+  arbitrary = do
+    m <- QC.choose (-10,10)
+    s <- QC.choose (1e-1,1e1)
+    d <- arbitrary
+    return $ scaleAround m s d
 instance QC.Arbitrary FDistribution where
   arbitrary =  fDistribution
            <$> ((abs <$> arbitrary) `suchThat` (>0))
