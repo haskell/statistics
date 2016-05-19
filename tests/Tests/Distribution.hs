@@ -31,7 +31,7 @@ import Test.QuickCheck as QC
 import Test.QuickCheck.Monadic as QC
 import Tests.ApproxEq (ApproxEq(..))
 import Tests.Helpers (T(..), testAssertion, typeName)
-import Tests.Helpers (monotonicallyIncreasesIEEE)
+import Tests.Helpers (monotonicallyIncreasesIEEE,isDenorm)
 import Text.Printf (printf)
 import qualified Control.Exception as E
 import qualified Numeric.IEEE as IEEE
@@ -168,14 +168,15 @@ cdfDiscreteIsCorrect _ d
 
 logDensityCheck :: (ContDistr d) => T d -> d -> Double -> Property
 logDensityCheck _ d x
-  = counterexample (printf "density    = %g" p)
-  $ counterexample (printf "logDensity = %g" logP)
-  $ counterexample (printf "log p      = %g" (log p))
-  $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
-  $ or [ p == 0      && logP == (-1/0)
-       , p <= m_tiny && logP < log(m_tiny)
-       , eq 1e-14 (log p) logP
-       ]
+  = not (isDenorm x)
+  ==> ( counterexample (printf "density    = %g" p)
+      $ counterexample (printf "logDensity = %g" logP)
+      $ counterexample (printf "log p      = %g" (log p))
+      $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+      $ or [ p == 0      && logP == (-1/0)
+           , p <= m_tiny && logP < log(m_tiny)
+           , eq 1e-14 (log p) logP
+           ])
   where
     p    = density d x
     logP = logDensity d x
@@ -357,7 +358,7 @@ instance Param FDistribution where
 unitTests :: Test
 unitTests = testGroup "Unit tests"
   [ testAssertion "density (gammaDistr 150 1/150) 1 == 4.883311" $
-      4.883311418525483 =~ (density (gammaDistr 150 (1/150)) 1)
+      4.883311418525483 =~ density (gammaDistr 150 (1/150)) 1
     -- Student-T
   , testStudentPDF 0.3  1.34  0.0648215  -- PDF
   , testStudentPDF 1    0.42  0.27058

@@ -3,6 +3,8 @@ module Tests.Helpers (
     -- * helpers
     T(..)
   , typeName
+    -- * IEEE 754
+  , isDenorm
     -- * Generic QC tests
   , monotonicallyIncreases
   , monotonicallyIncreasesIEEE
@@ -16,6 +18,7 @@ module Tests.Helpers (
   ) where
 
 import Data.Typeable
+import Numeric.MathFunctions.Constants (m_tiny)
 import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.QuickCheck
@@ -31,6 +34,10 @@ typeName = show . typeOf . typeParam
   where
     typeParam :: T a -> a
     typeParam _ = undefined
+
+-- | Check if Double denormalized
+isDenorm :: Double -> Bool
+isDenorm x = let ax = abs x in ax > 0 && ax < m_tiny
 
 ----------------------------------------------------------------
 -- Generic QC
