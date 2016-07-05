@@ -42,7 +42,7 @@ import qualified Data.Vector.Unboxed as U
 
 
 -- | Type class common to all distributions. Only c.d.f. could be
--- defined for both discrete and continous distributions.
+-- defined for both discrete and continuous distributions.
 class Distribution d where
     -- | Cumulative distribution function.  The probability that a
     -- random variable /X/ is less or equal than /x/,
@@ -159,7 +159,7 @@ class Distribution d => ContGen d where
 class (DiscreteDistr d, ContGen d) => DiscreteGen d where
   genDiscreteVar :: PrimMonad m => d -> Gen (PrimState m) -> m Int
 
--- | Generate variates from continous distribution using inverse
+-- | Generate variates from continuous distribution using inverse
 --   transform rule.
 genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
 genContinous d gen = do
