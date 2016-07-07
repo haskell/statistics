@@ -129,14 +129,13 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
       where res = wilcoxonMatchedPairSignedRank (U.zip (U.fromList a) (U.fromList b))
 
     -- List of (Sample A, Sample B, (Positive Rank, Negative Rank))
-    -- FIXME: Test is broken!
     testData :: [([Double], [Double], (Int,Double, Double))]
     testData = [ ([1..10], [1..10], (0, 0, 0     ))
-               , ([1..5],  [6..10], (0, 0, 5*(-3)))
+               , ([1..5],  [6..10], (5, 0, 5*(-3)))
                -- Worked example from the Internet:
                , ( [125,115,130,140,140,115,140,125,140,135]
                  , [110,122,125,120,140,124,123,137,135,145]
-                 , ( 0
+                 , ( 9
                    , sum $ filter (> 0) [7,-3,1.5,9,0,-4,8,-6,1.5,-5]
                    , sum $ filter (< 0) [7,-3,1.5,9,0,-4,8,-6,1.5,-5]
                    )
@@ -144,15 +143,15 @@ wilcoxonPairTests = zipWith test [(0::Int)..] testData ++
                -- Worked examples from books/papers:
                , ( [2.4,1.9,2.3,1.9,2.4,2.5]
                  , [2.0,2.1,2.0,2.0,1.8,2.0]
-                 , (0, 18, -3)
+                 , (6, 18, -3)
                  )
                , ( [130,170,125,170,130,130,145,160]
                  , [120,163,120,135,143,136,144,120]
-                 , (0, 27, -9)
+                 , (8, 27, -9)
                  )
                , ( [540,580,600,680,430,740,600,690,605,520]
                  , [760,710,1105,880,500,990,1050,640,595,520]
-                 , (0, 3, -42)
+                 , (9, 3, -42)
                  )
                ]
     to4dp tgt (getPValue -> x) = x >= tgt - 0.00005 && x < tgt + 0.00005
