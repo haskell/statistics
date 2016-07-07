@@ -112,8 +112,8 @@ complQuantile (LD l s) p
   | p == 0             = inf
   | p == 1             = -inf
   | p == 0.5           = l
-  | p > 0   && p < 0.5 = l + s * log (2 - 2 * p)
-  | p > 0.5 && p < 1   = l - s * log (2 * p)
+  | p > 0   && p < 0.5 = l - s * log (2 * p)
+  | p > 0.5 && p < 1   = l + s * log (2 - 2 * p)
   | otherwise          =
     error $ "Statistics.Distribution.Laplace.quantile: p must be in [0,1] range. Got: "++show p
   where
