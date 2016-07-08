@@ -25,7 +25,7 @@ import Data.Binary (Binary)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Numeric.SpecFunctions (
-  incompleteBeta, invIncompleteBeta, logBeta, digamma)
+  incompleteBeta, invIncompleteBeta, logBeta, digamma, log1p)
 import Numeric.MathFunctions.Constants (m_NaN,m_neg_inf)
 import qualified Statistics.Distribution as D
 import Data.Binary (put, get)
@@ -99,12 +99,12 @@ instance D.ContDistr BetaDistribution where
     | a <= 0 || b <= 0 = m_NaN
     | x <= 0 = 0
     | x >= 1 = 0
-    | otherwise = exp $ (a-1)*log x + (b-1)*log (1-x) - logBeta a b
+    | otherwise = exp $ (a-1)*log x + (b-1) * log1p (-x) - logBeta a b
   logDensity (BD a b) x
     | a <= 0 || b <= 0 = m_NaN
     | x <= 0 = m_neg_inf
     | x >= 1 = m_neg_inf
-    | otherwise = (a-1)*log x + (b-1)*log (1-x) - logBeta a b
+    | otherwise = (a-1)*log x + (b-1)*log1p (-x) - logBeta a b
 
   quantile (BD a b) p
     | p == 0         = 0
