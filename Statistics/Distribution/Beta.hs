@@ -70,6 +70,15 @@ instance D.Distribution BetaDistribution where
     | x <= 0    = 0
     | x >= 1    = 1
     | otherwise = incompleteBeta a b x
+  complCumulative (BD a b) x
+    | x <= 0    = 1
+    | x >= 1    = 0
+    -- For small x we use direct computation to avoid precision loss
+    -- when computing (1-x)
+    | x <  0.5  = 1 - incompleteBeta a b x
+    -- Otherwise we use property of incomplete beta:
+    --  > I(x,a,b) = 1 - I(1-x,b,a)
+    | otherwise = incompleteBeta b a (1-x)
 
 instance D.Mean BetaDistribution where
   mean (BD a b) = a / (a + b)
