@@ -53,7 +53,8 @@ fDistribution n m
     error "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
 
 instance D.Distribution FDistribution where
-  cumulative = cumulative
+  cumulative      = cumulative
+  complCumulative = complCumulative
 
 instance D.ContDistr FDistribution where
   density d x
@@ -69,6 +70,13 @@ cumulative (F n m _) x
   | x <= 0       = 0
   | isInfinite x = 1            -- Only matches +∞
   | otherwise    = let y = n*x in incompleteBeta (0.5 * n) (0.5 * m) (y / (m + y))
+
+complCumulative :: FDistribution -> Double -> Double
+complCumulative (F n m _) x
+  | x <= 0       = 1
+  | isInfinite x = 0            -- Only matches +∞
+  | otherwise    = let y = n*x
+                   in incompleteBeta (0.5 * m) (0.5 * n) (m / (m + y))
 
 logDensity :: FDistribution -> Double -> Double
 logDensity (F n m fac) x
