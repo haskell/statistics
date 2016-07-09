@@ -44,7 +44,8 @@ studentT ndf
   | otherwise = modErr "studentT" "non-positive number of degrees of freedom"
 
 instance D.Distribution StudentT where
-  cumulative = cumulative
+  cumulative      = cumulative
+  complCumulative = complCumulative
 
 instance D.ContDistr StudentT where
   density    d@(StudentT ndf) x = exp (logDensityUnscaled d x) / sqrt ndf
@@ -57,6 +58,14 @@ cumulative (StudentT ndf) x
   | otherwise = 0.5 * ibeta
   where
     ibeta = incompleteBeta (0.5 * ndf) 0.5 (ndf / (ndf + x*x))
+
+complCumulative :: StudentT -> Double -> Double
+complCumulative (StudentT ndf) x
+  | x > 0     = 0.5 * ibeta
+  | otherwise = 1 - 0.5 * ibeta
+  where
+    ibeta = incompleteBeta (0.5 * ndf) 0.5 (ndf / (ndf + x*x))
+
 
 logDensityUnscaled :: StudentT -> Double -> Double
 logDensityUnscaled (StudentT ndf) x =
