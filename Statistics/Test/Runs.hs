@@ -26,7 +26,7 @@ import Statistics.Types
 runsTest :: (G.Vector v Bool) => v Bool -> Test ()
 {-# INLINE runsTest #-}
 runsTest v
-  = Test { testSignificance = pValue (cumulativeProb n m r)
+  = Test { testSignificance = mkPValue $ cumulativeProb n m r
          , testStatistics   = fromIntegral r
          , testDistribution = ()
          }

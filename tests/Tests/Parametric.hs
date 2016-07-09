@@ -74,28 +74,29 @@ testTTest :: String
           -> [Tst.Test]
 testTTest name pVal test =
   [ testEquality name (isSignificant pVal test) NotSignificant
-  , testEquality name (isSignificant (pValue $ getPValue pVal + 1e-5) test) Significant
+  , testEquality name (isSignificant (mkConfLevelFromPVal $ getPValue pVal + 1e-5) test)
+    Significant
   ]
   
 studentTTests :: [Tst.Test]
 studentTTests = concat
   [ -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
     testTTest "two-sample t-test SamplesDiffer Student"
-      (pValue 0.03410) (studentTTest SamplesDiffer sample1 sample2)
+      (mkConfLevelFromPVal 0.03410) (studentTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", var.equal=F)
   , testTTest "two-sample t-test SamplesDiffer Welch"
-      (pValue 0.03483) (welchTTest SamplesDiffer sample1 sample2)
+      (mkConfLevelFromPVal 0.03483) (welchTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", paired=T)
   , testTTest "two-sample t-test SamplesDiffer Paired"
-      (pValue 0.03411) (pairedTTest SamplesDiffer sample12)
+      (mkConfLevelFromPVal 0.03411) (pairedTTest SamplesDiffer sample12)
     -- R: t.test(sample1, sample2, alt="less", var.equal=T)
   , testTTest "two-sample t-test BGreater Student"
-      (pValue 0.01705) (studentTTest BGreater sample1 sample2)
+      (mkConfLevelFromPVal 0.01705) (studentTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", var.equal=F)
   , testTTest "two-sample t-test BGreater Welch"
-      (pValue 0.01741) (welchTTest BGreater sample1 sample2)
+      (mkConfLevelFromPVal 0.01741) (welchTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", paired=F)
   , testTTest "two-sample t-test BGreater Paired"
-      (pValue 0.01705) (pairedTTest BGreater sample12)
+      (mkConfLevelFromPVal 0.01705) (pairedTTest BGreater sample12)
   ]
   where sample12 = U.zip sample1 sample2

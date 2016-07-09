@@ -24,7 +24,7 @@ import Statistics.Function as F
 import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms (qr)
 import Statistics.Resampling (splitGen)
-import Statistics.Types      (Estimate(..),ConfInt,estimateFromInterval,pValue)
+import Statistics.Types      (Estimate(..),ConfInt,estimateFromInterval,mkConfLevelFromPVal)
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
 import System.Random.MWC (GenIO, uniformR)
@@ -143,7 +143,7 @@ bootstrapRegress gen0 numResamples ci rgrss preds0 resp0
       r2      = est r2s (G.convert r2v)
       (coeffss, r2s) = rgrss preds0 resp0
       -- FIXME: CL semantics!
-      est s v = estimateFromInterval s (w G.! lo, w G.! hi) (pValue ci)
+      est s v = estimateFromInterval s (w G.! lo, w G.! hi) (mkConfLevelFromPVal ci)
         where w  = F.sort v
               lo = round c
               hi = truncate (n - c)

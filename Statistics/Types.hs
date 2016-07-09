@@ -16,22 +16,31 @@
 -- Types for working with statistics.
 
 module Statistics.Types
-    ( -- * Confidence level and intervals
+    ( -- * Confidence level
       CL
-      -- ** As confidence level
+      -- ** Accessors
     , confLevel
-    , getCL
+    , getPValue
+      -- ** Constructors
+    , mkConfLevel
+    , mkConfLevelFromPVal
+    , asCL
+      -- ** Constants and conversion to nσ
     , cl90
     , cl95
     , cl99
-      -- ** As p-value
-    , pValue
-    , getPValue
-      -- ** Normal approximation
+      -- *** Normal approximation
     , nSigma
     , nSigma1
     , getNSigma
     , getNSigma1
+      -- * p-value
+    , PValue
+      -- ** Accessors
+    , pValue
+      -- ** Constructors
+    , mkPValue
+    , asPValue
       -- * Estimates and upper/lower limits
     , Estimate(..)
     , NormalErr(..)
@@ -70,16 +79,12 @@ import Statistics.Distribution.Normal
 -- Data type for confidence level
 ----------------------------------------------------------------
 
--- | Confidence level. This data type serve two purposes:
---
---   1. In context of confidence intervals (CI) it should be
---      interpreted as probability that true value of parameter lies
---      OUTSIDE of interval. CI are constructed for /p/ close to 1 so
---      we store @1-p@ to avoid rounding errors when @p@ is very close
---      to 1. e.g. @CL 0.05@ corresponds to 95% CL.
---
---   2. In context of statistical tests it's p-value of test
---      significance.
+-- |
+-- Confidence level. In context of confidence intervals (CI) it's
+-- represented as probability that true value of parameter lies
+-- OUTSIDE of interval. CI are constructed for /p/ close to 1 so we
+-- store @1-p@ to avoid rounding errors when @p@ is very close to
+-- 1. e.g. 95% CL represented as @CL 0.05@.
 newtype CL a = CL a
                deriving (Show,Read,Eq, Typeable, Data, Generic)
 
@@ -106,28 +111,36 @@ instance Ord a => Ord (CL a) where
   min (CL a) (CL b) = CL (max a b)
 
 
--- | Construct confidence level.
---
---   > confLevel 0.90
---   >>> CL = 0.10
-confLevel :: (Ord a, Num a) => a -> CL a
-confLevel p
+-- | Create confidence level. Will throw exception if parameter is out
+--   of [0,1] range
+mkConfLevel :: (Ord a, Num a) => a -> CL a
+mkConfLevel p
   | p >= 0 && p <= 1 = CL (1 - p)
-  | otherwise        = error "Statistics.Types.confLevel: probability is out if [0,1] range"
+  | otherwise        = error "Statistics.Types.mkConfLevel: probability is out if [0,1] range"
 
--- | Construct p-value
-pValue :: (Ord a, Num a) => a -> CL a
-pValue p
+-- | Create confidence level. Will
+mkConfLevelFromPVal :: (Ord a, Num a) => a -> CL a
+mkConfLevelFromPVal p
   | p >= 0 && p <= 1 = CL p
-  | otherwise        = error "Statistics.Types.pValue: probability is out if [0,1] range"
+  | otherwise        = error "Statistics.Types.mkPValCL: probability is out if [0,1] range"
 
--- | Get p-value
+-- |
+-- Convert p-value to confidence level. It's interpreted as
+-- probability of hypothesis being wrong.
+asCL :: PValue a -> CL a
+asCL (PValue p) = CL p
+
+
+-- | Get confidence level. This function is subject to rounding
+--   errors. If @1 - CL@ is needed use 'getPValue' instead
+confLevel :: (Num a) => CL a -> a
+confLevel (CL p) = 1 - p
+
+-- | Get probability of hypothesis being false.
 getPValue :: CL a -> a
 getPValue (CL p) = p
 
--- | Get confidence level
-getCL :: (Ord a, Num a) => CL a -> a
-getCL (CL p) = 1 - p
+
 
 -- | 90% confidence level
 cl90 :: Fractional a => CL a
@@ -168,6 +181,42 @@ getNSigma (CL p) = negate $ quantile standard (p / 2)
 -- | Express confidence level in sigmas
 getNSigma1 :: CL Double -> Double
 getNSigma1 (CL p) = negate $ quantile standard p
+
+
+
+----------------------------------------------------------------
+-- Data type for p-value
+----------------------------------------------------------------
+
+-- | Newtype wrapper for p-value
+newtype PValue a = PValue a
+               deriving (Show,Read,Eq,Ord, Typeable, Data, Generic)
+
+instance Binary   a => Binary   (PValue a)
+instance FromJSON a => FromJSON (PValue a)
+instance ToJSON   a => ToJSON   (PValue a)
+instance NFData   a => NFData   (PValue a) where
+  rnf (PValue a) = rnf a
+
+derivingUnbox "PValue"
+  [t| forall a. Unbox a => PValue a -> a |]
+  [| \(PValue a) -> a |]
+  [| PValue           |]
+
+-- | Construct PValue. Throws error if argument is out of [0,1] range
+mkPValue :: (Ord a, Num a) => a -> PValue a
+mkPValue p
+  | p >= 0 && p <= 1 = PValue p
+  | otherwise        = error "Statistics.Types.mkPValue: probability is out if [0,1] range"
+
+-- | Get p-value
+pValue :: PValue a -> a
+pValue (PValue p) = p
+
+-- | Convert confidence level to p-value. It returns probability of
+--   hypothesis being false.
+asPValue :: CL a -> PValue a
+asPValue (CL p) = PValue p
 
 
 

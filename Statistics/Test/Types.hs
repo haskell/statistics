@@ -13,7 +13,7 @@ import Data.Binary      (Binary)
 import Data.Data (Typeable, Data)
 import GHC.Generics
 
-import Statistics.Types (CL)
+import Statistics.Types (PValue,CL,asPValue)
 
 
 -- | Result of hypothesis testing
@@ -30,7 +30,7 @@ instance NFData   TestResult
 
 -- | Result of statistical test. It contains test p-value (probability of encountering
 data Test distr = Test
-  { testSignificance :: !(CL Double)
+  { testSignificance :: !(PValue Double)
   , testStatistics   :: !Double
   , testDistribution :: distr
   }
@@ -45,7 +45,7 @@ instance (NFData   d) => NFData   (Test d) where
 -- | Check whether test is significant for given p-value.
 isSignificant :: CL Double -> Test d -> TestResult
 isSignificant cl t
-  = significant $ cl <= testSignificance t
+  = significant $ asPValue cl >= testSignificance t
 
 
 -- | Test type for test which compare positional (mean,median etc.)
