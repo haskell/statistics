@@ -47,7 +47,7 @@ module Statistics.Types
     , ConfInt(..)
     , UpperLimit(..)
     , LowerLimit(..)
-      -- ** Constructor
+      -- ** Constructors
     , estimateNormErr
     , (±)
     , estimateFromInterval
@@ -280,19 +280,34 @@ derivingUnbox "ConfInt"
 ----------------------------------------
 -- Constructors
 
-estimateNormErr :: a            -- ^ Central estimate
+-- | Create estimate with normal errors
+estimateNormErr :: a            -- ^ Point estimate
                 -> a            -- ^ 1σ error
                 -> Estimate NormalErr a
 estimateNormErr x dx = Estimate x (NormalErr dx)
 
-
-(±) :: a -> a -> Estimate NormalErr a
+-- | Synonym for 'estimateNormErr'
+(±) :: a      -- ^ Point estimate
+    -> a      -- ^ 1σ error
+    -> Estimate NormalErr a
 (±) = estimateNormErr
 
-estimateFromErr :: a -> (a,a) -> CL Double -> Estimate ConfInt a
+-- | Create estimate with asymmetric error.
+estimateFromErr
+  :: a                     -- ^ Central estimate
+  -> (a,a)                 -- ^ Lower and upper errors. Both should be
+                           --   positive but it's not checked.
+  -> CL Double             -- ^ Confidence level for interval
+  -> Estimate ConfInt a
 estimateFromErr x (ldx,udx) cl = Estimate x (ConfInt ldx udx cl)
 
-estimateFromInterval :: Num a => a -> (a,a) -> CL Double -> Estimate ConfInt a
+estimateFromInterval
+  :: Num a
+  => a                     -- ^ Point estimate. Should lie within
+                           --   interval but it's not checked.
+  -> (a,a)                 -- ^ Lower and upper bounds of interval
+  -> CL Double             -- ^ Confidence level for interval
+  -> Estimate ConfInt a
 estimateFromInterval x (lx,ux) cl
   = Estimate x (ConfInt (x-lx) (ux-x) cl)
 
@@ -300,16 +315,18 @@ estimateFromInterval x (lx,ux) cl
 ----------------------------------------
 -- Accessors
 
+-- | Get confidence interval
 confidenceInterval :: Num a => Estimate ConfInt a -> (a,a)
 confidenceInterval (Estimate x (ConfInt ldx udx _))
   = (x - ldx, x + udx)
 
+-- | Get asymmetric errors
 asymErrors :: Estimate ConfInt a -> (a,a)
 asymErrors (Estimate _ (ConfInt ldx udx _)) = (ldx,udx)
 
 
 
--- | Scale by exactly known value
+-- | Data types which could be multiplied by constant.
 class Scale e where
   scale :: (Ord a, Num a) => a -> e a -> e a
 
