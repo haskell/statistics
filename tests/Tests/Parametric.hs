@@ -1,5 +1,6 @@
 module Tests.Parametric (tests) where
 
+import Data.Maybe (fromJust)
 import Statistics.Test.StudentT
 import Statistics.Test.Types
 import Statistics.Types
@@ -82,21 +83,21 @@ studentTTests :: [Tst.Test]
 studentTTests = concat
   [ -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
     testTTest "two-sample t-test SamplesDiffer Student"
-      (mkConfLevelFromPVal 0.03410) (studentTTest SamplesDiffer sample1 sample2)
+      (mkConfLevelFromPVal 0.03410) (fromJust $ studentTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", var.equal=F)
   , testTTest "two-sample t-test SamplesDiffer Welch"
-      (mkConfLevelFromPVal 0.03483) (welchTTest SamplesDiffer sample1 sample2)
+      (mkConfLevelFromPVal 0.03483) (fromJust $ welchTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", paired=T)
   , testTTest "two-sample t-test SamplesDiffer Paired"
-      (mkConfLevelFromPVal 0.03411) (pairedTTest SamplesDiffer sample12)
+      (mkConfLevelFromPVal 0.03411) (fromJust $ pairedTTest SamplesDiffer sample12)
     -- R: t.test(sample1, sample2, alt="less", var.equal=T)
   , testTTest "two-sample t-test BGreater Student"
-      (mkConfLevelFromPVal 0.01705) (studentTTest BGreater sample1 sample2)
+      (mkConfLevelFromPVal 0.01705) (fromJust $ studentTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", var.equal=F)
   , testTTest "two-sample t-test BGreater Welch"
-      (mkConfLevelFromPVal 0.01741) (welchTTest BGreater sample1 sample2)
+      (mkConfLevelFromPVal 0.01741) (fromJust $ welchTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", paired=F)
   , testTTest "two-sample t-test BGreater Paired"
-      (mkConfLevelFromPVal 0.01705) (pairedTTest BGreater sample12)
+      (mkConfLevelFromPVal 0.01705) (fromJust $ pairedTTest BGreater sample12)
   ]
   where sample12 = U.zip sample1 sample2
