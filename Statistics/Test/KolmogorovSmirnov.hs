@@ -47,14 +47,15 @@ import qualified Data.Vector.Unboxed.Mutable as M
 -- Test
 ----------------------------------------------------------------
 
--- | Check that sample could be described by distribution.
+-- | Check that sample could be described by distribution. Returns
+--   @Nothing@ is sample is empty
 --
---   This test uses Marsaglia-Tsang-Wang exact alogorithm for
+--   This test uses Marsaglia-Tsang-Wang exact algorithm for
 --   calculation of p-value.
 kolmogorovSmirnovTest :: (Distribution d, G.Vector v Double)
                       => d        -- ^ Distribution
                       -> v Double -- ^ Data sample
-                      -> Test ()
+                      -> Maybe (Test ())
 {-# INLINE kolmogorovSmirnovTest #-}
 kolmogorovSmirnovTest d
   = kolmogorovSmirnovTestCdf (cumulative d)
@@ -65,13 +66,15 @@ kolmogorovSmirnovTest d
 kolmogorovSmirnovTestCdf :: (G.Vector v Double)
                          => (Double -> Double) -- ^ CDF of distribution
                          -> v Double           -- ^ Data sample
-                         -> Test ()
+                         -> Maybe (Test ())
 {-# INLINE kolmogorovSmirnovTestCdf #-}
 kolmogorovSmirnovTestCdf cdf sample
-  = Test { testSignificance = mkPValue $ 1 - prob
-         , testStatistics   = d
-         , testDistribution = ()
-         }
+  | G.null sample = Nothing
+  | otherwise     = Just Test
+      { testSignificance = mkPValue $ 1 - prob
+      , testStatistics   = d
+      , testDistribution = ()
+      }
   where
     d    = kolmogorovSmirnovCdfD cdf sample
     prob = kolmogorovSmirnovProbability (G.length sample) d
@@ -79,18 +82,21 @@ kolmogorovSmirnovTestCdf cdf sample
 
 -- | Two sample Kolmogorov-Smirnov test. It tests whether two data
 --   samples could be described by the same distribution without
---   making any assumptions about it.
+--   making any assumptions about it. If either of samples is empty
+--   returns Nothing.
 --
 --   This test uses approximate formula for computing p-value.
 kolmogorovSmirnovTest2 :: (G.Vector v Double)
                        => v Double -- ^ Sample 1
                        -> v Double -- ^ Sample 2
-                       -> Test ()
+                       -> Maybe (Test ())
 kolmogorovSmirnovTest2 xs1 xs2
-  = Test { testSignificance = mkPValue $ 1 - prob d
-         , testStatistics   = d
-         , testDistribution = ()
-         }
+  | G.null xs1 || G.null xs2 = Nothing
+  | otherwise                = Just Test
+      { testSignificance = mkPValue $ 1 - prob d
+      , testStatistics   = d
+      , testDistribution = ()
+      }
   where
     d    = kolmogorovSmirnov2D xs1 xs2
          * (en + 0.12 + 0.11/en)
@@ -103,13 +109,13 @@ kolmogorovSmirnovTest2 xs1 xs2
       | z <  0    = error "kolmogorovSmirnov2D: internal error"
       | z == 0    = 0
       | z <  1.18 = let y = exp( -1.23370055013616983 / (z*z) )
-                    in  2.25675833419102515 * sqrt( -log(y) ) * (y + y**9 + y**25 + y**49)
+                    in  2.25675833419102515 * sqrt( -log y ) * (y + y**9 + y**25 + y**49)
       | otherwise = let x = exp(-2 * z * z)
                     in  1 - 2*(x - x**4 + x**9)
 {-# INLINABLE  kolmogorovSmirnovTest2 #-}
-{-# SPECIALIZE kolmogorovSmirnovTest2 :: U.Vector Double -> U.Vector Double -> Test () #-}
-{-# SPECIALIZE kolmogorovSmirnovTest2 :: V.Vector Double -> V.Vector Double -> Test () #-}
-{-# SPECIALIZE kolmogorovSmirnovTest2 :: S.Vector Double -> S.Vector Double -> Test () #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: U.Vector Double -> U.Vector Double -> Maybe (Test ()) #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: V.Vector Double -> V.Vector Double -> Maybe (Test ()) #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: S.Vector Double -> S.Vector Double -> Maybe (Test ()) #-}
 -- FIXME: Find source for approximation for D
 
 
