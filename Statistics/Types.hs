@@ -65,11 +65,12 @@ module Statistics.Types
     , Weights
     ) where
 
-import Control.DeepSeq
-import Data.Aeson   (FromJSON, ToJSON)
-import Data.Binary  (Binary)
-import Data.Data    (Data,Typeable)
-import Data.Maybe   (fromMaybe)
+import Control.Monad                ((<=<))
+import Control.DeepSeq              (NFData(..))
+import Data.Aeson                   (FromJSON(..), ToJSON, Result(..))
+import Data.Binary                  (Binary(..))
+import Data.Data                    (Data,Typeable)
+import Data.Maybe                   (fromMaybe)
 import Data.Vector.Unboxed          (Unbox)
 import Data.Vector.Unboxed.Deriving (derivingUnbox)
 import GHC.Generics (Generic)
@@ -98,9 +99,14 @@ instance Show a => Show (CL a) where
 instance (Num a, Ord a, Read a) => Read (CL a) where
   readPrec = defaultReadPrecM1 "clFromPVal" clFromPValE
 
-instance Binary   a => Binary   (CL a)
-instance FromJSON a => FromJSON (CL a)
-instance ToJSON   a => ToJSON   (CL a)
+instance (Binary a, Num a, Ord a) => Binary (CL a) where
+  put (CL p) = put p
+  get        = maybe (fail errMkCL) return . clFromPValE =<< get
+
+instance (ToJSON a)                 => ToJSON   (CL a)
+instance (FromJSON a, Num a, Ord a) => FromJSON (CL a) where
+  parseJSON = maybe (fail errMkCL) return . clFromPValE <=< parseJSON
+
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
 
@@ -123,7 +129,7 @@ mkConfLevel
   = fromMaybe (error "Statistics.Types.mkConfLevel: probability is out if [0,1] range")
   . mkConfLevelE
 
--- | Create confidence level. 
+-- | Create confidence level.
 mkConfLevelE :: (Ord a, Num a) => a -> Maybe (CL a)
 mkConfLevelE p
   | p >= 0 && p <= 1 = Just $ CL (1 - p)
@@ -132,15 +138,16 @@ mkConfLevelE p
 -- | Create confidence level. Will throw exception if parameter is out
 --   of [0,1] range
 clFromPVal :: (Ord a, Num a) => a -> CL a
-clFromPVal
-  = fromMaybe (error "Statistics.Types.mkPValCL: probability is out if [0,1] range")
-  . clFromPValE
+clFromPVal = fromMaybe (error errMkCL) . clFromPValE
 
 -- | Create confidence level.
 clFromPValE :: (Ord a, Num a) => a -> Maybe (CL a)
 clFromPValE p
   | p >= 0 && p <= 1 = Just $ CL p
   | otherwise        = Nothing
+
+errMkCL :: String
+errMkCL = "Statistics.Types.mkPValCL: probability is out if [0,1] range"
 
 -- |
 -- Convert p-value to confidence level. It's interpreted as
@@ -215,17 +222,21 @@ instance Show a => Show (PValue a) where
 instance (Num a, Ord a, Read a) => Read (PValue a) where
   readPrec = defaultReadPrecM1 "mkPValue" mkPValueE
 
-instance Binary   a => Binary   (PValue a)
-instance FromJSON a => FromJSON (PValue a)
-instance ToJSON   a => ToJSON   (PValue a)
-instance NFData   a => NFData   (PValue a) where
+instance (Binary a, Num a, Ord a) => Binary (PValue a) where
+  put (PValue p) = put p
+  get            = maybe (fail errMkPValue) return . mkPValueE =<< get
+
+instance (ToJSON a)                 => ToJSON   (PValue a)
+instance (FromJSON a, Num a, Ord a) => FromJSON (PValue a) where
+  parseJSON = maybe (fail errMkPValue) return <=< parseJSON
+
+instance NFData a => NFData (PValue a) where
   rnf (PValue a) = rnf a
+
 
 -- | Construct PValue. Throws error if argument is out of [0,1] range
 mkPValue :: (Ord a, Num a) => a -> PValue a
-mkPValue
-  = fromMaybe (error "Statistics.Types.mkPValue: probability is out if [0,1] range")
-  . mkPValueE
+mkPValue = fromMaybe (error errMkPValue) . mkPValueE
 
 -- | Construct PValue.
 mkPValueE :: (Ord a, Num a) => a -> Maybe (PValue a)
@@ -241,6 +252,9 @@ pValue (PValue p) = p
 --   hypothesis being false.
 asPValue :: CL a -> PValue a
 asPValue (CL p) = PValue p
+
+errMkPValue :: String
+errMkPValue = "Statistics.Types.mkPValue: probability is out if [0,1] range"
 
 
 
