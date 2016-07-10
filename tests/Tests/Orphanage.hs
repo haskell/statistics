@@ -1,11 +1,11 @@
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
 -- Orphan instances for common data types
 module Tests.Orphanage where
 
-
-import Statistics.Distribution
+import Control.Applicative
 import Statistics.Distribution.Beta           (BetaDistribution, betaDistr)
 import Statistics.Distribution.Binomial       (BinomialDistribution, binomial)
 import Statistics.Distribution.CauchyLorentz
@@ -87,3 +87,18 @@ instance (Arbitrary a, Ord a, RealFrac a) => Arbitrary (CL a) where
   arbitrary = do
     (_::Int,x) <- properFraction <$> arbitrary
     return $ clFromPVal $ abs x
+
+instance Arbitrary a => Arbitrary (NormalErr a) where
+  arbitrary = NormalErr <$> arbitrary
+
+instance Arbitrary a => Arbitrary (ConfInt a) where
+  arbitrary = liftA3 ConfInt arbitrary arbitrary arbitrary
+
+instance (Arbitrary (e a), Arbitrary a) => Arbitrary (Estimate e a) where
+  arbitrary = liftA2 Estimate arbitrary arbitrary
+
+instance (Arbitrary a) => Arbitrary (UpperLimit a) where
+  arbitrary = liftA2 UpperLimit arbitrary arbitrary
+
+instance (Arbitrary a) => Arbitrary (LowerLimit a) where
+  arbitrary = liftA2 LowerLimit arbitrary arbitrary

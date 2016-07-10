@@ -38,6 +38,12 @@ tests = testGroup "Test for data serialization"
   , serializationTests (T :: T (CL Double))
   , serializationTests (T :: T (PValue Float))
   , serializationTests (T :: T (PValue Double))
+  , serializationTests (T :: T (NormalErr Double))
+  , serializationTests (T :: T (ConfInt   Double))
+  , serializationTests (T :: T (Estimate NormalErr Double))
+  , serializationTests (T :: T (Estimate ConfInt   Double))
+  , serializationTests (T :: T (LowerLimit Double))
+  , serializationTests (T :: T (UpperLimit Double))
     -- Distributions
   , serializationTests (T :: T BetaDistribution        )
   , serializationTests (T :: T CauchyDistribution      )
