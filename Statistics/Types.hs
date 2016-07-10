@@ -67,7 +67,7 @@ module Statistics.Types
 
 import Control.Monad                ((<=<))
 import Control.DeepSeq              (NFData(..))
-import Data.Aeson                   (FromJSON(..), ToJSON, Result(..))
+import Data.Aeson                   (FromJSON(..), ToJSON)
 import Data.Binary                  (Binary(..))
 import Data.Data                    (Data,Typeable)
 import Data.Maybe                   (fromMaybe)
@@ -228,7 +228,7 @@ instance (Binary a, Num a, Ord a) => Binary (PValue a) where
 
 instance (ToJSON a)                 => ToJSON   (PValue a)
 instance (FromJSON a, Num a, Ord a) => FromJSON (PValue a) where
-  parseJSON = maybe (fail errMkPValue) return <=< parseJSON
+  parseJSON = maybe (fail errMkPValue) return . mkPValueE <=< parseJSON
 
 instance NFData a => NFData (PValue a) where
   rnf (PValue a) = rnf a
