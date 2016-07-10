@@ -14,15 +14,17 @@ module Statistics.Internal (
   , defaultShow2
   , defaultShow3
     -- * Default definitions for Read
-  , defaultReadPrec1
-  , defaultReadPrec2
-  , defaultReadPrec3
+  , defaultReadPrecM1
+  , defaultReadPrecM2
+  , defaultReadPrecM3
     -- * Reexports
   , Show(..)
   , Read(..)
   ) where
 
+import Control.Applicative
 import Control.Monad
+import Data.Maybe
 import Text.Read
 
 
@@ -66,27 +68,29 @@ defaultShow3 con a b c n
 -- Default read implementations
 ----------------------------------------------------------------
 
-defaultReadPrec1 :: (Read a) => String -> (a -> r) -> ReadPrec r
-defaultReadPrec1 con f = parens $ prec 10 $ do
-  Ident con' <- lexP
-  guard (con' == con)
+defaultReadPrecM1 :: (Read a) => String -> (a -> Maybe r) -> ReadPrec r
+defaultReadPrecM1 con f = parens $ prec 10 $ do
+  expect con
   a <- readPrec
-  return $ f a
+  maybe empty return $ f a
 
-defaultReadPrec2 :: (Read a, Read b) => String -> (a -> b -> r) -> ReadPrec r
-defaultReadPrec2 con f = parens $ prec 10 $ do
-  Ident con' <- lexP
-  guard (con' == con)
+defaultReadPrecM2 :: (Read a, Read b) => String -> (a -> b -> Maybe r) -> ReadPrec r
+defaultReadPrecM2 con f = parens $ prec 10 $ do
+  expect con
   a <- readPrec
   b <- readPrec
-  return $ f a b
+  maybe empty return $ f a b
 
-defaultReadPrec3 :: (Read a, Read b, Read c)
-                 => String -> (a -> b -> c -> r) -> ReadPrec r
-defaultReadPrec3 con f = parens $ prec 10 $ do
-  Ident con' <- lexP
-  guard (con' == con)
+defaultReadPrecM3 :: (Read a, Read b, Read c)
+                 => String -> (a -> b -> c -> Maybe r) -> ReadPrec r
+defaultReadPrecM3 con f = parens $ prec 10 $ do
+  expect con
   a <- readPrec
   b <- readPrec
   c <- readPrec
-  return $ f a b c
+  maybe empty return $ f a b c
+
+expect :: String -> ReadPrec ()
+expect str = do
+  Ident s <- lexP
+  guard (s == str)

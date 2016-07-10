@@ -96,7 +96,7 @@ newtype CL a = CL a
 instance Show a => Show (CL a) where
   showsPrec n (CL p) = defaultShow1 "clFromPVal" p n
 instance (Num a, Ord a, Read a) => Read (CL a) where
-  readPrec = defaultReadPrec1 "clFromPVal" clFromPVal
+  readPrec = defaultReadPrecM1 "clFromPVal" clFromPValE
 
 instance Binary   a => Binary   (CL a)
 instance FromJSON a => FromJSON (CL a)
@@ -213,7 +213,7 @@ newtype PValue a = PValue a
 instance Show a => Show (PValue a) where
   showsPrec n (PValue p) = defaultShow1 "mkPValue" p n
 instance (Num a, Ord a, Read a) => Read (PValue a) where
-  readPrec = defaultReadPrec1 "mkPValue" mkPValue
+  readPrec = defaultReadPrecM1 "mkPValue" mkPValueE
 
 instance Binary   a => Binary   (PValue a)
 instance FromJSON a => FromJSON (PValue a)
