@@ -301,7 +301,7 @@ derivingUnbox "NormalErr"
 
 -- | Confidence interval
 data ConfInt a = ConfInt !a !a !(CL Double)
-  deriving (Read,Show,Typeable,Data,Generic)
+  deriving (Read,Show,Eq,Typeable,Data,Generic)
 
 instance Binary   a => Binary   (ConfInt a)
 instance FromJSON a => FromJSON (ConfInt a)
