@@ -8,7 +8,7 @@ import Statistics.Test.KolmogorovSmirnov
 import Statistics.Test.MannWhitneyU
 import Statistics.Test.KruskalWallis
 import Statistics.Test.WilcoxonT
-import Statistics.Types (CL(..),pValue,cl95,clFromPVal)
+import Statistics.Types (CL,pValue,cl95,clFromPVal)
 
 import Test.Framework (testGroup)
 import Test.Framework.Providers.HUnit

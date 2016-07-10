@@ -112,12 +112,12 @@ cdfIsNondecreasing :: (Distribution d) => T d -> d -> Double -> Double -> Bool
 cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
 
 -- cumulative d +∞ = 1
-cdfAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfAtPosInfinity :: (Distribution d) => T d -> d -> Bool
 cdfAtPosInfinity _ d
   = cumulative d (1/0) == 1
 
 -- cumulative d - ∞ = 0
-cdfAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfAtNegInfinity :: (Distribution d) => T d -> d -> Bool
 cdfAtNegInfinity _ d
   = cumulative d (-1/0) == 0
 
@@ -197,7 +197,7 @@ complQuantileCheck _ d (snd . properFraction -> p) =
     x1 = complQuantile d p
 
 -- Quantile is inverse of CDF
-quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
+quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double -> Property
 quantileIsInvCDF _ d (snd . properFraction -> p) =
   and [ p > 1e-250
       , p < 1
@@ -268,7 +268,7 @@ logProbabilityCheck _ d x
     logP = logProbability d x
 
 
-p_binary :: (Eq a, Show a, Binary a) => T a -> a -> Bool
+p_binary :: (Eq a, Binary a) => T a -> a -> Bool
 p_binary _ a = a == (decode . encode) a
 
 
