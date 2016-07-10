@@ -23,7 +23,9 @@ module Statistics.Types
     , getPValue
       -- ** Constructors
     , mkConfLevel
+    , mkConfLevelE
     , clFromPVal
+    , clFromPValE
     , asCL
       -- ** Constants and conversion to nσ
     , cl90
@@ -40,6 +42,7 @@ module Statistics.Types
     , pValue
       -- ** Constructors
     , mkPValue
+    , mkPValueE
     , asPValue
       -- * Estimates and upper/lower limits
     , Estimate(..)
@@ -66,6 +69,7 @@ import Control.DeepSeq
 import Data.Aeson   (FromJSON, ToJSON)
 import Data.Binary  (Binary)
 import Data.Data    (Data,Typeable)
+import Data.Maybe   (fromMaybe)
 import Data.Vector.Unboxed          (Unbox)
 import Data.Vector.Unboxed.Deriving (derivingUnbox)
 import GHC.Generics (Generic)
@@ -115,15 +119,28 @@ instance Ord a => Ord (CL a) where
 -- | Create confidence level. Will throw exception if parameter is out
 --   of [0,1] range
 mkConfLevel :: (Ord a, Num a) => a -> CL a
-mkConfLevel p
-  | p >= 0 && p <= 1 = CL (1 - p)
-  | otherwise        = error "Statistics.Types.mkConfLevel: probability is out if [0,1] range"
+mkConfLevel
+  = fromMaybe (error "Statistics.Types.mkConfLevel: probability is out if [0,1] range")
+  . mkConfLevelE
 
--- | Create confidence level. Will
+-- | Create confidence level. 
+mkConfLevelE :: (Ord a, Num a) => a -> Maybe (CL a)
+mkConfLevelE p
+  | p >= 0 && p <= 1 = Just $ CL (1 - p)
+  | otherwise        = Nothing
+
+-- | Create confidence level. Will throw exception if parameter is out
+--   of [0,1] range
 clFromPVal :: (Ord a, Num a) => a -> CL a
-clFromPVal p
-  | p >= 0 && p <= 1 = CL p
-  | otherwise        = error "Statistics.Types.mkPValCL: probability is out if [0,1] range"
+clFromPVal
+  = fromMaybe (error "Statistics.Types.mkPValCL: probability is out if [0,1] range")
+  . clFromPValE
+
+-- | Create confidence level.
+clFromPValE :: (Ord a, Num a) => a -> Maybe (CL a)
+clFromPValE p
+  | p >= 0 && p <= 1 = Just $ CL p
+  | otherwise        = Nothing
 
 -- |
 -- Convert p-value to confidence level. It's interpreted as
@@ -206,9 +223,15 @@ instance NFData   a => NFData   (PValue a) where
 
 -- | Construct PValue. Throws error if argument is out of [0,1] range
 mkPValue :: (Ord a, Num a) => a -> PValue a
-mkPValue p
-  | p >= 0 && p <= 1 = PValue p
-  | otherwise        = error "Statistics.Types.mkPValue: probability is out if [0,1] range"
+mkPValue
+  = fromMaybe (error "Statistics.Types.mkPValue: probability is out if [0,1] range")
+  . mkPValueE
+
+-- | Construct PValue.
+mkPValueE :: (Ord a, Num a) => a -> Maybe (PValue a)
+mkPValueE p
+  | p >= 0 && p <= 1 = Just $ PValue p
+  | otherwise        = Nothing
 
 -- | Get p-value
 pValue :: PValue a -> a
