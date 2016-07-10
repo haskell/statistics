@@ -23,7 +23,7 @@ module Statistics.Types
     , getPValue
       -- ** Constructors
     , mkConfLevel
-    , mkConfLevelFromPVal
+    , clFromPVal
     , asCL
       -- ** Constants and conversion to nσ
     , cl90
@@ -70,6 +70,7 @@ import Data.Vector.Unboxed          (Unbox)
 import Data.Vector.Unboxed.Deriving (derivingUnbox)
 import GHC.Generics (Generic)
 
+import Statistics.Internal
 import Statistics.Types.Internal
 import Statistics.Distribution
 import Statistics.Distribution.Normal
@@ -86,18 +87,18 @@ import Statistics.Distribution.Normal
 -- store @1-p@ to avoid rounding errors when @p@ is very close to
 -- 1. e.g. 95% CL represented as @CL 0.05@.
 newtype CL a = CL a
-               deriving (Show,Read,Eq, Typeable, Data, Generic)
+               deriving (Eq, Typeable, Data, Generic)
+
+instance Show a => Show (CL a) where
+  showsPrec n (CL p) = defaultShow1 "clFromPVal" p n
+instance (Num a, Ord a, Read a) => Read (CL a) where
+  readPrec = defaultReadPrec1 "clFromPVal" clFromPVal
 
 instance Binary   a => Binary   (CL a)
 instance FromJSON a => FromJSON (CL a)
 instance ToJSON   a => ToJSON   (CL a)
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
-
-derivingUnbox "CL"
-  [t| forall a. Unbox a => CL a -> a |]
-  [| \(CL a) -> a |]
-  [| CL           |]
 
 -- | This instance is inverted relative to instance of underlying
 --   type. In other words is larger if it describes greater confidence
@@ -119,8 +120,8 @@ mkConfLevel p
   | otherwise        = error "Statistics.Types.mkConfLevel: probability is out if [0,1] range"
 
 -- | Create confidence level. Will
-mkConfLevelFromPVal :: (Ord a, Num a) => a -> CL a
-mkConfLevelFromPVal p
+clFromPVal :: (Ord a, Num a) => a -> CL a
+clFromPVal p
   | p >= 0 && p <= 1 = CL p
   | otherwise        = error "Statistics.Types.mkPValCL: probability is out if [0,1] range"
 
@@ -190,18 +191,18 @@ getNSigma1 (CL p) = negate $ quantile standard p
 
 -- | Newtype wrapper for p-value
 newtype PValue a = PValue a
-               deriving (Show,Read,Eq,Ord, Typeable, Data, Generic)
+               deriving (Eq,Ord, Typeable, Data, Generic)
+
+instance Show a => Show (PValue a) where
+  showsPrec n (PValue p) = defaultShow1 "mkPValue" p n
+instance (Num a, Ord a, Read a) => Read (PValue a) where
+  readPrec = defaultReadPrec1 "mkPValue" mkPValue
 
 instance Binary   a => Binary   (PValue a)
 instance FromJSON a => FromJSON (PValue a)
 instance ToJSON   a => ToJSON   (PValue a)
 instance NFData   a => NFData   (PValue a) where
   rnf (PValue a) = rnf a
-
-derivingUnbox "PValue"
-  [t| forall a. Unbox a => PValue a -> a |]
-  [| \(PValue a) -> a |]
-  [| PValue           |]
 
 -- | Construct PValue. Throws error if argument is out of [0,1] range
 mkPValue :: (Ord a, Num a) => a -> PValue a
@@ -362,10 +363,6 @@ instance ToJSON   a => ToJSON   (UpperLimit a)
 instance NFData   a => NFData   (UpperLimit a) where
     rnf (UpperLimit x cl) = rnf x `seq` rnf cl
 
-derivingUnbox "UpperLimit"
-  [t| forall a. Unbox a => UpperLimit a -> (a, CL Double) |]
-  [| \(UpperLimit a b) -> (a,b) |]
-  [| \(a,b) -> UpperLimit a b   |]
 
 
 -- | Lower limit. They are usually given for large quantities when
@@ -382,6 +379,26 @@ instance FromJSON a => FromJSON (LowerLimit a)
 instance ToJSON   a => ToJSON   (LowerLimit a)
 instance NFData   a => NFData   (LowerLimit a) where
     rnf (LowerLimit x cl) = rnf x `seq` rnf cl
+
+
+----------------------------------------------------------------
+-- Deriving unbox instances
+----------------------------------------------------------------
+
+derivingUnbox "CL"
+  [t| forall a. Unbox a => CL a -> a |]
+  [| \(CL a) -> a |]
+  [| CL           |]
+
+derivingUnbox "PValue"
+  [t| forall a. Unbox a => PValue a -> a |]
+  [| \(PValue a) -> a |]
+  [| PValue           |]
+
+derivingUnbox "UpperLimit"
+  [t| forall a. Unbox a => UpperLimit a -> (a, CL Double) |]
+  [| \(UpperLimit a b) -> (a,b) |]
+  [| \(a,b) -> UpperLimit a b   |]
 
 derivingUnbox "LowerLimit"
   [t| forall a. Unbox a => LowerLimit a -> (a, CL Double) |]
