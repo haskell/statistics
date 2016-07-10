@@ -139,6 +139,7 @@ test-suite tests
     Tests.NonParametric.Table
     Tests.Orphanage
     Tests.Parametric
+    Tests.Serialization
     Tests.Transform
 
   ghc-options:
@@ -150,6 +151,7 @@ test-suite tests
     base,
     binary,
     erf,
+    aeson,
     ieee754 >= 0.7.3,
     math-functions,
     mwc-random,

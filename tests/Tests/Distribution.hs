@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE FlexibleInstances, OverlappingInstances, ScopedTypeVariables,
     ViewPatterns #-}
 module Tests.Distribution (tests) where
@@ -12,21 +11,21 @@ import qualified Numeric.IEEE as IEEE
 import Numeric.MathFunctions.Constants (m_tiny,m_epsilon)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
-import Statistics.Distribution.Beta (BetaDistribution)
-import Statistics.Distribution.Binomial (BinomialDistribution)
+import Statistics.Distribution.Beta           (BetaDistribution)
+import Statistics.Distribution.Binomial       (BinomialDistribution)
 import Statistics.Distribution.CauchyLorentz
-import Statistics.Distribution.ChiSquared (ChiSquared)
-import Statistics.Distribution.Exponential (ExponentialDistribution)
-import Statistics.Distribution.FDistribution (FDistribution,fDistribution)
-import Statistics.Distribution.Gamma (GammaDistribution,gammaDistr)
+import Statistics.Distribution.ChiSquared     (ChiSquared)
+import Statistics.Distribution.Exponential    (ExponentialDistribution)
+import Statistics.Distribution.FDistribution  (FDistribution,fDistribution)
+import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
-import Statistics.Distribution.Laplace (LaplaceDistribution)
-import Statistics.Distribution.Normal (NormalDistribution)
-import Statistics.Distribution.Poisson (PoissonDistribution)
+import Statistics.Distribution.Laplace        (LaplaceDistribution)
+import Statistics.Distribution.Normal         (NormalDistribution)
+import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform (LinearTransform, linTransDistr)
-import Statistics.Distribution.Uniform (UniformDistribution)
+import Statistics.Distribution.Transform      (LinearTransform, linTransDistr)
+import Statistics.Distribution.Uniform        (UniformDistribution)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
@@ -97,7 +96,6 @@ cdfTests t =
   , testProperty "CDF at -inf = 1"      $ cdfAtNegInfinity       t
   , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
   , testProperty "1-CDF is correct"     $ cdfComplementIsCorrect t
-  , testProperty "Binary OK"            $ p_binary t
   ]
 
 
@@ -267,11 +265,6 @@ logProbabilityCheck _ d x
   where
     p    = probability d x
     logP = logProbability d x
-
-
-p_binary :: (Eq a, Binary a) => T a -> a -> Bool
-p_binary _ a = a == (decode . encode) a
-
 
 
 

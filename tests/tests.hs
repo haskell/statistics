@@ -7,7 +7,7 @@ import qualified Tests.NonParametric as NonParametric
 import qualified Tests.Parametric as Parametric
 import qualified Tests.Transform as Transform
 import qualified Tests.Correlation as Correlation
-
+import qualified Tests.Serialization
 main :: IO ()
 main = defaultMain [ Distribution.tests
                    , Function.tests
@@ -17,4 +17,5 @@ main = defaultMain [ Distribution.tests
                    , Parametric.tests
                    , Transform.tests
                    , Correlation.tests
+                   , Tests.Serialization.tests
                    ]
