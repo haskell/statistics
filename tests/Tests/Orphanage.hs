@@ -79,9 +79,9 @@ instance QC.Arbitrary FDistribution where
 instance (Arbitrary a, Ord a, RealFrac a) => Arbitrary (PValue a) where
   arbitrary = do
     (_::Int,x) <- properFraction <$> arbitrary
-    return $ mkPValue x
+    return $ mkPValue $ abs x
 
 instance (Arbitrary a, Ord a, RealFrac a) => Arbitrary (CL a) where
   arbitrary = do
     (_::Int,x) <- properFraction <$> arbitrary
-    return $ clFromPVal x
+    return $ clFromPVal $ abs x
