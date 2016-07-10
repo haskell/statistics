@@ -86,7 +86,7 @@ library
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.KruskalWallis
     Statistics.Test.MannWhitneyU
-    Statistics.Test.Runs
+--    Statistics.Test.Runs
     Statistics.Test.StudentT
     Statistics.Test.Types
     Statistics.Test.WilcoxonT
