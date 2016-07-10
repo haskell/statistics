@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
 -- Orphan instances for common data types
@@ -20,6 +21,7 @@ import Statistics.Distribution.Poisson        (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform, scaleAround)
 import Statistics.Distribution.Uniform        (UniformDistribution, uniformDistr)
+import Statistics.Types
 
 import Test.QuickCheck         as QC
 
@@ -74,3 +76,12 @@ instance QC.Arbitrary FDistribution where
            <*> ((abs <$> arbitrary) `suchThat` (>0))
 
 
+instance (Arbitrary a, Ord a, RealFrac a) => Arbitrary (PValue a) where
+  arbitrary = do
+    (_::Int,x) <- properFraction <$> arbitrary
+    return $ mkPValue x
+
+instance (Arbitrary a, Ord a, RealFrac a) => Arbitrary (CL a) where
+  arbitrary = do
+    (_::Int,x) <- properFraction <$> arbitrary
+    return $ clFromPVal x
