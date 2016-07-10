@@ -38,7 +38,25 @@ tests = testGroup "Test for data serialization"
   , serializationTests (T :: T (CL Double))
   , serializationTests (T :: T (PValue Float))
   , serializationTests (T :: T (PValue Double))
+    -- Distributions
+  , serializationTests (T :: T BetaDistribution        )
+  , serializationTests (T :: T CauchyDistribution      )
+  , serializationTests (T :: T ChiSquared              )
+  , serializationTests (T :: T ExponentialDistribution )
+  , serializationTests (T :: T GammaDistribution       )
+  , serializationTests (T :: T LaplaceDistribution     )
+  , serializationTests (T :: T NormalDistribution      )
+  , serializationTests (T :: T UniformDistribution     )
+  , serializationTests (T :: T StudentT                )
+  , serializationTests (T :: T (LinearTransform NormalDistribution))
+  , serializationTests (T :: T FDistribution           )
+  , serializationTests (T :: T BinomialDistribution       )
+  , serializationTests (T :: T GeometricDistribution      )
+  , serializationTests (T :: T GeometricDistribution0     )
+  , serializationTests (T :: T HypergeometricDistribution )
+  , serializationTests (T :: T PoissonDistribution        )
   ]
+
 
 serializationTests
   :: (Eq a, Typeable a, Binary a, Show a, Read a, ToJSON a, FromJSON a, Arbitrary a)
