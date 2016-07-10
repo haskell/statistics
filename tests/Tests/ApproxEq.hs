@@ -24,7 +24,8 @@ class (Eq a, Show a) => ApproxEq a where
     eql eps a b = counterexample (show a ++ " /=~ " ++ show b) (eq eps a b)
 
     (=~)  :: a -> a -> Bool
-    (==~) :: ApproxEq a => a -> a -> Property
+
+    (==~) :: a -> a -> Property
     a ==~ b = counterexample (show a ++ " /=~ " ++ show b) (a =~ b)
 
 instance ApproxEq Double where
