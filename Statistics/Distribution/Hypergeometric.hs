@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Hypergeometric
@@ -21,34 +22,52 @@ module Statistics.Distribution.Hypergeometric
       HypergeometricDistribution
     -- * Constructors
     , hypergeometric
+    , hypergeometricE
     -- ** Accessors
     , hdM
     , hdL
     , hdK
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary          (Binary(..))
+import Data.Data            (Data, Typeable)
+import GHC.Generics         (Generic)
 import Numeric.MathFunctions.Constants (m_epsilon,m_neg_inf)
 import Numeric.SpecFunctions (choose,logChoose)
+
 import qualified Statistics.Distribution as D
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
+import Statistics.Internal
+
 
 data HypergeometricDistribution = HD {
       hdM :: {-# UNPACK #-} !Int
     , hdL :: {-# UNPACK #-} !Int
     , hdK :: {-# UNPACK #-} !Int
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON HypergeometricDistribution
+instance Show HypergeometricDistribution where
+  showsPrec i (HD m l k) = defaultShow3 "hypergeometric" m l k i
+instance Read HypergeometricDistribution where
+  readPrec = defaultReadPrecM3 "hypergeometric" hypergeometricE
+
 instance ToJSON HypergeometricDistribution
+instance FromJSON HypergeometricDistribution where
+  parseJSON (Object v) = do
+    m <- v .: "hdM"
+    l <- v .: "hdL"
+    k <- v .: "hdK"
+    maybe (fail $ errMsg m l k) return $ hypergeometricE m l k
+  parseJSON _ = empty
 
 instance Binary HypergeometricDistribution where
-    get = HD <$> get <*> get <*> get
-    put (HD x y z) = put x >> put y >> put z
+  put (HD m l k) = put m >> put l >> put k
+  get = do
+    m <- get
+    l <- get
+    k <- get
+    maybe (fail $ errMsg m l k) return $ hypergeometricE m l k
 
 instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative
@@ -86,11 +105,11 @@ mean :: HypergeometricDistribution -> Double
 mean (HD m l k) = fromIntegral k * fromIntegral m / fromIntegral l
 
 directEntropy :: HypergeometricDistribution -> Double
-directEntropy d@(HD m _ _) =
-    negate . sum $
-  takeWhile (< negate m_epsilon) $
-  dropWhile (not . (< negate m_epsilon)) $
-  [ let x = probability d n in x * log x | n <- [0..m]]
+directEntropy d@(HD m _ _)
+  = negate . sum
+  $ takeWhile (< negate m_epsilon)
+  $ dropWhile (not . (< negate m_epsilon))
+    [ let x = probability d n in x * log x | n <- [0..m]]
 
 
 hypergeometric :: Int               -- ^ /m/
@@ -98,12 +117,26 @@ hypergeometric :: Int               -- ^ /m/
                -> Int               -- ^ /k/
                -> HypergeometricDistribution
 hypergeometric m l k
-  | not (l > 0)            = error $ msg ++ "l must be positive"
-  | not (m >= 0 && m <= l) = error $ msg ++ "m must lie in [0,l] range"
-  | not (k > 0  && k <= l) = error $ msg ++ "k must lie in (0,l] range"
-  | otherwise = HD m l k
-    where
-      msg = "Statistics.Distribution.Hypergeometric.hypergeometric: "
+  = maybe (error $ errMsg m l k) id $ hypergeometricE m l k
+
+hypergeometricE :: Int               -- ^ /m/
+                -> Int               -- ^ /l/
+                -> Int               -- ^ /k/
+                -> Maybe HypergeometricDistribution
+hypergeometricE m l k
+  | not (l > 0)            = Nothing
+  | not (m >= 0 && m <= l) = Nothing
+  | not (k > 0  && k <= l) = Nothing
+  | otherwise              = Just (HD m l k)
+
+
+errMsg :: Int -> Int -> Int -> String
+errMsg m l k
+  =  "Statistics.Distribution.Hypergeometric.hypergeometric: "
+  ++ "m=" ++ show m
+  ++ "l=" ++ show l
+  ++ "k=" ++ show k
+  ++ " should hold: l>0 & m in [0,l] & k in (0,l]"
 
 -- Naive implementation
 probability :: HypergeometricDistribution -> Int -> Double
