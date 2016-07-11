@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.StudentT
@@ -11,37 +12,62 @@
 -- Student-T distribution
 module Statistics.Distribution.StudentT (
     StudentT
+    -- * Constructors
   , studentT
-  , studentTndf
+  , studentTE
   , studentTUnstandardized
+    -- * Accessors
+  , studentTndf
   ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
-import qualified Statistics.Distribution as D
-import Statistics.Distribution.Transform (LinearTransform (..))
+import Control.Applicative
+import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary         (Binary(..))
+import Data.Data           (Data, Typeable)
+import GHC.Generics        (Generic)
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
-import Data.Binary (put, get)
+
+import qualified Statistics.Distribution as D
+import Statistics.Distribution.Transform (LinearTransform (..))
+import Statistics.Internal
+
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
-                   deriving (Eq, Show, Read, Typeable, Data, Generic)
+                   deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON StudentT
+instance Show StudentT where
+  showsPrec i (StudentT ndf) = defaultShow1 "studentT" ndf i
+instance Read StudentT where
+  readPrec = defaultReadPrecM1 "studentT" studentTE
+
 instance ToJSON StudentT
+instance FromJSON StudentT where
+  parseJSON (Object v) = do
+    ndf <- v .: "studentTndf"
+    maybe (fail $ errMsg ndf) return $ studentTE ndf
+  parseJSON _ = empty
 
 instance Binary StudentT where
-    put = put . studentTndf
-    get = fmap StudentT get
+  put = put . studentTndf
+  get = do
+    ndf <- get
+    maybe (fail $ errMsg ndf) return $ studentTE ndf
 
 -- | Create Student-T distribution. Number of parameters must be positive.
 studentT :: Double -> StudentT
-studentT ndf
-  | ndf > 0   = StudentT ndf
-  | otherwise = modErr "studentT" "non-positive number of degrees of freedom"
+studentT ndf = maybe (error $ errMsg ndf) id $ studentTE ndf
+
+-- | Create Student-T distribution. Number of parameters must be positive.
+studentTE :: Double -> Maybe StudentT
+studentTE ndf
+  | ndf > 0   = Just (StudentT ndf)
+  | otherwise = Nothing
+
+errMsg :: Double -> String
+errMsg _ = modErr "studentT" "non-positive number of degrees of freedom"
+
 
 instance D.Distribution StudentT where
   cumulative      = cumulative
