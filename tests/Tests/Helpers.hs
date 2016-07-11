@@ -1,8 +1,10 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | Helpers for testing
 module Tests.Helpers (
     -- * helpers
     T(..)
   , typeName
+  , Double01(..)
     -- * IEEE 754
   , isDenorm
     -- * Generic QC tests
@@ -38,6 +40,14 @@ typeName = show . typeOf . typeParam
 -- | Check if Double denormalized
 isDenorm :: Double -> Bool
 isDenorm x = let ax = abs x in ax > 0 && ax < m_tiny
+
+-- | Generates Doubles in range [0,1]
+newtype Double01 = Double01 Double
+                   deriving (Show)
+instance Arbitrary Double01 where
+  arbitrary = do
+    (_::Int, x) <- fmap properFraction arbitrary
+    return $ Double01 x
 
 ----------------------------------------------------------------
 -- Generic QC

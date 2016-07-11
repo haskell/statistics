@@ -32,7 +32,7 @@ import Test.QuickCheck.Monadic as QC
 import Text.Printf (printf)
 
 import Tests.ApproxEq  (ApproxEq(..))
-import Tests.Helpers   (T(..), testAssertion, typeName)
+import Tests.Helpers   (T(..), Double01(..), testAssertion, typeName)
 import Tests.Helpers   (monotonicallyIncreasesIEEE,isDenorm)
 import Tests.Orphanage ()
 
@@ -172,7 +172,7 @@ logDensityCheck _ d x
       $ counterexample (printf "log p      = %g" (log p))
       $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
       $ or [ p == 0      && logP == (-1/0)
-           , p <= m_tiny && logP < log(m_tiny)
+           , p <= m_tiny && logP < log m_tiny
            , eq 1e-14 (log p) logP
            ])
   where
@@ -184,8 +184,8 @@ pdfSanityCheck :: (ContDistr d) => T d -> d -> Double -> Bool
 pdfSanityCheck _ d x = p >= 0
   where p = density d x
 
-complQuantileCheck :: (ContDistr d) => T d -> d -> Double -> Property
-complQuantileCheck _ d (snd . properFraction -> p) =
+complQuantileCheck :: (ContDistr d) => T d -> d -> Double01 -> Property
+complQuantileCheck _ d (Double01 p) =
   -- We avoid extreme tails of distributions
   --
   -- FIXME: all parameters are arbitrary at the moment
@@ -195,8 +195,8 @@ complQuantileCheck _ d (snd . properFraction -> p) =
     x1 = complQuantile d p
 
 -- Quantile is inverse of CDF
-quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double -> Property
-quantileIsInvCDF _ d (snd . properFraction -> p) =
+quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double01 -> Property
+quantileIsInvCDF _ d (Double01 p) =
   and [ p > 1e-250
       , p < 1
       , x > m_tiny
