@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.ChiSquared
@@ -13,46 +14,65 @@
 -- distributions. It's commonly used in statistical tests
 module Statistics.Distribution.ChiSquared (
           ChiSquared
-        -- Constructors
-        , chiSquared
         , chiSquaredNDF
+        -- * Constructors
+        , chiSquared
+        , chiSquaredE
         ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
-import Numeric.SpecFunctions (
-  incompleteGamma,invIncompleteGamma,logGamma,digamma)
+import Control.Applicative
+import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary           (Binary(..))
+import Data.Data             (Data, Typeable)
+import GHC.Generics          (Generic)
+import Numeric.SpecFunctions ( incompleteGamma,invIncompleteGamma,logGamma,digamma)
 import Numeric.MathFunctions.Constants (m_neg_inf)
+import qualified System.Random.MWC.Distributions as MWC
 
 import qualified Statistics.Distribution         as D
-import qualified System.Random.MWC.Distributions as MWC
-import Data.Binary (put, get)
+import Statistics.Internal
+
 
 
 -- | Chi-squared distribution
-newtype ChiSquared = ChiSquared Int
-                     deriving (Eq, Read, Show, Typeable, Data, Generic)
+newtype ChiSquared = ChiSquared
+  { chiSquaredNDF :: Int
+    -- ^ Get number of degrees of freedom
+  }
+  deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON ChiSquared
+instance Show ChiSquared where
+  showsPrec i (ChiSquared n) = defaultShow1 "chiSquared" n i
+instance Read ChiSquared where
+  readPrec = defaultReadPrecM1 "chiSquared" chiSquaredE
+
 instance ToJSON ChiSquared
+instance FromJSON ChiSquared where
+  parseJSON (Object v) = do
+    n <- v .: "chiSquaredNDF"
+    maybe (fail $ errMsg n) return $ chiSquaredE n
+  parseJSON _ = empty
 
 instance Binary ChiSquared where
-    get = fmap ChiSquared get
-    put (ChiSquared x) = put x
+  put (ChiSquared x) = put x
+  get = do n <- get
+           maybe (fail $ errMsg n) return $ chiSquaredE n
 
--- | Get number of degrees of freedom
-chiSquaredNDF :: ChiSquared -> Int
-chiSquaredNDF (ChiSquared ndf) = ndf
 
 -- | Construct chi-squared distribution. Number of degrees of freedom
 --   must be positive.
 chiSquared :: Int -> ChiSquared
-chiSquared n
-  | n <= 0    = error $
-     "Statistics.Distribution.ChiSquared.chiSquared: N.D.F. must be positive. Got " ++ show n
-  | otherwise = ChiSquared n
+chiSquared n = maybe (error $ errMsg n) id $ chiSquaredE n
+
+-- | Construct chi-squared distribution. Number of degrees of freedom
+--   must be positive.
+chiSquaredE :: Int -> Maybe ChiSquared
+chiSquaredE n
+  | n <= 0    = Nothing
+  | otherwise = Just (ChiSquared n)
+
+errMsg :: Int -> String
+errMsg n = "Statistics.Distribution.ChiSquared.chiSquared: N.D.F. must be positive. Got " ++ show n
 
 instance D.Distribution ChiSquared where
   cumulative = cumulative
