@@ -18,7 +18,7 @@ module Statistics.Resampling
     ( -- * Data types
       Resample(..)
     , Bootstrap(..)
-    , Estimator
+    , Estimator(..)
     , estimate
       -- * Resampling
     , resampleST
