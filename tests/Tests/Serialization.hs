@@ -26,7 +26,6 @@ import Statistics.Types
 import Test.Framework                       (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck         as QC
-import Test.QuickCheck.Monadic as QC
 
 import Tests.Helpers
 import Tests.Orphanage ()

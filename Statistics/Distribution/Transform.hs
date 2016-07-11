@@ -83,12 +83,10 @@ instance (D.Variance d) => D.Variance (LinearTransform d) where
   variance (LinearTransform _ sc dist) = sc * sc * D.variance dist
   stdDev   (LinearTransform _ sc dist) = sc * D.stdDev dist
 
-instance (D.MaybeEntropy d, D.DiscreteDistr d)
-         => D.MaybeEntropy (LinearTransform d) where
+instance (D.MaybeEntropy d) => D.MaybeEntropy (LinearTransform d) where
   maybeEntropy (LinearTransform _ _ dist) = D.maybeEntropy dist
 
-instance (D.Entropy d, D.DiscreteDistr d)
-         => D.Entropy (LinearTransform d) where
+instance (D.Entropy d) => D.Entropy (LinearTransform d) where
   entropy (LinearTransform _ _ dist) = D.entropy dist
 
 instance D.ContGen d => D.ContGen (LinearTransform d) where

@@ -24,7 +24,6 @@ module Statistics.Internal (
 
 import Control.Applicative
 import Control.Monad
-import Data.Maybe
 import Text.Read
 
 

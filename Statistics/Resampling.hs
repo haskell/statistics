@@ -57,7 +57,7 @@ import Numeric.Sum (Summation(..), kbn)
 import Statistics.Function (indices)
 import Statistics.Sample (mean, stdDev, variance, varianceUnbiased)
 import Statistics.Types (Sample)
-import System.Random.MWC (Gen, GenIO, initialize, uniform, uniformR, uniformVector)
+import System.Random.MWC (Gen, GenIO, initialize, uniformR, uniformVector)
 
 
 ----------------------------------------------------------------

@@ -29,7 +29,7 @@ import Data.Binary.Get (getWord8)
 import Data.Binary.Put (putWord8)
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
-import Statistics.Function.Comparison (within)
+import Numeric.MathFunctions.Comparison (within)
 
 
 -- | The result of searching for a root of a mathematical function.

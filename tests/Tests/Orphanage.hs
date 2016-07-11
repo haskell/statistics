@@ -25,7 +25,6 @@ import Statistics.Types
 
 import Test.QuickCheck         as QC
 
-import Debug.Trace
 
 ----------------------------------------------------------------
 -- Arbitrary instances for ditributions
