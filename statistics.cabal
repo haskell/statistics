@@ -126,6 +126,7 @@ test-suite tests
     Tests.ApproxEq
     Tests.Correlation
     Tests.Distribution
+    Tests.Regression
     Tests.Function
     Tests.Helpers
     Tests.KDE
