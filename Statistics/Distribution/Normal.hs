@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Normal
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -16,21 +17,24 @@ module Statistics.Distribution.Normal
       NormalDistribution
     -- * Constructors
     , normalDistr
+    , normalDistrE
     , normalFromSample
     , standard
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<$>), (<*>))
-import Data.Binary (Binary)
-import Data.Binary (put, get)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary           (Binary(..))
+import Data.Data             (Data, Typeable)
+import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
 import Numeric.SpecFunctions (erfc, invErfc)
+import qualified System.Random.MWC.Distributions as MWC
+
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
-import qualified System.Random.MWC.Distributions as MWC
+import Statistics.Internal
+
 
 -- | The normal distribution.
 data NormalDistribution = ND {
@@ -38,14 +42,27 @@ data NormalDistribution = ND {
     , stdDev     :: {-# UNPACK #-} !Double
     , ndPdfDenom :: {-# UNPACK #-} !Double
     , ndCdfDenom :: {-# UNPACK #-} !Double
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON NormalDistribution
+instance Show NormalDistribution where
+  showsPrec i (ND m s _ _) = defaultShow2 "normalDistr" m s i
+instance Read NormalDistribution where
+  readPrec = defaultReadPrecM2 "normalDistr" normalDistrE
+
 instance ToJSON NormalDistribution
+instance FromJSON NormalDistribution where
+  parseJSON (Object v) = do
+    m  <- v .: "mean"
+    sd <- v .: "stdDev"
+    maybe (fail $ errMsg m sd) return $ normalDistrE m sd
+  parseJSON _ = empty
 
 instance Binary NormalDistribution where
-    put (ND w x y z) = put w >> put x >> put y >> put z
-    get = ND <$> get <*> get <*> get <*> get
+    put (ND m sd _ _) = put m >> put sd
+    get = do
+      m  <- get
+      sd <- get
+      maybe (fail $ errMsg m sd) return $ normalDistrE m sd
 
 instance D.Distribution NormalDistribution where
     cumulative      = cumulative
@@ -93,14 +110,25 @@ standard = ND { mean       = 0.0
 normalDistr :: Double            -- ^ Mean of distribution
             -> Double            -- ^ Standard deviation of distribution
             -> NormalDistribution
-normalDistr m sd
-  | sd > 0    = ND { mean       = m
-                   , stdDev     = sd
-                   , ndPdfDenom = log $ m_sqrt_2_pi * sd
-                   , ndCdfDenom = m_sqrt_2 * sd
-                   }
-  | otherwise =
-    error $ "Statistics.Distribution.Normal.normalDistr: standard deviation must be positive. Got " ++ show sd
+normalDistr m sd = maybe (error $ errMsg m sd) id $ normalDistrE m sd
+
+-- | Create normal distribution from parameters.
+--
+-- IMPORTANT: prior to 0.10 release second parameter was variance not
+-- standard deviation.
+normalDistrE :: Double            -- ^ Mean of distribution
+             -> Double            -- ^ Standard deviation of distribution
+             -> Maybe NormalDistribution
+normalDistrE m sd
+  | sd > 0    = Just ND { mean       = m
+                        , stdDev     = sd
+                        , ndPdfDenom = log $ m_sqrt_2_pi * sd
+                        , ndCdfDenom = m_sqrt_2 * sd
+                        }
+  | otherwise = Nothing
+
+errMsg :: Double -> Double -> String
+errMsg _ sd = "Statistics.Distribution.Normal.normalDistr: standard deviation must be positive. Got " ++ show sd
 
 -- | Create distribution using parameters estimated from
 --   sample. Variance is estimated using maximum likelihood method
