@@ -14,7 +14,8 @@ import Statistics.Function (within)
 import Statistics.Transform (CD, dct, fft, idct, ifft)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck (Positive(..), Arbitrary(..), (==>), Gen, choose, vectorOf, counterexample)
+import Test.QuickCheck ( Positive(..), Arbitrary(..), Blind(..), (==>), Gen
+                       , choose, vectorOf, counterexample, forAll)
 import Test.QuickCheck.Property (Property(..))
 import Tests.Helpers (testAssertion)
 import Text.Printf (printf)
@@ -86,15 +87,14 @@ t_impulse_offset k (Positive x) (Positive m)
 -- whole are approximate equal.
 t_fftInverse :: (HasNorm (U.Vector a), U.Unbox a, Num a, Show a, Arbitrary a)
              => (U.Vector a -> U.Vector a) -> Property
-t_fftInverse roundtrip = MkProperty $ do
-  x <- genFftVector
-  let n  = G.length x
-      x' = roundtrip x
-      d  = G.zipWith (-) x x'
-      nd = vectorNorm d
-      nx = vectorNorm x
-  unProperty
-     $ counterexample "Original vector"
+t_fftInverse roundtrip =
+  forAll (Blind <$> genFftVector) $ \(Blind x) ->
+    let n  = G.length x
+        x' = roundtrip x
+        d  = G.zipWith (-) x x'
+        nd = vectorNorm d
+        nx = vectorNorm x
+    in counterexample "Original vector"
      $ counterexample (show x )
      $ counterexample "Transformed one"
      $ counterexample (show x')
