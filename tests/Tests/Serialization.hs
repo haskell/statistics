@@ -11,15 +11,15 @@ import Statistics.Distribution.Binomial       (BinomialDistribution)
 import Statistics.Distribution.CauchyLorentz
 import Statistics.Distribution.ChiSquared     (ChiSquared)
 import Statistics.Distribution.Exponential    (ExponentialDistribution)
-import Statistics.Distribution.FDistribution  (FDistribution,fDistribution)
-import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr)
+import Statistics.Distribution.FDistribution  (FDistribution)
+import Statistics.Distribution.Gamma          (GammaDistribution)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform      (LinearTransform, linTransDistr)
+import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
 import Statistics.Types
 

@@ -4,7 +4,6 @@ module Tests.Distribution (tests) where
 
 import Control.Applicative ((<$), (<$>), (<*>))
 import qualified Control.Exception as E
-import Data.Binary (Binary, decode, encode)
 import Data.List (find)
 import Data.Typeable (Typeable)
 import qualified Numeric.IEEE as IEEE
@@ -66,7 +65,7 @@ tests = testGroup "Tests for all distributions"
 ----------------------------------------------------------------
 
 -- Tests for continuous distribution
-contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d, Binary d, Eq d) => T d -> Test
+contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck     t
@@ -77,7 +76,7 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for discrete distribution
-discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d, Binary d, Eq d) => T d -> Test
+discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
@@ -87,7 +86,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for distributions which have CDF
-cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d, Binary d, Eq d) => T d -> [Test]
+cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
 cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
   , testProperty "CDF limit at +inf"    $ cdfLimitAtPosInfinity  t
