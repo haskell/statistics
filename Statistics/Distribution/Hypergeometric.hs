@@ -73,7 +73,8 @@ instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative
 
 instance D.DiscreteDistr HypergeometricDistribution where
-    probability = probability
+    probability    = probability
+    logProbability = logProbability
 
 instance D.Mean HypergeometricDistribution where
     mean = mean
