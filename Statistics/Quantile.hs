@@ -15,7 +15,7 @@
 -- The number of quantiles is described below by the variable /q/, so
 -- with /q/=4, a 4-quantile (also known as a /quartile/) has 4
 -- intervals, and contains 5 points.  The parameter /k/ describes the
--- desired point, where 0 &#8804; /k/ &#8804; /q/.
+-- desired point, where 0 ≤ /k/ ≤ /q/.
 
 module Statistics.Quantile
     (
@@ -50,7 +50,7 @@ import qualified Data.Vector.Unboxed as U
 -- The following properties should hold:
 --   * the length of the input is greater than @0@
 --   * the input does not contain @NaN@
---   * k >= 0 and k < q
+--   * k ≥ 0 and k ≤ q
 --
 -- otherwise an error will be thrown.
 weightedAvg :: G.Vector v Double =>
@@ -63,8 +63,9 @@ weightedAvg k q x
   | n == 0          = modErr "weightedAvg" "Sample is empty"
   | n == 1          = G.head x
   | q < 2           = modErr "weightedAvg" "At least 2 quantiles is needed"
-  | k < 0 || k >= q = modErr "weightedAvg" "Wrong quantile number"
-  | otherwise       = xj + g * (xj1 - xj)
+  | k == q          = G.maximum x
+  | k >= 0 || k < q = xj + g * (xj1 - xj)
+  | otherwise       = modErr "weightedAvg" "Wrong quantile number"
   where
     j   = floor idx
     idx = fromIntegral (n - 1) * fromIntegral k / fromIntegral q
