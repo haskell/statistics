@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE BangPatterns, CPP, DeriveDataTypeable, DeriveGeneric #-}
 
 -- |
 -- Module    : Statistics.Math.RootFinding
@@ -21,7 +21,7 @@ module Statistics.Math.RootFinding
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative (Alternative(..), Applicative(..))
+import Control.Applicative (Alternative(..))
 import Control.Monad (MonadPlus(..), ap)
 import Data.Binary (Binary)
 import Data.Binary (put, get)
@@ -31,6 +31,9 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Statistics.Function.Comparison (within)
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative (Applicative(..))
+#endif
 
 -- | The result of searching for a root of a mathematical function.
 data Root a = NotBracketed

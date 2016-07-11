@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Gamma
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
@@ -26,7 +26,6 @@ module Statistics.Distribution.Gamma
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<$>), (<*>))
 import Data.Binary (Binary)
 import Data.Binary (put, get)
 import Data.Data (Data, Typeable)
@@ -36,6 +35,10 @@ import Numeric.SpecFunctions (incompleteGamma, invIncompleteGamma, logGamma, dig
 import Statistics.Distribution.Poisson.Internal as Poisson
 import qualified Statistics.Distribution as D
 import qualified System.Random.MWC.Distributions as MWC
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | The gamma distribution.
 data GammaDistribution = GD {

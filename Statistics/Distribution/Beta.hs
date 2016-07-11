@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Statistics.Distribution.Beta
@@ -29,7 +29,10 @@ import Numeric.SpecFunctions (
 import Numeric.MathFunctions.Constants (m_NaN)
 import qualified Statistics.Distribution as D
 import Data.Binary (put, get)
+
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | The beta distribution
 data BetaDistribution = BD

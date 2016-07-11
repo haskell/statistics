@@ -7,7 +7,7 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Kolmogov-Smirnov tests are non-parametric tests for assesing
+-- Kolmogov-Smirnov tests are non-parametric tests for assessing
 -- whether given sample could be described by distribution or whether
 -- two samples have the same distribution. It's only applicable to
 -- continuous distributions.
@@ -48,7 +48,7 @@ import qualified Data.Vector.Unboxed.Mutable as M
 --   distribution. 'Significant' means distribution is not compatible
 --   with data for given p-value.
 --
---   This test uses Marsaglia-Tsang-Wang exact alogorithm for
+--   This test uses Marsaglia-Tsang-Wang exact algorithm for
 --   calculation of p-value.
 kolmogorovSmirnovTest :: Distribution d
                       => d      -- ^ Distribution
@@ -178,7 +178,7 @@ kolmogorovSmirnovProbability :: Int    -- ^ Size of the sample
                              -> Double -- ^ D value
                              -> Double
 kolmogorovSmirnovProbability n d
-  -- Avoid potencially lengthy calculations for large N and D > 0.999
+  -- Avoid potentially lengthy calculations for large N and D > 0.999
   | s > 7.24 || (s > 3.76 && n > 99) = 1 - 2 * exp( -(2.000071 + 0.331 / sqrt n' + 1.409 / n') * s)
   -- Exact computation
   | otherwise = fini $ matrix `power` n

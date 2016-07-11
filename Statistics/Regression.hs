@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- |
 -- Module    : Statistics.Regression
 -- Copyright : 2014 Bryan O'Sullivan
@@ -13,7 +14,6 @@ module Statistics.Regression
     , bootstrapRegress
     ) where
 
-import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (newChan, readChan, writeChan)
 import Control.DeepSeq (rnf)
@@ -32,6 +32,10 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 
 -- | Perform an ordinary least-squares regression on a set of
 -- predictors, and calculate the goodness-of-fit of the regression.

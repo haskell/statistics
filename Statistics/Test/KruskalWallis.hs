@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- |
 -- Module    : Statistics.Test.KruskalWallis
 -- Copyright : (c) 2014 Danny Navarro
@@ -15,7 +17,6 @@ module Statistics.Test.KruskalWallis
   ) where
 
 import Data.Ord (comparing)
-import Data.Foldable (foldMap)
 import qualified Data.Vector.Unboxed as U
 import Statistics.Function (sort, sortBy, square)
 import Statistics.Distribution (quantile)
@@ -25,6 +26,9 @@ import Statistics.Test.Internal (rank)
 import Statistics.Sample
 import qualified Statistics.Sample.Internal as Sample(sum)
 
+#if !MIN_VERSION_base(4,8,0)
+import Data.Foldable (foldMap)
+#endif
 
 -- | Kruskal-Wallis ranking.
 --

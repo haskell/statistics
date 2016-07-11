@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- |
 -- Module    : Statistics.Matrix.Mutable
 -- Copyright : (c) 2014 Bryan O'Sullivan
@@ -21,13 +22,16 @@ module Statistics.Matrix.Mutable
     , unsafeBounds
     ) where
 
-import Control.Applicative ((<$>))
 import Control.DeepSeq (NFData(..))
 import Control.Monad.ST (ST)
 import Statistics.Matrix.Types (Matrix(..), MMatrix(..), MVector)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
 import Prelude hiding (replicate)
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 
 replicate :: Int -> Int -> Double -> ST s (MMatrix s)
 replicate r c k = MMatrix r c 0 <$> M.replicate (r*c) k

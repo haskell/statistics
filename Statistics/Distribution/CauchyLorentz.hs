@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.CauchyLorentz
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -27,7 +27,10 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import Data.Binary (put, get)
+
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | Cauchy-Lorentz distribution.
 data CauchyDistribution = CD {

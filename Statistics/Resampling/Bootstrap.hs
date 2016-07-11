@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, OverloadedStrings,
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, OverloadedStrings,
     RecordWildCards #-}
 
 -- |
@@ -21,7 +21,6 @@ module Statistics.Resampling.Bootstrap
     -- $references
     ) where
 
-import Control.Applicative ((<$>), (<*>))
 import Control.DeepSeq (NFData)
 import Control.Exception (assert)
 import Control.Monad.Par (parMap, runPar)
@@ -39,6 +38,10 @@ import Statistics.Sample (mean)
 import Statistics.Types (Estimator, Sample)
 import qualified Data.Vector.Unboxed as U
 import qualified Statistics.Resampling as R
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | A point and interval estimate computed via an 'Estimator'.
 data Estimate = Estimate {

@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- |
 -- Module    : Statistics.Test.WilcoxonT
 -- Copyright : (c) 2010 Neil Brown
@@ -40,7 +42,6 @@ module Statistics.Test.WilcoxonT (
 -- the sum of negative ranks (the ranks of the differences where the second parameter is higher).
 -- to the the length of the shorter sample.
 
-import Control.Applicative ((<$>))
 import Data.Function (on)
 import Data.List (findIndex)
 import Data.Ord (comparing)
@@ -51,6 +52,10 @@ import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types (TestResult(..), TestType(..), significant)
 import Statistics.Types (Sample)
 import qualified Data.Vector.Unboxed as U
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 
 wilcoxonMatchedPairSignedRank :: Sample -> Sample -> (Double, Double)
 wilcoxonMatchedPairSignedRank a b = (sum ranks1, negate (sum ranks2))

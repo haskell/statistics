@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Hypergeometric
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -35,7 +35,10 @@ import Numeric.MathFunctions.Constants (m_epsilon)
 import Numeric.SpecFunctions (choose)
 import qualified Statistics.Distribution as D
 import Data.Binary (put, get)
+
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>), (<*>))
+#endif
 
 data HypergeometricDistribution = HD {
       hdM :: {-# UNPACK #-} !Int

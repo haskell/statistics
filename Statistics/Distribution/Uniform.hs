@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Uniform
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -26,8 +26,10 @@ import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 import qualified System.Random.MWC       as MWC
 import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>), (<*>))
+#endif
 
 -- | Uniform distribution from A to B
 data UniformDistribution = UniformDistribution {
