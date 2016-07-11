@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -----------------------------------------------------------------------------
 -- |
@@ -14,22 +15,25 @@ module Statistics.Distribution.Beta
   ( BetaDistribution
     -- * Constructor
   , betaDistr
+  , betaDistrE
   , improperBetaDistr
+  , improperBetaDistrE
     -- * Accessors
   , bdAlpha
   , bdBeta
   ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary           (Binary(..))
+import Data.Data             (Data, Typeable)
+import GHC.Generics          (Generic)
 import Numeric.SpecFunctions (
   incompleteBeta, invIncompleteBeta, logBeta, digamma, log1p)
 import Numeric.MathFunctions.Constants (m_NaN,m_neg_inf)
 import qualified Statistics.Distribution as D
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
+import Statistics.Internal
+
 
 -- | The beta distribution
 data BetaDistribution = BD
@@ -37,27 +41,50 @@ data BetaDistribution = BD
    -- ^ Alpha shape parameter
  , bdBeta  :: {-# UNPACK #-} !Double
    -- ^ Beta shape parameter
- } deriving (Eq, Read, Show, Typeable, Data, Generic)
+ } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON BetaDistribution
+instance Show BetaDistribution where
+  showsPrec n (BD a b) = defaultShow2 "improperBetaDistr" a b n
+instance Read BetaDistribution where
+  readPrec = defaultReadPrecM2 "improperBetaDistr" improperBetaDistrE
+
 instance ToJSON BetaDistribution
+instance FromJSON BetaDistribution where
+  parseJSON (Object v) = do
+    a <- v .: "bdAlpha"
+    b <- v .: "bdBeta"
+    maybe (fail $ errMsgI a b) return $ improperBetaDistrE a b
+  parseJSON _ = empty
 
 instance Binary BetaDistribution where
-    put (BD x y) = put x >> put y
-    get = BD <$> get <*> get
+  put (BD a b) = put a >> put b
+  get = do
+    a <- get
+    b <- get
+    maybe (fail $ errMsgI a b) return $ improperBetaDistrE a b
+
 
 -- | Create beta distribution. Both shape parameters must be positive.
 betaDistr :: Double             -- ^ Shape parameter alpha
           -> Double             -- ^ Shape parameter beta
           -> BetaDistribution
-betaDistr a b
-  | a > 0 && b > 0 = BD a b
-  | otherwise      =
-      error $  "Statistics.Distribution.Beta.betaDistr: "
-            ++ "shape parameters must be positive. Got a = "
-            ++ show a
-            ++ " b = "
-            ++ show b
+betaDistr a b = maybe (error $ errMsg a b) id $ betaDistrE a b
+
+-- | Create beta distribution. Both shape parameters must be positive.
+betaDistrE :: Double             -- ^ Shape parameter alpha
+          -> Double             -- ^ Shape parameter beta
+          -> Maybe BetaDistribution
+betaDistrE a b
+  | a > 0 && b > 0 = Just (BD a b)
+  | otherwise      = Nothing
+
+errMsg :: Double -> Double -> String
+errMsg a b = "Statistics.Distribution.Beta.betaDistr: "
+          ++ "shape parameters must be positive. Got a = "
+          ++ show a
+          ++ " b = "
+          ++ show b
+
 
 -- | Create beta distribution. Both shape parameters must be
 -- non-negative. So it allows to construct improper beta distribution
@@ -66,11 +93,25 @@ improperBetaDistr :: Double             -- ^ Shape parameter alpha
                   -> Double             -- ^ Shape parameter beta
                   -> BetaDistribution
 improperBetaDistr a b
-  | a >= 0 && b >= 0 = BD a b
-  | otherwise        = error
-    $  "Statistics.Distribution.Beta.betaDistr: "
-    ++ "shape parameters must be non-negative. Got a = " ++ show a
-    ++ " b = " ++ show b
+  = maybe (error $ errMsgI a b) id $ improperBetaDistrE a b
+
+-- | Create beta distribution. Both shape parameters must be
+-- non-negative. So it allows to construct improper beta distribution
+-- which could be used as improper prior.
+improperBetaDistrE :: Double             -- ^ Shape parameter alpha
+                   -> Double             -- ^ Shape parameter beta
+                   -> Maybe BetaDistribution
+improperBetaDistrE a b
+  | a >= 0 && b >= 0 = Just (BD a b)
+  | otherwise        = Nothing
+
+errMsgI :: Double -> Double -> String
+errMsgI a b
+  =  "Statistics.Distribution.Beta.betaDistr: "
+  ++ "shape parameters must be non-negative. Got a = " ++ show a
+  ++ " b = " ++ show b
+
+
 
 instance D.Distribution BetaDistribution where
   cumulative (BD a b) x
