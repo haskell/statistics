@@ -46,6 +46,13 @@ import qualified Data.Vector.Unboxed as U
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
 -- using the weighted average method.
+--
+-- The following properties should hold:
+--   * the length of the input is greater than @0@
+--   * the input does not contain @NaN@
+--   * k >= 0 and k < q
+--
+-- otherwise an error will be thrown.
 weightedAvg :: G.Vector v Double =>
                Int        -- ^ /k/, the desired quantile.
             -> Int        -- ^ /q/, the number of quantiles.
@@ -53,6 +60,7 @@ weightedAvg :: G.Vector v Double =>
             -> Double
 weightedAvg k q x
   | G.any isNaN x   = modErr "weightedAvg" "Sample contains NaNs"
+  | n == 0          = modErr "weightedAvg" "Sample is empty"
   | n == 1          = G.head x
   | q < 2           = modErr "weightedAvg" "At least 2 quantiles is needed"
   | k < 0 || k >= q = modErr "weightedAvg" "Wrong quantile number"
