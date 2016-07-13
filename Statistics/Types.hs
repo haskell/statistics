@@ -268,24 +268,24 @@ data Estimate e a = Estimate
     { estPoint           :: !a
       -- ^ Point estimate.
     , estError           :: !(e a)
+      -- ^ Confidence error estimate. It's parametrized by
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance (Binary   (e a), Binary   a) => Binary   (Estimate e a)
 instance (FromJSON (e a), FromJSON a) => FromJSON (Estimate e a)
 instance (ToJSON   (e a), ToJSON   a) => ToJSON   (Estimate e a)
-instance (NFData   (e a), NFData   a) => NFData (Estimate e a) where
+instance (NFData   (e a), NFData   a) => NFData   (Estimate e a) where
     rnf (Estimate x dx) = rnf x `seq` rnf dx
 
-derivingUnbox "Estimate"
-  [t| forall a e. (Unbox a, Unbox (e a)) => Estimate e a -> (a, e a) |]
-  [| \(Estimate x dx) -> (x,dx) |]
-  [| \(x,dx) -> (Estimate x dx) |]
+
 
 -- | Normal errors. They are stored as 1σ errors. Since we can
 -- recalculate them to any confidence level if needed we don't store
 -- it.
-newtype NormalErr a = NormalErr { normalError :: a }
-                    deriving (Eq, Read, Show, Typeable, Data, Generic)
+newtype NormalErr a = NormalErr
+  { normalError :: a
+  }
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary   a => Binary   (NormalErr a)
 instance FromJSON a => FromJSON (NormalErr a)
@@ -293,14 +293,19 @@ instance ToJSON   a => ToJSON   (NormalErr a)
 instance NFData   a => NFData   (NormalErr a) where
     rnf (NormalErr x) = rnf x
 
-derivingUnbox "NormalErr"
-  [t| forall a. Unbox a => NormalErr a -> a |]
-  [| \(NormalErr a) -> a |]
-  [| NormalErr           |]
 
-
--- | Confidence interval
-data ConfInt a = ConfInt !a !a !(CL Double)
+-- | Confidence interval. It assumes that confidence interval forms
+--   single interval and isn't set of disjoint intervals.
+data ConfInt a = ConfInt
+  { confIntLDX :: !a
+    -- ^ Lower error estimate, or distance between point estimate and
+    --   lower bound of confidence interval.
+  , confIntUDX :: !a
+    -- ^ Upper error estimate, or distance between point estimate and
+    --   upper bound of confidence interval.
+  , confIntCL  :: !(CL Double)
+    -- ^ Confidence level corresponding to given confidence interval.
+  }
   deriving (Read,Show,Eq,Typeable,Data,Generic)
 
 instance Binary   a => Binary   (ConfInt a)
@@ -309,10 +314,6 @@ instance ToJSON   a => ToJSON   (ConfInt a)
 instance NFData   a => NFData   (ConfInt a) where
     rnf (ConfInt x y _) = rnf x `seq` rnf y
 
-derivingUnbox "ConfInt"
-  [t| forall a. Unbox a => ConfInt a -> (a, a, CL Double) |]
-  [| \(ConfInt a b c) -> (a,b,c) |]
-  [| \(a,b,c) -> ConfInt a b c   |]
 
 
 ----------------------------------------
@@ -431,6 +432,21 @@ derivingUnbox "PValue"
   [t| forall a. Unbox a => PValue a -> a |]
   [| \(PValue a) -> a |]
   [| PValue           |]
+
+derivingUnbox "Estimate"
+  [t| forall a e. (Unbox a, Unbox (e a)) => Estimate e a -> (a, e a) |]
+  [| \(Estimate x dx) -> (x,dx) |]
+  [| \(x,dx) -> (Estimate x dx) |]
+
+derivingUnbox "NormalErr"
+  [t| forall a. Unbox a => NormalErr a -> a |]
+  [| \(NormalErr a) -> a |]
+  [| NormalErr           |]
+
+derivingUnbox "ConfInt"
+  [t| forall a. Unbox a => ConfInt a -> (a, a, CL Double) |]
+  [| \(ConfInt a b c) -> (a,b,c) |]
+  [| \(a,b,c) -> ConfInt a b c   |]
 
 derivingUnbox "UpperLimit"
   [t| forall a. Unbox a => UpperLimit a -> (a, CL Double) |]
