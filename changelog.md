@@ -1,26 +1,54 @@
 ## Changes in 0.14.0.0
 
-  * Data type for confidence level/test significance (CL) added.
+Breaking update. It seriously changes parts of API. It adds new data types for
+dealing with with estimates, confidence intervals, confidence levels and
+p-value. Also API for statistical tests is changed.
 
-  * Helper function for interpreting CL in terms of sigma (common in physics)
+ * Module `Statistis.Types` now contains new data types for estimates,
+   upper/lower bounds, confidence level, and p-value.
 
-  * Data types for central estimate and upper/lower limits added in
-    Statistics.Types
+	- `CL` for representing confidence level
+	- `PValue` for representing p-values
+	- `Estimate` data type moved here from `Statistis.Resampling.Bootstrap` and
+      now parametrized by type of error.
+	- `NormalError` — represents normal error.
+    - `ConfInt` — generic confidence interval
+    - `UpperLimit`,`LowerLimit` for upper/lower limits.
 
-  * Statistics.Resample.Bootstrap uses new data type for central estimates. Old
-    one is removed. This is API breaking change.
+ * New API for statistical tests. Instead of simply return significant/not
+   significant it returns p-value, test statistics and distribution of test
+   statistics if it's available. Tests also return `Nothing` instead of throwing
+   error if sample size is not sufficient. Fixes #25.
 
-  * Function for calculation of confidence intervals for Poisson and binomial
-    distribution added in Statistics.ConfidenceInt
+ * `Statistics.Tests.Types.TestType` data type dropped
 
-  * New API for statistical tests. Test result returns p-value, test statistics
-    and optionally distribution of test statistics.
+ * New smart constructors for distributions are added. They return `Nothing` if
+   parameters are outside of allowed range.
 
-  * Tests of position now allow to ask whether first sample on average larger
-    than second, second larger than first or whether they differ significantly.
-	Affects Wilcoxon-T, Mann-Whitney-U, and Student-T tests.
+ * Serialization instances (`Show/Read, Binary, ToJSON/FromJSON`) for
+   distributions no longer allows to create data types with invalid
+   parameters. They will fail to parse. Cached values are not serialized either
+   so `Binary` instances changed normal and F-distributions.
 
-  * Statistics.Tests.Types.TestType data type dropped
+   Encoding to JSON changed for Normal, F-distribution, and χ²
+   distributions. However data created using older statistics will be
+   successfully decoded.
+
+   Fixes #59.
+
+ * Statistics.Resample.Bootstrap uses new data types for central estimates.
+
+ * Function for calculation of confidence intervals for Poisson and binomial
+   distribution added in `Statistics.ConfidenceInt`
+
+ * Tests of position now allow to ask whether first sample on average larger
+   than second, second larger than first or whether they differ significantly.
+   Affects Wilcoxon-T, Mann-Whitney-U, and Student-T tests.
+
+ * Bug fixes for #74, #81, #83, #92, #94
+
+ * `complCumulative` added for many distributions.
+
 
 
 ## Changes in 0.13.3.0
