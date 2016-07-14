@@ -45,6 +45,8 @@ p-value. Also API for statistical tests is changed.
    than second, second larger than first or whether they differ significantly.
    Affects Wilcoxon-T, Mann-Whitney-U, and Student-T tests.
 
+ * API for bootstrap changed. New data types added.
+
  * Bug fixes for #74, #81, #83, #92, #94
 
  * `complCumulative` added for many distributions.
