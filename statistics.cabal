@@ -90,6 +90,7 @@ library
     Statistics.Test.StudentT
     Statistics.Test.Types
     Statistics.Test.WilcoxonT
+    Statistics.Test.TwoSampleT
     Statistics.Transform
     Statistics.Types
   other-modules:
