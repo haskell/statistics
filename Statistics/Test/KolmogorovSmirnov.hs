@@ -210,7 +210,7 @@ kolmogorovSmirnovProbability :: Int    -- ^ Size of the sample
                              -> Double -- ^ D value
                              -> Double
 kolmogorovSmirnovProbability n d
-  -- Avoid potencially lengthy calculations for large N and D > 0.999
+  -- Avoid potentially lengthy calculations for large N and D > 0.999
   | s > 7.24 || (s > 3.76 && n > 99) = 1 - 2 * exp( -(2.000071 + 0.331 / sqrt n' + 1.409 / n') * s)
   -- Exact computation
   | otherwise = fini $ matrix `power` n
