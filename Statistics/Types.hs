@@ -13,8 +13,7 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Types for working with statistics.
-
+-- Data types common used in statistics
 module Statistics.Types
     ( -- * Confidence level
       CL
@@ -86,11 +85,22 @@ import Statistics.Distribution.Normal
 ----------------------------------------------------------------
 
 -- |
--- Confidence level. In context of confidence intervals (CI) it's
--- represented as probability that true value of parameter lies
--- OUTSIDE of interval. CI are constructed for /p/ close to 1 so we
--- store @1-p@ to avoid rounding errors when @p@ is very close to
--- 1. e.g. 95% CL represented as @CL 0.05@.
+-- Confidence level. In context of confidence intervals it's
+-- probability of said interval covering true value of measured
+-- value. In context of statistical tests it's @1-α@ where α is
+-- significance of test.
+--
+-- Since confidence level are usually close to 1 they are stored as
+-- @1-CL@ internally. There are two smart constructors for @CL@:
+-- 'mkConfLevel' and 'clFromPVal' (and corresponding variant returning
+-- @Maybe@). First creates @CL@ from confidence level and second from
+-- @1 - CL@.
+--
+-- >>> cl95
+-- clFromPVal 0.05
+--
+-- Prior to 0.14 confidence levels were passed to function as plain
+-- @Doubles@. Use 'mkConfLevel' to convert them to @CL@.
 newtype CL a = CL a
                deriving (Eq, Typeable, Data, Generic)
 
@@ -110,9 +120,9 @@ instance (FromJSON a, Num a, Ord a) => FromJSON (CL a) where
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
 
--- | This instance is inverted relative to instance of underlying
---   type. In other words is larger if it describes greater confidence
---   or significance. This corresponds to smaller wrapped probability.
+-- |
+-- >>> cl95 > cl90
+-- True
 instance Ord a => Ord (CL a) where
   CL a <  CL b = a >  b
   CL a <= CL b = a >= b
@@ -124,12 +134,19 @@ instance Ord a => Ord (CL a) where
 
 -- | Create confidence level. Will throw exception if parameter is out
 --   of [0,1] range
+--
+-- >>> mkConfLevel 0.95    -- same as cl95
+-- clFromPVal 0.05
 mkConfLevel :: (Ord a, Num a) => a -> CL a
 mkConfLevel
   = fromMaybe (error "Statistics.Types.mkConfLevel: probability is out if [0,1] range")
   . mkConfLevelE
 
--- | Create confidence level.
+-- | Create confidence level. Returns @Nothing@ if parameter is out of
+-- [0,1] range
+--
+-- >>> mkConfLevelE 0.95    -- same as cl95
+-- Just (clFromPVal 0.05)
 mkConfLevelE :: (Ord a, Num a) => a -> Maybe (CL a)
 mkConfLevelE p
   | p >= 0 && p <= 1 = Just $ CL (1 - p)
@@ -137,10 +154,17 @@ mkConfLevelE p
 
 -- | Create confidence level. Will throw exception if parameter is out
 --   of [0,1] range
+--
+-- >>> clFromPVal 0.05    -- same as cl95
+-- clFromPVal 0.05
 clFromPVal :: (Ord a, Num a) => a -> CL a
 clFromPVal = fromMaybe (error errMkCL) . clFromPValE
 
--- | Create confidence level.
+-- | Create confidence level. Returns @Nothing@ if parameter is out of
+-- [0,1] range
+--
+-- >>> clFromPValE 0.05    -- same as cl95
+-- Just (clFromPVal 0.05)
 clFromPValE :: (Ord a, Num a) => a -> Maybe (CL a)
 clFromPValE p
   | p >= 0 && p <= 1 = Just $ CL p
@@ -203,7 +227,7 @@ nSigma1 n
 getNSigma :: CL Double -> Double
 getNSigma (CL p) = negate $ quantile standard (p / 2)
 
--- | Express confidence level in sigmas
+-- | Express confidence level in sigmas for one-tailed hypothesis.
 getNSigma1 :: CL Double -> Double
 getNSigma1 (CL p) = negate $ quantile standard p
 
@@ -213,7 +237,7 @@ getNSigma1 (CL p) = negate $ quantile standard p
 -- Data type for p-value
 ----------------------------------------------------------------
 
--- | Newtype wrapper for p-value
+-- | Newtype wrapper for p-value.
 newtype PValue a = PValue a
                deriving (Eq,Ord, Typeable, Data, Generic)
 
@@ -234,11 +258,12 @@ instance NFData a => NFData (PValue a) where
   rnf (PValue a) = rnf a
 
 
--- | Construct PValue. Throws error if argument is out of [0,1] range
+-- | Construct PValue. Throws error if argument is out of [0,1] range.
+--
 mkPValue :: (Ord a, Num a) => a -> PValue a
 mkPValue = fromMaybe (error errMkPValue) . mkPValueE
 
--- | Construct PValue.
+-- | Construct PValue. Returns @Nothing@ if argument is out of [0,1] range.
 mkPValueE :: (Ord a, Num a) => a -> Maybe (PValue a)
 mkPValueE p
   | p >= 0 && p <= 1 = Just $ PValue p
@@ -262,13 +287,44 @@ errMkPValue = "Statistics.Types.mkPValue: probability is out if [0,1] range"
 -- Point estimates
 ----------------------------------------------------------------
 
--- | A point estimate and its confidence interval. Latter is
---   frequently referred to as error estimate.
+-- |
+-- A point estimate and its confidence interval. It's parametrized by
+-- both error type @e@ and value type @a@. This module provides two
+-- types of error: 'NormalErr' for normally distributed errors and
+-- 'ConfInt' for error with normal distribution. See their
+-- documentation for more details.
+--
+-- For example @144 ± 5@ (assuming normality) could be expressed as
+--
+-- > Estimate { estPoint = 144
+-- >          , estError = NormalErr 5
+-- >          }
+--
+-- Or if we want to express @144 + 6 - 4@ at CL95 we could write:
+--
+-- > Estimate { estPoint = 144
+-- >          , estError = ConfInt
+-- >                       { confIntLDX = 4
+-- >                       , confIntUDX = 6
+-- >                       , confIntCL  = cl95
+-- >                       }
+--
+-- Prior to statistics 0.14 @Estimate@ data type used following definition:
+--
+-- > data Estimate = Estimate {
+-- >      estPoint           :: {-# UNPACK #-} !Double
+-- >    , estLowerBound      :: {-# UNPACK #-} !Double
+-- >    , estUpperBound      :: {-# UNPACK #-} !Double
+-- >    , estConfidenceLevel :: {-# UNPACK #-} !Double
+-- >    }
+--
+-- Now type @Estimate ConfInt Double@ should be used instead. Function
+-- 'estimateFromInterval' allow to easily construct estimate from same inputs.
 data Estimate e a = Estimate
     { estPoint           :: !a
       -- ^ Point estimate.
     , estError           :: !(e a)
-      -- ^ Confidence error estimate. It's parametrized by
+      -- ^ Confidence interval for estimate.
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance (Binary   (e a), Binary   a) => Binary   (Estimate e a)
@@ -279,9 +335,10 @@ instance (NFData   (e a), NFData   a) => NFData   (Estimate e a) where
 
 
 
--- | Normal errors. They are stored as 1σ errors. Since we can
--- recalculate them to any confidence level if needed we don't store
--- it.
+-- |
+-- Normal errors. They are stored as 1σ errors which corresponds to
+-- 68.8% CL. Since we can recalculate them to any confidence level if
+-- needed we don't store it.
 newtype NormalErr a = NormalErr
   { normalError :: a
   }
@@ -340,6 +397,7 @@ estimateFromErr
   -> Estimate ConfInt a
 estimateFromErr x (ldx,udx) cl = Estimate x (ConfInt ldx udx cl)
 
+-- | Create estimate with asymmetric error.
 estimateFromInterval
   :: Num a
   => a                     -- ^ Point estimate. Should lie within
