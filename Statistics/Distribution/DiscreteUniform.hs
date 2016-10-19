@@ -8,12 +8,12 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- The discrete uniform distribution. There are two variants of
+-- The discrete uniform distribution. There are two parametrizations of
 -- this distribution. First is the probability distribution on an
 -- inclusive interval {1, ..., n}. This is parametrized with n only,
 -- where p_1, ..., p_n = 1/n. ('discreteUniform').
 --
--- The second variant is the uniform distribution on {a, ..., b} with
+-- The second parametrizaton is the uniform distribution on {a, ..., b} with
 -- probabilities p_a, ..., p_b = 1/(a-b+1). This is parametrized with
 -- /a/ and /b/. ('discreteUniformAB')
 
@@ -92,10 +92,9 @@ discreteUniform n
         where msg = "Statistics.Distribution.DiscreteUniform.discreteUniform: "
 
 -- | Construct discrete uniform distribution on support {a, ..., b}.
---   /a/≤/b/ must hold.
-discreteUniformAB :: Int              -- ^ Lower boundary (inclusive)
-                -> Int              -- ^ Upper boundary (inclusive)
-                -> DiscreteUniform
+discreteUniformAB :: Int             -- ^ Lower boundary (inclusive)
+                  -> Int             -- ^ Upper boundary (inclusive)
+                  -> DiscreteUniform
 discreteUniformAB a b
     | b < a     = discreteUniformAB b a
     | otherwise = U a b
