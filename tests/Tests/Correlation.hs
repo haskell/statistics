@@ -5,7 +5,6 @@ module Tests.Correlation
 
 import Control.Arrow (Arrow(..))
 import qualified Data.Vector as V
-import Statistics.Matrix hiding (map)
 import Statistics.Correlation
 import Statistics.Correlation.Kendall
 import Test.QuickCheck ((==>),Property,counterexample)

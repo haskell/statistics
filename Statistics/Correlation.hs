@@ -23,7 +23,8 @@ import Statistics.Test.Internal (rankUnsorted)
 -- Pearson
 ----------------------------------------------------------------
 
--- | Pearson correlation for sample of pairs.
+-- | Pearson correlation for sample of pairs. Exactly same as
+-- 'Statistics.Sample.correlation'
 pearson :: (G.Vector v (Double, Double), G.Vector v Double)
         => v (Double, Double) -> Double
 pearson = correlation

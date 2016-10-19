@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Gamma
@@ -19,36 +20,55 @@ module Statistics.Distribution.Gamma
       GammaDistribution
     -- * Constructors
     , gammaDistr
+    , gammaDistrE
     , improperGammaDistr
+    , improperGammaDistrE
     -- * Accessors
     , gdShape
     , gdScale
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<$>), (<*>))
-import Data.Binary (Binary)
-import Data.Binary (put, get)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary          (Binary(..))
+import Data.Data            (Data, Typeable)
+import GHC.Generics         (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN, m_neg_inf)
 import Numeric.SpecFunctions (incompleteGamma, invIncompleteGamma, logGamma, digamma)
+import qualified System.Random.MWC.Distributions as MWC
+
 import Statistics.Distribution.Poisson.Internal as Poisson
 import qualified Statistics.Distribution as D
-import qualified System.Random.MWC.Distributions as MWC
+import Statistics.Internal
+
 
 -- | The gamma distribution.
 data GammaDistribution = GD {
       gdShape :: {-# UNPACK #-} !Double -- ^ Shape parameter, /k/.
     , gdScale :: {-# UNPACK #-} !Double -- ^ Scale parameter, &#977;.
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON GammaDistribution
+instance Show GammaDistribution where
+  showsPrec i (GD k theta) = defaultShow2 "improperGammaDistr" k theta i
+instance Read GammaDistribution where
+  readPrec = defaultReadPrecM2 "improperGammaDistr" improperGammaDistrE
+
+
 instance ToJSON GammaDistribution
+instance FromJSON GammaDistribution where
+  parseJSON (Object v) = do
+    k     <- v .: "gdShape"
+    theta <- v .: "gdScale"
+    maybe (fail $ errMsgI k theta) return $ improperGammaDistrE k theta
+  parseJSON _ = empty
 
 instance Binary GammaDistribution where
-    put (GD x y) = put x >> put y
-    get = GD <$> get <*> get
+  put (GD x y) = put x >> put y
+  get = do
+    k     <- get
+    theta <- get
+    maybe (fail $ errMsgI k theta) return $ improperGammaDistrE k theta
+
 
 -- | Create gamma distribution. Both shape and scale parameters must
 -- be positive.
@@ -56,17 +76,48 @@ gammaDistr :: Double            -- ^ Shape parameter. /k/
            -> Double            -- ^ Scale parameter, &#977;.
            -> GammaDistribution
 gammaDistr k theta
-  | k     <= 0 = error $ msg ++ "shape must be positive. Got " ++ show k
-  | theta <= 0 = error $ msg ++ "scale must be positive. Got " ++ show theta
-  | otherwise  = improperGammaDistr k theta
-    where msg = "Statistics.Distribution.Gamma.gammaDistr: "
+  = maybe (error $ errMsg k theta) id $ gammaDistrE k theta
 
--- | Create gamma distribution. This constructor do not check whether
---   parameters are valid
+errMsg :: Double -> Double -> String
+errMsg k theta
+  =  "Statistics.Distribution.Gamma.gammaDistr: "
+  ++ "k=" ++ show k
+  ++ "theta=" ++ show theta
+  ++ " but must be positive"
+
+-- | Create gamma distribution. Both shape and scale parameters must
+-- be positive.
+gammaDistrE :: Double            -- ^ Shape parameter. /k/
+            -> Double            -- ^ Scale parameter, &#977;.
+            -> Maybe GammaDistribution
+gammaDistrE k theta
+  | k > 0 && theta > 0 = Just (GD k theta)
+  | otherwise          = Nothing
+
+
+-- | Create gamma distribution. Both shape and scale parameters must
+-- be non-negative.
 improperGammaDistr :: Double            -- ^ Shape parameter. /k/
                    -> Double            -- ^ Scale parameter, &#977;.
                    -> GammaDistribution
-improperGammaDistr = GD
+improperGammaDistr k theta
+  = maybe (error $ errMsgI k theta) id $ improperGammaDistrE k theta
+
+errMsgI :: Double -> Double -> String
+errMsgI k theta
+  =  "Statistics.Distribution.Gamma.gammaDistr: "
+  ++ "k=" ++ show k
+  ++ "theta=" ++ show theta
+  ++ " but must be non-negative"
+
+-- | Create gamma distribution. Both shape and scale parameters must
+-- be non-negative.
+improperGammaDistrE :: Double            -- ^ Shape parameter. /k/
+                    -> Double            -- ^ Scale parameter, &#977;.
+                    -> Maybe GammaDistribution
+improperGammaDistrE k theta
+  | k >= 0 && theta >= 0 = Just (GD k theta)
+  | otherwise            = Nothing
 
 instance D.Distribution GammaDistribution where
     cumulative = cumulative

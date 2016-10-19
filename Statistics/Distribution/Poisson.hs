@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Poisson
@@ -18,33 +19,48 @@ module Statistics.Distribution.Poisson
       PoissonDistribution
     -- * Constructors
     , poisson
+    , poissonE
     -- * Accessors
     , poissonLambda
     -- * References
     -- $references
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
-import qualified Statistics.Distribution as D
-import qualified Statistics.Distribution.Poisson.Internal as I
+import Control.Applicative
+import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary          (Binary(..))
+import Data.Data            (Data, Typeable)
+import GHC.Generics         (Generic)
 import Numeric.SpecFunctions (incompleteGamma,logFactorial)
 import Numeric.MathFunctions.Constants (m_neg_inf)
-import Data.Binary (put, get)
+
+import qualified Statistics.Distribution as D
+import qualified Statistics.Distribution.Poisson.Internal as I
+import Statistics.Internal
+
 
 
 newtype PoissonDistribution = PD {
       poissonLambda :: Double
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON PoissonDistribution
+instance Show PoissonDistribution where
+  showsPrec i (PD l) = defaultShow1 "poisson" l i
+instance Read PoissonDistribution where
+  readPrec = defaultReadPrecM1 "poisson" poissonE
+
 instance ToJSON PoissonDistribution
+instance FromJSON PoissonDistribution where
+  parseJSON (Object v) = do
+    l <- v .: "poissonLambda"
+    maybe (fail $ errMsg l) return $ poissonE l
+  parseJSON _ = empty
 
 instance Binary PoissonDistribution where
-    get = fmap PD get
-    put = put . poissonLambda
+  put = put . poissonLambda
+  get = do
+    l <- get
+    maybe (fail $ errMsg l) return $ poissonE l
 
 instance D.Distribution PoissonDistribution where
     cumulative (PD lambda) x
@@ -79,11 +95,18 @@ instance D.MaybeEntropy PoissonDistribution where
 
 -- | Create Poisson distribution.
 poisson :: Double -> PoissonDistribution
-poisson l
-  | l >=  0   = PD l
-  | otherwise = error $
-    "Statistics.Distribution.Poisson.poisson: lambda must be non-negative. Got "
-    ++ show l
+poisson l = maybe (error $ errMsg l) id $ poissonE l
+
+-- | Create Poisson distribution.
+poissonE :: Double -> Maybe PoissonDistribution
+poissonE l
+  | l >=  0   = Just (PD l)
+  | otherwise = Nothing
+
+errMsg :: Double -> String
+errMsg l = "Statistics.Distribution.Poisson.poisson: lambda must be non-negative. Got "
+        ++ show l
+
 
 -- $references
 --

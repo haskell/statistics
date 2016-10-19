@@ -8,7 +8,7 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Types classes for probability distrubutions
+-- Type classes for probability distributions
 
 module Statistics.Distribution
     (
@@ -26,6 +26,7 @@ module Statistics.Distribution
       -- ** Random number generation
     , ContGen(..)
     , DiscreteGen(..)
+    , genContinuous
     , genContinous
       -- * Helper functions
     , findRoot
@@ -42,7 +43,7 @@ import qualified Data.Vector.Unboxed as U
 
 
 -- | Type class common to all distributions. Only c.d.f. could be
--- defined for both discrete and continous distributions.
+-- defined for both discrete and continuous distributions.
 class Distribution d where
     -- | Cumulative distribution function.  The probability that a
     -- random variable /X/ is less or equal than /x/,
@@ -57,7 +58,7 @@ class Distribution d where
     --
     -- > complCumulative d x = 1 - cumulative d x
     --
-    -- It's useful when one is interested in P(/X/</x/) and
+    -- It's useful when one is interested in P(/X/>/x/) and
     -- expression on the right side begin to lose precision. This
     -- function have default implementation but implementors are
     -- encouraged to provide more precise implementation.
@@ -90,6 +91,12 @@ class Distribution d => ContDistr d where
     -- /x/ for which P(/X/&#8804;/x/) = /p/. If probability is outside
     -- of [0,1] range function should call 'error'
     quantile :: d -> Double -> Double
+
+    -- | 1-complement of @quantile@:
+    --
+    -- > complQuantile x ≡ quantile (1 - x)
+    complQuantile :: d -> Double -> Double
+    complQuantile d x = quantile d (1 - x)
 
     -- | Natural logarithm of density.
     logDensity :: d -> Double -> Double
@@ -159,12 +166,17 @@ class Distribution d => ContGen d where
 class (DiscreteDistr d, ContGen d) => DiscreteGen d where
   genDiscreteVar :: PrimMonad m => d -> Gen (PrimState m) -> m Int
 
--- | Generate variates from continous distribution using inverse
+-- | Generate variates from continuous distribution using inverse
 --   transform rule.
-genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
-genContinous d gen = do
+genContinuous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
+genContinuous d gen = do
   x <- uniform gen
   return $! quantile d x
+
+-- | Backwards compatibility with genContinuous.
+genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
+genContinous = genContinuous
+{-# DEPRECATED genContinous "Use genContinuous" #-}
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 

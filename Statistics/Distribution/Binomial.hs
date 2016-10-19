@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Binomial
@@ -18,21 +19,23 @@ module Statistics.Distribution.Binomial
       BinomialDistribution
     -- * Constructors
     , binomial
+    , binomialE
     -- * Accessors
     , bdTrials
     , bdProbability
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary           (Binary(..))
+import Data.Data             (Data, Typeable)
+import GHC.Generics          (Generic)
+import Numeric.SpecFunctions           (choose,logChoose,incompleteBeta,log1p)
+import Numeric.MathFunctions.Constants (m_epsilon)
+
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
-import Numeric.SpecFunctions (choose,incompleteBeta)
-import Numeric.MathFunctions.Constants (m_epsilon)
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
+import Statistics.Internal
 
 
 -- | The binomial distribution.
@@ -41,20 +44,36 @@ data BinomialDistribution = BD {
     -- ^ Number of trials.
     , bdProbability :: {-# UNPACK #-} !Double
     -- ^ Probability.
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON BinomialDistribution
+instance Show BinomialDistribution where
+  showsPrec i (BD n p) = defaultShow2 "binomial" n p i
+instance Read BinomialDistribution where
+  readPrec = defaultReadPrecM2 "binomial" binomialE
+
 instance ToJSON BinomialDistribution
+instance FromJSON BinomialDistribution where
+  parseJSON (Object v) = do
+    n <- v .: "bdTrials"
+    p <- v .: "bdProbability"
+    maybe (fail $ errMsg n p) return $ binomialE n p
+  parseJSON _ = empty
 
 instance Binary BinomialDistribution where
-    put (BD x y) = put x >> put y
-    get = BD <$> get <*> get
+  put (BD x y) = put x >> put y
+  get = do
+    n <- get
+    p <- get
+    maybe (fail $ errMsg n p) return $ binomialE n p
+
+
 
 instance D.Distribution BinomialDistribution where
     cumulative = cumulative
 
 instance D.DiscreteDistr BinomialDistribution where
-    probability = probability
+    probability    = probability
+    logProbability = logProbability
 
 instance D.Mean BinomialDistribution where
     mean = mean
@@ -83,7 +102,22 @@ probability :: BinomialDistribution -> Int -> Double
 probability (BD n p) k
   | k < 0 || k > n = 0
   | n == 0         = 1
-  | otherwise      = choose n k * p^k * (1-p)^(n-k)
+    -- choose could overflow Double for n >= 1030 so we switch to
+    -- log-domain to calculate probability
+  | n < 1000       = choose n k * p^k * (1-p)^(n-k)
+  | otherwise      = exp $ logChoose n k + log p * k' + log1p (-p) * nk'
+  where
+    k'  = fromIntegral k
+    nk' = fromIntegral $ n - k
+
+logProbability :: BinomialDistribution -> Int -> Double
+logProbability (BD n p) k
+  | k < 0 || k > n          = (-1)/0
+  | n == 0                  = 0
+  | otherwise               = logChoose n k + log p * k' + log1p (-p) * nk'
+  where
+    k'  = fromIntegral   k
+    nk' = fromIntegral $ n - k
 
 -- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
@@ -114,10 +148,19 @@ directEntropy d@(BD n _) =
 binomial :: Int                 -- ^ Number of trials.
          -> Double              -- ^ Probability.
          -> BinomialDistribution
-binomial n p
-  | n < 0          =
-    error $ msg ++ "number of trials must be non-negative. Got " ++ show n
-  | p < 0 || p > 1 =
-    error $ msg++"probability must be in [0,1] range. Got " ++ show p
-  | otherwise      = BD n p
-    where msg = "Statistics.Distribution.Binomial.binomial: "
+binomial n p = maybe (error $ errMsg n p) id $ binomialE n p
+
+-- | Construct binomial distribution. Number of trials must be
+--   non-negative and probability must be in [0,1] range
+binomialE :: Int                 -- ^ Number of trials.
+          -> Double              -- ^ Probability.
+          -> Maybe BinomialDistribution
+binomialE n p
+  | n < 0            = Nothing
+  | p >= 0 || p <= 1 = Just (BD n p)
+  | otherwise        = Nothing
+
+errMsg :: Int -> Double -> String
+errMsg n p
+  = "Statistics.Distribution.Binomial.binomial: n=" ++ show n
+  ++ " p=" ++ show p ++ "but n>=0 and p in [0,1]"

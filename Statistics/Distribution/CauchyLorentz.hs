@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.CauchyLorentz
@@ -18,16 +19,18 @@ module Statistics.Distribution.CauchyLorentz (
   , cauchyDistribScale
     -- * Constructors
   , cauchyDistribution
+  , cauchyDistributionE
   , standardCauchy
   ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Data.Aeson             (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary            (Binary(..))
+import Data.Maybe             (fromMaybe)
+import Data.Data              (Data, Typeable)
+import GHC.Generics           (Generic)
 import qualified Statistics.Distribution as D
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
+import Statistics.Internal
 
 -- | Cauchy-Lorentz distribution.
 data CauchyDistribution = CD {
@@ -40,24 +43,52 @@ data CauchyDistribution = CD {
     --   maximum (HWHM).
   , cauchyDistribScale  :: {-# UNPACK #-} !Double
   }
-  deriving (Eq, Show, Read, Typeable, Data, Generic)
+  deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON CauchyDistribution
-instance ToJSON CauchyDistribution
+instance Show CauchyDistribution where
+  showsPrec i (CD m s) = defaultShow2 "cauchyDistribution" m s i
+instance Read CauchyDistribution where
+  readPrec = defaultReadPrecM2 "cauchyDistribution" cauchyDistributionE
+
+instance ToJSON   CauchyDistribution
+instance FromJSON CauchyDistribution where
+  parseJSON (Object v) = do
+    m <- v .: "cauchyDistribMedian"
+    s <- v .: "cauchyDistribScale"
+    maybe (fail $ errMsg m s) return $ cauchyDistributionE m s
+  parseJSON _ = empty
 
 instance Binary CauchyDistribution where
-    put (CD x y) = put x >> put y
-    get = CD <$> get <*> get
+    put (CD m s) = put m >> put s
+    get = do
+      m <- get
+      s <- get
+      maybe (error $ errMsg m s) return $ cauchyDistributionE m s
+
 
 -- | Cauchy distribution
 cauchyDistribution :: Double    -- ^ Central point
                    -> Double    -- ^ Scale parameter (FWHM)
                    -> CauchyDistribution
 cauchyDistribution m s
-  | s > 0     = CD m s
-  | otherwise =
-    error $ "Statistics.Distribution.CauchyLorentz.cauchyDistribution: FWHM must be positive. Got " ++ show s
+  = fromMaybe (error $ errMsg m s)
+  $ cauchyDistributionE m s
 
+
+-- | Cauchy distribution
+cauchyDistributionE :: Double    -- ^ Central point
+                    -> Double    -- ^ Scale parameter (FWHM)
+                    -> Maybe CauchyDistribution
+cauchyDistributionE m s
+  | s > 0     = Just (CD m s)
+  | otherwise = Nothing
+
+errMsg :: Double -> Double -> String
+errMsg _ s
+  = "Statistics.Distribution.CauchyLorentz.cauchyDistribution: FWHM must be positive. Got "
+  ++ show s
+
+-- | Standard Cauchy distribution. It's centered at 0 and and have 1 FWHM
 standardCauchy :: CauchyDistribution
 standardCauchy = CD 0 1
 
@@ -73,10 +104,16 @@ instance D.ContDistr CauchyDistribution where
     | p == 0         = -1 / 0
     | p == 1         =  1 / 0
     | otherwise      =
-      error $ "Statistics.Distribution.CauchyLorentz..quantile: p must be in [0,1] range. Got: "++show p
+      error $ "Statistics.Distribution.CauchyLorentz.quantile: p must be in [0,1] range. Got: "++show p
+  complQuantile (CD m s) p
+    | p > 0 && p < 1 = m + s * tan( pi * (0.5 - p) )
+    | p == 0         =  1 / 0
+    | p == 1         = -1 / 0
+    | otherwise      =
+      error $ "Statistics.Distribution.CauchyLorentz.complQuantile: p must be in [0,1] range. Got: "++show p
 
 instance D.ContGen CauchyDistribution where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous
 
 instance D.Entropy CauchyDistribution where
   entropy (CD _ s) = log s + log (4*pi)

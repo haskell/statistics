@@ -1,40 +1,41 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE FlexibleInstances, OverlappingInstances, ScopedTypeVariables,
     ViewPatterns #-}
 module Tests.Distribution (tests) where
 
 import Control.Applicative ((<$), (<$>), (<*>))
-import Data.Binary (Binary, decode, encode)
+import qualified Control.Exception as E
 import Data.List (find)
 import Data.Typeable (Typeable)
+import qualified Numeric.IEEE as IEEE
+import Numeric.MathFunctions.Constants (m_tiny,m_epsilon)
+import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
-import Statistics.Distribution.Beta (BetaDistribution, betaDistr)
-import Statistics.Distribution.Binomial (BinomialDistribution, binomial)
+import Statistics.Distribution.Beta            (BetaDistribution)
+import Statistics.Distribution.Binomial        (BinomialDistribution)
 import Statistics.Distribution.CauchyLorentz
-import Statistics.Distribution.ChiSquared (ChiSquared, chiSquared)
-import Statistics.Distribution.Exponential (ExponentialDistribution, exponential)
-import Statistics.Distribution.FDistribution (FDistribution, fDistribution)
-import Statistics.Distribution.Gamma (GammaDistribution, gammaDistr)
+import Statistics.Distribution.ChiSquared      (ChiSquared)
+import Statistics.Distribution.Exponential     (ExponentialDistribution)
+import Statistics.Distribution.FDistribution   (FDistribution,fDistribution)
+import Statistics.Distribution.Gamma           (GammaDistribution,gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
-import Statistics.Distribution.Laplace (LaplaceDistribution, laplace)
-import Statistics.Distribution.Normal (NormalDistribution, normalDistr)
-import Statistics.Distribution.Poisson (PoissonDistribution, poisson)
+import Statistics.Distribution.Laplace         (LaplaceDistribution)
+import Statistics.Distribution.Normal          (NormalDistribution)
+import Statistics.Distribution.Poisson         (PoissonDistribution)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform (LinearTransform, linTransDistr)
-import Statistics.Distribution.Uniform (UniformDistribution, uniformDistr)
-import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
+import Statistics.Distribution.Transform       (LinearTransform, linTransDistr)
+import Statistics.Distribution.Uniform         (UniformDistribution)
+import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
 import Test.QuickCheck.Monadic as QC
-import Tests.ApproxEq (ApproxEq(..))
-import Tests.Helpers (T(..), testAssertion, typeName)
-import Tests.Helpers (monotonicallyIncreasesIEEE)
 import Text.Printf (printf)
-import qualified Control.Exception as E
-import qualified Numeric.IEEE as IEEE
 
+import Tests.ApproxEq  (ApproxEq(..))
+import Tests.Helpers   (T(..), Double01(..), testAssertion, typeName)
+import Tests.Helpers   (monotonicallyIncreasesIEEE,isDenorm)
+import Tests.Orphanage ()
 
 -- | Tests for all distributions
 tests :: Test
@@ -48,7 +49,7 @@ tests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
   , contDistrTests (T :: T StudentT                )
-  , contDistrTests (T :: T (LinearTransform StudentT) )
+  , contDistrTests (T :: T (LinearTransform NormalDistribution))
   , contDistrTests (T :: T FDistribution           )
 
   , discreteDistrTests (T :: T BinomialDistribution       )
@@ -65,18 +66,19 @@ tests = testGroup "Tests for all distributions"
 -- Tests
 ----------------------------------------------------------------
 
--- Tests for continous distribution
-contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d, Binary d, Eq d) => T d -> Test
+-- Tests for continuous distribution
+contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck     t
   , testProperty "Quantile is CDF inverse" $ quantileIsInvCDF   t
   , testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
   , testProperty "log density check"       $ logDensityCheck    t
+  , testProperty "complQuantile"           $ complQuantileCheck t
   ]
 
 -- Tests for discrete distribution
-discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d, Binary d, Eq d) => T d -> Test
+discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
 discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
@@ -86,7 +88,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for distributions which have CDF
-cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d, Binary d, Eq d) => T d -> [Test]
+cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
 cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
   , testProperty "CDF limit at +inf"    $ cdfLimitAtPosInfinity  t
@@ -95,7 +97,6 @@ cdfTests t =
   , testProperty "CDF at -inf = 1"      $ cdfAtNegInfinity       t
   , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
   , testProperty "1-CDF is correct"     $ cdfComplementIsCorrect t
-  , testProperty "Binary OK"            $ p_binary t
   ]
 
 
@@ -111,12 +112,12 @@ cdfIsNondecreasing :: (Distribution d) => T d -> d -> Double -> Double -> Bool
 cdfIsNondecreasing _ d = monotonicallyIncreasesIEEE $ cumulative d
 
 -- cumulative d +∞ = 1
-cdfAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfAtPosInfinity :: (Distribution d) => T d -> d -> Bool
 cdfAtPosInfinity _ d
   = cumulative d (1/0) == 1
 
 -- cumulative d - ∞ = 0
-cdfAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfAtNegInfinity :: (Distribution d) => T d -> d -> Bool
 cdfAtNegInfinity _ d
   = cumulative d (-1/0) == 0
 
@@ -167,14 +168,15 @@ cdfDiscreteIsCorrect _ d
 
 logDensityCheck :: (ContDistr d) => T d -> d -> Double -> Property
 logDensityCheck _ d x
-  = counterexample (printf "density    = %g" p)
-  $ counterexample (printf "logDensity = %g" logP)
-  $ counterexample (printf "log p      = %g" (log p))
-  $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
-  $ or [ p == 0     && logP == (-1/0)
-       , p < 1e-308 && logP < 609
-       , eq 1e-14 (log p) logP
-       ]
+  = not (isDenorm x)
+  ==> ( counterexample (printf "density    = %g" p)
+      $ counterexample (printf "logDensity = %g" logP)
+      $ counterexample (printf "log p      = %g" (log p))
+      $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+      $ or [ p == 0      && logP == (-1/0)
+           , p <= m_tiny && logP < log m_tiny
+           , eq 1e-14 (log p) logP
+           ])
   where
     p    = density d x
     logP = logDensity d x
@@ -184,18 +186,41 @@ pdfSanityCheck :: (ContDistr d) => T d -> d -> Double -> Bool
 pdfSanityCheck _ d x = p >= 0
   where p = density d x
 
--- Quantile is inverse of CDF
-quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double -> Property
-quantileIsInvCDF _ d (snd . properFraction -> p) =
-  p > 0 && p < 1  ==> ( counterexample (printf "Quantile     = %g" q )
-                      $ counterexample (printf "Probability  = %g" p )
-                      $ counterexample (printf "Probability' = %g" p')
-                      $ counterexample (printf "Error        = %e" (abs $ p - p'))
-                      $ abs (p - p') < invQuantilePrec d
-                      )
+complQuantileCheck :: (ContDistr d) => T d -> d -> Double01 -> Property
+complQuantileCheck _ d (Double01 p) =
+  -- We avoid extreme tails of distributions
+  --
+  -- FIXME: all parameters are arbitrary at the moment
+  p > 0.01 && p < 0.99 ==> (abs (x1 - x0) < 1e-6)
   where
-    q  = quantile   d p
-    p' = cumulative d q
+    x0 = quantile      d (1 - p)
+    x1 = complQuantile d p
+
+-- Quantile is inverse of CDF
+quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double01 -> Property
+quantileIsInvCDF _ d (Double01 p) =
+  and [ p > 1e-250
+      , p < 1
+      , x > m_tiny
+      , dens > 0
+      ] ==>
+    ( counterexample (printf "Quantile      = %g" x )
+    $ counterexample (printf "Probability   = %g" p )
+    $ counterexample (printf "Probability'  = %g" p')
+    $ counterexample (printf "Expected err. = %g" err)
+    $ counterexample (printf "Rel. error    = %g" (relativeError p p'))
+    $ counterexample (printf "Abs. error    = %e" (abs $ p - p'))
+    $ eqRelErr err p p'
+    )
+  where
+    -- Algorithm for error estimation is taken from here
+    --
+    -- http://sepulcarium.org/posts/2012-07-19-rounding_effect_on_inverse.html
+    dens = density    d x
+    err  = 64 * m_epsilon * (1 + abs (x / p) * dens)
+    --
+    x    = quantile   d p
+    p'   = cumulative d x
 
 -- Test that quantile fails if p<0 or p>1
 quantileShouldFail :: (ContDistr d) => T d -> d -> Double -> Property
@@ -243,64 +268,6 @@ logProbabilityCheck _ d x
     logP = logProbability d x
 
 
-p_binary :: (Eq a, Show a, Binary a) => T a -> a -> Bool
-p_binary _ a = a == (decode . encode) a
-
-
-
-----------------------------------------------------------------
--- Arbitrary instances for ditributions
-----------------------------------------------------------------
-
-instance QC.Arbitrary BinomialDistribution where
-  arbitrary = binomial <$> QC.choose (1,100) <*> QC.choose (0,1)
-instance QC.Arbitrary DiscreteUniform where
-  arbitrary = discreteUniformAB <$> QC.choose (1,1000) <*> QC.choose(1,1000)
-instance QC.Arbitrary ExponentialDistribution where
-  arbitrary = exponential <$> QC.choose (0,100)
-instance QC.Arbitrary LaplaceDistribution where
-  arbitrary = laplace <$> QC.choose (-10,10) <*> QC.choose (0, 2)
-instance QC.Arbitrary GammaDistribution where
-  arbitrary = gammaDistr <$> QC.choose (0.1,10) <*> QC.choose (0.1,10)
-instance QC.Arbitrary BetaDistribution where
-  arbitrary = betaDistr <$> QC.choose (1e-3,10) <*> QC.choose (1e-3,10)
-instance QC.Arbitrary GeometricDistribution where
-  arbitrary = geometric <$> QC.choose (0,1)
-instance QC.Arbitrary GeometricDistribution0 where
-  arbitrary = geometric0 <$> QC.choose (0,1)
-instance QC.Arbitrary HypergeometricDistribution where
-  arbitrary = do l <- QC.choose (1,20)
-                 m <- QC.choose (0,l)
-                 k <- QC.choose (1,l)
-                 return $ hypergeometric m l k
-instance QC.Arbitrary NormalDistribution where
-  arbitrary = normalDistr <$> QC.choose (-100,100) <*> QC.choose (1e-3, 1e3)
-instance QC.Arbitrary PoissonDistribution where
-  arbitrary = poisson <$> QC.choose (0,1)
-instance QC.Arbitrary ChiSquared where
-  arbitrary = chiSquared <$> QC.choose (1,100)
-instance QC.Arbitrary UniformDistribution where
-  arbitrary = do a <- QC.arbitrary
-                 b <- QC.arbitrary `suchThat` (/= a)
-                 return $ uniformDistr a b
-instance QC.Arbitrary CauchyDistribution where
-  arbitrary = cauchyDistribution
-                <$> arbitrary
-                <*> ((abs <$> arbitrary) `suchThat` (> 0))
-instance QC.Arbitrary StudentT where
-  arbitrary = studentT <$> ((abs <$> arbitrary) `suchThat` (>0))
-instance QC.Arbitrary (LinearTransform StudentT) where
-  arbitrary = studentTUnstandardized
-           <$> ((abs <$> arbitrary) `suchThat` (>0))
-           <*> ((abs <$> arbitrary))
-           <*> ((abs <$> arbitrary) `suchThat` (>0))
-instance QC.Arbitrary FDistribution where
-  arbitrary =  fDistribution
-           <$> ((abs <$> arbitrary) `suchThat` (>0))
-           <*> ((abs <$> arbitrary) `suchThat` (>0))
-
-
-
 -- Parameters for distribution testing. Some distribution require
 -- relaxing parameters a bit
 class Param a where
@@ -334,7 +301,7 @@ instance Param FDistribution where
 unitTests :: Test
 unitTests = testGroup "Unit tests"
   [ testAssertion "density (gammaDistr 150 1/150) 1 == 4.883311" $
-      4.883311418525483 =~ (density (gammaDistr 150 (1/150)) 1)
+      4.883311418525483 =~ density (gammaDistr 150 (1/150)) 1
     -- Student-T
   , testStudentPDF 0.3  1.34  0.0648215  -- PDF
   , testStudentPDF 1    0.42  0.27058

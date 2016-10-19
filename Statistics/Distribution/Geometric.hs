@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Geometric
@@ -24,36 +25,53 @@ module Statistics.Distribution.Geometric
     , GeometricDistribution0
     -- * Constructors
     , geometric
+    , geometricE
     , geometric0
+    , geometric0E
     -- ** Accessors
     , gdSuccess
     , gdSuccess0
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<$>))
-import Control.Monad (liftM)
-import Data.Binary (Binary)
-import Data.Binary (put, get)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Control.Monad       (liftM)
+import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary         (Binary(..))
+import Data.Data           (Data, Typeable)
+import GHC.Generics        (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_neg_inf)
-import qualified Statistics.Distribution as D
 import qualified System.Random.MWC.Distributions as MWC
 
-----------------------------------------------------------------
--- Distribution over [1..]
+import qualified Statistics.Distribution as D
+import Statistics.Internal
 
+
+
+----------------------------------------------------------------
+
+-- | Distribution over [1..]
 newtype GeometricDistribution = GD {
       gdSuccess :: Double
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON GeometricDistribution
+instance Show GeometricDistribution where
+  showsPrec i (GD x) = defaultShow1 "geometric" x i
+instance Read GeometricDistribution where
+  readPrec = defaultReadPrecM1 "geometric" geometricE
+
 instance ToJSON GeometricDistribution
+instance FromJSON GeometricDistribution where
+  parseJSON (Object v) = do
+    x <- v .: "gdSuccess"
+    maybe (fail $ errMsg x) return  $ geometricE x
+  parseJSON _ = empty
 
 instance Binary GeometricDistribution where
-    get = GD <$> get
-    put (GD x) = put x
+  put (GD x) = put x
+  get = do
+    x <- get
+    maybe (fail $ errMsg x) return  $ geometricE x
+
 
 instance D.Distribution GeometricDistribution where
     cumulative = cumulative
@@ -95,14 +113,6 @@ instance D.DiscreteGen GeometricDistribution where
 instance D.ContGen GeometricDistribution where
   genContVar d g = fromIntegral `liftM` D.genDiscreteVar d g
 
--- | Create geometric distribution.
-geometric :: Double                -- ^ Success rate
-          -> GeometricDistribution
-geometric x
-  | x >= 0 && x <= 1 = GD x
-  | otherwise        =
-    error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
-
 cumulative :: GeometricDistribution -> Double -> Double
 cumulative (GD s) x
   | x < 1        = 0
@@ -111,19 +121,47 @@ cumulative (GD s) x
   | otherwise    = 1 - (1-s) ^ (floor x :: Int)
 
 
-----------------------------------------------------------------
--- Distribution over [0..]
+-- | Create geometric distribution.
+geometric :: Double                -- ^ Success rate
+          -> GeometricDistribution
+geometric x = maybe (error $ errMsg x) id $ geometricE x
 
+-- | Create geometric distribution.
+geometricE :: Double                -- ^ Success rate
+           -> Maybe GeometricDistribution
+geometricE x
+  | x >= 0 && x <= 1 = Just (GD x)
+  | otherwise        = Nothing
+
+errMsg :: Double -> String
+errMsg x = "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
+
+
+----------------------------------------------------------------
+
+-- | Distribution over [0..]
 newtype GeometricDistribution0 = GD0 {
       gdSuccess0 :: Double
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON GeometricDistribution0
+instance Show GeometricDistribution0 where
+  showsPrec i (GD0 x) = defaultShow1 "geometric0" x i
+instance Read GeometricDistribution0 where
+  readPrec = defaultReadPrecM1 "geometric0" geometric0E
+
 instance ToJSON GeometricDistribution0
+instance FromJSON GeometricDistribution0 where
+  parseJSON (Object v) = do
+    x <- v .: "gdSuccess0"
+    maybe (fail $ errMsg x) return  $ geometric0E x
+  parseJSON _ = empty
 
 instance Binary GeometricDistribution0 where
-    get = GD0 <$> get
-    put (GD0 x) = put x
+  put (GD0 x) = put x
+  get = do
+    x <- get
+    maybe (fail $ errMsg x) return  $ geometric0E x
+
 
 instance D.Distribution GeometricDistribution0 where
     cumulative (GD0 s) x = cumulative (GD s) (x + 1)
@@ -157,10 +195,18 @@ instance D.DiscreteGen GeometricDistribution0 where
 instance D.ContGen GeometricDistribution0 where
   genContVar d g = fromIntegral `liftM` D.genDiscreteVar d g
 
+
 -- | Create geometric distribution.
 geometric0 :: Double                -- ^ Success rate
            -> GeometricDistribution0
-geometric0 x
-  | x >= 0 && x <= 1 = GD0 x
-  | otherwise        =
-    error $ "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
+geometric0 x = maybe (error $ errMsg0 x) id $ geometric0E x
+
+-- | Create geometric distribution.
+geometric0E :: Double                -- ^ Success rate
+            -> Maybe GeometricDistribution0
+geometric0E x
+  | x >= 0 && x <= 1 = Just (GD0 x)
+  | otherwise        = Nothing
+
+errMsg0 :: Double -> String
+errMsg0 x = "Statistics.Distribution.Geometric.geometric0: probability must be in [0,1] range. Got " ++ show x

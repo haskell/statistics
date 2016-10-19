@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.FDistribution
@@ -11,49 +12,90 @@
 -- Fisher F distribution
 module Statistics.Distribution.FDistribution (
     FDistribution
+    -- * Constructors
   , fDistribution
+  , fDistributionE
+  , fDistributionReal
+  , fDistributionRealE
+    -- * Accessors
   , fDistributionNDF1
   , fDistributionNDF2
   ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import Numeric.MathFunctions.Constants (m_neg_inf)
-import GHC.Generics (Generic)
-import qualified Statistics.Distribution as D
-import Statistics.Function (square)
+import Control.Applicative
+import Data.Aeson             (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary            (Binary(..))
+import Data.Data              (Data, Typeable)
+import GHC.Generics           (Generic)
 import Numeric.SpecFunctions (
   logBeta, incompleteBeta, invIncompleteBeta, digamma)
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
+import Numeric.MathFunctions.Constants (m_neg_inf)
+
+import qualified Statistics.Distribution as D
+import Statistics.Function (square)
+import Statistics.Internal
+
 
 -- | F distribution
 data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
                        , fDistributionNDF2 :: {-# UNPACK #-} !Double
                        , _pdfFactor        :: {-# UNPACK #-} !Double
                        }
-                   deriving (Eq, Show, Read, Typeable, Data, Generic)
+                   deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON FDistribution
+instance Show FDistribution where
+  showsPrec i (F n m _) = defaultShow2 "fDistributionReal" n m i
+instance Read FDistribution where
+  readPrec = defaultReadPrecM2 "fDistributionReal" fDistributionRealE
+
 instance ToJSON FDistribution
+instance FromJSON FDistribution where
+  parseJSON (Object v) = do
+    n <- v .: "fDistributionNDF1"
+    m <- v .: "fDistributionNDF2"
+    maybe (fail $ errMsgR n m) return $ fDistributionRealE n m
+  parseJSON _ = empty
 
 instance Binary FDistribution where
-    get = F <$> get <*> get <*> get
-    put (F x y z) = put x >> put y >> put z
+  put (F n m _) = put n >> put m
+  get = do
+    n <- get
+    m <- get
+    maybe (fail $ errMsgR n m) return $ fDistributionRealE n m
 
 fDistribution :: Int -> Int -> FDistribution
-fDistribution n m
+fDistribution n m = maybe (error $ errMsg n m) id $ fDistributionE n m
+
+fDistributionReal :: Double -> Double -> FDistribution
+fDistributionReal n m = maybe (error $ errMsgR n m) id $ fDistributionRealE n m
+
+fDistributionE :: Int -> Int -> Maybe FDistribution
+fDistributionE n m
   | n > 0 && m > 0 =
     let n' = fromIntegral n
         m' = fromIntegral m
         f' = 0.5 * (log m' * m' + log n' * n') - logBeta (0.5*n') (0.5*m')
-    in F n' m' f'
-  | otherwise =
-    error "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
+    in Just $ F n' m' f'
+  | otherwise = Nothing
+
+fDistributionRealE :: Double -> Double -> Maybe FDistribution
+fDistributionRealE n m
+  | n > 0 && m > 0 =
+    let f' = 0.5 * (log m * m + log n * n) - logBeta (0.5*n) (0.5*m)
+    in Just $ F n m f'
+  | otherwise = Nothing
+
+errMsg :: Int -> Int -> String
+errMsg _ _ = "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
+
+errMsgR :: Double -> Double -> String
+errMsgR _ _ = "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
+
+
 
 instance D.Distribution FDistribution where
-  cumulative = cumulative
+  cumulative      = cumulative
+  complCumulative = complCumulative
 
 instance D.ContDistr FDistribution where
   density d x
@@ -69,6 +111,13 @@ cumulative (F n m _) x
   | x <= 0       = 0
   | isInfinite x = 1            -- Only matches +∞
   | otherwise    = let y = n*x in incompleteBeta (0.5 * n) (0.5 * m) (y / (m + y))
+
+complCumulative :: FDistribution -> Double -> Double
+complCumulative (F n m _) x
+  | x <= 0       = 1
+  | isInfinite x = 0            -- Only matches +∞
+  | otherwise    = let y = n*x
+                   in incompleteBeta (0.5 * m) (0.5 * n) (m / (m + y))
 
 logDensity :: FDistribution -> Double -> Double
 logDensity (F n m fac) x
@@ -106,4 +155,4 @@ instance D.MaybeEntropy FDistribution where
   maybeEntropy = Just . D.entropy
 
 instance D.ContGen FDistribution where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous

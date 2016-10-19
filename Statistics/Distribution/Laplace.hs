@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Laplace
@@ -21,22 +22,24 @@ module Statistics.Distribution.Laplace
       LaplaceDistribution
     -- * Constructors
     , laplace
+    , laplaceE
     , laplaceFromSample
     -- * Accessors
     , ldLocation
     , ldScale
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary(..))
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
+import Control.Applicative
+import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary          (Binary(..))
+import Data.Data            (Data, Typeable)
+import GHC.Generics         (Generic)
 import qualified Data.Vector.Generic             as G
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Quantile             as Q
 import qualified Statistics.Sample               as S
 import Statistics.Types (Sample)
-import Control.Applicative ((<$>), (<*>))
+import Statistics.Internal
 
 
 data LaplaceDistribution = LD {
@@ -44,14 +47,27 @@ data LaplaceDistribution = LD {
     -- ^ Location.
     , ldScale    :: {-# UNPACK #-} !Double
     -- ^ Scale.
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON LaplaceDistribution
+instance Show LaplaceDistribution where
+  showsPrec i (LD l s) = defaultShow2 "laplace" l s i
+instance Read LaplaceDistribution where
+  readPrec = defaultReadPrecM2 "laplace" laplaceE
+
 instance ToJSON LaplaceDistribution
+instance FromJSON LaplaceDistribution where
+  parseJSON (Object v) = do
+    l <- v .: "ldLocation"
+    s <- v .: "ldScale"
+    maybe (fail $ errMsg l s) return $ laplaceE l s
+  parseJSON _ = empty
 
 instance Binary LaplaceDistribution where
-    put (LD l s) = put l >> put s
-    get = LD <$> get <*> get
+  put (LD l s) = put l >> put s
+  get = do
+    l <- get
+    s <- get
+    maybe (fail $ errMsg l s) return $ laplaceE l s
 
 instance D.Distribution LaplaceDistribution where
     cumulative      = cumulative
@@ -60,7 +76,8 @@ instance D.Distribution LaplaceDistribution where
 instance D.ContDistr LaplaceDistribution where
     density    (LD l s) x = exp (- abs (x - l) / s) / (2 * s)
     logDensity (LD l s) x = - abs (x - l) / s - log 2 - log s
-    quantile = quantile
+    quantile      = quantile
+    complQuantile = complQuantile
 
 instance D.Mean LaplaceDistribution where
     mean (LD l _) = l
@@ -82,7 +99,7 @@ instance D.MaybeEntropy LaplaceDistribution where
   maybeEntropy = Just . D.entropy
 
 instance D.ContGen LaplaceDistribution where
-  genContVar = D.genContinous
+  genContVar = D.genContinuous
 
 cumulative :: LaplaceDistribution -> Double -> Double
 cumulative (LD l s) x
@@ -106,14 +123,35 @@ quantile (LD l s) p
   where
     inf = 1 / 0
 
+complQuantile :: LaplaceDistribution -> Double -> Double
+complQuantile (LD l s) p
+  | p == 0             = inf
+  | p == 1             = -inf
+  | p == 0.5           = l
+  | p > 0   && p < 0.5 = l - s * log (2 * p)
+  | p > 0.5 && p < 1   = l + s * log (2 - 2 * p)
+  | otherwise          =
+    error $ "Statistics.Distribution.Laplace.quantile: p must be in [0,1] range. Got: "++show p
+  where
+    inf = 1 / 0
+
 -- | Create an Laplace distribution.
 laplace :: Double         -- ^ Location
         -> Double        -- ^ Scale
         -> LaplaceDistribution
-laplace l s
-  | s <= 0 =
-    error $ "Statistics.Distribution.Laplace.laplace: scale parameter must be positive. Got " ++ show s
-  | otherwise = LD l s
+laplace l s = maybe (error $ errMsg l s) id $ laplaceE l s
+
+-- | Create an Laplace distribution.
+laplaceE :: Double         -- ^ Location
+         -> Double        -- ^ Scale
+         -> Maybe LaplaceDistribution
+laplaceE l s
+  | s >= 0    = Just (LD l s)
+  | otherwise = Nothing
+
+errMsg :: Double -> Double -> String
+errMsg _ s = "Statistics.Distribution.Laplace.laplace: scale parameter must be positive. Got " ++ show s
+
 
 -- | Create Laplace distribution from sample. No tests are made to
 --   check whether it truly is Laplace. Location of distribution

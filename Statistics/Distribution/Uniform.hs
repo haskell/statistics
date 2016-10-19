@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Uniform
@@ -14,41 +15,65 @@ module Statistics.Distribution.Uniform
       UniformDistribution
     -- * Constructors
     , uniformDistr
+    , uniformDistrE
     -- ** Accessors
     , uniformA
     , uniformB
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary)
-import Data.Data (Data, Typeable)
-import GHC.Generics (Generic)
-import qualified Statistics.Distribution as D
+import Control.Applicative
+import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary         (Binary(..))
+import Data.Data           (Data, Typeable)
+import GHC.Generics        (Generic)
 import qualified System.Random.MWC       as MWC
-import Data.Binary (put, get)
-import Control.Applicative ((<$>), (<*>))
+
+import qualified Statistics.Distribution as D
+import Statistics.Internal
+
 
 
 -- | Uniform distribution from A to B
 data UniformDistribution = UniformDistribution {
       uniformA :: {-# UNPACK #-} !Double -- ^ Low boundary of distribution
     , uniformB :: {-# UNPACK #-} !Double -- ^ Upper boundary of distribution
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Typeable, Data, Generic)
 
-instance FromJSON UniformDistribution
+instance Show UniformDistribution where
+  showsPrec i (UniformDistribution a b) = defaultShow2 "uniformDistr" a b i
+instance Read UniformDistribution where
+  readPrec = defaultReadPrecM2 "uniformDistr" uniformDistrE
+
 instance ToJSON UniformDistribution
+instance FromJSON UniformDistribution where
+  parseJSON (Object v) = do
+    a <- v .: "uniformA"
+    b <- v .: "uniformB"
+    maybe (fail errMsg) return $ uniformDistrE a b
+  parseJSON _ = empty
 
 instance Binary UniformDistribution where
-    put (UniformDistribution x y) = put x >> put y
-    get = UniformDistribution <$> get <*> get
+  put (UniformDistribution x y) = put x >> put y
+  get = do
+    a <- get
+    b <- get
+    maybe (fail errMsg) return $ uniformDistrE a b
 
 -- | Create uniform distribution.
 uniformDistr :: Double -> Double -> UniformDistribution
-uniformDistr a b
-  | b < a     = uniformDistr b a
-  | a < b     = UniformDistribution a b
-  | otherwise = error "Statistics.Distribution.Uniform.uniform: wrong parameters"
+uniformDistr a b = maybe (error errMsg) id $ uniformDistrE a b
+
+-- | Create uniform distribution.
+uniformDistrE :: Double -> Double -> Maybe UniformDistribution
+uniformDistrE a b
+  | b < a     = Just $ UniformDistribution b a
+  | a < b     = Just $ UniformDistribution a b
+  | otherwise = Nothing
 -- NOTE: failure is in default branch to guard againist NaNs.
+
+errMsg :: String
+errMsg = "Statistics.Distribution.Uniform.uniform: wrong parameters"
+
 
 instance D.Distribution UniformDistribution where
   cumulative (UniformDistribution a b) x
@@ -65,6 +90,10 @@ instance D.ContDistr UniformDistribution where
     | p >= 0 && p <= 1 = a + (b - a) * p
     | otherwise        =
       error $ "Statistics.Distribution.Uniform.quantile: p must be in [0,1] range. Got: "++show p
+  complQuantile (UniformDistribution a b) p
+    | p >= 0 && p <= 1 = b + (a - b) * p
+    | otherwise        =
+      error $ "Statistics.Distribution.Uniform.complQuantile: p must be in [0,1] range. Got: "++show p
 
 instance D.Mean UniformDistribution where
   mean (UniformDistribution a b) = 0.5 * (a + b)

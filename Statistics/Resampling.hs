@@ -1,4 +1,7 @@
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, FlexibleContexts #-}
 
 -- |
 -- Module    : Statistics.Resampling
@@ -12,37 +15,54 @@
 -- Resampling statistics.
 
 module Statistics.Resampling
-    (
+    ( -- * Data types
       Resample(..)
+    , Bootstrap(..)
+    , Estimator(..)
+    , estimate
+      -- * Resampling
+    , resampleST
+    , resample
+    , resampleVector
+      -- * Jackknife
     , jackknife
     , jackknifeMean
     , jackknifeVariance
     , jackknifeVarianceUnb
     , jackknifeStdDev
-    , resample
-    , estimate
+      -- * Helper functions
     , splitGen
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Control.Applicative
 import Control.Concurrent (forkIO, newChan, readChan, writeChan)
-import Control.Monad (forM_, liftM, replicateM, replicateM_)
+import Control.Monad (forM_, forM, replicateM, replicateM_)
+import Control.Monad.Primitive (PrimMonad(..))
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
 import Data.Vector.Algorithms.Intro (sort)
 import Data.Vector.Binary ()
-import Data.Vector.Generic (unsafeFreeze)
+import Data.Vector.Generic (unsafeFreeze,unsafeThaw)
 import Data.Word (Word32)
+import qualified Data.Foldable as T
+import qualified Data.Traversable as T
+import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Mutable as MU
+
 import GHC.Conc (numCapabilities)
 import GHC.Generics (Generic)
 import Numeric.Sum (Summation(..), kbn)
 import Statistics.Function (indices)
 import Statistics.Sample (mean, stdDev, variance, varianceUnbiased)
-import Statistics.Types (Estimator(..), Sample)
-import System.Random.MWC (GenIO, initialize, uniform, uniformVector)
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Unboxed.Mutable as MU
+import Statistics.Types (Sample)
+import System.Random.MWC (Gen, GenIO, initialize, uniformR, uniformVector)
+
+
+----------------------------------------------------------------
+-- Data types
+----------------------------------------------------------------
 
 -- | A resample drawn randomly, with replacement, from a set of data
 -- points.  Distinct from a normal array to make it harder for your
@@ -57,6 +77,62 @@ instance ToJSON Resample
 instance Binary Resample where
     put = put . fromResample
     get = fmap Resample get
+
+data Bootstrap v a = Bootstrap
+  { fullSample :: !a
+  , resamples  :: v a
+  }
+  deriving (Eq, Read, Show, Typeable, Data, Generic, Functor, T.Foldable, T.Traversable)
+
+instance (Binary a,   Binary   (v a)) => Binary   (Bootstrap v a)
+instance (FromJSON a, FromJSON (v a)) => FromJSON (Bootstrap v a)
+instance (ToJSON a,   ToJSON   (v a)) => ToJSON   (Bootstrap v a)
+
+
+
+-- | An estimator of a property of a sample, such as its 'mean'.
+--
+-- The use of an algebraic data type here allows functions such as
+-- 'jackknife' and 'bootstrapBCA' to use more efficient algorithms
+-- when possible.
+data Estimator = Mean
+               | Variance
+               | VarianceUnbiased
+               | StdDev
+               | Function (Sample -> Double)
+
+-- | Run an 'Estimator' over a sample.
+estimate :: Estimator -> Sample -> Double
+estimate Mean             = mean
+estimate Variance         = variance
+estimate VarianceUnbiased = varianceUnbiased
+estimate StdDev           = stdDev
+estimate (Function est) = est
+
+
+----------------------------------------------------------------
+-- Resampling
+----------------------------------------------------------------
+
+-- | Single threaded and deterministic version of resample.
+resampleST :: PrimMonad m
+           => Gen (PrimState m)
+           -> [Estimator]         -- ^ Estimation functions.
+           -> Int                 -- ^ Number of resamples to compute.
+           -> U.Vector Double     -- ^ Original sample.
+           -> m [Bootstrap U.Vector Double]
+resampleST gen ests numResamples sample = do
+  -- Generate resamples
+  res <- forM ests $ \e -> U.replicateM numResamples $ do
+    v <- resampleVector gen sample
+    return $! estimate e v
+  -- Sort resamples
+  resM <- mapM unsafeThaw res
+  mapM_ sort resM
+  resSorted <- mapM unsafeFreeze resM
+  return $ zipWith Bootstrap [estimate e sample | e <- ests]
+                             resSorted
+
 
 -- | /O(e*r*s)/ Resample a data set repeatedly, with replacement,
 -- computing each estimate over the resampled data.
@@ -73,41 +149,48 @@ instance Binary Resample where
 resample :: GenIO
          -> [Estimator]         -- ^ Estimation functions.
          -> Int                 -- ^ Number of resamples to compute.
-         -> Sample              -- ^ Original sample.
-         -> IO [Resample]
+         -> U.Vector Double     -- ^ Original sample.
+         -> IO [(Estimator, Bootstrap U.Vector Double)]
 resample gen ests numResamples samples = do
-  let !numSamples = U.length samples
-      ixs = scanl (+) 0 $
+  let ixs = scanl (+) 0 $
             zipWith (+) (replicate numCapabilities q)
                         (replicate r 1 ++ repeat 0)
           where (q,r) = numResamples `quotRem` numCapabilities
   results <- mapM (const (MU.new numResamples)) ests
   done <- newChan
   gens <- splitGen numCapabilities gen
-  forM_ (zip3 ixs (tail ixs) gens) $ \ (start,!end,gen') -> do
+  forM_ (zip3 ixs (tail ixs) gens) $ \ (start,!end,gen') ->
     forkIO $ do
       let loop k ers | k >= end = writeChan done ()
                      | otherwise = do
-            re <- U.replicateM numSamples $ do
-                    r <- uniform gen'
-                    return (U.unsafeIndex samples (r `mod` numSamples))
+            re <- resampleVector gen' samples
             forM_ ers $ \(est,arr) ->
                 MU.write arr k . est $ re
             loop (k+1) ers
       loop start (zip ests' results)
   replicateM_ numCapabilities $ readChan done
   mapM_ sort results
-  mapM (liftM Resample . unsafeFreeze) results
+  -- Build resamples
+  res <- mapM unsafeFreeze results
+  return $ zip ests
+         $ zipWith Bootstrap [estimate e samples | e <- ests]
+                             res
  where
   ests' = map estimate ests
 
--- | Run an 'Estimator' over a sample.
-estimate :: Estimator -> Sample -> Double
-estimate Mean             = mean
-estimate Variance         = variance
-estimate VarianceUnbiased = varianceUnbiased
-estimate StdDev           = stdDev
-estimate (Function est) = est
+-- | Create vector using resamples
+resampleVector :: (PrimMonad m, G.Vector v a)
+               => Gen (PrimState m) -> v a -> m (v a)
+resampleVector gen v
+  = G.replicateM n $ do i <- uniformR (0,n-1) gen
+                        return $! G.unsafeIndex v i
+  where
+    n = G.length v
+
+
+----------------------------------------------------------------
+-- Jackknife
+----------------------------------------------------------------
 
 -- | /O(n) or O(n^2)/ Compute a statistical estimate repeatedly over a
 -- sample, each time omitting a successive element.

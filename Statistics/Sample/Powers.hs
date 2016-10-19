@@ -47,23 +47,22 @@ module Statistics.Sample.Powers
     -- $references
     ) where
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Binary (Binary(..))
-import Data.Data (Data, Typeable)
-import Data.Vector.Binary ()
-import Data.Vector.Generic (unsafeFreeze)
-import Data.Vector.Unboxed ((!))
-import GHC.Generics (Generic)
+import Control.Monad.ST
+import Data.Aeson            (FromJSON, ToJSON)
+import Data.Binary           (Binary(..))
+import Data.Data             (Data, Typeable)
+import Data.Vector.Binary    ()
+import Data.Vector.Unboxed   ((!))
+import GHC.Generics          (Generic)
 import Numeric.SpecFunctions (choose)
 import Prelude hiding (sum)
-import Statistics.Function (indexed)
-import Statistics.Internal (inlinePerformIO)
-import System.IO.Unsafe (unsafePerformIO)
-import qualified Data.Vector as V
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Unboxed as U
+import Statistics.Function   (indexed)
+import qualified Data.Vector          as V
+import qualified Data.Vector.Generic  as G
+import qualified Data.Vector.Storable as SV
+import qualified Data.Vector.Unboxed  as U
 import qualified Data.Vector.Unboxed.Mutable as MU
-import qualified Statistics.Sample.Internal as S
+import qualified Statistics.Sample.Internal  as S
 
 newtype Powers = Powers (U.Vector Double)
     deriving (Eq, Read, Show, Typeable, Data, Generic)
@@ -94,19 +93,22 @@ powers :: G.Vector v Double =>
           Int                   -- ^ /n/, the number of powers, where /n/ >= 2.
        -> v Double
        -> Powers
-powers k
-    | k < 2     = error "Statistics.Sample.powers: too few powers"
-    | otherwise = fini . G.foldl' go (unsafePerformIO $ MU.replicate l 0)
+powers k sample
+  | k < 2     = error "Statistics.Sample.powers: too few powers"
+  | otherwise = runST $ do
+      acc <- MU.replicate l 0
+      G.forM_ sample $ \x ->
+        let loop !i !xk
+              | i == l    = return ()
+              | otherwise = do MU.write acc i . (+ xk) =<< MU.read acc i
+                               loop (i+1) (xk * x)
+        in loop 0 1
+      fmap Powers $ U.unsafeFreeze acc
   where
-    go ms x = inlinePerformIO $ loop 0 1
-        where loop !i !xk | i == l = return ms
-                          | otherwise = do
-                MU.read ms i >>= MU.write ms i . (+ xk)
-                loop (i+1) (xk*x)
-    fini = Powers . unsafePerformIO . unsafeFreeze
-    l    = k + 1
-{-# SPECIALIZE powers :: Int -> U.Vector Double -> Powers #-}
-{-# SPECIALIZE powers :: Int -> V.Vector Double -> Powers #-}
+    l = k + 1
+{-# SPECIALIZE powers :: Int -> U.Vector  Double -> Powers #-}
+{-# SPECIALIZE powers :: Int -> V.Vector  Double -> Powers #-}
+{-# SPECIALIZE powers :: Int -> SV.Vector Double -> Powers #-}
 
 -- | The order (number) of simple powers collected from a 'sample'.
 order :: Powers -> Int

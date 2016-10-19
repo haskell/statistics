@@ -24,7 +24,7 @@ import Statistics.Function as F
 import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms (qr)
 import Statistics.Resampling (splitGen)
-import Statistics.Resampling.Bootstrap (Estimate(..))
+import Statistics.Types      (Estimate(..),ConfInt,CL,estimateFromInterval,getPValue)
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
 import System.Random.MWC (GenIO, uniformR)
@@ -88,7 +88,7 @@ solve r b
   rfor n 0 $ \i -> do
     si <- (/ unsafeIndex r i i) <$> M.unsafeRead s i
     M.unsafeWrite s i si
-    for 0 i $ \j -> F.unsafeModify s j $ subtract ((unsafeIndex r j i) * si)
+    for 0 i $ \j -> F.unsafeModify s j $ subtract (unsafeIndex r j i * si)
   return s
   where n = rows r
         l = U.length b
@@ -110,25 +110,23 @@ rSquare pred resp coeff = 1 - r / t
 
 -- | Bootstrap a regression function.  Returns both the results of the
 -- regression and the requested confidence interval values.
-bootstrapRegress :: GenIO
-                 -> Int         -- ^ Number of resamples to compute.
-                 -> Double      -- ^ Confidence interval.
-                 -> ([Vector] -> Vector -> (Vector, Double))
-                 -- ^ Regression function.
-                 -> [Vector]    -- ^ Predictor vectors.
-                 -> Vector      -- ^ Responder vector.
-                 -> IO (V.Vector Estimate, Estimate)
-bootstrapRegress gen0 numResamples ci rgrss preds0 resp0
+bootstrapRegress
+  :: GenIO
+  -> Int         -- ^ Number of resamples to compute.
+  -> CL Double   -- ^ Confidence level.
+  -> ([Vector] -> Vector -> (Vector, Double))
+     -- ^ Regression function.
+  -> [Vector]    -- ^ Predictor vectors.
+  -> Vector      -- ^ Responder vector.
+  -> IO (V.Vector (Estimate ConfInt Double), Estimate ConfInt Double)
+bootstrapRegress gen0 numResamples cl rgrss preds0 resp0
   | numResamples < 1   = error $ "bootstrapRegress: number of resamples " ++
                                  "must be positive"
-  | ci <= 0 || ci >= 1 = error $ "bootstrapRegress: confidence interval " ++
-                                 "must lie between 0 and 1"
   | otherwise = do
   caps <- getNumCapabilities
   gens <- splitGen caps gen0
   done <- newChan
-  forM_ (zip gens (balance caps numResamples)) $ \(gen,count) -> do
-    forkIO $ do
+  forM_ (zip gens (balance caps numResamples)) $ \(gen,count) -> forkIO $ do
       v <- V.replicateM count $ do
            let n = U.length resp0
            ixs <- U.replicateM n $ uniformR (0,n-1) gen
@@ -138,15 +136,16 @@ bootstrapRegress gen0 numResamples ci rgrss preds0 resp0
       rnf v `seq` writeChan done v
   (coeffsv, r2v) <- (G.unzip . V.concat) <$> replicateM caps (readChan done)
   let coeffs  = flip G.imap (G.convert coeffss) $ \i x ->
-                est x . U.generate numResamples $ \k -> ((coeffsv G.! k) G.! i)
+                est x . U.generate numResamples $ \k -> (coeffsv G.! k) G.! i
       r2      = est r2s (G.convert r2v)
       (coeffss, r2s) = rgrss preds0 resp0
-      est s v = Estimate s (w G.! lo) (w G.! hi) ci
+      -- FIXME: CL semantics!
+      est s v = estimateFromInterval s (w G.! lo, w G.! hi) cl
         where w  = F.sort v
               lo = round c
               hi = truncate (n - c)
               n  = fromIntegral numResamples
-              c  = n * ((1 - ci) / 2)
+              c  = n * (getPValue cl / 2)
   return (coeffs, r2)
 
 -- | Balance units of work across workers.

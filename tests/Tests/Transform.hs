@@ -14,7 +14,8 @@ import Statistics.Function (within)
 import Statistics.Transform (CD, dct, fft, idct, ifft)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck (Positive(..), Arbitrary(..), Gen, choose, vectorOf, counterexample)
+import Test.QuickCheck ( Positive(..), Arbitrary(..), Blind(..), (==>), Gen
+                       , choose, vectorOf, counterexample, forAll)
 import Test.QuickCheck.Property (Property(..))
 import Tests.Helpers (testAssertion)
 import Text.Printf (printf)
@@ -68,8 +69,11 @@ t_impulse k (Positive m) = U.all (c_near i) (fft v)
 -- If a real-valued impulse is offset from the beginning of an
 -- otherwise zero vector, the sum-of-squares of each component of the
 -- result should equal the square of the impulse.
-t_impulse_offset :: Double -> Positive Int -> Positive Int -> Bool
-t_impulse_offset k (Positive x) (Positive m) = U.all ok (fft v)
+t_impulse_offset :: Double -> Positive Int -> Positive Int -> Property
+t_impulse_offset k (Positive x) (Positive m)
+  -- For numbers smaller than 1e-162 their square underflows and test
+  -- fails spuriously
+  = abs k >= 1e-100 ==> U.all ok (fft v)
   where v = G.concat [G.replicate xn 0, G.singleton i, G.replicate (n-xn-1) 0]
         ok (re :+ im) = within ulps (re*re + im*im) (k*k)
         i  = k :+ 0
@@ -83,15 +87,14 @@ t_impulse_offset k (Positive x) (Positive m) = U.all ok (fft v)
 -- whole are approximate equal.
 t_fftInverse :: (HasNorm (U.Vector a), U.Unbox a, Num a, Show a, Arbitrary a)
              => (U.Vector a -> U.Vector a) -> Property
-t_fftInverse roundtrip = MkProperty $ do
-  x <- genFftVector
-  let n  = G.length x
-      x' = roundtrip x
-      d  = G.zipWith (-) x x'
-      nd = vectorNorm d
-      nx = vectorNorm x
-  unProperty
-     $ counterexample "Original vector"
+t_fftInverse roundtrip =
+  forAll (Blind <$> genFftVector) $ \(Blind x) ->
+    let n  = G.length x
+        x' = roundtrip x
+        d  = G.zipWith (-) x x'
+        nd = vectorNorm d
+        nx = vectorNorm x
+    in counterexample "Original vector"
      $ counterexample (show x )
      $ counterexample "Transformed one"
      $ counterexample (show x')

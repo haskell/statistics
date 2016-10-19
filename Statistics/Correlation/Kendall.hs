@@ -8,11 +8,11 @@
 -- This module implementes Kendall's tau form b which allows ties in the data.
 -- This is the same formula used by other statistical packages, e.g., R, matlab.
 --
--- $$\tau = \frac{n_c - n_d}{\sqrt{(n_0 - n_1)(n_0 - n_2)}}$$
+-- > \tau = \frac{n_c - n_d}{\sqrt{(n_0 - n_1)(n_0 - n_2)}}
 --
--- where $n_0 = n(n-1)/2$, $n_1 = number of pairs tied for the first quantify$,
--- $n_2 = number of pairs tied for the second quantify$,
--- $n_c = number of concordant pairs$, $n_d = number of discordant pairs$.
+-- where n_0 = n(n-1)\/2, n_1 = number of pairs tied for the first quantify,
+-- n_2 = number of pairs tied for the second quantify,
+-- n_c = number of concordant pairs$, n_d = number of discordant pairs.
 
 module Statistics.Correlation.Kendall
     ( kendall

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Test.KolmogorovSmirnov
 -- Copyright : (c) 2011 Aleksey Khudyakov
@@ -7,10 +8,10 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- Kolmogov-Smirnov tests are non-parametric tests for assesing
+-- Kolmogov-Smirnov tests are non-parametric tests for assessing
 -- whether given sample could be described by distribution or whether
 -- two samples have the same distribution. It's only applicable to
--- continous distributions.
+-- continuous distributions.
 module Statistics.Test.KolmogorovSmirnov (
     -- * Kolmogorov-Smirnov test
     kolmogorovSmirnovTest
@@ -22,21 +23,23 @@ module Statistics.Test.KolmogorovSmirnov (
   , kolmogorovSmirnov2D
     -- * Probablities
   , kolmogorovSmirnovProbability
-    -- * Data types
-  , TestType(..)
-  , TestResult(..)
     -- * References
     -- $references
+  , module Statistics.Test.Types
   ) where
 
 import Control.Monad (when)
 import Prelude hiding (exponent, sum)
 import Statistics.Distribution (Distribution(..))
-import Statistics.Function (sort, unsafeModify)
+import Statistics.Function (gsort, unsafeModify)
 import Statistics.Matrix (center, exponent, for, fromVector, power)
-import Statistics.Test.Types (TestResult(..), TestType(..), significant)
-import Statistics.Types (Sample)
-import qualified Data.Vector.Unboxed as U
+import Statistics.Test.Types
+import Statistics.Types (mkPValue)
+import qualified Data.Vector          as V
+import qualified Data.Vector.Storable as S
+import qualified Data.Vector.Unboxed  as U
+import qualified Data.Vector.Generic  as G
+import           Data.Vector.Generic    ((!))
 import qualified Data.Vector.Unboxed.Mutable as M
 
 
@@ -44,58 +47,75 @@ import qualified Data.Vector.Unboxed.Mutable as M
 -- Test
 ----------------------------------------------------------------
 
--- | Check that sample could be described by
---   distribution. 'Significant' means distribution is not compatible
---   with data for given p-value.
+-- | Check that sample could be described by distribution. Returns
+--   @Nothing@ is sample is empty
 --
---   This test uses Marsaglia-Tsang-Wang exact alogorithm for
+--   This test uses Marsaglia-Tsang-Wang exact algorithm for
 --   calculation of p-value.
-kolmogorovSmirnovTest :: Distribution d
-                      => d      -- ^ Distribution
-                      -> Double -- ^ p-value
-                      -> Sample -- ^ Data sample
-                      -> TestResult
-kolmogorovSmirnovTest d = kolmogorovSmirnovTestCdf (cumulative d)
+kolmogorovSmirnovTest :: (Distribution d, G.Vector v Double)
+                      => d        -- ^ Distribution
+                      -> v Double -- ^ Data sample
+                      -> Maybe (Test ())
+{-# INLINE kolmogorovSmirnovTest #-}
+kolmogorovSmirnovTest d
+  = kolmogorovSmirnovTestCdf (cumulative d)
+
 
 -- | Variant of 'kolmogorovSmirnovTest' which uses CFD in form of
 --   function.
-kolmogorovSmirnovTestCdf :: (Double -> Double) -- ^ CDF of distribution
-                         -> Double             -- ^ p-value
-                         -> Sample             -- ^ Data sample
-                         -> TestResult
-kolmogorovSmirnovTestCdf cdf p sample
-  | p > 0 && p < 1 = significant $ 1 - prob < p
-  | otherwise      = error "Statistics.Test.KolmogorovSmirnov.kolmogorovSmirnovTestCdf:bad p-value"
+kolmogorovSmirnovTestCdf :: (G.Vector v Double)
+                         => (Double -> Double) -- ^ CDF of distribution
+                         -> v Double           -- ^ Data sample
+                         -> Maybe (Test ())
+{-# INLINE kolmogorovSmirnovTestCdf #-}
+kolmogorovSmirnovTestCdf cdf sample
+  | G.null sample = Nothing
+  | otherwise     = Just Test
+      { testSignificance = mkPValue $ 1 - prob
+      , testStatistics   = d
+      , testDistribution = ()
+      }
   where
     d    = kolmogorovSmirnovCdfD cdf sample
-    prob = kolmogorovSmirnovProbability (U.length sample) d
+    prob = kolmogorovSmirnovProbability (G.length sample) d
+
 
 -- | Two sample Kolmogorov-Smirnov test. It tests whether two data
 --   samples could be described by the same distribution without
---   making any assumptions about it.
+--   making any assumptions about it. If either of samples is empty
+--   returns Nothing.
 --
---   This test uses approxmate formula for computing p-value.
-kolmogorovSmirnovTest2 :: Double -- ^ p-value
-                       -> Sample -- ^ Sample 1
-                       -> Sample -- ^ Sample 2
-                       -> TestResult
-kolmogorovSmirnovTest2 p xs1 xs2
-  | p > 0 && p < 1 = significant $ 1 - prob( d*(en + 0.12 + 0.11/en) ) < p
-  | otherwise      = error "Statistics.Test.KolmogorovSmirnov.kolmogorovSmirnovTest2:bad p-value"
+--   This test uses approximate formula for computing p-value.
+kolmogorovSmirnovTest2 :: (G.Vector v Double)
+                       => v Double -- ^ Sample 1
+                       -> v Double -- ^ Sample 2
+                       -> Maybe (Test ())
+kolmogorovSmirnovTest2 xs1 xs2
+  | G.null xs1 || G.null xs2 = Nothing
+  | otherwise                = Just Test
+      { testSignificance = mkPValue $ 1 - prob d
+      , testStatistics   = d
+      , testDistribution = ()
+      }
   where
     d    = kolmogorovSmirnov2D xs1 xs2
+         * (en + 0.12 + 0.11/en)
     -- Effective number of data points
-    n1   = fromIntegral (U.length xs1)
-    n2   = fromIntegral (U.length xs2)
+    n1   = fromIntegral (G.length xs1)
+    n2   = fromIntegral (G.length xs2)
     en   = sqrt $ n1 * n2 / (n1 + n2)
     --
     prob z
       | z <  0    = error "kolmogorovSmirnov2D: internal error"
-      | z == 0    = 1
+      | z == 0    = 0
       | z <  1.18 = let y = exp( -1.23370055013616983 / (z*z) )
-                    in  2.25675833419102515 * sqrt( -log(y) ) * (y + y**9 + y**25 + y**49)
+                    in  2.25675833419102515 * sqrt( -log y ) * (y + y**9 + y**25 + y**49)
       | otherwise = let x = exp(-2 * z * z)
                     in  1 - 2*(x - x**4 + x**9)
+{-# INLINABLE  kolmogorovSmirnovTest2 #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: U.Vector Double -> U.Vector Double -> Maybe (Test ()) #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: V.Vector Double -> V.Vector Double -> Maybe (Test ()) #-}
+{-# SPECIALIZE kolmogorovSmirnovTest2 :: S.Vector Double -> S.Vector Double -> Maybe (Test ()) #-}
 -- FIXME: Find source for approximation for D
 
 
@@ -107,64 +127,76 @@ kolmogorovSmirnovTest2 p xs1 xs2
 -- | Calculate Kolmogorov's statistic /D/ for given cumulative
 --   distribution function (CDF) and data sample. If sample is empty
 --   returns 0.
-kolmogorovSmirnovCdfD :: (Double -> Double) -- ^ CDF function
-                      -> Sample             -- ^ Sample
+kolmogorovSmirnovCdfD :: G.Vector v Double
+                      => (Double -> Double) -- ^ CDF function
+                      -> v Double           -- ^ Sample
                       -> Double
 kolmogorovSmirnovCdfD cdf sample
-  | U.null sample = 0
-  | otherwise     = U.maximum
-                  $ U.zipWith3 (\p a b -> abs (p-a) `max` abs (p-b))
-                    ps steps (U.tail steps)
+  | G.null sample = 0
+  | otherwise     = G.maximum
+                  $ G.zipWith3 (\p a b -> abs (p-a) `max` abs (p-b))
+                    ps steps (G.tail steps)
   where
-    xs = sort sample
-    n  = U.length xs
+    xs = gsort sample
+    n  = G.length xs
     --
-    ps    = U.map cdf xs
-    steps = U.map ((/ fromIntegral n) . fromIntegral)
-          $ U.generate (n+1) id
+    ps    = G.map cdf xs
+    steps = G.map (/ fromIntegral n)
+          $ G.generate (n+1) fromIntegral
+{-# INLINABLE  kolmogorovSmirnovCdfD #-}
+{-# SPECIALIZE kolmogorovSmirnovCdfD :: (Double -> Double) -> U.Vector Double -> Double #-}
+{-# SPECIALIZE kolmogorovSmirnovCdfD :: (Double -> Double) -> V.Vector Double -> Double #-}
+{-# SPECIALIZE kolmogorovSmirnovCdfD :: (Double -> Double) -> S.Vector Double -> Double #-}
 
 
 -- | Calculate Kolmogorov's statistic /D/ for given cumulative
 --   distribution function (CDF) and data sample. If sample is empty
 --   returns 0.
-kolmogorovSmirnovD :: (Distribution d)
+kolmogorovSmirnovD :: (Distribution d, G.Vector v Double)
                    => d         -- ^ Distribution
-                   -> Sample    -- ^ Sample
+                   -> v Double  -- ^ Sample
                    -> Double
 kolmogorovSmirnovD d = kolmogorovSmirnovCdfD (cumulative d)
+{-# INLINE kolmogorovSmirnovD #-}
+
 
 -- | Calculate Kolmogorov's statistic /D/ for two data samples. If
 --   either of samples is empty returns 0.
-kolmogorovSmirnov2D :: Sample   -- ^ First sample
-                    -> Sample   -- ^ Second sample
+kolmogorovSmirnov2D :: (G.Vector v Double)
+                    => v Double   -- ^ First sample
+                    -> v Double   -- ^ Second sample
                     -> Double
 kolmogorovSmirnov2D sample1 sample2
-  | U.null sample1 || U.null sample2 = 0
+  | G.null sample1 || G.null sample2 = 0
   | otherwise                        = worker 0 0 0
   where
-    xs1 = sort sample1
-    xs2 = sort sample2
-    n1  = U.length xs1
-    n2  = U.length xs2
+    xs1 = gsort sample1
+    xs2 = gsort sample2
+    n1  = G.length xs1
+    n2  = G.length xs2
     en1 = fromIntegral n1
     en2 = fromIntegral n2
     -- Find new index
     skip x i xs = go (i+1)
-      where go n | n >= U.length xs = n
-                 | xs U.! n == x    = go (n+1)
+      where go n | n >= G.length xs = n
+                 | xs ! n == x      = go (n+1)
                  | otherwise        = n
     -- Main loop
     worker d i1 i2
       | i1 >= n1 || i2 >= n2 = d
       | otherwise            = worker d' i1' i2'
       where
-        d1  = xs1 U.! i1
-        d2  = xs2 U.! i2
+        d1  = xs1 ! i1
+        d2  = xs2 ! i2
         i1' | d1 <= d2  = skip d1 i1 xs1
             | otherwise = i1
         i2' | d2 <= d1  = skip d2 i2 xs2
             | otherwise = i2
         d'  = max d (abs $ fromIntegral i1' / en1 - fromIntegral i2' / en2)
+{-# INLINABLE  kolmogorovSmirnov2D #-}
+{-# SPECIALIZE kolmogorovSmirnov2D :: U.Vector Double -> U.Vector Double -> Double #-}
+{-# SPECIALIZE kolmogorovSmirnov2D :: V.Vector Double -> V.Vector Double -> Double #-}
+{-# SPECIALIZE kolmogorovSmirnov2D :: S.Vector Double -> S.Vector Double -> Double #-}
 
 
 
@@ -178,7 +210,7 @@ kolmogorovSmirnovProbability :: Int    -- ^ Size of the sample
                              -> Double -- ^ D value
                              -> Double
 kolmogorovSmirnovProbability n d
-  -- Avoid potencially lengthy calculations for large N and D > 0.999
+  -- Avoid potentially lengthy calculations for large N and D > 0.999
   | s > 7.24 || (s > 3.76 && n > 99) = 1 - 2 * exp( -(2.000071 + 0.331 / sqrt n' + 1.409 / n') * s)
   -- Exact computation
   | otherwise = fini $ matrix `power` n

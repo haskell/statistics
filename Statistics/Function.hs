@@ -47,7 +47,7 @@ import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Unboxed.Mutable as M
-import Statistics.Function.Comparison (within)
+import Numeric.MathFunctions.Comparison (within)
 
 -- | Sort a vector.
 sort :: U.Vector Double -> U.Vector Double

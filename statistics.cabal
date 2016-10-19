@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.13.2.3
+version:        0.14.0.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -48,7 +48,7 @@ extra-source-files:
 library
   exposed-modules:
     Statistics.Autocorrelation
-    Statistics.Constants
+    Statistics.ConfidenceInt
     Statistics.Correlation
     Statistics.Correlation.Kendall
     Statistics.Distribution
@@ -87,6 +87,8 @@ library
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.KruskalWallis
     Statistics.Test.MannWhitneyU
+--    Statistics.Test.Runs
+    Statistics.Test.StudentT
     Statistics.Test.Types
     Statistics.Test.WilcoxonT
     Statistics.Transform
@@ -97,18 +99,20 @@ library
     Statistics.Internal
     Statistics.Sample.Internal
     Statistics.Test.Internal
+    Statistics.Types.Internal
   build-depends:
     aeson >= 0.6.0.0,
     base >= 4.4 && < 5,
     binary >= 0.5.1.0,
     deepseq >= 1.1.0.2,
     erf,
-    math-functions    >= 0.1.5.2,
+    math-functions    >= 0.1.7,
     monad-par         >= 0.3.4,
     mwc-random        >= 0.13.0.0,
     primitive         >= 0.3,
     vector            >= 0.10,
     vector-algorithms >= 0.4,
+    vector-th-unbox,
     vector-binary-instances >= 0.2.1
   if impl(ghc < 7.6)
     build-depends:
@@ -134,6 +138,9 @@ test-suite tests
     Tests.Matrix.Types
     Tests.NonParametric
     Tests.NonParametric.Table
+    Tests.Orphanage
+    Tests.Parametric
+    Tests.Serialization
     Tests.Transform
 
   ghc-options:
@@ -145,6 +152,7 @@ test-suite tests
     base,
     binary,
     erf,
+    aeson,
     ieee754 >= 0.7.3,
     math-functions,
     mwc-random,

@@ -60,7 +60,7 @@ module Statistics.Sample
 
 import Statistics.Function (minMax)
 import Statistics.Sample.Internal (robustSumVar, sum)
-import Statistics.Types (Sample,WeightedSample)
+import Statistics.Types.Internal  (Sample,WeightedSample)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
