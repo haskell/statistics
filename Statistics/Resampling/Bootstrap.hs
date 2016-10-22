@@ -66,7 +66,7 @@ bootstrapBCA confidenceLevel sample resampledData
         ni    = U.length resample
         n     = fromIntegral ni
         -- Corrections
-        z1    = getNSigma confidenceLevel
+        z1    = quantile standard ((getPValue confidenceLevel) / 2)
         cumn  = round . (*n) . cumulative standard
         bias  = quantile standard (probN / n)
           where probN = fromIntegral . U.length . U.filter (<pt) $ resample
