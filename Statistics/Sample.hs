@@ -43,6 +43,7 @@ module Statistics.Sample
     , meanVarianceUnb
     , stdDev
     , varianceWeighted
+    , stdErrMean
 
     -- ** Single-pass functions (faster, less safe)
     -- $cancellation
@@ -283,6 +284,13 @@ stdDev :: (G.Vector v Double) => v Double -> Double
 stdDev = sqrt . varianceUnbiased
 {-# SPECIALIZE stdDev :: U.Vector Double -> Double #-}
 {-# SPECIALIZE stdDev :: V.Vector Double -> Double #-}
+
+-- | Standard error of the mean. This is the standard deviation
+-- divided by the square root of the sample size.
+stdErrMean :: (G.Vector v Double) => v Double -> Double
+stdErrMean samp = stdDev samp / (sqrt . fromIntegral . G.length) samp
+{-# SPECIALIZE stdErrMean :: U.Vector Double -> Double #-}
+{-# SPECIALIZE stdErrMean :: V.Vector Double -> Double #-}
 
 robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> V
 robustSumVarWeighted samp = G.foldl' go (V 0 0) samp
