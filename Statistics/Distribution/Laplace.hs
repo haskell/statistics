@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
@@ -16,14 +17,12 @@
 -- recognition and least absolute deviations method (Laplace's first
 -- law of errors, giving a robust regression method)
 --
-
 module Statistics.Distribution.Laplace
     (
       LaplaceDistribution
     -- * Constructors
     , laplace
     , laplaceE
-    , laplaceFromSample
     -- * Accessors
     , ldLocation
     , ldScale
@@ -156,8 +155,10 @@ errMsg _ s = "Statistics.Distribution.Laplace.laplace: scale parameter must be p
 -- | Create Laplace distribution from sample. No tests are made to
 --   check whether it truly is Laplace. Location of distribution
 --   estimated as median of sample.
-laplaceFromSample :: Sample -> LaplaceDistribution
-laplaceFromSample xs = LD s l
-  where
-    s = Q.continuousBy Q.medianUnbiased 1 2 xs
-    l = S.mean $ G.map (\x -> abs $ x - s) xs
+instance D.FromSample LaplaceDistribution Double where
+  fromSample xs
+    | G.null xs = Nothing
+    | otherwise = Just $! LD s l
+    where
+      s = Q.continuousBy Q.medianUnbiased 1 2 xs
+      l = S.mean $ G.map (\x -> abs $ x - s) xs
