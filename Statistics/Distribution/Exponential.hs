@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
@@ -20,7 +21,6 @@ module Statistics.Distribution.Exponential
     -- * Constructors
     , exponential
     , exponentialE
-    , exponentialFromSample
     -- * Accessors
     , edLambda
     ) where
@@ -33,6 +33,7 @@ import GHC.Generics                    (Generic)
 import Numeric.SpecFunctions           (log1p)
 import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified System.Random.MWC.Distributions as MWC
+import qualified Data.Vector.Generic as G
 
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
@@ -136,7 +137,11 @@ exponentialE l
 errMsg :: Double -> String
 errMsg l = "Statistics.Distribution.Exponential.exponential: scale parameter must be positive. Got " ++ show l
 
--- | Create exponential distribution from sample. No tests are made to
--- check whether it truly is exponential.
-exponentialFromSample :: Sample -> ExponentialDistribution
-exponentialFromSample = ED . S.mean
+-- | Create exponential distribution from sample. Returns @Nothing@ if
+--   sample is empty or contains negative elements. No other tests are
+--   made to check whether it truly is exponential.
+instance D.FromSample ExponentialDistribution Double where
+  fromSample xs
+    | G.null xs       = Nothing
+    | G.all (>= 0) xs = Nothing
+    | otherwise       = Just $! ED (S.mean xs)

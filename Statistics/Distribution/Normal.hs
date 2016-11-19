@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
@@ -18,7 +19,6 @@ module Statistics.Distribution.Normal
     -- * Constructors
     , normalDistr
     , normalDistrE
-    , normalFromSample
     , standard
     ) where
 
@@ -30,6 +30,7 @@ import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_sqrt_2, m_sqrt_2_pi)
 import Numeric.SpecFunctions (erfc, invErfc)
 import qualified System.Random.MWC.Distributions as MWC
+import qualified Data.Vector.Generic as G
 
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
@@ -130,14 +131,18 @@ normalDistrE m sd
 errMsg :: Double -> Double -> String
 errMsg _ sd = "Statistics.Distribution.Normal.normalDistr: standard deviation must be positive. Got " ++ show sd
 
--- | Create distribution using parameters estimated from
---   sample. Variance is estimated using maximum likelihood method
+-- | Variance is estimated using maximum likelihood method
 --   (biased estimation).
-normalFromSample :: S.Sample -> NormalDistribution
-normalFromSample xs
-  = normalDistr m (sqrt v)
-  where
-    (m,v) = S.meanVariance xs
+--
+--   Returns @Nothing@ if sample contains less than one element or
+--   variance is zero (all elements are equal)
+instance D.FromSample NormalDistribution Double where
+  fromSample xs
+    | G.length xs <= 1 = Nothing
+    | v == 0           = Nothing
+    | otherwise        = Just $! normalDistr m (sqrt v)
+    where
+      (m,v) = S.meanVariance xs
 
 logDensity :: NormalDistribution -> Double -> Double
 logDensity d x = (-xm * xm / (2 * sd * sd)) - ndPdfDenom d

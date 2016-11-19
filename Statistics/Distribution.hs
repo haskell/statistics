@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
 -- |
 -- Module    : Statistics.Distribution
@@ -23,6 +24,7 @@ module Statistics.Distribution
     , Variance(..)
     , MaybeEntropy(..)
     , Entropy(..)
+    , FromSample(..)
       -- ** Random number generation
     , ContGen(..)
     , DiscreteGen(..)
@@ -40,6 +42,7 @@ import Statistics.Function (square)
 import Statistics.Sample.Internal (sum)
 import System.Random.MWC (Gen, uniform)
 import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Generic as G
 
 
 -- | Type class common to all distributions. Only c.d.f. could be
@@ -165,6 +168,16 @@ class Distribution d => ContGen d where
 --   to generate real-valued variates from integer values
 class (DiscreteDistr d, ContGen d) => DiscreteGen d where
   genDiscreteVar :: PrimMonad m => d -> Gen (PrimState m) -> m Int
+
+-- | Estimate distribution from sample. First parameter in sample is
+--   distribution type and second is element type.
+class FromSample d a where
+  -- | Estimate distribution from sample. Returns nothing is there's
+  --   not enough data to estimate or sample clearly doesn't come from
+  --   distribution in question. For example if there's negative
+  --   samples in exponential distribution.
+  fromSample :: G.Vector v a => v a -> Maybe d
+
 
 -- | Generate variates from continuous distribution using inverse
 --   transform rule.
