@@ -46,6 +46,7 @@ module Statistics.Types
       -- * Estimates and upper/lower limits
     , Estimate(..)
     , NormalErr(..)
+    , TErr(..)
     , ConfInt(..)
     , UpperLimit(..)
     , LowerLimit(..)
@@ -60,6 +61,7 @@ module Statistics.Types
     , Scale(..)
       -- * Other
     , Sample
+    , TestStatistic(..)
     , WeightedSample
     , Weights
     ) where
@@ -78,6 +80,7 @@ import Statistics.Internal
 import Statistics.Types.Internal
 import Statistics.Distribution
 import Statistics.Distribution.Normal
+import Statistics.Distribution.StudentT
 
 
 ----------------------------------------------------------------
@@ -350,6 +353,21 @@ instance ToJSON   a => ToJSON   (NormalErr a)
 instance NFData   a => NFData   (NormalErr a) where
     rnf (NormalErr x) = rnf x
 
+-- |
+-- t distributed errors. Soread as 1σ errors with degrees of freedom
+-- which corresponds to 100 x Pr(|t_{df}| <= σ) CL.
+data TErr a = TErr
+  { tError :: a
+  , tDf    :: Double
+  }
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary   a => Binary   (TErr a)
+instance FromJSON a => FromJSON (TErr a)
+instance ToJSON   a => ToJSON   (TErr a)
+instance NFData   a => NFData   (TErr a) where
+    rnf (TErr x tdist) = rnf x `seq` rnf tdist
+
 
 -- | Confidence interval. It assumes that confidence interval forms
 --   single interval and isn't set of disjoint intervals.
@@ -387,6 +405,14 @@ estimateNormErr x dx = Estimate x (NormalErr dx)
     -> a      -- ^ 1σ error
     -> Estimate NormalErr a
 (±) = estimateNormErr
+
+
+-- | Create estimate with t errors
+estimateTErr :: a               -- ^ Point estimate
+             -> a               -- ^ 1σ error
+             -> Double          -- ^ degrees of freedom
+             -> Estimate TErr a
+estimateTErr x dx df = Estimate x (TErr dx df)
 
 -- | Create estimate with asymmetric error.
 estimateFromErr
@@ -478,6 +504,15 @@ instance NFData   a => NFData   (LowerLimit a) where
 
 
 ----------------------------------------------------------------
+-- Test Statistic
+----------------------------------------------------------------
+
+data TestStatistic a b = TestStatistic
+    { testStat :: !a
+    , refDist  :: !b
+    } deriving (Eq, Read, Show, Typeable, Data)
+
+----------------------------------------------------------------
 -- Deriving unbox instances
 ----------------------------------------------------------------
 
@@ -500,6 +535,11 @@ derivingUnbox "NormalErr"
   [t| forall a. Unbox a => NormalErr a -> a |]
   [| \(NormalErr a) -> a |]
   [| NormalErr           |]
+
+derivingUnbox "TErr"
+  [t| forall a. Unbox a => TErr a -> (a, Double) |]
+  [| \(TErr a df) -> (a,df) |]
+  [| \(a,df) -> TErr a df   |]
 
 derivingUnbox "ConfInt"
   [t| forall a. Unbox a => ConfInt a -> (a, a, CL Double) |]

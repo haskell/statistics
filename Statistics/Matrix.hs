@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternGuards #-}
+
 -- |
 -- Module    : Statistics.Matrix
 -- Copyright : 2011 Aleksey Khudyakov, 2014 Bryan O'Sullivan
@@ -29,6 +30,7 @@ module Statistics.Matrix
     , generateSym
     , ident
     , diag
+    , toDiag
     , dimension
     , center
     , multiply
@@ -169,6 +171,7 @@ generateSym n f = runST $ do
 ident :: Int -> Matrix
 ident n = diag $ U.replicate n 1.0
 
+
 -- | Create a square matrix with given diagonal, other entries default to 0
 diag :: Vector -> Matrix
 diag v
@@ -179,6 +182,14 @@ diag v
       return arr
   where
     n = U.length v
+
+-- | Return diagonal of a square matrix
+toDiag :: Matrix -> Vector
+toDiag m
+  | rs /= cs  = error $ "matrix is not square, dimension = " ++ show d
+  | otherwise = U.map (\i -> unsafeIndex m i i) $ U.fromList [0..(rs-1)]
+  where
+    d@(rs,cs) = dimension m
 
 -- | Return the dimensions of this matrix, as a (row,column) pair.
 dimension :: Matrix -> (Int, Int)

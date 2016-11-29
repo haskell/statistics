@@ -40,6 +40,8 @@ extra-source-files:
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
+  examples/regression/regression.hs
+  examples/regression/data/wine.csv                 
   tests/Tests/Math/Tables.hs
   tests/Tests/Math/gen.py
   tests/utils/Makefile
@@ -100,19 +102,23 @@ library
     Statistics.Test.Internal
     Statistics.Types.Internal
   build-depends:
-    aeson >= 0.6.0.0,
-    base >= 4.4 && < 5,
-    binary >= 0.5.1.0,
-    deepseq >= 1.1.0.2,
-    erf,
-    math-functions    >= 0.1.7,
-    monad-par         >= 0.3.4,
-    mwc-random        >= 0.13.0.0,
-    primitive         >= 0.3,
-    vector            >= 0.10,
-    vector-algorithms >= 0.4,
-    vector-th-unbox,
-    vector-binary-instances >= 0.2.1
+                aeson >= 0.6.0.0,
+                base >= 4.4 && < 5,
+                binary >= 0.5.1.0,
+                bytestring >= 0.10.6.0,
+                cassava >= 0.4.5.0,
+                containers >= 0.5.6.2,
+                deepseq >= 1.1.0.2,
+                erf,
+                math-functions    >= 0.1.7,
+                monad-par         >= 0.3.4,
+                mwc-random        >= 0.13.0.0,
+                primitive         >= 0.3,
+                table-layout >= 0.7.0.0,
+                vector            >= 0.10,
+                vector-algorithms >= 0.4,
+                vector-binary-instances >= 0.2.1,
+                vector-th-unbox
   if impl(ghc < 7.6)
     build-depends:
       ghc-prim
@@ -146,22 +152,26 @@ test-suite tests
     -Wall -threaded -rtsopts -fsimpl-tick-factor=500
 
   build-depends:
-    HUnit,
-    QuickCheck >= 2.7.5,
-    base,
-    binary,
-    erf,
-    aeson,
-    ieee754 >= 0.7.3,
-    math-functions,
-    mwc-random,
-    primitive,
-    statistics,
-    test-framework,
-    test-framework-hunit,
-    test-framework-quickcheck2,
-    vector,
-    vector-algorithms
+                HUnit,
+                QuickCheck >= 2.7.5,
+                aeson,
+                base,
+                binary,
+                bytestring >= 0.10.6.0,
+                cassava >= 0.4.5.0,
+                containers >= 0.5.6.2,
+                erf,
+                ieee754 >= 0.7.3,
+                math-functions,
+                mwc-random,
+                primitive,
+                statistics,
+                table-layout >= 0.7.0.0,
+                test-framework,
+                test-framework-hunit,
+                test-framework-quickcheck2,
+                vector,
+                vector-algorithms
 
 source-repository head
   type:     git
