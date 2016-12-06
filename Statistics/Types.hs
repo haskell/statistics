@@ -53,6 +53,7 @@ module Statistics.Types
       -- ** Constructors
     , estimateNormErr
     , (±)
+    , estimateTErr
     , estimateFromInterval
     , estimateFromErr
       -- ** Accessors
@@ -337,7 +338,6 @@ instance (NFData   (e a), NFData   a) => NFData   (Estimate e a) where
     rnf (Estimate x dx) = rnf x `seq` rnf dx
 
 
-
 -- |
 -- Normal errors. They are stored as 1σ errors which corresponds to
 -- 68.8% CL. Since we can recalculate them to any confidence level if
@@ -354,12 +354,16 @@ instance NFData   a => NFData   (NormalErr a) where
     rnf (NormalErr x) = rnf x
 
 -- |
--- t distributed errors. Soread as 1σ errors with degrees of freedom
+-- t distributed errors. Stored as 1σ errors with degrees of freedom
 -- which corresponds to 100 x Pr(|t_{df}| <= σ) CL.
+--
+-- Can also be set as 'Unknown'. For example, when running linear
+-- regression with 'normalRegress' we can input regression coefficient
+-- error type as 'Unknown' if we want to estimate it.
 data TErr a = TErr
   { tError :: a
   , tDf    :: Double
-  }
+  } | Unknown
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 instance Binary   a => Binary   (TErr a)
@@ -367,6 +371,7 @@ instance FromJSON a => FromJSON (TErr a)
 instance ToJSON   a => ToJSON   (TErr a)
 instance NFData   a => NFData   (TErr a) where
     rnf (TErr x tdist) = rnf x `seq` rnf tdist
+    rnf Unknown = ()
 
 
 -- | Confidence interval. It assumes that confidence interval forms
@@ -507,6 +512,8 @@ instance NFData   a => NFData   (LowerLimit a) where
 -- Test Statistic
 ----------------------------------------------------------------
 
+-- | Test statistic. Stored as value of test statistic and the
+-- reference distribution to be used to compute p-values.
 data TestStatistic a b = TestStatistic
     { testStat :: !a
     , refDist  :: !b

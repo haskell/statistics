@@ -13,6 +13,8 @@
 module Statistics.Matrix
     ( -- * Data types
       Matrix(..)
+    , TMatrix(..)
+    , UpperLower(..)
     , Vector
       -- * Conversion from/to lists/vectors
     , fromVector
@@ -30,7 +32,7 @@ module Statistics.Matrix
     , generateSym
     , ident
     , diag
-    , toDiag
+    , diagOf
     , dimension
     , center
     , multiply
@@ -184,10 +186,10 @@ diag v
     n = U.length v
 
 -- | Return diagonal of a square matrix
-toDiag :: Matrix -> Vector
-toDiag m
+diagOf :: Matrix -> Vector
+diagOf m
   | rs /= cs  = error $ "matrix is not square, dimension = " ++ show d
-  | otherwise = U.map (\i -> unsafeIndex m i i) $ U.fromList [0..(rs-1)]
+  | otherwise = U.generate rs (\i -> unsafeIndex m i i)
   where
     d@(rs,cs) = dimension m
 

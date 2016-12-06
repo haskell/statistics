@@ -21,7 +21,6 @@ module Statistics.Distribution.StudentT (
   ) where
 
 import Control.Applicative
-import Control.DeepSeq              (NFData(..))
 import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary         (Binary(..))
 import Data.Data           (Data, Typeable)
@@ -32,6 +31,7 @@ import Numeric.SpecFunctions (
 import qualified Statistics.Distribution as D
 import Statistics.Distribution.Transform (LinearTransform (..))
 import Statistics.Internal
+
 
 -- | Student-T distribution
 newtype StudentT = StudentT { studentTndf :: Double }
