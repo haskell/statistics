@@ -181,7 +181,7 @@ instance WeightedNormalRegress TErr FDistribution where
   estimateErrs ps se df = U.convert $
                           U.zipWith (\p s -> estimateTErr p s (fromIntegral df)) ps se
 
--- | Instnace of 'WeightedNormalRegerss' when noise variance is known and
+-- | Instance of 'WeightedNormalRegerss' when noise variance is known and
 -- thus regression coefficients follow a 'NormalDistribution' distribution
 -- and overall model fit test statistic has reference distribution 'ChiSquared'.
 instance WeightedNormalRegress NormalErr ChiSquared where
@@ -233,7 +233,7 @@ solve tr b
   | n /= l    = error $ "row/vector mismatch " ++ show (n,l)
   | otherwise = U.create $ do
   s <- U.thaw b
-  rfor n0 n1 $ \i -> do
+  for_ n0 n1 $ \i -> do
     si <- (/ unsafeIndex r i i) <$> M.unsafeRead s i
     M.unsafeWrite s i si
     for 0 i $ \j -> F.unsafeModify s j $ subtract (unsafeIndex r j i * si)
@@ -246,8 +246,8 @@ solve tr b
                      -- ^ Starting at the last non-zero element of b provides a constant
                      -- factor speed up when using solve to perform backward substitution
                      -- to invert upper-triangualr matrices.
-               else (fst . U.head $ U.dropWhile (\x -> snd x == 0) $
-                                        U.indexed b)
+               else fst . U.head $ U.dropWhile (\x -> snd x == 0) $
+                                        U.indexed b
         n1 = if ul == Upper
                then 0
                else n
