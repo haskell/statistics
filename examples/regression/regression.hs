@@ -90,8 +90,7 @@ main = do
   let w1        = V.convert $ V.map weights w
   let (preds,y) = toXY wine
   putStrLn $ show (weightedNormalRegress preds y (Just w1) Unknown)
-  
-  -- putStrLn $ show (weightedNormalRegress preds y (Just w1) $ Normal 0.5382708)
+  --putStrLn $ show (weightedNormalRegress preds y (Just w1) $ NormalErr 0.5382708)
   -- ^ This will give (numerically) equivalent results with different
   -- reference distributions.
   
@@ -106,7 +105,7 @@ main = do
 
 
 {-
-Equivalent R code to check for correctness:
+qEquivalent R code to check for correctness:
 
 wine.df    <- read.csv("data/wine.csv")
 w.df <- read.csv("data/weights.csv")
