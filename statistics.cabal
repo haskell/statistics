@@ -22,7 +22,7 @@ description:
   * Common statistical tests for significant differences between
     samples.
 
-license:        BSD3
+license:        BSD2
 license-file:   LICENSE
 homepage:       https://github.com/bos/statistics
 bug-reports:    https://github.com/bos/statistics/issues
