@@ -36,7 +36,10 @@ data T = {-# UNPACK #-} !Double :< {-# UNPACK #-} !Double
 infixl 2 :<
 
 -- | Bias-corrected accelerated (BCA) bootstrap. This adjusts for both
--- bias and skewness in the resampled distribution.
+--   bias and skewness in the resampled distribution.
+--
+--   BCA algorithm is described in ch. 5 of Davison, Hinkley "Confidence
+--   intervals" in section 5.3 "Percentile method"
 bootstrapBCA
   :: CL Double       -- ^ Confidence level
   -> Sample          -- ^ Full data sample
@@ -44,8 +47,6 @@ bootstrapBCA
   -- ^ Estimates obtained from resampled data and estimator used for
   --   this.
   -> [Estimate ConfInt Double]
--- BCA algorithm is described in ch. 5 of Davison, Hinkley "Confidence
--- intervals" in section 5.3 "Percentile method"
 bootstrapBCA confidenceLevel sample resampledData
   = runPar $ parMap e resampledData
   where
@@ -66,7 +67,7 @@ bootstrapBCA confidenceLevel sample resampledData
         ni    = U.length resample
         n     = fromIntegral ni
         -- Corrections
-        z1    = quantile standard ((getPValue confidenceLevel) / 2)
+        z1    = quantile standard (getPValue confidenceLevel / 2)
         cumn  = round . (*n) . cumulative standard
         bias  = quantile standard (probN / n)
           where probN = fromIntegral . U.length . U.filter (<pt) $ resample
