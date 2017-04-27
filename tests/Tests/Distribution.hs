@@ -10,21 +10,22 @@ import qualified Numeric.IEEE as IEEE
 import Numeric.MathFunctions.Constants (m_tiny,m_epsilon)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
-import Statistics.Distribution.Beta           (BetaDistribution)
-import Statistics.Distribution.Binomial       (BinomialDistribution)
+import Statistics.Distribution.Beta            (BetaDistribution)
+import Statistics.Distribution.Binomial        (BinomialDistribution)
 import Statistics.Distribution.CauchyLorentz
-import Statistics.Distribution.ChiSquared     (ChiSquared)
-import Statistics.Distribution.Exponential    (ExponentialDistribution)
-import Statistics.Distribution.FDistribution  (FDistribution,fDistribution)
-import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr)
+import Statistics.Distribution.ChiSquared      (ChiSquared)
+import Statistics.Distribution.Exponential     (ExponentialDistribution)
+import Statistics.Distribution.FDistribution   (FDistribution,fDistribution)
+import Statistics.Distribution.Gamma           (GammaDistribution,gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
-import Statistics.Distribution.Laplace        (LaplaceDistribution)
-import Statistics.Distribution.Normal         (NormalDistribution)
-import Statistics.Distribution.Poisson        (PoissonDistribution)
+import Statistics.Distribution.Laplace         (LaplaceDistribution)
+import Statistics.Distribution.Normal          (NormalDistribution)
+import Statistics.Distribution.Poisson         (PoissonDistribution)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform      (LinearTransform, linTransDistr)
-import Statistics.Distribution.Uniform        (UniformDistribution)
+import Statistics.Distribution.Transform       (LinearTransform, linTransDistr)
+import Statistics.Distribution.Uniform         (UniformDistribution)
+import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
@@ -56,6 +57,7 @@ tests = testGroup "Tests for all distributions"
   , discreteDistrTests (T :: T GeometricDistribution0     )
   , discreteDistrTests (T :: T HypergeometricDistribution )
   , discreteDistrTests (T :: T PoissonDistribution        )
+  , discreteDistrTests (T :: T DiscreteUniform            )
 
   , unitTests
   ]
@@ -264,7 +266,6 @@ logProbabilityCheck _ d x
   where
     p    = probability d x
     logP = logProbability d x
-
 
 
 -- Parameters for distribution testing. Some distribution require
