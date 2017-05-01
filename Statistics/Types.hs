@@ -46,12 +46,14 @@ module Statistics.Types
       -- * Estimates and upper/lower limits
     , Estimate(..)
     , NormalErr(..)
+    , TErr(..)
     , ConfInt(..)
     , UpperLimit(..)
     , LowerLimit(..)
       -- ** Constructors
     , estimateNormErr
     , (±)
+    , estimateTErr
     , estimateFromInterval
     , estimateFromErr
       -- ** Accessors
@@ -60,6 +62,7 @@ module Statistics.Types
     , Scale(..)
       -- * Other
     , Sample
+    , TestStatistic(..)
     , WeightedSample
     , Weights
     ) where
@@ -78,6 +81,7 @@ import Statistics.Internal
 import Statistics.Types.Internal
 import Statistics.Distribution
 import Statistics.Distribution.Normal
+import Statistics.Distribution.StudentT
 
 
 ----------------------------------------------------------------
@@ -334,7 +338,6 @@ instance (NFData   (e a), NFData   a) => NFData   (Estimate e a) where
     rnf (Estimate x dx) = rnf x `seq` rnf dx
 
 
-
 -- |
 -- Normal errors. They are stored as 1σ errors which corresponds to
 -- 68.8% CL. Since we can recalculate them to any confidence level if
@@ -349,6 +352,26 @@ instance FromJSON a => FromJSON (NormalErr a)
 instance ToJSON   a => ToJSON   (NormalErr a)
 instance NFData   a => NFData   (NormalErr a) where
     rnf (NormalErr x) = rnf x
+
+-- |
+-- t distributed errors. Stored as 1σ errors with degrees of freedom
+-- which corresponds to 100 x Pr(|t_{df}| <= σ) CL.
+--
+-- Can also be set as 'Unknown'. For example, when running linear
+-- regression with 'normalRegress' we can input regression coefficient
+-- error type as 'Unknown' if we want to estimate it.
+data TErr a = TErr
+  { tError :: a
+  , tDf    :: Double
+  } | Unknown
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+
+instance Binary   a => Binary   (TErr a)
+instance FromJSON a => FromJSON (TErr a)
+instance ToJSON   a => ToJSON   (TErr a)
+instance NFData   a => NFData   (TErr a) where
+    rnf (TErr x tdist) = rnf x `seq` rnf tdist
+    rnf Unknown = ()
 
 
 -- | Confidence interval. It assumes that confidence interval forms
@@ -387,6 +410,14 @@ estimateNormErr x dx = Estimate x (NormalErr dx)
     -> a      -- ^ 1σ error
     -> Estimate NormalErr a
 (±) = estimateNormErr
+
+
+-- | Create estimate with t errors
+estimateTErr :: a               -- ^ Point estimate
+             -> a               -- ^ 1σ error
+             -> Double          -- ^ degrees of freedom
+             -> Estimate TErr a
+estimateTErr x dx df = Estimate x (TErr dx df)
 
 -- | Create estimate with asymmetric error.
 estimateFromErr
@@ -478,6 +509,17 @@ instance NFData   a => NFData   (LowerLimit a) where
 
 
 ----------------------------------------------------------------
+-- Test Statistic
+----------------------------------------------------------------
+
+-- | Test statistic. Stored as value of test statistic and the
+-- reference distribution to be used to compute p-values.
+data TestStatistic a b = TestStatistic
+    { testStat :: !a
+    , refDist  :: !b
+    } deriving (Eq, Read, Show, Typeable, Data)
+
+----------------------------------------------------------------
 -- Deriving unbox instances
 ----------------------------------------------------------------
 
@@ -500,6 +542,11 @@ derivingUnbox "NormalErr"
   [t| forall a. Unbox a => NormalErr a -> a |]
   [| \(NormalErr a) -> a |]
   [| NormalErr           |]
+
+derivingUnbox "TErr"
+  [t| forall a. Unbox a => TErr a -> (a, Double) |]
+  [| \(TErr a df) -> (a,df) |]
+  [| \(a,df) -> TErr a df   |]
 
 derivingUnbox "ConfInt"
   [t| forall a. Unbox a => ConfInt a -> (a, a, CL Double) |]

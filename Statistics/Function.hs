@@ -37,6 +37,7 @@ module Statistics.Function
     -- * Combinators
     , for
     , rfor
+    , for_
     ) where
 
 #include "MachDeps.h"
@@ -140,6 +141,11 @@ rfor n0 !n f = loop n0
     loop i | i == n    = return ()
            | otherwise = let i' = i-1 in f i' >> loop i'
 {-# INLINE rfor #-}
+
+for_ :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
+for_ n0 !n f | n0 > n    = rfor n0 n f
+             | otherwise = for n0 n f
+{-# INLINE for_ #-}
 
 unsafeModify :: M.MVector s Double -> Int -> (Double -> Double) -> ST s ()
 unsafeModify v i f = do

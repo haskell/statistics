@@ -14,6 +14,8 @@ module Statistics.Matrix.Types
     , MVector
     , Matrix(..)
     , MMatrix(..)
+    , TMatrix(..)
+    , UpperLower(..)
     , debug
     ) where
 
@@ -41,6 +43,15 @@ data MMatrix s = MMatrix
                  {-# UNPACK #-} !Int
                  {-# UNPACK #-} !Int
                  !(MVector s)
+
+-- | Data type records whether a triangular matrix is upper or lower triangular.
+data UpperLower = Upper | Lower
+  deriving (Eq, Show)
+
+-- | Triangular matrix, stored as a Matrix with indication of whether it is
+-- upper or lower triangular.
+data TMatrix  = TMatrix Matrix UpperLower
+  deriving (Eq, Show)
 
 -- The Show instance is useful only for debugging.
 instance Show Matrix where

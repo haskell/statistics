@@ -12,6 +12,7 @@ module Statistics.Matrix.Algorithms
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad.ST (ST, runST)
+import Control.Monad (when)
 import Prelude hiding (sum, replicate)
 import Statistics.Matrix (Matrix, column, dimension, for, norm)
 import qualified Statistics.Matrix.Mutable as M
@@ -36,6 +37,30 @@ qr mat = runST $ do
         aij <- M.unsafeRead a i j
         M.unsafeModify a i jj $ subtract (p * aij)
   (,) <$> M.unsafeFreeze a <*> M.unsafeFreeze r
+
+-- | /O(n^3)/ Compute the Cholesky factorization and return
+-- the lower triangular Cholesky factor (/L/). Note: does
+-- not check whether matrix is positive definite or not.
+-- Will fail if diagonal elements are non-positive.  
+chol :: Matrix -> Matrix
+chol mat
+  | m /= n    = error "Matrix must be square."
+  | otherwise = runST $ do
+      l <- M.thaw mat
+      for 0 n $ \j -> do
+        M.unsafeModify l j j sqrt
+        for (j+1) n $ \i -> do
+          ljj <- M.unsafeRead l j j
+          M.unsafeModify l i j  (/ ljj)
+          M.unsafeWrite l j i 0
+          for (j+1) (i+1) $ \jj -> do
+            ljjj <- M.unsafeRead l jj j
+            lij  <- M.unsafeRead l i j
+            M.unsafeModify l i jj (subtract $ lij*ljjj)
+            when (i /= jj) $
+              M.unsafeModify l jj i (subtract $ lij*ljjj)
+      M.unsafeFreeze l
+  where (m,n) = dimension mat
 
 innerProduct :: M.MMatrix s -> Int -> Int -> ST s Double
 innerProduct mmat j k = M.immutably mmat $ \mat ->

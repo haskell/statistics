@@ -40,6 +40,9 @@ extra-source-files:
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
+  examples/regression/regression.hs
+  examples/regression/data/wine.csv
+  examples/regression/data/weights.csv                                  
   tests/Tests/Math/Tables.hs
   tests/Tests/Math/gen.py
   tests/utils/Makefile
