@@ -54,7 +54,7 @@ import Statistics.Distribution
 import Statistics.Distribution.Normal
 
 
--- | Calculate (n,T+,T-) values for both samples. Where /n/ is reduced
+-- | Calculate (n,T⁺,T⁻) values for both samples. Where /n/ is reduced
 --   sample where equal pairs are removed.
 wilcoxonMatchedPairSignedRank :: (Ord a, Num a, U.Unbox a) => U.Vector (a,a) -> (Int, Double, Double)
 wilcoxonMatchedPairSignedRank ab
@@ -121,7 +121,7 @@ summedCoefficients n
 wilcoxonMatchedPairSignificant
   :: PositionTest          -- ^ How to compare two samples
   -> PValue Double         -- ^ The p-value at which to test (e.g. @mkPValue 0.05@)
-  -> (Int, Double, Double) -- ^ The (n,T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
+  -> (Int, Double, Double) -- ^ The (n,T⁺, T⁻) values from 'wilcoxonMatchedPairSignedRank'.
   -> Maybe TestResult      -- ^ Return 'Nothing' if the sample was too
                            --   small to make a decision.
 wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
