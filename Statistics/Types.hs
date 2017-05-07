@@ -197,34 +197,6 @@ cl95 = CL 0.05
 cl99 :: Fractional a => CL a
 cl99 = CL 0.01
 
--- | CL expressed in sigma. This is convention widely used in
---   experimental physics. N sigma confidence level corresponds to
---   probability within N sigma of normal distribution.
---
---   Note that this correspondence is for normal distribution. Other
---   distribution will have different dependency. Also experimental
---   distribution usually only approximately normal (especially at
---   extreme tails).
-nSigma :: Double -> CL Double
-nSigma n
-  | n > 0     = CL $ 2 * cumulative standard (-n)
-  | otherwise = error "Statistics.Extra.Error.nSigma: non-positive number of sigma"
-
--- | CL expressed in sigma for one-tail hypothesis. This correspond to
---   probability of obtaining value less than @N·σ@.
-nSigma1 :: Double -> CL Double
-nSigma1 n
-  | n > 0     = CL $ cumulative standard (-n)
-  | otherwise = error "Statistics.Extra.Error.nSigma1: non-positive number of sigma"
-
--- | Express confidence level in sigmas
-getNSigma :: CL Double -> Double
-getNSigma (CL p) = negate $ quantile standard (p / 2)
-
--- | Express confidence level in sigmas for one-tailed hypothesis.
-getNSigma1 :: CL Double -> Double
-getNSigma1 (CL p) = negate $ quantile standard p
-
 
 
 ----------------------------------------------------------------
@@ -266,6 +238,37 @@ mkPValueE p
 -- | Get p-value
 pValue :: PValue a -> a
 pValue (PValue p) = p
+
+
+-- | P-value expressed in sigma. This is convention widely used in
+--   experimental physics. N sigma confidence level corresponds to
+--   probability within N sigma of normal distribution.
+--
+--   Note that this correspondence is for normal distribution. Other
+--   distribution will have different dependency. Also experimental
+--   distribution usually only approximately normal (especially at
+--   extreme tails).
+nSigma :: Double -> PValue Double
+nSigma n
+  | n > 0     = PValue $ 2 * cumulative standard (-n)
+  | otherwise = error "Statistics.Extra.Error.nSigma: non-positive number of sigma"
+
+-- | P-value expressed in sigma for one-tail hypothesis. This correspond to
+--   probability of obtaining value less than @N·σ@.
+nSigma1 :: Double -> PValue Double
+nSigma1 n
+  | n > 0     = PValue $ cumulative standard (-n)
+  | otherwise = error "Statistics.Extra.Error.nSigma1: non-positive number of sigma"
+
+-- | Express confidence level in sigmas
+getNSigma :: PValue Double -> Double
+getNSigma (PValue p) = negate $ quantile standard (p / 2)
+
+-- | Express confidence level in sigmas for one-tailed hypothesis.
+getNSigma1 :: PValue Double -> Double
+getNSigma1 (PValue p) = negate $ quantile standard p
+
+
 
 errMkPValue :: String
 errMkPValue = "Statistics.Types.mkPValue: probability is out if [0,1] range"
