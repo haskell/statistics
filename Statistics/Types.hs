@@ -25,7 +25,6 @@ module Statistics.Types
     , mkCLE
     , mkCLFromSignificance
     , mkCLFromSignificanceE
-    , asCL
       -- ** Constants and conversion to nσ
     , cl90
     , cl95
@@ -42,7 +41,6 @@ module Statistics.Types
       -- ** Constructors
     , mkPValue
     , mkPValueE
-    , asPValue
       -- * Estimates and upper/lower limits
     , Estimate(..)
     , NormalErr(..)
@@ -176,13 +174,6 @@ errMkCL :: String
 errMkCL = "Statistics.Types.mkPValCL: probability is out if [0,1] range"
 
 
--- |
--- Convert p-value to confidence level. It's interpreted as
--- probability of hypothesis being wrong.
-asCL :: PValue a -> CL a
-asCL (PValue p) = CL p
-
-
 -- | Get confidence level. This function is subject to rounding
 --   errors. If @1 - CL@ is needed use 'significanceLevel' instead
 confidenceLevel :: (Num a) => CL a -> a
@@ -275,11 +266,6 @@ mkPValueE p
 -- | Get p-value
 pValue :: PValue a -> a
 pValue (PValue p) = p
-
--- | Convert confidence level to p-value. It returns probability of
---   hypothesis being false.
-asPValue :: CL a -> PValue a
-asPValue (CL p) = PValue p
 
 errMkPValue :: String
 errMkPValue = "Statistics.Types.mkPValue: probability is out if [0,1] range"
