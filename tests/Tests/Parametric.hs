@@ -70,12 +70,12 @@ sample2 = U.fromList [
 
 
 testTTest :: String
-          -> CL Double
+          -> PValue Double
           -> Test d
           -> [Tst.Test]
 testTTest name pVal test =
   [ testEquality name (isSignificant pVal test) NotSignificant
-  , testEquality name (isSignificant (clFromPVal $ getPValue pVal + 1e-5) test)
+  , testEquality name (isSignificant (mkPValue $ pValue pVal + 1e-5) test)
     Significant
   ]
   
@@ -83,21 +83,21 @@ studentTTests :: [Tst.Test]
 studentTTests = concat
   [ -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
     testTTest "two-sample t-test SamplesDiffer Student"
-      (clFromPVal 0.03410) (fromJust $ studentTTest SamplesDiffer sample1 sample2)
+      (mkPValue 0.03410) (fromJust $ studentTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", var.equal=F)
   , testTTest "two-sample t-test SamplesDiffer Welch"
-      (clFromPVal 0.03483) (fromJust $ welchTTest SamplesDiffer sample1 sample2)
+      (mkPValue 0.03483) (fromJust $ welchTTest SamplesDiffer sample1 sample2)
     -- R: t.test(sample1, sample2, alt="two.sided", paired=T)
   , testTTest "two-sample t-test SamplesDiffer Paired"
-      (clFromPVal 0.03411) (fromJust $ pairedTTest SamplesDiffer sample12)
+      (mkPValue 0.03411) (fromJust $ pairedTTest SamplesDiffer sample12)
     -- R: t.test(sample1, sample2, alt="less", var.equal=T)
   , testTTest "two-sample t-test BGreater Student"
-      (clFromPVal 0.01705) (fromJust $ studentTTest BGreater sample1 sample2)
+      (mkPValue 0.01705) (fromJust $ studentTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", var.equal=F)
   , testTTest "two-sample t-test BGreater Welch"
-      (clFromPVal 0.01741) (fromJust $ welchTTest BGreater sample1 sample2)
+      (mkPValue 0.01741) (fromJust $ welchTTest BGreater sample1 sample2)
     -- R: t.test(sample1, sample2, alt="less", paired=F)
   , testTTest "two-sample t-test BGreater Paired"
-      (clFromPVal 0.01705) (fromJust $ pairedTTest BGreater sample12)
+      (mkPValue 0.01705) (fromJust $ pairedTTest BGreater sample12)
   ]
   where sample12 = U.zip sample1 sample2

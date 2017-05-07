@@ -85,7 +85,7 @@ instance (Arbitrary a, Ord a, RealFrac a) => Arbitrary (PValue a) where
 instance (Arbitrary a, Ord a, RealFrac a) => Arbitrary (CL a) where
   arbitrary = do
     (_::Int,x) <- properFraction <$> arbitrary
-    return $ clFromPVal $ abs x
+    return $ mkCLFromSignificance $ abs x
 
 instance Arbitrary a => Arbitrary (NormalErr a) where
   arbitrary = NormalErr <$> arbitrary
