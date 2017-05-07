@@ -37,7 +37,6 @@ import qualified Data.Vector.Generic as G
 
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
-import Statistics.Types (Sample)
 import Statistics.Internal
 
 

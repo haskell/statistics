@@ -26,7 +26,7 @@ import Statistics.Distribution.Normal
 import Statistics.Resampling (Bootstrap(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Sample, CL, Estimate, ConfInt, estimateFromInterval,
-                         estimateFromErr, CL, getNSigma, getPValue)
+                         estimateFromErr, CL, getPValue)
 import Statistics.Function (gsort)
 
 import qualified Statistics.Resampling as R
