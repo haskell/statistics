@@ -35,7 +35,7 @@ import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types (TestResult(..), PositionTest(..), significant)
-import Statistics.Types (CL,significanceLevel)
+import Statistics.Types (PValue,pValue)
 import qualified Data.Vector.Unboxed as U
 
 -- | The Wilcoxon Rank Sums Test.
@@ -103,9 +103,10 @@ mannWhitneyU xs1 xs2
 -- The algorithm to generate these values is a faster, memoised version of the
 -- simple unoptimised generating function given in section 2 of \"The Mann Whitney
 -- Wilcoxon Distribution Using Linked Lists\"
-mannWhitneyUCriticalValue :: (Int, Int) -- ^ The sample size
-                          -> CL Double  -- ^ The p-value (e.g. 0.05) for which you want the critical value.
-                          -> Maybe Int  -- ^ The critical value (of U).
+mannWhitneyUCriticalValue
+  :: (Int, Int)     -- ^ The sample size
+  -> PValue Double  -- ^ The p-value (e.g. 0.05) for which you want the critical value.
+  -> Maybe Int      -- ^ The critical value (of U).
 mannWhitneyUCriticalValue (m, n) p
   | m < 1 || n < 1 = Nothing    -- Sample must be nonempty
   | p' <= 1        = Nothing    -- p-value is too small. Null hypothesys couln't be disproved
@@ -115,7 +116,7 @@ mannWhitneyUCriticalValue (m, n) p
                    $ alookup !! (m+n-2) !! (min m n - 1)
   where
     mnCn = (m+n) `choose` n
-    p'   = mnCn * significanceLevel p
+    p'   = mnCn * pValue p
 
 
 {-
@@ -182,7 +183,7 @@ alookup = gen 2 [1 : repeat 2]
 mannWhitneyUSignificant
   :: PositionTest     -- ^ Perform one-tailed test (see description above).
   -> (Int, Int)       -- ^ The samples' size from which the (U&#8321;,U&#8322;) values were derived.
-  -> CL Double        -- ^ The p-value at which to test (e.g. 0.05)
+  -> PValue Double    -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double) -- ^ The (U&#8321;, U&#8322;) values from 'mannWhitneyU'.
   -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
@@ -205,7 +206,7 @@ mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
   where
     n1 = fromIntegral in1
     n2 = fromIntegral in2
-    p  = significanceLevel pVal
+    p  = pValue pVal
 
 
 -- | Perform Mann-Whitney U Test for two samples and required
@@ -218,7 +219,7 @@ mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
 mannWhitneyUtest
   :: (Ord a, U.Unbox a)
   => PositionTest     -- ^ Perform one-tailed test (see description above).
-  -> CL Double        -- ^ The p-value at which to test (e.g. 0.05)
+  -> PValue Double    -- ^ The p-value at which to test (e.g. 0.05)
   -> U.Vector a       -- ^ First sample
   -> U.Vector a       -- ^ Second sample
   -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too small to

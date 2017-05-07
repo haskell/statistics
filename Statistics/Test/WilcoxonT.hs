@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 -- |
 -- Module    : Statistics.Test.WilcoxonT
 -- Copyright : (c) 2010 Neil Brown
@@ -119,7 +120,7 @@ summedCoefficients n
 -- pair before passing them to this function.
 wilcoxonMatchedPairSignificant
   :: PositionTest          -- ^ How to compare two samples
-  -> CL Double             -- ^ The p-value at which to test (e.g. @pValue 0.05@)
+  -> PValue Double         -- ^ The p-value at which to test (e.g. @mkPValue 0.05@)
   -> (Int, Double, Double) -- ^ The (n,T+, T-) values from 'wilcoxonMatchedPairSignedRank'.
   -> Maybe TestResult      -- ^ Return 'Nothing' if the sample was too
                            --   small to make a decision.
@@ -137,11 +138,11 @@ wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
     -- Note that in absence of ties sum of |T+| and |T-| is constant
     -- so by selecting minimal we are performing two-tailed test and
     -- look and both tails of distribution of T.
-    SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (mkCLFromSignificance $ p/2)
+    SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (mkPValue $ p/2)
                         return $ significant $ t <= fromIntegral crit
   where
     t = min (abs tPlus) (abs tMinus)
-    p = significanceLevel pVal
+    p = pValue pVal
 
 
 -- | Obtains the critical value of T to compare against, given a sample size
@@ -161,7 +162,7 @@ wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
 -- the values obtained by this function will be the correct ones.
 wilcoxonMatchedPairCriticalValue ::
      Int                -- ^ The sample size
-  -> CL Double          -- ^ The p-value (e.g. @pValue 0.05@) for which you want the critical value.
+  -> PValue Double      -- ^ The p-value (e.g. @mkPValue 0.05@) for which you want the critical value.
   -> Maybe Int          -- ^ The critical value (of T), or Nothing if
                         --   the sample is too small to make a decision.
 wilcoxonMatchedPairCriticalValue n pVal
@@ -175,7 +176,7 @@ wilcoxonMatchedPairCriticalValue n pVal
        z | z < 0     -> Nothing
          | otherwise -> Just (round z)
   where
-    p = significanceLevel pVal
+    p = pValue pVal
     m = (2 ** fromIntegral n) * p
 
 
