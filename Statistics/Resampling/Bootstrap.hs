@@ -26,7 +26,7 @@ import Statistics.Distribution.Normal
 import Statistics.Resampling (Bootstrap(..), jackknife)
 import Statistics.Sample (mean)
 import Statistics.Types (Sample, CL, Estimate, ConfInt, estimateFromInterval,
-                         estimateFromErr, CL, getPValue)
+                         estimateFromErr, CL, significanceLevel)
 import Statistics.Function (gsort)
 
 import qualified Statistics.Resampling as R
@@ -67,7 +67,7 @@ bootstrapBCA confidenceLevel sample resampledData
         ni    = U.length resample
         n     = fromIntegral ni
         -- Corrections
-        z1    = quantile standard (getPValue confidenceLevel / 2)
+        z1    = quantile standard (significanceLevel confidenceLevel / 2)
         cumn  = round . (*n) . cumulative standard
         bias  = quantile standard (probN / n)
           where probN = fromIntegral . U.length . U.filter (<pt) $ resample
@@ -94,7 +94,7 @@ basicBootstrap cl (Bootstrap e ests)
   where
     sorted = gsort ests
     n  = fromIntegral $ G.length ests
-    c  = n * (getPValue cl / 2)
+    c  = n * (significanceLevel cl / 2)
     -- FIXME: can we have better estimates of quantiles in case when p
     --        is not multiple of 1/N
     --

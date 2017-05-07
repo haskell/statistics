@@ -18,13 +18,13 @@ module Statistics.Types
     ( -- * Confidence level
       CL
       -- ** Accessors
-    , confLevel
-    , getPValue
+    , confidenceLevel
+    , significanceLevel
       -- ** Constructors
     , mkCL
     , mkCLE
-    , mkCLFromAlpha
-    , mkCLFromAlphaE
+    , mkCLFromSignificance
+    , mkCLFromSignificanceE
     , asCL
       -- ** Constants and conversion to nσ
     , cl90
@@ -92,30 +92,30 @@ import Statistics.Distribution.Normal
 --
 -- Since confidence level are usually close to 1 they are stored as
 -- @1-CL@ internally. There are two smart constructors for @CL@:
--- 'mkConfLevel' and 'mkCLFromAlpha' (and corresponding variant returning
--- @Maybe@). First creates @CL@ from confidence level and second from
--- @1 - CL@.
+-- 'mkCL' and 'mkCLFromSignificance' (and corresponding variant
+-- returning @Maybe@). First creates @CL@ from confidence level and
+-- second from @1 - CL@ or significance level.
 --
 -- >>> cl95
--- mkCLFromAlpha 0.05
+-- mkCLFromSignificance 0.05
 --
 -- Prior to 0.14 confidence levels were passed to function as plain
--- @Doubles@. Use 'mkConfLevel' to convert them to @CL@.
+-- @Doubles@. Use 'mkCL' to convert them to @CL@.
 newtype CL a = CL a
                deriving (Eq, Typeable, Data, Generic)
 
 instance Show a => Show (CL a) where
-  showsPrec n (CL p) = defaultShow1 "mkCLFromAlpha" p n
+  showsPrec n (CL p) = defaultShow1 "mkCLFromSignificance" p n
 instance (Num a, Ord a, Read a) => Read (CL a) where
-  readPrec = defaultReadPrecM1 "mkCLFromAlpha" mkCLFromAlphaE
+  readPrec = defaultReadPrecM1 "mkCLFromSignificance" mkCLFromSignificanceE
 
 instance (Binary a, Num a, Ord a) => Binary (CL a) where
   put (CL p) = put p
-  get        = maybe (fail errMkCL) return . mkCLFromAlphaE =<< get
+  get        = maybe (fail errMkCL) return . mkCLFromSignificanceE =<< get
 
 instance (ToJSON a)                 => ToJSON   (CL a)
 instance (FromJSON a, Num a, Ord a) => FromJSON (CL a) where
-  parseJSON = maybe (fail errMkCL) return . mkCLFromAlphaE <=< parseJSON
+  parseJSON = maybe (fail errMkCL) return . mkCLFromSignificanceE <=< parseJSON
 
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
@@ -137,7 +137,7 @@ instance Ord a => Ord (CL a) where
 --   exception if parameter is out of [0,1] range
 --
 -- >>> mkCL 0.95    -- same as cl95
--- mkCLFromAlpha 0.05
+-- mkCLFromSignificance 0.05
 mkCL :: (Ord a, Num a) => a -> CL a
 mkCL
   = fromMaybe (error "Statistics.Types.mkCL: probability is out if [0,1] range")
@@ -147,7 +147,7 @@ mkCL
 --   parameter is out of [0,1] range
 --
 -- >>> mkCLE 0.95    -- same as cl95
--- Just (mkCLFromAlpha 0.05)
+-- Just (mkCLFromSignificance 0.05)
 mkCLE :: (Ord a, Num a) => a -> Maybe (CL a)
 mkCLE p
   | p >= 0 && p <= 1 = Just $ CL (1 - p)
@@ -157,18 +157,18 @@ mkCLE p
 --   confidence interval does not contain true value of estimate. Will
 --   throw exception if parameter is out of [0,1] range
 --
--- >>> mkCLFromAlpha 0.05    -- same as cl95
--- mkCLFromAlpha 0.05
-mkCLFromAlpha :: (Ord a, Num a) => a -> CL a
-mkCLFromAlpha = fromMaybe (error errMkCL) . mkCLFromAlphaE
+-- >>> mkCLFromSignificance 0.05    -- same as cl95
+-- mkCLFromSignificance 0.05
+mkCLFromSignificance :: (Ord a, Num a) => a -> CL a
+mkCLFromSignificance = fromMaybe (error errMkCL) . mkCLFromSignificanceE
 
--- | Same as 'mkCLFromAlpha' but returns @Nothing@ instead of error if
+-- | Same as 'mkCLFromSignificance' but returns @Nothing@ instead of error if
 --   parameter is out of [0,1] range
 --
--- >>> mkCLFromAlphaE 0.05    -- same as cl95
--- Just (mkCLFromAlpha 0.05)
-mkCLFromAlphaE :: (Ord a, Num a) => a -> Maybe (CL a)
-mkCLFromAlphaE p
+-- >>> mkCLFromSignificanceE 0.05    -- same as cl95
+-- Just (mkCLFromSignificance 0.05)
+mkCLFromSignificanceE :: (Ord a, Num a) => a -> Maybe (CL a)
+mkCLFromSignificanceE p
   | p >= 0 && p <= 1 = Just $ CL p
   | otherwise        = Nothing
 
@@ -184,13 +184,13 @@ asCL (PValue p) = CL p
 
 
 -- | Get confidence level. This function is subject to rounding
---   errors. If @1 - CL@ is needed use 'getPValue' instead
-confLevel :: (Num a) => CL a -> a
-confLevel (CL p) = 1 - p
+--   errors. If @1 - CL@ is needed use 'significanceLevel' instead
+confidenceLevel :: (Num a) => CL a -> a
+confidenceLevel (CL p) = 1 - p
 
--- | Get probability of hypothesis being false.
-getPValue :: CL a -> a
-getPValue (CL p) = p
+-- | Get significance level.
+significanceLevel :: CL a -> a
+significanceLevel (CL p) = p
 
 
 

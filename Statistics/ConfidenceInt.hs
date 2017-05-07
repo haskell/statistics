@@ -28,7 +28,7 @@ poissonNormalCI n
 -- | Calculate confidence intervals for Poisson-distributed value for
 --   single measurement. These are exact confidence intervals
 poissonCI :: CL Double -> Int -> Estimate ConfInt Double
-poissonCI cl@(getPValue -> p) n
+poissonCI cl@(significanceLevel -> p) n
   | n <  0    = error "Statistics.ConfidenceInt.poissonCI: negative number of trials"
   | n == 0    = estimateFromInterval m (m1,m2) cl
   | otherwise = estimateFromInterval m (m1,m2) cl
@@ -59,7 +59,7 @@ binomialCI :: CL Double
            -> Int               -- ^ Number of trials
            -> Int               -- ^ Number of successes
            -> Estimate ConfInt Double
-binomialCI cl@(getPValue -> p) ni ki
+binomialCI cl@(significanceLevel -> p) ni ki
   | ni <= 0 || ki < 0 = error "Statistics.ConfidenceInt.binomialCI: negative number of events"
   | ki > ni           = error "Statistics.ConfidenceInt.binomialCI: more successes than trials"
   | ki == 0           = estimateFromInterval eff (0, ub) cl

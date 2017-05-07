@@ -137,11 +137,11 @@ wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
     -- Note that in absence of ties sum of |T+| and |T-| is constant
     -- so by selecting minimal we are performing two-tailed test and
     -- look and both tails of distribution of T.
-    SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (mkCLFromAlpha $ p/2)
+    SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (mkCLFromSignificance $ p/2)
                         return $ significant $ t <= fromIntegral crit
   where
     t = min (abs tPlus) (abs tMinus)
-    p = getPValue pVal
+    p = significanceLevel pVal
 
 
 -- | Obtains the critical value of T to compare against, given a sample size
@@ -175,7 +175,7 @@ wilcoxonMatchedPairCriticalValue n pVal
        z | z < 0     -> Nothing
          | otherwise -> Just (round z)
   where
-    p = getPValue pVal
+    p = significanceLevel pVal
     m = (2 ** fromIntegral n) * p
 
 

@@ -24,7 +24,7 @@ import Statistics.Function as F
 import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms (qr)
 import Statistics.Resampling (splitGen)
-import Statistics.Types      (Estimate(..),ConfInt,CL,estimateFromInterval,getPValue)
+import Statistics.Types      (Estimate(..),ConfInt,CL,estimateFromInterval,significanceLevel)
 import Statistics.Sample (mean)
 import Statistics.Sample.Internal (sum)
 import System.Random.MWC (GenIO, uniformR)
@@ -145,7 +145,7 @@ bootstrapRegress gen0 numResamples cl rgrss preds0 resp0
               lo = round c
               hi = truncate (n - c)
               n  = fromIntegral numResamples
-              c  = n * (getPValue cl / 2)
+              c  = n * (significanceLevel cl / 2)
   return (coeffs, r2)
 
 -- | Balance units of work across workers.

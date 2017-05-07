@@ -35,7 +35,7 @@ import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types (TestResult(..), PositionTest(..), significant)
-import Statistics.Types (CL,getPValue)
+import Statistics.Types (CL,significanceLevel)
 import qualified Data.Vector.Unboxed as U
 
 -- | The Wilcoxon Rank Sums Test.
@@ -115,7 +115,7 @@ mannWhitneyUCriticalValue (m, n) p
                    $ alookup !! (m+n-2) !! (min m n - 1)
   where
     mnCn = (m+n) `choose` n
-    p'   = mnCn * getPValue p
+    p'   = mnCn * significanceLevel p
 
 
 {-
@@ -205,7 +205,7 @@ mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
   where
     n1 = fromIntegral in1
     n2 = fromIntegral in2
-    p  = getPValue pVal
+    p  = significanceLevel pVal
 
 
 -- | Perform Mann-Whitney U Test for two samples and required
