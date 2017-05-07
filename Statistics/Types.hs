@@ -21,10 +21,10 @@ module Statistics.Types
     , confLevel
     , getPValue
       -- ** Constructors
-    , mkConfLevel
-    , mkConfLevelE
-    , clFromPVal
-    , clFromPValE
+    , mkCL
+    , mkCLE
+    , mkCLFromAlpha
+    , mkCLFromAlphaE
     , asCL
       -- ** Constants and conversion to nσ
     , cl90
@@ -92,12 +92,12 @@ import Statistics.Distribution.Normal
 --
 -- Since confidence level are usually close to 1 they are stored as
 -- @1-CL@ internally. There are two smart constructors for @CL@:
--- 'mkConfLevel' and 'clFromPVal' (and corresponding variant returning
+-- 'mkConfLevel' and 'mkCLFromAlpha' (and corresponding variant returning
 -- @Maybe@). First creates @CL@ from confidence level and second from
 -- @1 - CL@.
 --
 -- >>> cl95
--- clFromPVal 0.05
+-- mkCLFromAlpha 0.05
 --
 -- Prior to 0.14 confidence levels were passed to function as plain
 -- @Doubles@. Use 'mkConfLevel' to convert them to @CL@.
@@ -105,17 +105,17 @@ newtype CL a = CL a
                deriving (Eq, Typeable, Data, Generic)
 
 instance Show a => Show (CL a) where
-  showsPrec n (CL p) = defaultShow1 "clFromPVal" p n
+  showsPrec n (CL p) = defaultShow1 "mkCLFromAlpha" p n
 instance (Num a, Ord a, Read a) => Read (CL a) where
-  readPrec = defaultReadPrecM1 "clFromPVal" clFromPValE
+  readPrec = defaultReadPrecM1 "mkCLFromAlpha" mkCLFromAlphaE
 
 instance (Binary a, Num a, Ord a) => Binary (CL a) where
   put (CL p) = put p
-  get        = maybe (fail errMkCL) return . clFromPValE =<< get
+  get        = maybe (fail errMkCL) return . mkCLFromAlphaE =<< get
 
 instance (ToJSON a)                 => ToJSON   (CL a)
 instance (FromJSON a, Num a, Ord a) => FromJSON (CL a) where
-  parseJSON = maybe (fail errMkCL) return . clFromPValE <=< parseJSON
+  parseJSON = maybe (fail errMkCL) return . mkCLFromAlphaE <=< parseJSON
 
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
@@ -132,46 +132,49 @@ instance Ord a => Ord (CL a) where
   min (CL a) (CL b) = CL (max a b)
 
 
--- | Create confidence level. Will throw exception if parameter is out
---   of [0,1] range
+-- | Create confidence level from probability β or probability
+--   confidence interval contain true value of estimate. Will throw
+--   exception if parameter is out of [0,1] range
 --
--- >>> mkConfLevel 0.95    -- same as cl95
--- clFromPVal 0.05
-mkConfLevel :: (Ord a, Num a) => a -> CL a
-mkConfLevel
-  = fromMaybe (error "Statistics.Types.mkConfLevel: probability is out if [0,1] range")
-  . mkConfLevelE
+-- >>> mkCL 0.95    -- same as cl95
+-- mkCLFromAlpha 0.05
+mkCL :: (Ord a, Num a) => a -> CL a
+mkCL
+  = fromMaybe (error "Statistics.Types.mkCL: probability is out if [0,1] range")
+  . mkCLE
 
--- | Create confidence level. Returns @Nothing@ if parameter is out of
--- [0,1] range
+-- | Same as 'mkCL' but returns @Nothing@ instead of error if
+--   parameter is out of [0,1] range
 --
--- >>> mkConfLevelE 0.95    -- same as cl95
--- Just (clFromPVal 0.05)
-mkConfLevelE :: (Ord a, Num a) => a -> Maybe (CL a)
-mkConfLevelE p
+-- >>> mkCLE 0.95    -- same as cl95
+-- Just (mkCLFromAlpha 0.05)
+mkCLE :: (Ord a, Num a) => a -> Maybe (CL a)
+mkCLE p
   | p >= 0 && p <= 1 = Just $ CL (1 - p)
   | otherwise        = Nothing
 
--- | Create confidence level. Will throw exception if parameter is out
---   of [0,1] range
+-- | Create confidence level from probability α or probability that
+--   confidence interval does not contain true value of estimate. Will
+--   throw exception if parameter is out of [0,1] range
 --
--- >>> clFromPVal 0.05    -- same as cl95
--- clFromPVal 0.05
-clFromPVal :: (Ord a, Num a) => a -> CL a
-clFromPVal = fromMaybe (error errMkCL) . clFromPValE
+-- >>> mkCLFromAlpha 0.05    -- same as cl95
+-- mkCLFromAlpha 0.05
+mkCLFromAlpha :: (Ord a, Num a) => a -> CL a
+mkCLFromAlpha = fromMaybe (error errMkCL) . mkCLFromAlphaE
 
--- | Create confidence level. Returns @Nothing@ if parameter is out of
--- [0,1] range
+-- | Same as 'mkCLFromAlpha' but returns @Nothing@ instead of error if
+--   parameter is out of [0,1] range
 --
--- >>> clFromPValE 0.05    -- same as cl95
--- Just (clFromPVal 0.05)
-clFromPValE :: (Ord a, Num a) => a -> Maybe (CL a)
-clFromPValE p
+-- >>> mkCLFromAlphaE 0.05    -- same as cl95
+-- Just (mkCLFromAlpha 0.05)
+mkCLFromAlphaE :: (Ord a, Num a) => a -> Maybe (CL a)
+mkCLFromAlphaE p
   | p >= 0 && p <= 1 = Just $ CL p
   | otherwise        = Nothing
 
 errMkCL :: String
 errMkCL = "Statistics.Types.mkPValCL: probability is out if [0,1] range"
+
 
 -- |
 -- Convert p-value to confidence level. It's interpreted as
