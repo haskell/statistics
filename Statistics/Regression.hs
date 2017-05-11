@@ -139,7 +139,6 @@ bootstrapRegress gen0 numResamples cl rgrss preds0 resp0
                 est x . U.generate numResamples $ \k -> (coeffsv G.! k) G.! i
       r2      = est r2s (G.convert r2v)
       (coeffss, r2s) = rgrss preds0 resp0
-      -- FIXME: CL semantics!
       est s v = estimateFromInterval s (w G.! lo, w G.! hi) cl
         where w  = F.sort v
               lo = round c
