@@ -8,8 +8,9 @@ module Statistics.Test.Types (
   ) where
 
 import Control.DeepSeq  (NFData(..))
+import Control.Monad    (liftM3)
 import Data.Aeson       (FromJSON, ToJSON)
-import Data.Binary      (Binary)
+import Data.Binary      (Binary (..))
 import Data.Data (Typeable, Data)
 import GHC.Generics
 
@@ -21,7 +22,11 @@ data TestResult = Significant    -- ^ Null hypothesis should be rejected
                 | NotSignificant -- ^ Data is compatible with hypothesis
                   deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
-instance Binary   TestResult
+instance Binary   TestResult where
+  get = do
+      sig <- get
+      if sig then return Significant else return NotSignificant
+  put = put . (== Significant)
 instance FromJSON TestResult
 instance ToJSON   TestResult
 instance NFData   TestResult
@@ -40,7 +45,9 @@ data Test distr = Test
   }
   deriving (Eq,Ord,Show,Typeable,Data,Generic,Functor)
 
-instance (Binary   d) => Binary   (Test d)
+instance (Binary   d) => Binary   (Test d) where
+  get = liftM3 Test get get get
+  put (Test sign stat distr) = put sign >> put stat >> put distr
 instance (FromJSON d) => FromJSON (Test d)
 instance (ToJSON   d) => ToJSON   (Test d)
 instance (NFData   d) => NFData   (Test d) where
@@ -65,7 +72,17 @@ data PositionTest
     -- ^ Test if second sample is larger than first.
   deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
-instance Binary   PositionTest
+instance Binary   PositionTest where
+  get = do
+    i <- get
+    case (i :: Int) of
+      0 -> return SamplesDiffer
+      1 -> return AGreater
+      2 -> return BGreater
+      _ -> fail "Invalid PositionTest"
+  put SamplesDiffer = put (0 :: Int)
+  put AGreater      = put (1 :: Int)
+  put BGreater      = put (2 :: Int)
 instance FromJSON PositionTest
 instance ToJSON   PositionTest
 instance NFData   PositionTest

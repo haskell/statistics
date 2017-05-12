@@ -39,8 +39,8 @@ tests = testGroup "Test for data serialization"
   , serializationTests (T :: T (PValue Double))
   , serializationTests (T :: T (NormalErr Double))
   , serializationTests (T :: T (ConfInt   Double))
-  , serializationTests (T :: T (Estimate NormalErr Double))
-  , serializationTests (T :: T (Estimate ConfInt   Double))
+  , serializationTests' "T (Estimate NormalErr Double)" (T :: T (Estimate NormalErr Double))
+  , serializationTests' "T (Estimate ConfInt Double)" (T :: T (Estimate ConfInt   Double))
   , serializationTests (T :: T (LowerLimit Double))
   , serializationTests (T :: T (UpperLimit Double))
     -- Distributions
@@ -66,11 +66,19 @@ tests = testGroup "Test for data serialization"
 serializationTests
   :: (Eq a, Typeable a, Binary a, Show a, Read a, ToJSON a, FromJSON a, Arbitrary a)
   => T a -> Test
-serializationTests t = testGroup ("Tests for: " ++ typeName t)
+serializationTests t = serializationTests' (typeName t) t
+
+-- Not all types are Typeable, unfortunately
+serializationTests'
+  :: (Eq a, Binary a, Show a, Read a, ToJSON a, FromJSON a, Arbitrary a)
+  => String -> T a -> Test
+serializationTests' name t = testGroup ("Tests for: " ++ name)
   [ testProperty "show/read" (p_showRead t)
   , testProperty "binary"    (p_binary   t)
   , testProperty "aeson"     (p_aeson    t)
   ]
+
+
 
 p_binary :: (Eq a, Binary a) => T a -> a -> Bool
 p_binary _ a = a == (decode . encode) a
