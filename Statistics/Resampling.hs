@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DeriveFunctor #-}
@@ -37,7 +38,7 @@ module Statistics.Resampling
 import Data.Aeson (FromJSON, ToJSON)
 import Control.Applicative
 import Control.Concurrent (forkIO, newChan, readChan, writeChan)
-import Control.Monad (forM_, forM, replicateM, replicateM_)
+import Control.Monad (forM_, forM, replicateM, replicateM_, liftM2)
 import Control.Monad.Primitive (PrimMonad(..))
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
@@ -82,9 +83,15 @@ data Bootstrap v a = Bootstrap
   { fullSample :: !a
   , resamples  :: v a
   }
-  deriving (Eq, Read, Show, Typeable, Data, Generic, Functor, T.Foldable, T.Traversable)
+  deriving (Eq, Read, Show , Generic, Functor, T.Foldable, T.Traversable
+#if __GLASGOW_HASKELL >= 708
+           , Typeable, Data
+#endif
+           )
 
-instance (Binary a,   Binary   (v a)) => Binary   (Bootstrap v a)
+instance (Binary a,   Binary   (v a)) => Binary   (Bootstrap v a) where
+  get = liftM2 Bootstrap get get
+  put (Bootstrap fs rs) = put fs >> put rs
 instance (FromJSON a, FromJSON (v a)) => FromJSON (Bootstrap v a)
 instance (ToJSON a,   ToJSON   (v a)) => ToJSON   (Bootstrap v a)
 

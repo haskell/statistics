@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -62,7 +63,7 @@ module Statistics.Types
     , Weights
     ) where
 
-import Control.Monad                ((<=<))
+import Control.Monad                ((<=<), liftM2, liftM3)
 import Control.DeepSeq              (NFData(..))
 import Data.Aeson                   (FromJSON(..), ToJSON)
 import Data.Binary                  (Binary(..))
@@ -70,7 +71,12 @@ import Data.Data                    (Data,Typeable)
 import Data.Maybe                   (fromMaybe)
 import Data.Vector.Unboxed          (Unbox)
 import Data.Vector.Unboxed.Deriving (derivingUnbox)
-import GHC.Generics (Generic)
+import GHC.Generics                 (Generic)
+
+#if __GLASGOW_HASKELL__ == 704
+import qualified Data.Vector.Generic
+import qualified Data.Vector.Generic.Mutable
+#endif
 
 import Statistics.Internal
 import Statistics.Types.Internal
@@ -317,9 +323,15 @@ data Estimate e a = Estimate
       -- ^ Point estimate.
     , estError           :: !(e a)
       -- ^ Confidence interval for estimate.
-    } deriving (Eq, Read, Show, Typeable, Data, Generic)
+    } deriving (Eq, Read, Show, Generic
+#if __GLASGOW_HASKELL >= 708
+               , Typeable, Data
+#endif
+               )
 
-instance (Binary   (e a), Binary   a) => Binary   (Estimate e a)
+instance (Binary   (e a), Binary   a) => Binary   (Estimate e a) where
+  get = liftM2 Estimate get get
+  put (Estimate ep ee) = put ep >> put ee
 instance (FromJSON (e a), FromJSON a) => FromJSON (Estimate e a)
 instance (ToJSON   (e a), ToJSON   a) => ToJSON   (Estimate e a)
 instance (NFData   (e a), NFData   a) => NFData   (Estimate e a) where
@@ -336,7 +348,9 @@ newtype NormalErr a = NormalErr
   }
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary   a => Binary   (NormalErr a)
+instance Binary   a => Binary   (NormalErr a) where
+  get = fmap NormalErr get
+  put = put . normalError
 instance FromJSON a => FromJSON (NormalErr a)
 instance ToJSON   a => ToJSON   (NormalErr a)
 instance NFData   a => NFData   (NormalErr a) where
@@ -357,7 +371,9 @@ data ConfInt a = ConfInt
   }
   deriving (Read,Show,Eq,Typeable,Data,Generic)
 
-instance Binary   a => Binary   (ConfInt a)
+instance Binary   a => Binary   (ConfInt a) where
+  get = liftM3 ConfInt get get get
+  put (ConfInt l u cl) = put l >> put u >> put cl 
 instance FromJSON a => FromJSON (ConfInt a)
 instance ToJSON   a => ToJSON   (ConfInt a)
 instance NFData   a => NFData   (ConfInt a) where
@@ -445,7 +461,9 @@ data UpperLimit a = UpperLimit
     } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 
-instance Binary   a => Binary   (UpperLimit a)
+instance Binary   a => Binary   (UpperLimit a) where
+  get = liftM2 UpperLimit get get
+  put (UpperLimit l cl) = put l >> put cl
 instance FromJSON a => FromJSON (UpperLimit a)
 instance ToJSON   a => ToJSON   (UpperLimit a)
 instance NFData   a => NFData   (UpperLimit a) where
@@ -462,7 +480,9 @@ data LowerLimit a = LowerLimit {
     -- ^ Confidence level for which limit was calculated
   } deriving (Eq, Read, Show, Typeable, Data, Generic)
 
-instance Binary   a => Binary   (LowerLimit a)
+instance Binary   a => Binary   (LowerLimit a) where
+  get = liftM2 LowerLimit get get
+  put (LowerLimit l cl) = put l >> put cl
 instance FromJSON a => FromJSON (LowerLimit a)
 instance ToJSON   a => ToJSON   (LowerLimit a)
 instance NFData   a => NFData   (LowerLimit a) where

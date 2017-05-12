@@ -103,6 +103,7 @@ library
   build-depends:
     aeson >= 0.6.0.0,
     base >= 4.4 && < 5,
+    base-orphans >= 0.6 && <0.7,
     binary >= 0.5.1.0,
     deepseq >= 1.1.0.2,
     erf,

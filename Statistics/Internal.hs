@@ -25,6 +25,7 @@ module Statistics.Internal (
 import Control.Applicative
 import Control.Monad
 import Text.Read
+import Data.Orphans ()
 
 
 
