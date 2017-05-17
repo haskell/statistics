@@ -1,3 +1,8 @@
+## Changes in 0.14.0.1
+
+ * Restored compatibility with GHC 7.4 & 7.6
+
+
 ## Changes in 0.14.0.0
 
 Breaking update. It seriously changes parts of API. It adds new data types for
