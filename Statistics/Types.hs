@@ -324,7 +324,7 @@ data Estimate e a = Estimate
     , estError           :: !(e a)
       -- ^ Confidence interval for estimate.
     } deriving (Eq, Read, Show, Generic
-#if __GLASGOW_HASKELL >= 708
+#if __GLASGOW_HASKELL__ >= 708
                , Typeable, Data
 #endif
                )
