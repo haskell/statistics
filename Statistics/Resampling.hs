@@ -84,7 +84,7 @@ data Bootstrap v a = Bootstrap
   , resamples  :: v a
   }
   deriving (Eq, Read, Show , Generic, Functor, T.Foldable, T.Traversable
-#if __GLASGOW_HASKELL >= 708
+#if __GLASGOW_HASKELL__ >= 708
            , Typeable, Data
 #endif
            )
