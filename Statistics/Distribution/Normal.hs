@@ -121,7 +121,7 @@ normalDistrE :: Double            -- ^ Mean of distribution
              -> Double            -- ^ Standard deviation of distribution
              -> Maybe NormalDistribution
 normalDistrE m sd
-  | sd > 0    = Just ND { mean       = m
+  | sd >= 0   = Just ND { mean       = m
                         , stdDev     = sd
                         , ndPdfDenom = log $ m_sqrt_2_pi * sd
                         , ndCdfDenom = m_sqrt_2 * sd
