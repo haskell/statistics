@@ -1,3 +1,8 @@
+## Changes in 0.14.0.2
+
+ * Compatibility fixes with older GHC
+
+
 ## Changes in 0.14.0.1
 
  * Restored compatibility with GHC 7.4 & 7.6
