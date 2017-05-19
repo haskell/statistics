@@ -34,15 +34,22 @@ module Statistics.Function
     , square
     -- * Vectors
     , unsafeModify
+    , BitVec
+    , MBitVec
+    , newMBitVec
+    , setbit
+    , getbit
+    , getbit'
     -- * Combinators
     , for
     , rfor
+    , forStep
     ) where
 
 #include "MachDeps.h"
 
 import Control.Monad.ST (ST)
-import Data.Bits ((.|.), shiftR)
+import Data.Bits ((.|.), shiftR,testBit,setBit)
 import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -132,6 +139,14 @@ for n0 !n f = loop n0
            | otherwise = f i >> loop (i+1)
 {-# INLINE for #-}
 
+-- | For loop.  Counts from /start/ with /step/ increments while /< end/.
+forStep :: Monad m => Int -> Int -> Int -> (Int -> m ()) -> m ()
+forStep n0 !n step f = loop n0
+  where
+    loop !i | i >= n    = return ()
+            | otherwise = f i >> loop (i+step)
+{-# INLINE forStep #-}
+
 -- | Simple reverse-for loop.  Counts from /start/-1 to /end/ (which
 -- must be less than /start/).
 rfor :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
@@ -146,3 +161,30 @@ unsafeModify v i f = do
   k <- M.unsafeRead v i
   M.unsafeWrite v i (f k)
 {-# INLINE unsafeModify #-}
+
+type MBitVec s = M.STVector s Int
+type BitVec = U.Vector Int
+
+{-# INLINE newMBitVec #-}
+newMBitVec :: Int -> ST s (MBitVec s)
+newMBitVec n = M.replicate (n `div` 32 + 1) 0
+
+{-# INLINE setbit #-}
+setbit :: MBitVec s -> Int -> ST s ()
+setbit v !i = do
+  x <- M.unsafeRead v idx
+  M.unsafeWrite v idx (setBit x off)
+    where (!idx,!off) = i `quotRem` 32
+
+{-# INLINE getbit #-}
+getbit :: MBitVec s -> Int -> ST s Bool
+getbit v !i = do
+  x <- M.unsafeRead v idx
+  return $! testBit x off
+    where (!idx,!off) = i `quotRem` 32
+
+{-# INLINE getbit' #-}
+getbit' :: BitVec -> Int -> Bool
+getbit' v !i = testBit (U.unsafeIndex v idx) off
+    where (!idx,!off) = i `quotRem` 32
+

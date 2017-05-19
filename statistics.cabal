@@ -110,6 +110,8 @@ library
     erf,
     math-functions    >= 0.1.7,
     monad-par         >= 0.3.4,
+    mtl               >= 2.0.1.0,
+    transformers      >= 0.2,
     mwc-random        >= 0.13.0.0,
     primitive         >= 0.3,
     vector            >= 0.10,
