@@ -33,6 +33,8 @@ module Statistics.Quantile
     , medianUnbiased
     , normalUnbiased
 
+    -- * Median functions
+    , mad
     -- * References
     -- $references
     ) where
@@ -197,3 +199,12 @@ modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 -- * Hyndman, R.J.; Fan, Y. (1996) Sample quantiles in statistical
 --   packages. /American Statistician/
 --   50(4):361&#8211;365. <http://www.jstor.org/stable/2684934>
+
+-- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a sample
+-- /x/ using continuousBy.
+mad :: G.Vector v Double
+    => ContParam  -- ^ Parameters /a/ and /b/.
+    -> v Double   -- ^ /x/, the sample data.
+    -> Double
+mad cp x = continuousBy cp 2 4 . G.map (\a -> abs $ a - m) $ x
+    where m = continuousBy cp 2 4 x
