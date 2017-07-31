@@ -201,7 +201,7 @@ modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 --   50(4):361&#8211;365. <http://www.jstor.org/stable/2684934>
 
 -- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a sample
--- /x/ using continuousBy.
+-- /x/ using 'continuousBy'.
 mad :: G.Vector v Double
     => ContParam  -- ^ Parameters /a/ and /b/.
     -> v Double   -- ^ /x/, the sample data.
