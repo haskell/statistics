@@ -191,6 +191,22 @@ normalUnbiased = ContParam ta ta
 modErr :: String -> String -> a
 modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 
+
+-- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a
+--   sample /x/ using 'continuousBy'. It's robust estimate of
+--   variability in sample and defined as:
+--
+--   \[
+--   MAD = \operatorname{median}(| X_i - \operatorname{median}(X) |)
+--   \]
+mad :: G.Vector v Double
+    => ContParam  -- ^ Parameters /a/ and /b/.
+    -> v Double   -- ^ /x/, the sample data.
+    -> Double
+mad cp x = med . G.map (\a -> abs $ a - med x) $ x
+  where med = continuousBy cp 2 4
+
+
 -- $references
 --
 -- * Weisstein, E.W. Quantile. /MathWorld/.
@@ -199,12 +215,3 @@ modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 -- * Hyndman, R.J.; Fan, Y. (1996) Sample quantiles in statistical
 --   packages. /American Statistician/
 --   50(4):361&#8211;365. <http://www.jstor.org/stable/2684934>
-
--- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a sample
--- /x/ using 'continuousBy'.
-mad :: G.Vector v Double
-    => ContParam  -- ^ Parameters /a/ and /b/.
-    -> v Double   -- ^ /x/, the sample data.
-    -> Double
-mad cp x = continuousBy cp 2 4 . G.map (\a -> abs $ a - m) $ x
-    where m = continuousBy cp 2 4 x
