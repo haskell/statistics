@@ -19,6 +19,7 @@ import Statistics.Distribution.StudentT
 import Statistics.Matrix
 import Statistics.Sample
 import Statistics.Test.Internal (rankUnsorted)
+import Statistics.Types (mkPValue, PValue)
 
 
 ----------------------------------------------------------------
@@ -28,15 +29,20 @@ import Statistics.Test.Internal (rankUnsorted)
 -- | Pearson correlation for sample of pairs. Exactly same as
 -- 'Statistics.Sample.correlation'
 pearson :: (G.Vector v (Double, Double), G.Vector v Double)
-        => v (Double, Double) -> Double
-pearson = correlation
+        => v (Double, Double) -> (Double, PValue Double)
+pearson xy = (coeff, p)
+  where
+    coeff = correlation xy
+    n     = fromIntegral . G.length $ xy
+    stat  = coeff * ((sqrt (n - 2)) / (1 - (coeff ** 2)))
+    p     = mkPValue $ 2 * (complCumulative (studentT (n - 2)) . abs $ stat)
 {-# INLINE pearson #-}
 
 -- | Compute pairwise pearson correlation between rows of a matrix
 pearsonMatByRow :: Matrix -> Matrix
 pearsonMatByRow m
   = generateSym (rows m)
-      (\i j -> pearson $ row m i `U.zip` row m j)
+      (\i j -> fst . pearson $ row m i `U.zip` row m j)
 {-# INLINE pearsonMatByRow #-}
 
 
@@ -59,15 +65,12 @@ spearman :: ( Ord a
             , G.Vector v (Int, b)
             )
          => v (a, b)
-         -> (Double, Double)
+         -> (Double, PValue Double)
 spearman xy
-  = (rho, p)
+  = pearson
+  $ G.zip (rankUnsorted x) (rankUnsorted y)
   where
     (x, y) = G.unzip xy
-    rho    = pearson $ G.zip (rankUnsorted x) (rankUnsorted y)
-    n     = fromIntegral . G.length $ xy
-    stat  = rho * ((sqrt (n - 2)) / (1 - (rho ^ 2)))
-    p     = 2 * (complCumulative (studentT (n - 2)) . abs $ stat)
 {-# INLINE spearman #-}
 
 -- | compute pairwise spearman correlation between rows of a matrix
