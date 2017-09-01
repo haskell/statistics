@@ -185,7 +185,7 @@ p-value. Also API for statistical tests is changed.
 
   * Accesors for uniform distribution are added.
 
-  * ContGen instances for all continous distribtuions are added.
+  * ContGen instances for all continuous distribtuions are added.
 
   * Beta distribution is added.
 
