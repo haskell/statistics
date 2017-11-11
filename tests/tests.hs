@@ -9,6 +9,7 @@ import qualified Tests.Parametric
 import qualified Tests.Transform
 import qualified Tests.Correlation
 import qualified Tests.Serialization
+import qualified Tests.Quantile
 
 main :: IO ()
 main = defaultMain [ Tests.Distribution.tests
@@ -20,4 +21,5 @@ main = defaultMain [ Tests.Distribution.tests
                    , Tests.Transform.tests
                    , Tests.Correlation.tests
                    , Tests.Serialization.tests
+                   , Tests.Quantile.tests
                    ]

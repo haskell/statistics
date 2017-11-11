@@ -144,7 +144,7 @@ test-suite tests
     Tests.Parametric
     Tests.Serialization
     Tests.Transform
-
+    Tests.Quantile
   ghc-options:
     -Wall -threaded -rtsopts -fsimpl-tick-factor=500
 
