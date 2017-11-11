@@ -1,21 +1,23 @@
 import Test.Framework (defaultMain)
-import qualified Tests.Distribution as Distribution
-import qualified Tests.Function as Function
-import qualified Tests.KDE as KDE
-import qualified Tests.Matrix as Matrix
-import qualified Tests.NonParametric as NonParametric
-import qualified Tests.Parametric as Parametric
-import qualified Tests.Transform as Transform
-import qualified Tests.Correlation as Correlation
+
+import qualified Tests.Distribution
+import qualified Tests.Function
+import qualified Tests.KDE
+import qualified Tests.Matrix
+import qualified Tests.NonParametric
+import qualified Tests.Parametric
+import qualified Tests.Transform
+import qualified Tests.Correlation
 import qualified Tests.Serialization
+
 main :: IO ()
-main = defaultMain [ Distribution.tests
-                   , Function.tests
-                   , KDE.tests
-                   , Matrix.tests
-                   , NonParametric.tests
-                   , Parametric.tests
-                   , Transform.tests
-                   , Correlation.tests
+main = defaultMain [ Tests.Distribution.tests
+                   , Tests.Function.tests
+                   , Tests.KDE.tests
+                   , Tests.Matrix.tests
+                   , Tests.NonParametric.tests
+                   , Tests.Parametric.tests
+                   , Tests.Transform.tests
+                   , Tests.Correlation.tests
                    , Tests.Serialization.tests
                    ]
