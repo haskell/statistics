@@ -42,19 +42,21 @@ module Statistics.Quantile
 import Data.Vector.Generic ((!))
 import Numeric.MathFunctions.Constants (m_epsilon)
 import Statistics.Function (partialSort)
-import qualified Data.Vector as V
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector          as V
+import qualified Data.Vector.Generic  as G
+import qualified Data.Vector.Unboxed  as U
+import qualified Data.Vector.Storable as S
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
 -- using the weighted average method.
 --
--- The following properties should hold:
---   * the length of the input is greater than @0@
---   * the input does not contain @NaN@
---   * k ≥ 0 and k ≤ q
+-- The following properties should hold otherwise an error will be thrown.
 --
--- otherwise an error will be thrown.
+--   * the length of the input is greater than @0@
+--
+--   * the input does not contain @NaN@
+--
+--   * k ≥ 0 and k ≤ q
 weightedAvg :: G.Vector v Double =>
                Int        -- ^ /k/, the desired quantile.
             -> Int        -- ^ /q/, the number of quantiles.
@@ -79,40 +81,61 @@ weightedAvg k q x
 {-# SPECIALIZE weightedAvg :: Int -> Int -> U.Vector Double -> Double #-}
 {-# SPECIALIZE weightedAvg :: Int -> Int -> V.Vector Double -> Double #-}
 
--- | Parameters /a/ and /b/ to the 'continuousBy' function.
+-- | Parameters /a/ and /b/ to the 'continuousBy' function. Exact
+--   meaning of parameters is described in [Hyndman1996] in section
+--   \"Piecewise linear functions\"
 data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample /x/,
--- using the continuous sample method with the given parameters.  This
--- is the method used by most statistical software, such as R,
--- Mathematica, SPSS, and S.
+--   using the continuous sample method with the given parameters.
+--   This method approximates empirical CDF as continuous piecewise
+--   function which interpolates linearly between points \((X_k,p_k)\).
+--   Algorithm parameters define how \(p_k\) are chosen.
+--
+--   This is the method used by most statistical software, such as R,
+--   Mathematica, SPSS, and S.
+--
+--   The following properties should hold, otherwise an error will be thrown.
+--
+--     * the length of the input is greater than @0@
+--
+--     * the input does not contain @NaN@
+--
+--     * k ≥ 0 and k ≤ q
 continuousBy :: G.Vector v Double =>
                 ContParam  -- ^ Parameters /a/ and /b/.
              -> Int        -- ^ /k/, the desired quantile.
              -> Int        -- ^ /q/, the number of quantiles.
              -> v Double   -- ^ /x/, the sample data.
              -> Double
-continuousBy (ContParam a b) k q x
-  | q < 2          = modErr "continuousBy" "At least 2 quantiles is needed"
-  | k < 0 || k > q = modErr "continuousBy" "Wrong quantile number"
-  | G.any isNaN x  = modErr "continuousBy" "Sample contains NaNs"
-  | otherwise      = (1-h) * item (j-1) + h * item j
+continuousBy (ContParam a b) q nQ xs
+  | nQ < 2          = modErr "continuousBy" "At least 2 quantiles is needed"
+  | q < 0 || q > nQ = modErr "continuousBy" "Wrong quantile number"
+  | G.any isNaN xs  = modErr "continuousBy" "Sample contains NaNs"
+  | otherwise       = (1-g) * item (k-1) + g * item k
   where
-    j               = floor (t + eps)
-    t               = a + p * (fromIntegral n + 1 - a - b)
-    p               = fromIntegral k / fromIntegral q
-    h | abs r < eps = 0
-      | otherwise   = r
-      where r       = t - fromIntegral j
-    eps             = m_epsilon * 4
-    n               = G.length x
-    item            = (sx !) . bracket
-    sx              = partialSort (bracket j + 1) x
-    bracket m       = min (max m 0) (n - 1)
+    -- Probability for quantile
+    p     = q' / nQ'
+    -- Calculate `k' from equation for p_k [Hyndman1996] p.363 and
+    -- split it into integral and fractional parts
+    (k,g) = properFraction
+          $ a + p * (n' + 1 - a - b)
+    -- Indexing of partially sorted array. Whenever indexes go outside of
+    -- range we clamp them into range
+    item     = (sortedXs !) . clamp
+    sortedXs = partialSort (clamp k + 1) xs
+    clamp  = max 0 . min (n - 1)
+    -- Constants
+    n   = G.length xs
+    n'  = fromIntegral n
+    q'  = fromIntegral q
+    nQ' = fromIntegral nQ
 {-# SPECIALIZE
     continuousBy :: ContParam -> Int -> Int -> U.Vector Double -> Double #-}
 {-# SPECIALIZE
     continuousBy :: ContParam -> Int -> Int -> V.Vector Double -> Double #-}
+{-# SPECIALIZE
+    continuousBy :: ContParam -> Int -> Int -> S.Vector Double -> Double #-}
 
 -- | O(/n/ log /n/). Estimate the range between /q/-quantiles 1 and
 -- /q/-1 of a sample /x/, using the continuous sample method with the
@@ -147,6 +170,7 @@ midspread (ContParam a b) k x
     frac              = 1 / fromIntegral k
 {-# SPECIALIZE midspread :: ContParam -> Int -> U.Vector Double -> Double #-}
 {-# SPECIALIZE midspread :: ContParam -> Int -> V.Vector Double -> Double #-}
+{-# SPECIALIZE midspread :: ContParam -> Int -> S.Vector Double -> Double #-}
 
 -- | California Department of Public Works definition, /a/=0, /b/=1.
 -- Gives a linear interpolation of the empirical CDF.  This
@@ -212,6 +236,6 @@ mad cp x = med . G.map (\a -> abs $ a - med x) $ x
 -- * Weisstein, E.W. Quantile. /MathWorld/.
 --   <http://mathworld.wolfram.com/Quantile.html>
 --
--- * Hyndman, R.J.; Fan, Y. (1996) Sample quantiles in statistical
+-- * [Hyndman1996] Hyndman, R.J.; Fan, Y. (1996) Sample quantiles in statistical
 --   packages. /American Statistician/
 --   50(4):361&#8211;365. <http://www.jstor.org/stable/2684934>
