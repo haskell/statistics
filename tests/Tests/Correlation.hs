@@ -11,7 +11,7 @@ import Test.QuickCheck ((==>),Property,counterexample)
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 import Test.Framework.Providers.HUnit
-import Test.HUnit (Assertion, (@=?), assertBool)
+import Test.HUnit (Assertion, (@=?))
 
 import Tests.ApproxEq
 

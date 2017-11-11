@@ -268,9 +268,6 @@ logProbabilityCheck _ d x
     logP = logProbability d x
 
 
-instance QC.Arbitrary DiscreteUniform where
-  arbitrary = discreteUniformAB <$> QC.choose (1,1000) <*> QC.choose(1,1000)
-
 -- Parameters for distribution testing. Some distribution require
 -- relaxing parameters a bit
 class Param a where

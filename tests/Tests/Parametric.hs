@@ -2,7 +2,6 @@ module Tests.Parametric (tests) where
 
 import Data.Maybe (fromJust)
 import Statistics.Test.StudentT
-import Statistics.Test.Types
 import Statistics.Types
 import qualified Data.Vector.Unboxed as U
 import Test.Framework (testGroup)

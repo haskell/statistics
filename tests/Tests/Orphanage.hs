@@ -6,21 +6,22 @@
 module Tests.Orphanage where
 
 import Control.Applicative
-import Statistics.Distribution.Beta           (BetaDistribution, betaDistr)
-import Statistics.Distribution.Binomial       (BinomialDistribution, binomial)
+import Statistics.Distribution.Beta            (BetaDistribution, betaDistr)
+import Statistics.Distribution.Binomial        (BinomialDistribution, binomial)
 import Statistics.Distribution.CauchyLorentz
-import Statistics.Distribution.ChiSquared     (ChiSquared, chiSquared)
-import Statistics.Distribution.Exponential    (ExponentialDistribution, exponential)
-import Statistics.Distribution.FDistribution  (FDistribution, fDistribution)
-import Statistics.Distribution.Gamma          (GammaDistribution, gammaDistr)
+import Statistics.Distribution.ChiSquared      (ChiSquared, chiSquared)
+import Statistics.Distribution.Exponential     (ExponentialDistribution, exponential)
+import Statistics.Distribution.FDistribution   (FDistribution, fDistribution)
+import Statistics.Distribution.Gamma           (GammaDistribution, gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
-import Statistics.Distribution.Laplace        (LaplaceDistribution, laplace)
-import Statistics.Distribution.Normal         (NormalDistribution, normalDistr)
-import Statistics.Distribution.Poisson        (PoissonDistribution, poisson)
+import Statistics.Distribution.Laplace         (LaplaceDistribution, laplace)
+import Statistics.Distribution.Normal          (NormalDistribution, normalDistr)
+import Statistics.Distribution.Poisson         (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform      (LinearTransform, scaleAround)
-import Statistics.Distribution.Uniform        (UniformDistribution, uniformDistr)
+import Statistics.Distribution.Transform       (LinearTransform, scaleAround)
+import Statistics.Distribution.Uniform         (UniformDistribution, uniformDistr)
+import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
 import Statistics.Types
 
 import Test.QuickCheck         as QC
@@ -101,3 +102,6 @@ instance (Arbitrary a) => Arbitrary (UpperLimit a) where
 
 instance (Arbitrary a) => Arbitrary (LowerLimit a) where
   arbitrary = liftA2 LowerLimit arbitrary arbitrary
+
+instance QC.Arbitrary DiscreteUniform where
+  arbitrary = discreteUniformAB <$> QC.choose (1,1000) <*> QC.choose(1,1000)
