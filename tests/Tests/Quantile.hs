@@ -1,12 +1,14 @@
+{-# LANGUAGE LambdaCase #-}
 -- |
 -- Tests for quantile
 module Tests.Quantile (tests) where
 
+import Control.Exception
 import qualified Data.Vector.Unboxed as U
 import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
-import Test.HUnit (Assertion,assertEqual)
+import Test.HUnit (Assertion,assertEqual,assertFailure)
 import Test.QuickCheck hiding (sample)
 import Numeric.MathFunctions.Comparison (ulpDelta,ulpDistance)
 import Statistics.Quantile
@@ -22,6 +24,23 @@ tests = testGroup "Quantiles"
   , testCase "R alg. 9" $ compareWithR normalUnbiased
       (0.0000, 0.9375, 5.0000, 9.0625, 10.0000)
   , testProperty "alg 7." testWeigtedAverage
+    -- Test failures
+  , testCase "weightedAvg should throw errors" $ do
+      let sample  = U.fromList [1,2,3]
+          sample0 = U.fromList []
+      shouldError "Empty sample" $ weightedAvg 1 4 sample0
+      shouldError "N=0"  $ weightedAvg 1 0 sample
+      shouldError "N=1"  $ weightedAvg 1 1 sample
+      shouldError "k<0"  $ weightedAvg (-1) 4 sample
+      shouldError "k>N"  $ weightedAvg 5    4 sample
+  , testCase "continuousBy should throw errors" $ do
+      let sample  = U.fromList [1,2,3]
+          sample0 = U.fromList []
+      shouldError "Empty sample" $ continuousBy s 1 4 sample0
+      shouldError "N=0"  $ continuousBy s 1 0 sample
+      shouldError "N=1"  $ continuousBy s 1 1 sample
+      shouldError "k<0"  $ continuousBy s (-1) 4 sample
+      shouldError "k>N"  $ continuousBy s 5    4 sample
   ]
 
 sample :: U.Vector Double
@@ -44,3 +63,9 @@ testWeigtedAverage (Positive k) (Positive q) =
                           $ counterexample ("continuousBy  = " ++ show q2)
                           $ counterexample ("delta in ulps = " ++ show (ulpDelta q1 q2))
                           $ ulpDistance q1 q2 <= 16
+
+shouldError :: String -> a -> Assertion
+shouldError nm x =
+  try (evaluate x) >>= \case
+    Left  (ErrorCall{}) -> return ()
+    Right _             -> assertFailure ("Should call error: " ++ nm)
