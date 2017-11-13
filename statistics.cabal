@@ -121,10 +121,6 @@ library
   if impl(ghc < 7.6)
     build-depends:
       ghc-prim
-
-  -- gather extensive profiling data for now
-  ghc-prof-options: -auto-all
-
   ghc-options: -O2 -Wall -fwarn-tabs -funbox-strict-fields
 
 test-suite tests
