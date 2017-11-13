@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveFoldable   #-}
+{-# LANGUAGE DeriveFunctor    #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ViewPatterns     #-}
 -- |
@@ -38,6 +40,7 @@ module Statistics.Quantile
     , normalUnbiased
 
     -- * Median functions
+    , median
     , mad
     -- * Deprecated
     , continuousBy
@@ -45,13 +48,12 @@ module Statistics.Quantile
     -- $references
     ) where
 
-import Data.Vector.Generic ((!))
-import Numeric.MathFunctions.Constants (m_epsilon)
-import Statistics.Function (partialSort)
+import           Data.Vector.Generic ((!))
 import qualified Data.Vector          as V
 import qualified Data.Vector.Generic  as G
 import qualified Data.Vector.Unboxed  as U
 import qualified Data.Vector.Storable as S
+import Statistics.Function (partialSort)
 
 
 ----------------------------------------------------------------
@@ -301,6 +303,14 @@ modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 -- Specializations
 ----------------------------------------------------------------
 
+-- | O(/n/ log /n/) Estimate median of sample
+median :: G.Vector v Double
+       => ContParam  -- ^ Parameters /a/ and /b/.
+       -> v Double   -- ^ /x/, the sample data.
+       -> Double
+{-# INLINE median #-}
+median p = quantile p 1 2
+
 -- | O(/n/ log /n/). Estimate the range between /q/-quantiles 1 and
 -- /q/-1 of a sample /x/, using the continuous sample method with the
 -- given parameters.
@@ -315,26 +325,18 @@ midspread :: G.Vector v Double =>
           -> Int        -- ^ /q/, the number of quantiles.
           -> v Double   -- ^ /x/, the sample data.
           -> Double
-midspread (ContParam a b) k x
+midspread param k x
   | G.any isNaN x = modErr "midspread" "Sample contains NaNs"
   | k <= 0        = modErr "midspread" "Nonpositive number of quantiles"
-  | otherwise     = quantile (1-frac) - quantile frac
-  where
-    quantile i        = (1-h i) * item (j i-1) + h i * item (j i)
-    j i               = floor (t i + eps) :: Int
-    t i               = a + i * (fromIntegral n + 1 - a - b)
-    h i | abs r < eps = 0
-        | otherwise   = r
-        where r       = t i - fromIntegral (j i)
-    eps               = m_epsilon * 4
-    n                 = G.length x
-    item              = (sx !) . bracket
-    sx                = partialSort (bracket (j (1-frac)) + 1) x
-    bracket m         = min (max m 0) (n - 1)
-    frac              = 1 / fromIntegral k
+  | otherwise     = let Pair x1 x2 = quantiles param (Pair 1 (k-1)) k x
+                    in  x2 - x1
+{-# INLINABLE  midspread #-}
 {-# SPECIALIZE midspread :: ContParam -> Int -> U.Vector Double -> Double #-}
 {-# SPECIALIZE midspread :: ContParam -> Int -> V.Vector Double -> Double #-}
 {-# SPECIALIZE midspread :: ContParam -> Int -> S.Vector Double -> Double #-}
+
+data Pair a = Pair !a !a
+  deriving (Functor,Foldable)
 
 
 -- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a
@@ -348,8 +350,10 @@ mad :: G.Vector v Double
     => ContParam  -- ^ Parameters /a/ and /b/.
     -> v Double   -- ^ /x/, the sample data.
     -> Double
-mad cp x = med . G.map (\a -> abs $ a - med x) $ x
-  where med = quantile cp 2 4
+mad p xs
+  = median p $ G.map (abs . subtract med) xs
+  where
+    med = median p xs
 
 
 ----------------------------------------------------------------
