@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ViewPatterns     #-}
 -- |
 -- Module    : Statistics.Quantile
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -21,11 +22,14 @@ module Statistics.Quantile
     (
     -- * Quantile estimation functions
       weightedAvg
+    -- $cont_quantiles
     , ContParam(..)
-    , continuousBy
+    , quantile
+    , quantiles
+    , quantilesVec
     , midspread
 
-    -- * Parameters for the continuous sample method
+    -- ** Parameters for the continuous sample method
     , cadpw
     , hazen
     , s
@@ -35,6 +39,8 @@ module Statistics.Quantile
 
     -- * Median functions
     , mad
+    -- * Deprecated
+    , continuousBy
     -- * References
     -- $references
     ) where
@@ -47,8 +53,14 @@ import qualified Data.Vector.Generic  as G
 import qualified Data.Vector.Unboxed  as U
 import qualified Data.Vector.Storable as S
 
+
+----------------------------------------------------------------
+-- Quantile estimation
+----------------------------------------------------------------
+
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
--- using the weighted average method.
+-- using the weighted average method. Up to rounding errors it's same
+-- as @quantile s@.
 --
 -- The following properties should hold otherwise an error will be thrown.
 --
@@ -80,62 +92,214 @@ weightedAvg k q x
     n   = G.length x
 {-# SPECIALIZE weightedAvg :: Int -> Int -> U.Vector Double -> Double #-}
 {-# SPECIALIZE weightedAvg :: Int -> Int -> V.Vector Double -> Double #-}
+{-# SPECIALIZE weightedAvg :: Int -> Int -> S.Vector Double -> Double #-}
 
--- | Parameters /a/ and /b/ to the 'continuousBy' function. Exact
+
+----------------------------------------------------------------
+-- Quantiles continuous algorithm
+----------------------------------------------------------------
+
+-- $cont_quantiles
+--
+-- Below is family of functions which use same algorithm for estimation
+-- of sample quantiles. It approximates empirical CDF as continuous
+-- piecewise function which interpolates linearly between points
+-- \((X_k,p_k)\) where \(X_k\) is k-th order statistics (k-th smallest
+-- element) and \(p_k\) is probability corresponding to
+-- it. 'ContParam' determines how \(p_k\) is chosen. For more detailed
+-- explanation see [Hyndman1996].
+--
+-- This is the method used by most statistical software, such as R,
+-- Mathematica, SPSS, and S.
+
+
+-- | Parameters /α/ and /β/ to the 'continuousBy' function. Exact
 --   meaning of parameters is described in [Hyndman1996] in section
 --   \"Piecewise linear functions\"
 data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample /x/,
 --   using the continuous sample method with the given parameters.
---   This method approximates empirical CDF as continuous piecewise
---   function which interpolates linearly between points \((X_k,p_k)\).
---   Algorithm parameters define how \(p_k\) are chosen.
---
---   This is the method used by most statistical software, such as R,
---   Mathematica, SPSS, and S.
 --
 --   The following properties should hold, otherwise an error will be thrown.
 --
---     * the length of the input is greater than @0@
+--     * input sample must be nonempty
 --
 --     * the input does not contain @NaN@
 --
---     * k ≥ 0 and k ≤ q
-continuousBy :: G.Vector v Double =>
-                ContParam  -- ^ Parameters /a/ and /b/.
-             -> Int        -- ^ /k/, the desired quantile.
-             -> Int        -- ^ /q/, the number of quantiles.
-             -> v Double   -- ^ /x/, the sample data.
-             -> Double
-continuousBy (ContParam a b) q nQ xs
-  | nQ < 2          = modErr "continuousBy" "At least 2 quantiles is needed"
-  | q < 0 || q > nQ = modErr "continuousBy" "Wrong quantile number"
-  | G.any isNaN xs  = modErr "continuousBy" "Sample contains NaNs"
-  | otherwise       = (1-g) * item (k-1) + g * item k
+--     * 0 ≤ k ≤ q
+quantile :: G.Vector v Double
+         => ContParam  -- ^ Parameters /a/ and /b/.
+         -> Int        -- ^ /k/, the desired quantile.
+         -> Int        -- ^ /q/, the number of quantiles.
+         -> v Double   -- ^ /x/, the sample data.
+         -> Double
+quantile param q nQ xs
+  | nQ < 2         = modErr "continuousBy" "At least 2 quantiles is needed"
+  | badQ nQ q      = modErr "continuousBy" "Wrong quantile number"
+  | G.any isNaN xs = modErr "continuousBy" "Sample contains NaNs"
+  | otherwise      = estimateQuantile sortedXs pk
   where
-    -- Probability for quantile
-    p     = q' / nQ'
-    -- Calculate `k' from equation for p_k [Hyndman1996] p.363 and
-    -- split it into integral and fractional parts
-    (k,g) = properFraction
-          $ a + p * (n' + 1 - a - b)
-    -- Indexing of partially sorted array. Whenever indexes go outside of
-    -- range we clamp them into range
-    item     = (sortedXs !) . clamp
-    sortedXs = partialSort (clamp k + 1) xs
-    clamp  = max 0 . min (n - 1)
-    -- Constants
-    n   = G.length xs
-    n'  = fromIntegral n
-    q'  = fromIntegral q
-    nQ' = fromIntegral nQ
+    pk       = toPk param n q nQ
+    sortedXs = psort xs $ floor pk + 1
+    n        = G.length xs
+{-# INLINABLE quantile #-}
 {-# SPECIALIZE
-    continuousBy :: ContParam -> Int -> Int -> U.Vector Double -> Double #-}
+    quantile :: ContParam -> Int -> Int -> U.Vector Double -> Double #-}
 {-# SPECIALIZE
-    continuousBy :: ContParam -> Int -> Int -> V.Vector Double -> Double #-}
+    quantile :: ContParam -> Int -> Int -> V.Vector Double -> Double #-}
 {-# SPECIALIZE
-    continuousBy :: ContParam -> Int -> Int -> S.Vector Double -> Double #-}
+    quantile :: ContParam -> Int -> Int -> S.Vector Double -> Double #-}
+
+-- | O(/kn/ log /n/). Estimate set of the /k/th /q/-quantile of a
+--   sample /x/, using the continuous sample method with the given
+--   parameters. This is faster than calling quantile repeatedly since
+--   sample should be sorted only once
+--
+--   The following properties should hold, otherwise an error will be thrown.
+--
+--     * input sample must be nonempty
+--
+--     * the input does not contain @NaN@
+--
+--     * for every k in set of quantiles 0 ≤ k ≤ q
+quantiles :: (G.Vector v Double, Foldable f, Functor f)
+  => ContParam
+  -> f Int
+  -> Int
+  -> v Double
+  -> f Double
+quantiles param qs nQ xs
+  | nQ < 2           = modErr "quantiles" "At least 2 quantiles is needed"
+  | any (badQ nQ) qs = modErr "quantiles" "Wrong quantile number"
+  | G.any isNaN xs   = modErr "quantiles" "Sample contains NaNs"
+  -- Doesn't matter what we put into empty container
+  | null qs          = 0 <$ qs
+  | otherwise        = fmap (estimateQuantile sortedXs) ks'
+  where
+    ks'      = fmap (\q -> toPk param n q nQ) qs
+    sortedXs = psort xs $ floor (maximum ks') + 1
+    n        = G.length xs
+{-# INLINABLE quantiles #-}
+{-# SPECIALIZE quantiles
+      :: (Functor f, Foldable f) => ContParam -> f Int -> Int -> V.Vector Double -> f Double #-}
+{-# SPECIALIZE quantiles
+      :: (Functor f, Foldable f) => ContParam -> f Int -> Int -> U.Vector Double -> f Double #-}
+{-# SPECIALIZE quantiles
+      :: (Functor f, Foldable f) => ContParam -> f Int -> Int -> S.Vector Double -> f Double #-}
+
+
+-- | O(/kn/ log /n/). Same as quantiles but uses 'G.Vector' container
+--   instead of 'Foldable' one.
+quantilesVec :: (G.Vector v Double, G.Vector v Int)
+  => ContParam
+  -> v Int
+  -> Int
+  -> v Double
+  -> v Double
+quantilesVec param qs nQ xs
+  | nQ < 2             = modErr "quantilesVec" "At least 2 quantiles is needed"
+  | G.any (badQ nQ) qs = modErr "quantilesVec" "Wrong quantile number"
+  | G.any isNaN xs     = modErr "quantilesVec" "Sample contains NaNs"
+  | G.null qs          = G.empty
+  | otherwise          = G.map (estimateQuantile sortedXs) ks'
+  where
+    ks'      = G.map (\q -> toPk param n q nQ) qs
+    sortedXs = psort xs $ floor (G.maximum ks') + 1
+    n        = G.length xs
+{-# INLINABLE quantilesVec #-}
+{-# SPECIALIZE quantilesVec
+      :: ContParam -> V.Vector Int -> Int -> V.Vector Double -> V.Vector Double #-}
+{-# SPECIALIZE quantilesVec
+      :: ContParam -> U.Vector Int -> Int -> U.Vector Double -> U.Vector Double #-}
+{-# SPECIALIZE quantilesVec
+      :: ContParam -> S.Vector Int -> Int -> S.Vector Double -> S.Vector Double #-}
+
+
+-- Returns True if quantile number is out of range
+badQ :: Int -> Int -> Bool
+badQ nQ q = q < 0 || q > nQ
+
+-- Obtain k from equation for p_k [Hyndman1996] p.363.  Note that
+-- equation defines p_k for integer k but we calculate it as real
+-- value and will use fractional part for linear interpolation. This
+-- is correct since equation is linear.
+toPk
+  :: ContParam
+  -> Int        -- ^ /n/ number of elements
+  -> Int        -- ^ /k/, the desired quantile.
+  -> Int        -- ^ /q/, the number of quantiles.
+  -> Double
+toPk (ContParam a b) (fromIntegral -> n) q nQ
+  = a + p * (n + 1 - a - b)
+  where
+    p = fromIntegral q / fromIntegral nQ
+
+-- Estimate quantile for given k (including fractional part)
+estimateQuantile :: G.Vector v Double => v Double -> Double -> Double
+{-# INLINE estimateQuantile #-}
+estimateQuantile sortedXs k'
+  = (1-g) * item (k-1) + g * item k
+  where
+    (k,g) = properFraction k'
+    item  = (sortedXs !) . clamp
+    --
+    clamp = max 0 . min (n - 1)
+    n     = G.length sortedXs
+
+psort :: G.Vector v Double => v Double -> Int -> v Double
+psort xs k = partialSort (max 0 $ min (G.length xs - 1) k) xs
+{-# INLINE psort #-}
+
+
+-- | California Department of Public Works definition, /a/=0, /b/=1.
+-- Gives a linear interpolation of the empirical CDF.  This
+-- corresponds to method 4 in R and Mathematica.
+cadpw :: ContParam
+cadpw = ContParam 0 1
+
+-- | Hazen's definition, /a/=0.5, /b/=0.5.  This is claimed to be
+-- popular among hydrologists.  This corresponds to method 5 in R and
+-- Mathematica.
+hazen :: ContParam
+hazen = ContParam 0.5 0.5
+
+-- | Definition used by the SPSS statistics application, with /a/=0,
+-- /b/=0 (also known as Weibull's definition).  This corresponds to
+-- method 6 in R and Mathematica.
+spss :: ContParam
+spss = ContParam 0 0
+
+-- | Definition used by the S statistics application, with /a/=1,
+-- /b/=1.  The interpolation points divide the sample range into @n-1@
+-- intervals.  This corresponds to method 7 in R and Mathematica and
+-- is default in R.
+s :: ContParam
+s = ContParam 1 1
+
+-- | Median unbiased definition, /a/=1\/3, /b/=1\/3. The resulting
+-- quantile estimates are approximately median unbiased regardless of
+-- the distribution of /x/.  This corresponds to method 8 in R and
+-- Mathematica.
+medianUnbiased :: ContParam
+medianUnbiased = ContParam third third
+    where third = 1/3
+
+-- | Normal unbiased definition, /a/=3\/8, /b/=3\/8.  An approximately
+-- unbiased estimate if the empirical distribution approximates the
+-- normal distribution.  This corresponds to method 9 in R and
+-- Mathematica.
+normalUnbiased :: ContParam
+normalUnbiased = ContParam ta ta
+    where ta = 3/8
+
+modErr :: String -> String -> a
+modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
+
+
+----------------------------------------------------------------
+-- Specializations
+----------------------------------------------------------------
 
 -- | O(/n/ log /n/). Estimate the range between /q/-quantiles 1 and
 -- /q/-1 of a sample /x/, using the continuous sample method with the
@@ -172,49 +336,6 @@ midspread (ContParam a b) k x
 {-# SPECIALIZE midspread :: ContParam -> Int -> V.Vector Double -> Double #-}
 {-# SPECIALIZE midspread :: ContParam -> Int -> S.Vector Double -> Double #-}
 
--- | California Department of Public Works definition, /a/=0, /b/=1.
--- Gives a linear interpolation of the empirical CDF.  This
--- corresponds to method 4 in R and Mathematica.
-cadpw :: ContParam
-cadpw = ContParam 0 1
-
--- | Hazen's definition, /a/=0.5, /b/=0.5.  This is claimed to be
--- popular among hydrologists.  This corresponds to method 5 in R and
--- Mathematica.
-hazen :: ContParam
-hazen = ContParam 0.5 0.5
-
--- | Definition used by the SPSS statistics application, with /a/=0,
--- /b/=0 (also known as Weibull's definition).  This corresponds to
--- method 6 in R and Mathematica.
-spss :: ContParam
-spss = ContParam 0 0
-
--- | Definition used by the S statistics application, with /a/=1,
--- /b/=1.  The interpolation points divide the sample range into @n-1@
--- intervals.  This corresponds to method 7 in R and Mathematica.
-s :: ContParam
-s = ContParam 1 1
-
--- | Median unbiased definition, /a/=1\/3, /b/=1\/3. The resulting
--- quantile estimates are approximately median unbiased regardless of
--- the distribution of /x/.  This corresponds to method 8 in R and
--- Mathematica.
-medianUnbiased :: ContParam
-medianUnbiased = ContParam third third
-    where third = 1/3
-
--- | Normal unbiased definition, /a/=3\/8, /b/=3\/8.  An approximately
--- unbiased estimate if the empirical distribution approximates the
--- normal distribution.  This corresponds to method 9 in R and
--- Mathematica.
-normalUnbiased :: ContParam
-normalUnbiased = ContParam ta ta
-    where ta = 3/8
-
-modErr :: String -> String -> a
-modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
-
 
 -- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a
 --   sample /x/ using 'continuousBy'. It's robust estimate of
@@ -228,8 +349,21 @@ mad :: G.Vector v Double
     -> v Double   -- ^ /x/, the sample data.
     -> Double
 mad cp x = med . G.map (\a -> abs $ a - med x) $ x
-  where med = continuousBy cp 2 4
+  where med = quantile cp 2 4
 
+
+----------------------------------------------------------------
+-- Deprecated
+----------------------------------------------------------------
+
+continuousBy :: G.Vector v Double =>
+                ContParam  -- ^ Parameters /a/ and /b/.
+             -> Int        -- ^ /k/, the desired quantile.
+             -> Int        -- ^ /q/, the number of quantiles.
+             -> v Double   -- ^ /x/, the sample data.
+             -> Double
+continuousBy = quantile
+{-# DEPRECATED continuousBy "Use quantile instead" #-}
 
 -- $references
 --
