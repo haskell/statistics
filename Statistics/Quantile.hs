@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP              #-}
 {-# LANGUAGE DeriveFoldable   #-}
 {-# LANGUAGE DeriveFunctor    #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -48,6 +49,8 @@ module Statistics.Quantile
     -- $references
     ) where
 
+import           Data.Functor
+import qualified Data.Foldable        as F
 import           Data.Vector.Generic ((!))
 import qualified Data.Vector          as V
 import qualified Data.Vector.Generic  as G
@@ -165,31 +168,38 @@ quantile param q nQ xs
 --     * the input does not contain @NaN@
 --
 --     * for every k in set of quantiles 0 ≤ k ≤ q
-quantiles :: (G.Vector v Double, Foldable f, Functor f)
+quantiles :: (G.Vector v Double, F.Foldable f, Functor f)
   => ContParam
   -> f Int
   -> Int
   -> v Double
   -> f Double
 quantiles param qs nQ xs
-  | nQ < 2           = modErr "quantiles" "At least 2 quantiles is needed"
-  | any (badQ nQ) qs = modErr "quantiles" "Wrong quantile number"
-  | G.any isNaN xs   = modErr "quantiles" "Sample contains NaNs"
+  | nQ < 2             = modErr "quantiles" "At least 2 quantiles is needed"
+  | F.any (badQ nQ) qs = modErr "quantiles" "Wrong quantile number"
+  | G.any isNaN xs     = modErr "quantiles" "Sample contains NaNs"
   -- Doesn't matter what we put into empty container
-  | null qs          = 0 <$ qs
-  | otherwise        = fmap (estimateQuantile sortedXs) ks'
+  | fnull qs           = 0 <$ qs
+  | otherwise          = fmap (estimateQuantile sortedXs) ks'
   where
     ks'      = fmap (\q -> toPk param n q nQ) qs
-    sortedXs = psort xs $ floor (maximum ks') + 1
+    sortedXs = psort xs $ floor (F.maximum ks') + 1
     n        = G.length xs
 {-# INLINABLE quantiles #-}
 {-# SPECIALIZE quantiles
-      :: (Functor f, Foldable f) => ContParam -> f Int -> Int -> V.Vector Double -> f Double #-}
+      :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> V.Vector Double -> f Double #-}
 {-# SPECIALIZE quantiles
-      :: (Functor f, Foldable f) => ContParam -> f Int -> Int -> U.Vector Double -> f Double #-}
+      :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> U.Vector Double -> f Double #-}
 {-# SPECIALIZE quantiles
-      :: (Functor f, Foldable f) => ContParam -> f Int -> Int -> S.Vector Double -> f Double #-}
+      :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> S.Vector Double -> f Double #-}
 
+-- COMPAT
+fnull :: F.Foldable f => f a -> Bool
+#if !MIN_VERSION_base(4,8,0)
+fnull = F.foldr (\_ _ -> False) True
+#else
+fnull = null
+#endif
 
 -- | O(/kn/ log /n/). Same as quantiles but uses 'G.Vector' container
 --   instead of 'Foldable' one.
@@ -336,7 +346,7 @@ midspread param k x
 {-# SPECIALIZE midspread :: ContParam -> Int -> S.Vector Double -> Double #-}
 
 data Pair a = Pair !a !a
-  deriving (Functor,Foldable)
+  deriving (Functor, F.Foldable)
 
 
 -- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a

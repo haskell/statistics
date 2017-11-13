@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase   #-}
 {-# LANGUAGE ViewPatterns #-}
 -- |
 -- Tests for quantile
@@ -94,7 +93,8 @@ propQuantilesVec (Positive n)
 
 
 shouldError :: String -> a -> Assertion
-shouldError nm x =
-  try (evaluate x) >>= \case
+shouldError nm x = do
+  r <- try (evaluate x)
+  case r of
     Left  (ErrorCall{}) -> return ()
     Right _             -> assertFailure ("Should call error: " ++ nm)
