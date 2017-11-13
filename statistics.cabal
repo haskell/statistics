@@ -45,7 +45,7 @@ extra-source-files:
   tests/utils/Makefile
   tests/utils/fftw.c
 tested-with: GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.1
-  
+
 library
   exposed-modules:
     Statistics.Autocorrelation
@@ -101,21 +101,23 @@ library
     Statistics.Sample.Internal
     Statistics.Test.Internal
     Statistics.Types.Internal
-  build-depends:
-    aeson >= 0.6.0.0,
-    base >= 4.5 && < 5,
-    base-orphans >= 0.6 && <0.7,
-    binary >= 0.5.1.0,
-    deepseq >= 1.1.0.2,
-    erf,
-    math-functions    >= 0.1.7,
-    monad-par         >= 0.3.4,
-    mwc-random        >= 0.13.0.0,
-    primitive         >= 0.3,
-    vector            >= 0.10,
-    vector-algorithms >= 0.4,
-    vector-th-unbox,
-    vector-binary-instances >= 0.2.1
+  build-depends: base                    >= 4.5 && < 5
+               , base-orphans            >= 0.6 && <0.7
+                 --
+               , math-functions          >= 0.1.7
+               , mwc-random              >= 0.13.0.0
+                 --
+               , aeson                   >= 0.6.0.0
+               , deepseq                 >= 1.1.0.2
+               , binary                  >= 0.5.1.0
+               , erf
+               , monad-par               >= 0.3.4
+               , primitive               >= 0.3
+               , vector                  >= 0.10
+               , vector-algorithms       >= 0.4
+               , vector-th-unbox
+               , vector-binary-instances >= 0.2.1
+               , data-default-class      >= 0.1.2
   if impl(ghc < 7.6)
     build-depends:
       ghc-prim
@@ -148,23 +150,22 @@ test-suite tests
   ghc-options:
     -Wall -threaded -rtsopts -fsimpl-tick-factor=500
 
-  build-depends:
-    HUnit,
-    QuickCheck >= 2.7.5,
-    base,
-    binary,
-    erf,
-    aeson,
-    ieee754 >= 0.7.3,
-    math-functions,
-    mwc-random,
-    primitive,
-    statistics,
-    test-framework,
-    test-framework-hunit,
-    test-framework-quickcheck2,
-    vector,
-    vector-algorithms
+  build-depends: base
+               , HUnit
+               , QuickCheck >= 2.7.5
+               , binary
+               , erf
+               , aeson
+               , ieee754 >= 0.7.3
+               , math-functions
+               , mwc-random
+               , primitive
+               , statistics
+               , test-framework
+               , test-framework-hunit
+               , test-framework-quickcheck2
+               , vector
+               , vector-algorithms
 
 source-repository head
   type:     git

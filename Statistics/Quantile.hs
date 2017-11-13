@@ -1,8 +1,10 @@
-{-# LANGUAGE CPP              #-}
-{-# LANGUAGE DeriveFoldable   #-}
-{-# LANGUAGE DeriveFunctor    #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ViewPatterns     #-}
+{-# LANGUAGE CPP                #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFoldable     #-}
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE ViewPatterns       #-}
 -- |
 -- Module    : Statistics.Quantile
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -49,6 +51,10 @@ module Statistics.Quantile
     -- $references
     ) where
 
+import           Data.Binary            (Binary)
+import           Data.Aeson             (ToJSON,FromJSON)
+import           Data.Data              (Data,Typeable)
+import           Data.Default.Class
 import           Data.Functor
 import qualified Data.Foldable        as F
 import           Data.Vector.Generic ((!))
@@ -56,6 +62,8 @@ import qualified Data.Vector          as V
 import qualified Data.Vector.Generic  as G
 import qualified Data.Vector.Unboxed  as U
 import qualified Data.Vector.Storable as S
+import GHC.Generics (Generic)
+
 import Statistics.Function (partialSort)
 
 
@@ -122,6 +130,14 @@ weightedAvg k q x
 --   meaning of parameters is described in [Hyndman1996] in section
 --   \"Piecewise linear functions\"
 data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+  deriving (Show,Eq,Ord,Data,Typeable,Generic)
+
+instance Default ContParam where
+  def = s
+
+instance Binary   ContParam
+instance ToJSON   ContParam
+instance FromJSON ContParam
 
 -- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample /x/,
 --   using the continuous sample method with the given parameters.
