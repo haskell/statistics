@@ -26,25 +26,25 @@
 module Statistics.Quantile
     (
     -- * Quantile estimation functions
-      weightedAvg
     -- $cont_quantiles
-    , ContParam(..)
+      ContParam(..)
+    , Default(..)
     , quantile
     , quantiles
     , quantilesVec
-    , midspread
-
     -- ** Parameters for the continuous sample method
     , cadpw
     , hazen
-    , s
     , spss
+    , s
     , medianUnbiased
     , normalUnbiased
-
-    -- * Median functions
+    -- * Other algorithms
+    , weightedAvg
+    -- * Median & other specializations
     , median
     , mad
+    , midspread
     -- * Deprecated
     , continuousBy
     -- * References
@@ -71,7 +71,7 @@ import Statistics.Function (partialSort)
 -- Quantile estimation
 ----------------------------------------------------------------
 
--- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample,
+-- | O(/n/·log /n/). Estimate the /k/th /q/-quantile of a sample,
 -- using the weighted average method. Up to rounding errors it's same
 -- as @quantile s@.
 --
@@ -132,6 +132,7 @@ weightedAvg k q x
 data ContParam = ContParam {-# UNPACK #-} !Double {-# UNPACK #-} !Double
   deriving (Show,Eq,Ord,Data,Typeable,Generic)
 
+-- | We use 's' as default value which is same as R's default.
 instance Default ContParam where
   def = s
 
@@ -139,7 +140,7 @@ instance Binary   ContParam
 instance ToJSON   ContParam
 instance FromJSON ContParam
 
--- | O(/n/ log /n/). Estimate the /k/th /q/-quantile of a sample /x/,
+-- | O(/n/·log /n/). Estimate the /k/th /q/-quantile of a sample /x/,
 --   using the continuous sample method with the given parameters.
 --
 --   The following properties should hold, otherwise an error will be thrown.
@@ -150,7 +151,7 @@ instance FromJSON ContParam
 --
 --     * 0 ≤ k ≤ q
 quantile :: G.Vector v Double
-         => ContParam  -- ^ Parameters /a/ and /b/.
+         => ContParam  -- ^ Parameters /α/ and /β/.
          -> Int        -- ^ /k/, the desired quantile.
          -> Int        -- ^ /q/, the number of quantiles.
          -> v Double   -- ^ /x/, the sample data.
@@ -172,7 +173,7 @@ quantile param q nQ xs
 {-# SPECIALIZE
     quantile :: ContParam -> Int -> Int -> S.Vector Double -> Double #-}
 
--- | O(/kn/ log /n/). Estimate set of the /k/th /q/-quantile of a
+-- | O(/k·n/·log /n/). Estimate set of the /k/th /q/-quantile of a
 --   sample /x/, using the continuous sample method with the given
 --   parameters. This is faster than calling quantile repeatedly since
 --   sample should be sorted only once
@@ -217,7 +218,7 @@ fnull = F.foldr (\_ _ -> False) True
 fnull = null
 #endif
 
--- | O(/kn/ log /n/). Same as quantiles but uses 'G.Vector' container
+-- | O(/k·n/·log /n/). Same as quantiles but uses 'G.Vector' container
 --   instead of 'Foldable' one.
 quantilesVec :: (G.Vector v Double, G.Vector v Int)
   => ContParam
@@ -280,32 +281,32 @@ psort xs k = partialSort (max 0 $ min (G.length xs - 1) k) xs
 {-# INLINE psort #-}
 
 
--- | California Department of Public Works definition, /a/=0, /b/=1.
+-- | California Department of Public Works definition, /α/=0, /β/=1.
 -- Gives a linear interpolation of the empirical CDF.  This
 -- corresponds to method 4 in R and Mathematica.
 cadpw :: ContParam
 cadpw = ContParam 0 1
 
--- | Hazen's definition, /a/=0.5, /b/=0.5.  This is claimed to be
+-- | Hazen's definition, /α/=0.5, /β/=0.5.  This is claimed to be
 -- popular among hydrologists.  This corresponds to method 5 in R and
 -- Mathematica.
 hazen :: ContParam
 hazen = ContParam 0.5 0.5
 
--- | Definition used by the SPSS statistics application, with /a/=0,
--- /b/=0 (also known as Weibull's definition).  This corresponds to
+-- | Definition used by the SPSS statistics application, with /α/=0,
+-- /β/=0 (also known as Weibull's definition).  This corresponds to
 -- method 6 in R and Mathematica.
 spss :: ContParam
 spss = ContParam 0 0
 
--- | Definition used by the S statistics application, with /a/=1,
--- /b/=1.  The interpolation points divide the sample range into @n-1@
+-- | Definition used by the S statistics application, with /α/=1,
+-- /β/=1.  The interpolation points divide the sample range into @n-1@
 -- intervals.  This corresponds to method 7 in R and Mathematica and
 -- is default in R.
 s :: ContParam
 s = ContParam 1 1
 
--- | Median unbiased definition, /a/=1\/3, /b/=1\/3. The resulting
+-- | Median unbiased definition, /α/=1\/3, /β/=1\/3. The resulting
 -- quantile estimates are approximately median unbiased regardless of
 -- the distribution of /x/.  This corresponds to method 8 in R and
 -- Mathematica.
@@ -313,7 +314,7 @@ medianUnbiased :: ContParam
 medianUnbiased = ContParam third third
     where third = 1/3
 
--- | Normal unbiased definition, /a/=3\/8, /b/=3\/8.  An approximately
+-- | Normal unbiased definition, /α/=3\/8, /β/=3\/8.  An approximately
 -- unbiased estimate if the empirical distribution approximates the
 -- normal distribution.  This corresponds to method 9 in R and
 -- Mathematica.
@@ -329,15 +330,15 @@ modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 -- Specializations
 ----------------------------------------------------------------
 
--- | O(/n/ log /n/) Estimate median of sample
+-- | O(/n/·log /n/) Estimate median of sample
 median :: G.Vector v Double
-       => ContParam  -- ^ Parameters /a/ and /b/.
+       => ContParam  -- ^ Parameters /α/ and /β/.
        -> v Double   -- ^ /x/, the sample data.
        -> Double
 {-# INLINE median #-}
 median p = quantile p 1 2
 
--- | O(/n/ log /n/). Estimate the range between /q/-quantiles 1 and
+-- | O(/n/·log /n/). Estimate the range between /q/-quantiles 1 and
 -- /q/-1 of a sample /x/, using the continuous sample method with the
 -- given parameters.
 --
@@ -347,7 +348,7 @@ median p = quantile p 1 2
 -- > midspread medianUnbiased 4 (U.fromList [1,1,2,2,3])
 -- > ==> 1.333333
 midspread :: G.Vector v Double =>
-             ContParam  -- ^ Parameters /a/ and /b/.
+             ContParam  -- ^ Parameters /α/ and /β/.
           -> Int        -- ^ /q/, the number of quantiles.
           -> v Double   -- ^ /x/, the sample data.
           -> Double
@@ -365,7 +366,7 @@ data Pair a = Pair !a !a
   deriving (Functor, F.Foldable)
 
 
--- | O(/n/ log /n/). Estimate the median absolute deviation (MAD) of a
+-- | O(/n/·log /n/). Estimate the median absolute deviation (MAD) of a
 --   sample /x/ using 'continuousBy'. It's robust estimate of
 --   variability in sample and defined as:
 --
@@ -373,13 +374,17 @@ data Pair a = Pair !a !a
 --   MAD = \operatorname{median}(| X_i - \operatorname{median}(X) |)
 --   \]
 mad :: G.Vector v Double
-    => ContParam  -- ^ Parameters /a/ and /b/.
+    => ContParam  -- ^ Parameters /α/ and /β/.
     -> v Double   -- ^ /x/, the sample data.
     -> Double
 mad p xs
   = median p $ G.map (abs . subtract med) xs
   where
     med = median p xs
+{-# INLINABLE  mad #-}
+{-# SPECIALIZE mad :: ContParam -> U.Vector Double -> Double #-}
+{-# SPECIALIZE mad :: ContParam -> V.Vector Double -> Double #-}
+{-# SPECIALIZE mad :: ContParam -> S.Vector Double -> Double #-}
 
 
 ----------------------------------------------------------------
@@ -387,7 +392,7 @@ mad p xs
 ----------------------------------------------------------------
 
 continuousBy :: G.Vector v Double =>
-                ContParam  -- ^ Parameters /a/ and /b/.
+                ContParam  -- ^ Parameters /α/ and /β/.
              -> Int        -- ^ /k/, the desired quantile.
              -> Int        -- ^ /q/, the number of quantiles.
              -> v Double   -- ^ /x/, the sample data.

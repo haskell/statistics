@@ -159,5 +159,5 @@ instance D.FromSample LaplaceDistribution Double where
     | G.null xs = Nothing
     | otherwise = Just $! LD s l
     where
-      s = Q.continuousBy Q.medianUnbiased 1 2 xs
+      s = Q.median Q.medianUnbiased xs
       l = S.mean $ G.map (\x -> abs $ x - s) xs
