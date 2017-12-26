@@ -113,7 +113,7 @@ ridders tol (lo,hi) f
     go !a !fa !b !fb !i
         -- Root is bracketed within 1 ulp. No improvement could be made
         | within 1 a b       = Root a
-        -- Root is found. Check that f(m) == 0 is nessesary to ensure
+        -- Root is found. Check that f(m) == 0 is necessary to ensure
         -- that root is never passed to 'go'
         | fm == 0            = Root m
         | fn == 0            = Root n

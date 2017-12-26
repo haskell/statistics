@@ -10,7 +10,7 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- The exponential distribution.  This is the continunous probability
+-- The exponential distribution.  This is the continuous probability
 -- distribution of the times between events in a poisson process, in
 -- which events occur continuously and independently at a constant
 -- average rate.

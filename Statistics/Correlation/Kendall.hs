@@ -5,7 +5,7 @@
 -- Fast O(NlogN) implementation of
 -- <http://en.wikipedia.org/wiki/Kendall_tau_rank_correlation_coefficient Kendall's tau>.
 --
--- This module implementes Kendall's tau form b which allows ties in the data.
+-- This module implements Kendall's tau form b which allows ties in the data.
 -- This is the same formula used by other statistical packages, e.g., R, matlab.
 --
 -- > \tau = \frac{n_c - n_d}{\sqrt{(n_0 - n_1)(n_0 - n_2)}}

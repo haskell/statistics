@@ -66,7 +66,7 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 
--- Operator ^ will be overriden
+-- Operator ^ will be overridden
 import Prelude hiding ((^), sum)
 
 -- | /O(n)/ Range. The difference between the largest and smallest
