@@ -13,7 +13,7 @@
 -- inclusive interval {1, ..., n}. This is parametrized with n only,
 -- where p_1, ..., p_n = 1/n. ('discreteUniform').
 --
--- The second parametrizaton is the uniform distribution on {a, ..., b} with
+-- The second parametrization is the uniform distribution on {a, ..., b} with
 -- probabilities p_a, ..., p_b = 1/(a-b+1). This is parametrized with
 -- /a/ and /b/. ('discreteUniformAB')
 

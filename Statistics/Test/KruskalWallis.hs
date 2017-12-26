@@ -78,7 +78,7 @@ kruskalWallis samples = (nTot - 1) * numerator / denominator
 -- significance. For additional information check 'kruskalWallis'. This is just
 -- a helper function.
 --
--- It uses /Chi-Squared/ distribution for aproximation as long as the sizes are
+-- It uses /Chi-Squared/ distribution for approximation as long as the sizes are
 -- larger than 5. Otherwise the test returns 'Nothing'.
 kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test ())
 kruskalWallisTest []      = Nothing

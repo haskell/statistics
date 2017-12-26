@@ -69,7 +69,7 @@ uniformDistrE a b
   | b < a     = Just $ UniformDistribution b a
   | a < b     = Just $ UniformDistribution a b
   | otherwise = Nothing
--- NOTE: failure is in default branch to guard againist NaNs.
+-- NOTE: failure is in default branch to guard against NaNs.
 
 errMsg :: String
 errMsg = "Statistics.Distribution.Uniform.uniform: wrong parameters"

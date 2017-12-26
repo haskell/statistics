@@ -87,7 +87,7 @@ instance FromJSON PositionTest
 instance ToJSON   PositionTest
 instance NFData   PositionTest
 
--- | significant if parameter is 'True', not significant otherwiser
+-- | significant if parameter is 'True', not significant otherwise
 significant :: Bool -> TestResult
 significant True  = Significant
 significant False = NotSignificant

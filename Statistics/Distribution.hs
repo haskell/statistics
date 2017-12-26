@@ -57,7 +57,7 @@ class Distribution d where
     -- > cumulative d -∞ = 0
     cumulative :: d -> Double -> Double
 
-    -- | One's complement of cumulative distibution:
+    -- | One's complement of cumulative distribution:
     --
     -- > complCumulative d x = 1 - cumulative d x
     --
@@ -79,7 +79,7 @@ class Distribution  d => DiscreteDistr d where
     logProbability d = log . probability d
 
 
--- | Continuous probability distributuion.
+-- | Continuous probability distribution.
 --
 --   Minimal complete definition is 'quantile' and either 'density' or
 --   'logDensity'.
@@ -111,7 +111,7 @@ class Distribution d => ContDistr d where
 class Distribution d => MaybeMean d where
     maybeMean :: d -> Maybe Double
 
--- | Type class for distributions with mean. If distribution have
+-- | Type class for distributions with mean. If a distribution has
 --   finite mean for all valid values of parameters it should be
 --   instance of this type class.
 class MaybeMean d => Mean d where
@@ -130,7 +130,7 @@ class MaybeMean d => MaybeVariance d where
     maybeStdDev   :: d -> Maybe Double
     maybeStdDev = fmap sqrt . maybeVariance
 
--- | Type class for distributions with variance. If distibution have
+-- | Type class for distributions with variance. If distribution have
 --   finite variance for all valid parameter values it should be
 --   instance of this type class.
 --
@@ -228,6 +228,6 @@ findRoot d prob = loop 0 1
 -- | Sum probabilities in inclusive interval.
 sumProbabilities :: DiscreteDistr d => d -> Int -> Int -> Double
 sumProbabilities d low hi =
-  -- Return value is forced to be less than 1 to guard againist roundoff errors.
+  -- Return value is forced to be less than 1 to guard against roundoff errors.
   -- ATTENTION! this check should be removed for testing or it could mask bugs.
   min 1 . sum . U.map (probability d) $ U.enumFromTo low hi
