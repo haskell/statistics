@@ -242,7 +242,9 @@ jackknifeVariance_ c samp
 
 -- | /O(n)/ Compute the unbiased jackknife variance of a sample.
 jackknifeVarianceUnb :: Sample -> U.Vector Double
-jackknifeVarianceUnb = jackknifeVariance_ 1
+jackknifeVarianceUnb samp
+  | G.length samp == 2  = singletonErr "jackknifeVariance"
+  | otherwise           = jackknifeVariance_ 1 samp
 
 -- | /O(n)/ Compute the jackknife variance of a sample.
 jackknifeVariance :: Sample -> U.Vector Double
@@ -264,7 +266,7 @@ dropAt n v = U.slice 0 n v U.++ U.slice (n+1) (U.length v - n - 1) v
 
 singletonErr :: String -> a
 singletonErr func = error $
-                    "Statistics.Resampling." ++ func ++ ": singleton input"
+                    "Statistics.Resampling." ++ func ++ ": not enough elements in sample"
 
 -- | Split a generator into several that can run independently.
 splitGen :: Int -> GenIO -> IO [GenIO]
