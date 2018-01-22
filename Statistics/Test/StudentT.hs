@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, Rank2Types, ScopedTypeVariables #-}
--- | Student's T-test is for assesing whether two samples have
+-- | Student's T-test is for assessing whether two samples have
 --   different mean. This module contain several variations of
 --   T-test. It's a parametric tests and assumes that samples are
 --   normally distributed.

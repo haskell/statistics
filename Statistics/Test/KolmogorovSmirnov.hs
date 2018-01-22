@@ -61,7 +61,7 @@ kolmogorovSmirnovTest d
   = kolmogorovSmirnovTestCdf (cumulative d)
 
 
--- | Variant of 'kolmogorovSmirnovTest' which uses CFD in form of
+-- | Variant of 'kolmogorovSmirnovTest' which uses CDF in form of
 --   function.
 kolmogorovSmirnovTestCdf :: (G.Vector v Double)
                          => (Double -> Double) -- ^ CDF of distribution

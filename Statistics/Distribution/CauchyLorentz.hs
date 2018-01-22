@@ -88,7 +88,7 @@ errMsg _ s
   = "Statistics.Distribution.CauchyLorentz.cauchyDistribution: FWHM must be positive. Got "
   ++ show s
 
--- | Standard Cauchy distribution. It's centered at 0 and and have 1 FWHM
+-- | Standard Cauchy distribution. It's centered at 0 and have 1 FWHM
 standardCauchy :: CauchyDistribution
 standardCauchy = CD 0 1
 

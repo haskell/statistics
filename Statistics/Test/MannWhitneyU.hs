@@ -8,7 +8,7 @@
 -- Portability : portable
 --
 -- Mann-Whitney U test (also know as Mann-Whitney-Wilcoxon and
--- Wilcoxon rank sum test) is a non-parametric test for assesing
+-- Wilcoxon rank sum test) is a non-parametric test for assessing
 -- whether two samples of independent observations have different
 -- mean.
 module Statistics.Test.MannWhitneyU (
@@ -109,7 +109,7 @@ mannWhitneyUCriticalValue
   -> Maybe Int      -- ^ The critical value (of U).
 mannWhitneyUCriticalValue (m, n) p
   | m < 1 || n < 1 = Nothing    -- Sample must be nonempty
-  | p' <= 1        = Nothing    -- p-value is too small. Null hypothesys couln't be disproved
+  | p' <= 1        = Nothing    -- p-value is too small. Null hypothesis couldn't be disproved
   | otherwise      = findIndex (>= p')
                    $ take (m*n)
                    $ tail
