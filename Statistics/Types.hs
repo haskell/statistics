@@ -62,7 +62,7 @@ module Statistics.Types
       -- * Error handling
     , Partial(..)
     , partial
-    , StatisticsException
+    , StatisticsException(..)
       -- * Other
     , Sample
     , WeightedSample
@@ -537,6 +537,9 @@ data StatisticsException
     -- ^ Quantity of interest couldn't be calculated for given
     --   sample. Parameters are function name and human-readable error
     --   string.
+  deriving (Show)
+
+instance Exception StatisticsException
 
 ----------------------------------------------------------------
 -- Deriving unbox instances

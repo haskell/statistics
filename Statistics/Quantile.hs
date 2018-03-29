@@ -22,7 +22,6 @@
 -- with /q/=4, a 4-quantile (also known as a /quartile/) has 4
 -- intervals, and contains 5 points.  The parameter /k/ describes the
 -- desired point, where 0 ≤ /k/ ≤ /q/.
-
 module Statistics.Quantile
     (
     -- * Quantile estimation functions
@@ -45,12 +44,11 @@ module Statistics.Quantile
     , median
     , mad
     , midspread
-    -- * Deprecated
-    , continuousBy
     -- * References
     -- $references
     ) where
 
+import           Control.Monad.Catch    (MonadThrow(..))
 import           Data.Binary            (Binary)
 import           Data.Aeson             (ToJSON,FromJSON)
 import           Data.Data              (Data,Typeable)
@@ -65,7 +63,7 @@ import qualified Data.Vector.Storable as S
 import GHC.Generics (Generic)
 
 import Statistics.Function (partialSort)
-
+import Statistics.Types    (StatisticsException(..))
 
 ----------------------------------------------------------------
 -- Quantile estimation
@@ -82,18 +80,18 @@ import Statistics.Function (partialSort)
 --   * the input does not contain @NaN@
 --
 --   * k ≥ 0 and k ≤ q
-weightedAvg :: G.Vector v Double =>
-               Int        -- ^ /k/, the desired quantile.
+weightedAvg :: (G.Vector v Double, MonadThrow m)
+            => Int        -- ^ /k/, the desired quantile.
             -> Int        -- ^ /q/, the number of quantiles.
             -> v Double   -- ^ /x/, the sample data.
-            -> Double
+            -> m Double
 weightedAvg k q x
   | G.any isNaN x   = modErr "weightedAvg" "Sample contains NaNs"
   | n == 0          = modErr "weightedAvg" "Sample is empty"
-  | n == 1          = G.head x
+  | n == 1          = return $! G.head x
   | q < 2           = modErr "weightedAvg" "At least 2 quantiles is needed"
-  | k == q          = G.maximum x
-  | k >= 0 || k < q = xj + g * (xj1 - xj)
+  | k == q          = return $! G.maximum x
+  | k >= 0 || k < q = return $! xj + g * (xj1 - xj)
   | otherwise       = modErr "weightedAvg" "Wrong quantile number"
   where
     j   = floor idx
@@ -103,9 +101,9 @@ weightedAvg k q x
     xj1 = sx ! (j+1)
     sx  = partialSort (j+2) x
     n   = G.length x
-{-# SPECIALIZE weightedAvg :: Int -> Int -> U.Vector Double -> Double #-}
-{-# SPECIALIZE weightedAvg :: Int -> Int -> V.Vector Double -> Double #-}
-{-# SPECIALIZE weightedAvg :: Int -> Int -> S.Vector Double -> Double #-}
+{-# SPECIALIZE weightedAvg :: MonadThrow m => Int -> Int -> V.Vector Double -> m Double #-}
+{-# SPECIALIZE weightedAvg :: MonadThrow m => Int -> Int -> U.Vector Double -> m Double #-}
+{-# SPECIALIZE weightedAvg :: MonadThrow m => Int -> Int -> S.Vector Double -> m Double #-}
 
 
 ----------------------------------------------------------------
@@ -150,28 +148,25 @@ instance FromJSON ContParam
 --     * the input does not contain @NaN@
 --
 --     * 0 ≤ k ≤ q
-quantile :: G.Vector v Double
+quantile :: (G.Vector v Double, MonadThrow m)
          => ContParam  -- ^ Parameters /α/ and /β/.
          -> Int        -- ^ /k/, the desired quantile.
          -> Int        -- ^ /q/, the number of quantiles.
          -> v Double   -- ^ /x/, the sample data.
-         -> Double
+         -> m Double
 quantile param q nQ xs
-  | nQ < 2         = modErr "continuousBy" "At least 2 quantiles is needed"
-  | badQ nQ q      = modErr "continuousBy" "Wrong quantile number"
-  | G.any isNaN xs = modErr "continuousBy" "Sample contains NaNs"
-  | otherwise      = estimateQuantile sortedXs pk
+  | nQ < 2         = modErr "quantile" "At least 2 quantiles is needed"
+  | badQ nQ q      = modErr "quantile" "Wrong quantile number"
+  | G.any isNaN xs = modErr "quantile" "Sample contains NaNs"
+  | otherwise      = return $! estimateQuantile sortedXs pk
   where
     pk       = toPk param n q nQ
     sortedXs = psort xs $ floor pk + 1
     n        = G.length xs
 {-# INLINABLE quantile #-}
-{-# SPECIALIZE
-    quantile :: ContParam -> Int -> Int -> U.Vector Double -> Double #-}
-{-# SPECIALIZE
-    quantile :: ContParam -> Int -> Int -> V.Vector Double -> Double #-}
-{-# SPECIALIZE
-    quantile :: ContParam -> Int -> Int -> S.Vector Double -> Double #-}
+{-# SPECIALIZE quantile :: MonadThrow m => ContParam -> Int -> Int -> V.Vector Double -> m Double #-}
+{-# SPECIALIZE quantile :: MonadThrow m => ContParam -> Int -> Int -> U.Vector Double -> m Double #-}
+{-# SPECIALIZE quantile :: MonadThrow m => ContParam -> Int -> Int -> S.Vector Double -> m Double #-}
 
 -- | O(/k·n/·log /n/). Estimate set of the /k/th /q/-quantile of a
 --   sample /x/, using the continuous sample method with the given
@@ -185,30 +180,29 @@ quantile param q nQ xs
 --     * the input does not contain @NaN@
 --
 --     * for every k in set of quantiles 0 ≤ k ≤ q
-quantiles :: (G.Vector v Double, F.Foldable f, Functor f)
+quantiles
+  :: (G.Vector v Double, F.Foldable f, Functor f, MonadThrow m)
   => ContParam
   -> f Int
   -> Int
   -> v Double
-  -> f Double
+  -> m (f Double)
 quantiles param qs nQ xs
   | nQ < 2             = modErr "quantiles" "At least 2 quantiles is needed"
   | F.any (badQ nQ) qs = modErr "quantiles" "Wrong quantile number"
   | G.any isNaN xs     = modErr "quantiles" "Sample contains NaNs"
   -- Doesn't matter what we put into empty container
-  | fnull qs           = 0 <$ qs
-  | otherwise          = fmap (estimateQuantile sortedXs) ks'
+  | fnull qs           = return $! 0 <$ qs
+  | otherwise          = return $! fmap (estimateQuantile sortedXs) ks'
   where
     ks'      = fmap (\q -> toPk param n q nQ) qs
     sortedXs = psort xs $ floor (F.maximum ks') + 1
     n        = G.length xs
 {-# INLINABLE quantiles #-}
-{-# SPECIALIZE quantiles
-      :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> V.Vector Double -> f Double #-}
-{-# SPECIALIZE quantiles
-      :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> U.Vector Double -> f Double #-}
-{-# SPECIALIZE quantiles
-      :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> S.Vector Double -> f Double #-}
+type TY_quantiles f m v = ContParam -> f Int -> Int -> v Double -> m (f Double)
+{-# SPECIALIZE quantiles :: (Functor f, F.Foldable f, MonadThrow m) => TY_quantiles f m V.Vector #-}
+{-# SPECIALIZE quantiles :: (Functor f, F.Foldable f, MonadThrow m) => TY_quantiles f m U.Vector #-}
+{-# SPECIALIZE quantiles :: (Functor f, F.Foldable f, MonadThrow m) => TY_quantiles f m S.Vector #-}
 
 -- COMPAT
 fnull :: F.Foldable f => f a -> Bool
@@ -220,30 +214,27 @@ fnull = null
 
 -- | O(/k·n/·log /n/). Same as quantiles but uses 'G.Vector' container
 --   instead of 'Foldable' one.
-quantilesVec :: (G.Vector v Double, G.Vector v Int)
+quantilesVec :: (G.Vector v Double, G.Vector v Int, MonadThrow m)
   => ContParam
   -> v Int
   -> Int
   -> v Double
-  -> v Double
+  -> m (v Double)
 quantilesVec param qs nQ xs
   | nQ < 2             = modErr "quantilesVec" "At least 2 quantiles is needed"
   | G.any (badQ nQ) qs = modErr "quantilesVec" "Wrong quantile number"
   | G.any isNaN xs     = modErr "quantilesVec" "Sample contains NaNs"
-  | G.null qs          = G.empty
-  | otherwise          = G.map (estimateQuantile sortedXs) ks'
+  | G.null qs          = return $! G.empty
+  | otherwise          = return $! G.map (estimateQuantile sortedXs) ks'
   where
     ks'      = G.map (\q -> toPk param n q nQ) qs
     sortedXs = psort xs $ floor (G.maximum ks') + 1
     n        = G.length xs
 {-# INLINABLE quantilesVec #-}
-{-# SPECIALIZE quantilesVec
-      :: ContParam -> V.Vector Int -> Int -> V.Vector Double -> V.Vector Double #-}
-{-# SPECIALIZE quantilesVec
-      :: ContParam -> U.Vector Int -> Int -> U.Vector Double -> U.Vector Double #-}
-{-# SPECIALIZE quantilesVec
-      :: ContParam -> S.Vector Int -> Int -> S.Vector Double -> S.Vector Double #-}
-
+type TY_quantilesVec m v = ContParam -> v Int -> Int -> v Double -> m (v Double)
+{-# SPECIALIZE quantilesVec :: MonadThrow m => TY_quantilesVec m V.Vector #-}
+{-# SPECIALIZE quantilesVec :: MonadThrow m => TY_quantilesVec m U.Vector #-}
+{-# SPECIALIZE quantilesVec :: MonadThrow m => TY_quantilesVec m S.Vector #-}
 
 -- Returns True if quantile number is out of range
 badQ :: Int -> Int -> Bool
@@ -322,8 +313,8 @@ normalUnbiased :: ContParam
 normalUnbiased = ContParam ta ta
     where ta = 3/8
 
-modErr :: String -> String -> a
-modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
+modErr :: MonadThrow m => String -> String -> m a
+modErr f err = throwM $ InvalidSample ("Statistics.Quantile." ++ f) err
 
 
 ----------------------------------------------------------------
@@ -331,10 +322,10 @@ modErr f err = error $ "Statistics.Quantile." ++ f ++ ": " ++ err
 ----------------------------------------------------------------
 
 -- | O(/n/·log /n/) Estimate median of sample
-median :: G.Vector v Double
+median :: (G.Vector v Double, MonadThrow m)
        => ContParam  -- ^ Parameters /α/ and /β/.
        -> v Double   -- ^ /x/, the sample data.
-       -> Double
+       -> m Double
 {-# INLINE median #-}
 median p = quantile p 1 2
 
@@ -347,20 +338,20 @@ median p = quantile p 1 2
 --
 -- > midspread medianUnbiased 4 (U.fromList [1,1,2,2,3])
 -- > ==> 1.333333
-midspread :: G.Vector v Double =>
-             ContParam  -- ^ Parameters /α/ and /β/.
+midspread :: (G.Vector v Double, MonadThrow m)
+          => ContParam  -- ^ Parameters /α/ and /β/.
           -> Int        -- ^ /q/, the number of quantiles.
           -> v Double   -- ^ /x/, the sample data.
-          -> Double
+          -> m Double
 midspread param k x
   | G.any isNaN x = modErr "midspread" "Sample contains NaNs"
   | k <= 0        = modErr "midspread" "Nonpositive number of quantiles"
-  | otherwise     = let Pair x1 x2 = quantiles param (Pair 1 (k-1)) k x
-                    in  x2 - x1
+  | otherwise     = do Pair x1 x2 <- quantiles param (Pair 1 (k-1)) k x
+                       return $! x2 - x1
 {-# INLINABLE  midspread #-}
-{-# SPECIALIZE midspread :: ContParam -> Int -> U.Vector Double -> Double #-}
-{-# SPECIALIZE midspread :: ContParam -> Int -> V.Vector Double -> Double #-}
-{-# SPECIALIZE midspread :: ContParam -> Int -> S.Vector Double -> Double #-}
+{-# SPECIALIZE midspread :: MonadThrow m => ContParam -> Int -> V.Vector Double -> m Double #-}
+{-# SPECIALIZE midspread :: MonadThrow m => ContParam -> Int -> U.Vector Double -> m Double #-}
+{-# SPECIALIZE midspread :: MonadThrow m => ContParam -> Int -> S.Vector Double -> m Double #-}
 
 data Pair a = Pair !a !a
   deriving (Functor, F.Foldable)
@@ -373,32 +364,19 @@ data Pair a = Pair !a !a
 --   \[
 --   MAD = \operatorname{median}(| X_i - \operatorname{median}(X) |)
 --   \]
-mad :: G.Vector v Double
+mad :: (G.Vector v Double, MonadThrow m)
     => ContParam  -- ^ Parameters /α/ and /β/.
     -> v Double   -- ^ /x/, the sample data.
-    -> Double
-mad p xs
-  = median p $ G.map (abs . subtract med) xs
-  where
-    med = median p xs
+    -> m Double
+mad p xs = do
+  med <- median p xs
+  median p $ G.map (abs . subtract med) xs
 {-# INLINABLE  mad #-}
-{-# SPECIALIZE mad :: ContParam -> U.Vector Double -> Double #-}
-{-# SPECIALIZE mad :: ContParam -> V.Vector Double -> Double #-}
-{-# SPECIALIZE mad :: ContParam -> S.Vector Double -> Double #-}
+{-# SPECIALIZE mad :: MonadThrow m => ContParam -> V.Vector Double -> m Double #-}
+{-# SPECIALIZE mad :: MonadThrow m => ContParam -> U.Vector Double -> m Double #-}
+{-# SPECIALIZE mad :: MonadThrow m => ContParam -> S.Vector Double -> m Double #-}
 
 
-----------------------------------------------------------------
--- Deprecated
-----------------------------------------------------------------
-
-continuousBy :: G.Vector v Double =>
-                ContParam  -- ^ Parameters /α/ and /β/.
-             -> Int        -- ^ /k/, the desired quantile.
-             -> Int        -- ^ /q/, the number of quantiles.
-             -> v Double   -- ^ /x/, the sample data.
-             -> Double
-continuousBy = quantile
-{-# DEPRECATED continuousBy "Use quantile instead" #-}
 
 -- $references
 --
