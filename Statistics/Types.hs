@@ -1,10 +1,12 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns          #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 -- |
 -- Module    : Statistics.Types
 -- Copyright : (c) 2009 Bryan O'Sullivan
@@ -57,6 +59,10 @@ module Statistics.Types
     , confidenceInterval
     , asymErrors
     , Scale(..)
+      -- * Error handling
+    , Partial(..)
+    , partial
+    , StatisticsException
       -- * Other
     , Sample
     , WeightedSample
@@ -64,7 +70,9 @@ module Statistics.Types
     ) where
 
 import Control.Monad                ((<=<), liftM2, liftM3)
+import Control.Monad.Catch          (MonadThrow(..))
 import Control.DeepSeq              (NFData(..))
+import Control.Exception            (Exception,throw)
 import Data.Aeson                   (FromJSON(..), ToJSON)
 import Data.Binary                  (Binary(..))
 import Data.Data                    (Data,Typeable)
@@ -488,6 +496,47 @@ instance ToJSON   a => ToJSON   (LowerLimit a)
 instance NFData   a => NFData   (LowerLimit a) where
     rnf (LowerLimit x cl) = rnf x `seq` rnf cl
 
+
+----------------------------------------------------------------
+-- Error handling
+----------------------------------------------------------------
+
+-- | Identity monad which is used to encode partial functions for
+--   'MonadThrow' based error handling. Its @MonadThrow@ instance
+--   just throws normal exception.
+newtype Partial a = Partial a
+  deriving (Show, Read, Eq, Ord, Typeable, Data, Generic)
+
+-- | Call function in partial manner. For example
+--
+-- > partial . mean
+--
+--   will throw an exception when called with empty vector as input
+partial :: Partial a -> a
+partial (Partial x) = x
+
+instance Functor Partial where
+  fmap f (Partial a) = Partial (f a)
+
+instance Applicative Partial where
+  pure = Partial
+  Partial f <*> Partial a = Partial (f a)
+
+instance Monad Partial where
+  return = Partial
+  Partial a >>= f = f a
+  (!_) >> f = f
+
+instance MonadThrow Partial where
+  throwM = throw
+
+
+-- | Generic exception for use in statistics package
+data StatisticsException
+  = InvalidSample String String
+    -- ^ Quantity of interest couldn't be calculated for given
+    --   sample. Parameters are function name and human-readable error
+    --   string.
 
 ----------------------------------------------------------------
 -- Deriving unbox instances

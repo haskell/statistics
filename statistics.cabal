@@ -112,6 +112,7 @@ library
                , deepseq                 >= 1.1.0.2
                , binary                  >= 0.5.1.0
                , monad-par               >= 0.3.4
+               , exceptions              >= 0.10
                , primitive               >= 0.3
                , vector                  >= 0.10
                , vector-algorithms       >= 0.4
