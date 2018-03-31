@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.14.0.2
+version:        0.15.0.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -92,9 +92,7 @@ library
     Statistics.Types
   other-modules:
     Statistics.Distribution.Poisson.Internal
-    Statistics.Function.Comparison
     Statistics.Internal
-
     Statistics.Test.Internal
     Statistics.Types.Internal
   build-depends: base                    >= 4.5 && < 5
@@ -109,6 +107,7 @@ library
                , erf
                , monad-par               >= 0.3.4
                , primitive               >= 0.3
+               , statistics-dense-linear-algebra
                , vector                  >= 0.10
                , vector-algorithms       >= 0.4
                , vector-th-unbox
