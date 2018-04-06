@@ -21,7 +21,6 @@ module Statistics.Sample
 
     -- * Statistics of location
     , mean
-    , welfordMean
     , meanWeighted
     , harmonicMean
     , geometricMean
@@ -77,27 +76,11 @@ range s = hi - lo
 {-# INLINE range #-}
 
 -- | /O(n)/ Arithmetic mean.  This uses Kahan-Babuška-Neumaier
--- summation, so is more accurate than 'welfordMean' unless the input
--- values are very large.
+--   summation.
 mean :: (G.Vector v Double) => v Double -> Double
 mean xs = sum xs / fromIntegral (G.length xs)
 {-# SPECIALIZE mean :: U.Vector Double -> Double #-}
 {-# SPECIALIZE mean :: V.Vector Double -> Double #-}
-
--- | /O(n)/ Arithmetic mean.  This uses Welford's algorithm to provide
--- numerical stability, using a single pass over the sample data.
---
--- Compared to 'mean', this loses a surprising amount of precision
--- unless the inputs are very large.
-welfordMean :: (G.Vector v Double) => v Double -> Double
-welfordMean = fini . G.foldl' go (T 0 0)
-  where
-    fini (T a _) = a
-    go (T m n) x = T m' n'
-        where m' = m + (x - m) / fromIntegral n'
-              n' = n + 1
-{-# SPECIALIZE welfordMean :: U.Vector Double -> Double #-}
-{-# SPECIALIZE welfordMean :: V.Vector Double -> Double #-}
 
 -- | /O(n)/ Arithmetic mean for weighted sample. It uses a single-pass
 -- algorithm analogous to the one used by 'welfordMean'.

@@ -1,3 +1,13 @@
+## Changes in 0.15.0.0
+
+ * New method for error handling is used. Functions which may return have return
+   type of the form `MonadThrow m ⇒ m a` which allow both `Maybe` & Co based
+   error handling and converting errors into exceptions via `Partial` newtype.
+
+ * `welfordMean` is dropped. It doesn't improve precision compared to naive
+   summation.
+
+
 ## Changes in 0.14.0.2
 
  * Compatibility fixes with older GHC
