@@ -28,12 +28,6 @@ module Statistics.Sample
     -- * Statistics of dispersion
     -- $variance
 
-    -- ** Functions over central moments
-    , centralMoment
-    , centralMoments
-    , skewness
-    , kurtosis
-
     -- ** Two-pass functions (numerically robust)
     -- $robust
     , variance
@@ -44,11 +38,11 @@ module Statistics.Sample
     , varianceWeighted
     , stdErrMean
 
-    -- ** Single-pass functions (faster, less safe)
-    -- $cancellation
-    , fastVariance
-    , fastVarianceUnbiased
-    , fastStdDev
+    -- ** Functions over central moments
+    , centralMoment
+    , centralMoments
+    , skewness
+    , kurtosis
 
     -- * Joint distirbutions
     , covariance
@@ -293,47 +287,6 @@ varianceWeighted samp
 {-# SPECIALIZE varianceWeighted :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE varianceWeighted :: V.Vector (Double,Double) -> Double #-}
 
--- $cancellation
---
--- The functions prefixed with the name @fast@ below perform a single
--- pass over the sample data using Knuth's algorithm. They usually
--- work well, but see below for caveats. These functions are subject
--- to array fusion.
---
--- /Note/: in cases where most sample data is close to the sample's
--- mean, Knuth's algorithm gives inaccurate results due to
--- catastrophic cancellation.
-
-fastVar :: (G.Vector v Double) => v Double -> T1
-fastVar = G.foldl' go (T1 0 0 0)
-  where
-    go (T1 n m s) x = T1 n' m' s'
-      where n' = n + 1
-            m' = m + d / fromIntegral n'
-            s' = s + d * (x - m')
-            d  = x - m
-
--- | Maximum likelihood estimate of a sample's variance.
-fastVariance :: (G.Vector v Double) => v Double -> Double
-fastVariance = fini . fastVar
-  where fini (T1 n _m s)
-          | n > 1     = s / fromIntegral n
-          | otherwise = 0
-{-# INLINE fastVariance #-}
-
--- | Unbiased estimate of a sample's variance.
-fastVarianceUnbiased :: (G.Vector v Double) => v Double -> Double
-fastVarianceUnbiased = fini . fastVar
-  where fini (T1 n _m s)
-          | n > 1     = s / fromIntegral (n - 1)
-          | otherwise = 0
-{-# INLINE fastVarianceUnbiased #-}
-
--- | Standard deviation.  This is simply the square root of the
--- maximum likelihood estimate of the variance.
-fastStdDev :: (G.Vector v Double) => v Double -> Double
-fastStdDev = sqrt . fastVariance
-{-# INLINE fastStdDev #-}
 
 -- | Covariance of sample of pairs. For empty sample it's set to
 --   zero

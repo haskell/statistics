@@ -7,6 +7,10 @@
  * `welfordMean` is dropped. It doesn't improve precision compared to naive
    summation.
 
+ * `fast...` variants of calculation of variance are removed. All one-pass
+   algorithms are moved to `monoid-statistics`.
+
+
 
 ## Changes in 0.14.0.2
 
