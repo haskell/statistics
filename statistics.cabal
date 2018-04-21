@@ -107,7 +107,7 @@ library
                , erf
                , monad-par               >= 0.3.4
                , primitive               >= 0.3
-               , statistics-dense-linear-algebra
+               , dense-linear-algebra
                , vector                  >= 0.10
                , vector-algorithms       >= 0.4
                , vector-th-unbox

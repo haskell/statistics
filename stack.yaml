@@ -2,7 +2,7 @@ resolver: lts-10.10
 
 packages:
 - .
-- statistics-dense-linear-algebra/
+- dense-linear-algebra/
   
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)

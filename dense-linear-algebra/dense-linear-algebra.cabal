@@ -1,8 +1,8 @@
-name:                statistics-dense-linear-algebra
+name:                dense-linear-algebra
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/githubuser/statistics-dense-linear-algebra
+homepage:            https://github.com/githubuser/dense-linear-algebra
 license:             BSD3
 license-file:        LICENSE
 author:              Author name here
@@ -41,10 +41,10 @@ test-suite spec
   hs-source-dirs:      test
   main-is:             LibSpec.hs
   build-depends:       base
-                     , statistics-dense-linear-algebra
+                     , dense-linear-algebra
                      , hspec
                      , QuickCheck
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/statistics-dense-linear-algebra
+  location: https://github.com/githubuser/dense-linear-algebra
