@@ -1,0 +1,3 @@
+packages:
+  statistics.cabal
+  dense-linear-algebra/*.cabal
