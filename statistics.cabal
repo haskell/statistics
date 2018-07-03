@@ -103,7 +103,7 @@ library
     Statistics.Test.Internal
     Statistics.Types.Internal
   build-depends: base                    >= 4.5 && < 5
-               , base-orphans            >= 0.6 && <0.7
+               , base-orphans            >= 0.6 && <0.8
                  --
                , math-functions          >= 0.1.7
                , mwc-random              >= 0.13.0.0
