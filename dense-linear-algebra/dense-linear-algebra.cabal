@@ -19,7 +19,6 @@ library
   ghc-options:         -Wall
   hs-source-dirs:      src
   exposed-modules:     Statistics.Function
-                       Statistics.Function.Comparison
                        Statistics.Matrix
                        Statistics.Matrix.Algorithms
                        Statistics.Matrix.Mutable
