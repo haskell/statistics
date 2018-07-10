@@ -81,7 +81,7 @@ fromVector :: Int               -- ^ Number of rows.
            -> Matrix
 fromVector r c v
   | r*c /= len = error "input size mismatch"
-  | otherwise  = Matrix r c 0 v
+  | otherwise  = Matrix r c v
   where len    = U.length v
 
 -- | create a matrix from a list of vectors, as rows
@@ -102,7 +102,7 @@ fromColumns = transpose . fromRows
 
 -- | Convert to a row-major flat vector.
 toVector :: Matrix -> U.Vector Double
-toVector (Matrix _ _ _ v) = v
+toVector (Matrix _ _ v) = v
 
 -- | Convert to a row-major flat list.
 toList :: Matrix -> [Double]
@@ -110,7 +110,7 @@ toList = U.toList . toVector
 
 -- | Convert to a list of lists, as rows
 toRowLists :: Matrix -> [[Double]]
-toRowLists (Matrix _ nCol _ v)
+toRowLists (Matrix _ nCol v)
   = chunks $ U.toList v
   where
     chunks [] = []
@@ -120,7 +120,7 @@ toRowLists (Matrix _ nCol _ v)
 
 -- | Convert to a list of vectors, as rows
 toRows :: Matrix -> [Vector]
-toRows (Matrix _ nCol _ v) = chunks v
+toRows (Matrix _ nCol v) = chunks v
   where
     chunks xs
       | U.null xs = []
@@ -144,7 +144,7 @@ generate :: Int                 -- ^ Number of rows
             -- ^ Function which takes /row/ and /column/ as argument.
          -> Matrix
 generate nRow nCol f
-  = Matrix nRow nCol 0 $ U.generate (nRow*nCol) $ \i ->
+  = Matrix nRow nCol $ U.generate (nRow*nCol) $ \i ->
       let (r,c) = i `quotRem` nCol in f r c
 
 -- | Generate symmetric square matrix using function
@@ -172,7 +172,7 @@ ident n = diag $ U.replicate n 1.0
 -- | Create a square matrix with given diagonal, other entries default to 0
 diag :: Vector -> Matrix
 diag v
-  = Matrix n n 0 $ U.create $ do
+  = Matrix n n $ U.create $ do
       arr <- UM.replicate (n*n) 0
       for 0 n $ \i ->
         UM.unsafeWrite arr (i*n + i) (v ! i)
@@ -182,19 +182,13 @@ diag v
 
 -- | Return the dimensions of this matrix, as a (row,column) pair.
 dimension :: Matrix -> (Int, Int)
-dimension (Matrix r c _ _) = (r, c)
-
--- | Avoid overflow in the matrix.
-avoidOverflow :: Matrix -> Matrix
-avoidOverflow m@(Matrix r c e v)
-  | center m > 1e140 = Matrix r c (e + 140) (U.map (* 1e-140) v)
-  | otherwise        = m
+dimension (Matrix r c _) = (r, c)
 
 -- | Matrix-matrix multiplication. Matrices must be of compatible
 -- sizes (/note: not checked/).
 multiply :: Matrix -> Matrix -> Matrix
-multiply m1@(Matrix r1 _ e1 _) m2@(Matrix _ c2 e2 _) =
-  Matrix r1 c2 (e1 + e2) $ U.generate (r1*c2) go
+multiply m1@(Matrix r1 _ _) m2@(Matrix _ c2 _) =
+  Matrix r1 c2 $ U.generate (r1*c2) go
   where
     go t = sum $ U.zipWith (*) (row m1 i) (column m2 j)
       where (i,j) = t `quotRem` c2
@@ -210,7 +204,7 @@ multiplyV m v
 -- (/note: not checked).
 power :: Matrix -> Int -> Matrix
 power mat 1 = mat
-power mat n = avoidOverflow res
+power mat n = res
   where
     mat2 = power mat (n `quot` 2)
     pow  = multiply mat2 mat2
@@ -219,7 +213,7 @@ power mat n = avoidOverflow res
 
 -- | Element in the center of matrix (not corrected for exponent).
 center :: Matrix -> Double
-center mat@(Matrix r c _ _) =
+center mat@(Matrix r c _) =
     unsafeBounds U.unsafeIndex mat (r `quot` 2) (c `quot` 2)
 
 -- | Calculate the Euclidean norm of a vector.
@@ -228,12 +222,12 @@ norm = sqrt . sum . U.map square
 
 -- | Return the given column.
 column :: Matrix -> Int -> Vector
-column (Matrix r c _ v) i = U.backpermute v $ U.enumFromStepN i c r
+column (Matrix r c v) i = U.backpermute v $ U.enumFromStepN i c r
 {-# INLINE column #-}
 
 -- | Return the given row.
 row :: Matrix -> Int -> Vector
-row (Matrix _ c _ v) i = U.slice (c*i) c v
+row (Matrix _ c v) i = U.slice (c*i) c v
 
 unsafeIndex :: Matrix
             -> Int              -- ^ Row.
@@ -243,7 +237,7 @@ unsafeIndex = unsafeBounds U.unsafeIndex
 
 -- | Apply function to every element of matrix
 map :: (Double -> Double) -> Matrix -> Matrix
-map f (Matrix r c e v) = Matrix r c e (U.map f v)
+map f (Matrix r c v) = Matrix r c (U.map f v)
 
 -- | Indicate whether any element of the matrix is @NaN@.
 hasNaN :: Matrix -> Bool
@@ -252,7 +246,7 @@ hasNaN = U.any isNaN . toVector
 -- | Given row and column numbers, calculate the offset into the flat
 -- row-major vector.
 bounds :: (Vector -> Int -> r) -> Matrix -> Int -> Int -> r
-bounds k (Matrix rs cs _ v) r c
+bounds k (Matrix rs cs v) r c
   | r < 0 || r >= rs = error "row out of bounds"
   | c < 0 || c >= cs = error "column out of bounds"
   | otherwise        = k v $! r * cs + c
@@ -261,10 +255,10 @@ bounds k (Matrix rs cs _ v) r c
 -- | Given row and column numbers, calculate the offset into the flat
 -- row-major vector, without checking.
 unsafeBounds :: (Vector -> Int -> r) -> Matrix -> Int -> Int -> r
-unsafeBounds k (Matrix _ cs _ v) r c = k v $! r * cs + c
+unsafeBounds k (Matrix _ cs v) r c = k v $! r * cs + c
 {-# INLINE unsafeBounds #-}
 
 transpose :: Matrix -> Matrix
-transpose m@(Matrix r0 c0 e _) = Matrix c0 r0 e . U.generate (r0*c0) $ \i ->
+transpose m@(Matrix r0 c0 _) = Matrix c0 r0 . U.generate (r0*c0) $ \i ->
   let (r,c) = i `quotRem` r0
   in unsafeIndex m c r
