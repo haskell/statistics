@@ -44,7 +44,7 @@ extra-source-files:
   tests/Tests/Math/gen.py
   tests/utils/Makefile
   tests/utils/fftw.c
-tested-with: GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.1
+tested-with: GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.3
 
 library
   exposed-modules:
@@ -103,7 +103,7 @@ library
     Statistics.Test.Internal
     Statistics.Types.Internal
   build-depends: base                    >= 4.5 && < 5
-               , base-orphans            >= 0.6 && <0.8
+               , base-orphans            >= 0.6 && <0.9
                  --
                , math-functions          >= 0.1.7
                , mwc-random              >= 0.13.0.0
