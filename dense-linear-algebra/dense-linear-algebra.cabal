@@ -23,7 +23,6 @@ library
                        Statistics.Matrix.Algorithms
                        Statistics.Matrix.Mutable
                        Statistics.Matrix.Types
-                       Statistics.Sample.Internal                       
   build-depends:       base                    >= 4.5 && < 5
                      , deepseq                 >= 1.1.0.2
                      , math-functions          >= 0.1.7                     

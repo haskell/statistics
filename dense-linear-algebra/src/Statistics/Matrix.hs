@@ -46,17 +46,18 @@ module Statistics.Matrix
     , unsafeBounds
     ) where
 
-import Prelude hiding (exponent, map, sum)
+import Prelude hiding (exponent, map)
 import Control.Applicative ((<$>))
 import Control.Monad.ST
 import qualified Data.Vector.Unboxed as U
 import           Data.Vector.Unboxed   ((!))
 import qualified Data.Vector.Unboxed.Mutable as UM
 
+import Numeric.Sum         (sumVector,kbn)
 import Statistics.Function (for, square)
 import Statistics.Matrix.Types
 import Statistics.Matrix.Mutable  (unsafeNew,unsafeWrite,unsafeFreeze)
-import Statistics.Sample.Internal (sum)
+
 
 
 ----------------------------------------------------------------
@@ -190,13 +191,13 @@ multiply :: Matrix -> Matrix -> Matrix
 multiply m1@(Matrix r1 _ _) m2@(Matrix _ c2 _) =
   Matrix r1 c2 $ U.generate (r1*c2) go
   where
-    go t = sum $ U.zipWith (*) (row m1 i) (column m2 j)
+    go t = sumVector kbn $ U.zipWith (*) (row m1 i) (column m2 j)
       where (i,j) = t `quotRem` c2
 
 -- | Matrix-vector multiplication.
 multiplyV :: Matrix -> Vector -> Vector
 multiplyV m v
-  | cols m == c = U.generate (rows m) (sum . U.zipWith (*) v . row m)
+  | cols m == c = U.generate (rows m) (sumVector kbn . U.zipWith (*) v . row m)
   | otherwise   = error $ "matrix/vector unconformable " ++ show (cols m,c)
   where c = U.length v
 
@@ -218,7 +219,7 @@ center mat@(Matrix r c _) =
 
 -- | Calculate the Euclidean norm of a vector.
 norm :: Vector -> Double
-norm = sqrt . sum . U.map square
+norm = sqrt . sumVector kbn . U.map square
 
 -- | Return the given column.
 column :: Matrix -> Int -> Vector

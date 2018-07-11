@@ -12,10 +12,10 @@ module Statistics.Matrix.Algorithms
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad.ST (ST, runST)
-import Prelude hiding (sum, replicate)
+import Prelude hiding (replicate)
+import Numeric.Sum       (sumVector,kbn)
 import Statistics.Matrix (Matrix, column, dimension, for, norm)
 import qualified Statistics.Matrix.Mutable as M
-import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Unboxed as U
 
 -- | /O(r*c)/ Compute the QR decomposition of a matrix.
@@ -39,4 +39,4 @@ qr mat = runST $ do
 
 innerProduct :: M.MMatrix s -> Int -> Int -> ST s Double
 innerProduct mmat j k = M.immutably mmat $ \mat ->
-  sum $ U.zipWith (*) (column mat j) (column mat k)
+  sumVector kbn $ U.zipWith (*) (column mat j) (column mat k)
