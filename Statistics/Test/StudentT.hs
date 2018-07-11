@@ -15,7 +15,7 @@ import Statistics.Distribution hiding (mean)
 import Statistics.Distribution.StudentT
 import Statistics.Sample (mean, varianceUnbiased)
 import Statistics.Test.Types
-import Statistics.Types    (mkPValue,PValue)
+import Statistics.Types    (mkPValue,PValue,partial)
 import Statistics.Function (square)
 import qualified Data.Vector.Generic  as G
 import qualified Data.Vector.Unboxed  as U
@@ -98,9 +98,9 @@ significance :: PositionTest    -- ^ one- or two-tailed
 significance test t df =
   case test of
     -- Here we exploit symmetry of T-distribution and calculate small tail
-    SamplesDiffer -> mkPValue $ 2 * tailArea (negate (abs t))
-    AGreater      -> mkPValue $ tailArea (negate t)
-    BGreater      -> mkPValue $ tailArea  t
+    SamplesDiffer -> partial $ mkPValue $ 2 * tailArea (negate (abs t))
+    AGreater      -> partial $ mkPValue $ tailArea (negate t)
+    BGreater      -> partial $ mkPValue $ tailArea  t
   where
     tailArea = cumulative (studentT df)
 

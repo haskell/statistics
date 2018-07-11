@@ -37,7 +37,7 @@ chi2test :: (G.Vector v (Int,Double), G.Vector v Double)
 chi2test ndf vec
   | ndf <  0  = error $ "Statistics.Test.ChiSquare.chi2test: negative NDF " ++ show ndf
   | n   > 0   = Just Test
-              { testSignificance = mkPValue $ complCumulative d chi2
+              { testSignificance = partial $ mkPValue $ complCumulative d chi2
               , testStatistics   = chi2
               , testDistribution = chiSquared ndf
               }
@@ -64,7 +64,7 @@ chi2testCont
 chi2testCont ndf vec
   | ndf < 0   = error $ "Statistics.Test.ChiSquare.chi2testCont: negative NDF " ++ show ndf
   | n   > 0   = Just Test
-              { testSignificance = mkPValue $ complCumulative d chi2
+              { testSignificance = partial $ mkPValue $ complCumulative d chi2
               , testStatistics   = chi2
               , testDistribution = chiSquared ndf
               }

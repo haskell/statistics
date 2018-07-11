@@ -138,7 +138,7 @@ wilcoxonMatchedPairSignificant test pVal (sampleSize, tPlus, tMinus) =
     -- Note that in absence of ties sum of |T+| and |T-| is constant
     -- so by selecting minimal we are performing two-tailed test and
     -- look and both tails of distribution of T.
-    SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (mkPValue $ p/2)
+    SamplesDiffer -> do crit <- wilcoxonMatchedPairCriticalValue sampleSize (partial $ mkPValue $ p/2)
                         return $ significant $ t <= fromIntegral crit
   where
     t = min (abs tPlus) (abs tMinus)
@@ -189,7 +189,7 @@ wilcoxonMatchedPairSignificance
   -> Double        -- ^ The value of T for which you want the significance.
   -> PValue Double -- ^ The significance (p-value).
 wilcoxonMatchedPairSignificance n t
-  = mkPValue p
+  = partial $ mkPValue p
   where
     p | n < 100   = (summedCoefficients n !! floor t) / 2 ** fromIntegral n
       | otherwise = cumulative (normalApprox n) t
@@ -236,7 +236,7 @@ wilcoxonMatchedPairTest test pairs =
                  -- of error.
                  SamplesDiffer -> let t' = min (abs tMinus) (abs tPlus)
                                       p  = wilcoxonMatchedPairSignificance n t'
-                                  in (t', mkPValue $ min 1 $ 2 * pValue p)
+                                  in (t', partial $ mkPValue $ min 1 $ 2 * pValue p)
 
 
 -- $references

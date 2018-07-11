@@ -25,9 +25,7 @@ module Statistics.Types
     , significanceLevel
       -- ** Constructors
     , mkCL
-    , mkCLE
     , mkCLFromSignificance
-    , mkCLFromSignificanceE
       -- ** Constants and conversion to nσ
     , cl90
     , cl95
@@ -43,7 +41,6 @@ module Statistics.Types
     , pValue
       -- ** Constructors
     , mkPValue
-    , mkPValueE
       -- * Estimates and upper/lower limits
     , Estimate(..)
     , NormalErr(..)
@@ -119,15 +116,15 @@ newtype CL a = CL a
 instance Show a => Show (CL a) where
   showsPrec n (CL p) = defaultShow1 "mkCLFromSignificance" p n
 instance (Num a, Ord a, Read a) => Read (CL a) where
-  readPrec = defaultReadPrecM1 "mkCLFromSignificance" mkCLFromSignificanceE
+  readPrec = defaultReadPrecM1 "mkCLFromSignificance" mkCLFromSignificance
 
 instance (Binary a, Num a, Ord a) => Binary (CL a) where
   put (CL p) = put p
-  get        = maybe (fail errMkCL) return . mkCLFromSignificanceE =<< get
+  get        = maybe (fail errMkCL) return . mkCLFromSignificance =<< get
 
 instance (ToJSON a)                 => ToJSON   (CL a)
 instance (FromJSON a, Num a, Ord a) => FromJSON (CL a) where
-  parseJSON = maybe (fail errMkCL) return . mkCLFromSignificanceE <=< parseJSON
+  parseJSON = maybe (fail errMkCL) return . mkCLFromSignificance <=< parseJSON
 
 instance NFData   a => NFData   (CL a) where
   rnf (CL a) = rnf a
@@ -150,20 +147,10 @@ instance Ord a => Ord (CL a) where
 --
 -- >>> mkCL 0.95    -- same as cl95
 -- mkCLFromSignificance 0.05
-mkCL :: (Ord a, Num a) => a -> CL a
-mkCL
-  = fromMaybe (error "Statistics.Types.mkCL: probability is out if [0,1] range")
-  . mkCLE
-
--- | Same as 'mkCL' but returns @Nothing@ instead of error if
---   parameter is out of [0,1] range
---
--- >>> mkCLE 0.95    -- same as cl95
--- Just (mkCLFromSignificance 0.05)
-mkCLE :: (Ord a, Num a) => a -> Maybe (CL a)
-mkCLE p
-  | p >= 0 && p <= 1 = Just $ CL (1 - p)
-  | otherwise        = Nothing
+mkCL :: (MonadThrow m, Ord a, Num a) => a -> m (CL a)
+mkCL p
+  | p >= 0 && p <= 1 = return $ CL (1 - p)
+  | otherwise        = throwM $ ProbabilityOutOf_01_Range "mkCL"
 
 -- | Create confidence level from probability α or probability that
 --   confidence interval does not contain true value of estimate. Will
@@ -171,18 +158,10 @@ mkCLE p
 --
 -- >>> mkCLFromSignificance 0.05    -- same as cl95
 -- mkCLFromSignificance 0.05
-mkCLFromSignificance :: (Ord a, Num a) => a -> CL a
-mkCLFromSignificance = fromMaybe (error errMkCL) . mkCLFromSignificanceE
-
--- | Same as 'mkCLFromSignificance' but returns @Nothing@ instead of error if
---   parameter is out of [0,1] range
---
--- >>> mkCLFromSignificanceE 0.05    -- same as cl95
--- Just (mkCLFromSignificance 0.05)
-mkCLFromSignificanceE :: (Ord a, Num a) => a -> Maybe (CL a)
-mkCLFromSignificanceE p
-  | p >= 0 && p <= 1 = Just $ CL p
-  | otherwise        = Nothing
+mkCLFromSignificance :: (MonadThrow m, Ord a, Num a) => a -> m (CL a)
+mkCLFromSignificance p
+  | p >= 0 && p <= 1 = return $ CL p
+  | otherwise        = throwM $ ProbabilityOutOf_01_Range "mkCLFromSignificance"
 
 errMkCL :: String
 errMkCL = "Statistics.Types.mkPValCL: probability is out if [0,1] range"
@@ -224,15 +203,15 @@ newtype PValue a = PValue a
 instance Show a => Show (PValue a) where
   showsPrec n (PValue p) = defaultShow1 "mkPValue" p n
 instance (Num a, Ord a, Read a) => Read (PValue a) where
-  readPrec = defaultReadPrecM1 "mkPValue" mkPValueE
+  readPrec = defaultReadPrecM1 "mkPValue" mkPValue
 
 instance (Binary a, Num a, Ord a) => Binary (PValue a) where
   put (PValue p) = put p
-  get            = maybe (fail errMkPValue) return . mkPValueE =<< get
+  get            = maybe (fail errMkPValue) return . mkPValue =<< get
 
 instance (ToJSON a)                 => ToJSON   (PValue a)
 instance (FromJSON a, Num a, Ord a) => FromJSON (PValue a) where
-  parseJSON = maybe (fail errMkPValue) return . mkPValueE <=< parseJSON
+  parseJSON = maybe (fail errMkPValue) return . mkPValue <=< parseJSON
 
 instance NFData a => NFData (PValue a) where
   rnf (PValue a) = rnf a
@@ -240,14 +219,10 @@ instance NFData a => NFData (PValue a) where
 
 -- | Construct PValue. Throws error if argument is out of [0,1] range.
 --
-mkPValue :: (Ord a, Num a) => a -> PValue a
-mkPValue = fromMaybe (error errMkPValue) . mkPValueE
-
--- | Construct PValue. Returns @Nothing@ if argument is out of [0,1] range.
-mkPValueE :: (Ord a, Num a) => a -> Maybe (PValue a)
-mkPValueE p
-  | p >= 0 && p <= 1 = Just $ PValue p
-  | otherwise        = Nothing
+mkPValue :: (MonadThrow m, Ord a, Num a) => a -> m (PValue a)
+mkPValue p
+  | p >= 0 && p <= 1 = return $ PValue p
+  | otherwise        = throwM $ ProbabilityOutOf_01_Range "mkPValue"
 
 -- | Get p-value
 pValue :: PValue a -> a
@@ -537,6 +512,8 @@ data StatisticsException
     -- ^ Quantity of interest couldn't be calculated for given
     --   sample. Parameters are function name and human-readable error
     --   string.
+  | ProbabilityOutOf_01_Range String
+    -- ^ Probability is out of 0,1 range
   deriving (Show)
 
 instance Exception StatisticsException

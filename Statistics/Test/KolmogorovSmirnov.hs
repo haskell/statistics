@@ -34,7 +34,7 @@ import Statistics.Distribution (Distribution(..))
 import Statistics.Function (gsort, unsafeModify)
 import Statistics.Matrix (center, exponent, for, fromVector, power)
 import Statistics.Test.Types
-import Statistics.Types (mkPValue)
+import Statistics.Types (mkPValue,partial)
 import qualified Data.Vector          as V
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Unboxed  as U
@@ -71,7 +71,7 @@ kolmogorovSmirnovTestCdf :: (G.Vector v Double)
 kolmogorovSmirnovTestCdf cdf sample
   | G.null sample = Nothing
   | otherwise     = Just Test
-      { testSignificance = mkPValue $ 1 - prob
+      { testSignificance = partial $ mkPValue $ 1 - prob
       , testStatistics   = d
       , testDistribution = ()
       }
@@ -93,7 +93,7 @@ kolmogorovSmirnovTest2 :: (G.Vector v Double)
 kolmogorovSmirnovTest2 xs1 xs2
   | G.null xs1 || G.null xs2 = Nothing
   | otherwise                = Just Test
-      { testSignificance = mkPValue $ 1 - prob d
+      { testSignificance = partial $ mkPValue $ 1 - prob d
       , testStatistics   = d
       , testDistribution = ()
       }
