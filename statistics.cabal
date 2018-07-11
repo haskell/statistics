@@ -69,6 +69,7 @@ library
     Statistics.Distribution.StudentT
     Statistics.Distribution.Transform
     Statistics.Distribution.Uniform
+    Statistics.Function
     Statistics.Math.RootFinding
     Statistics.Quantile
     Statistics.Regression

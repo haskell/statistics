@@ -54,7 +54,7 @@ import           Data.Vector.Unboxed   ((!))
 import qualified Data.Vector.Unboxed.Mutable as UM
 
 import Numeric.Sum         (sumVector,kbn)
-import Statistics.Function (for, square)
+import Statistics.Matrix.Function
 import Statistics.Matrix.Types
 import Statistics.Matrix.Mutable  (unsafeNew,unsafeWrite,unsafeFreeze)
 
