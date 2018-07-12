@@ -21,7 +21,8 @@ module Statistics.Correlation.Kendall
     -- $references
     ) where
 
-import Control.Monad.ST (ST, runST)
+import Control.Monad.Catch (MonadThrow(..))
+import Control.Monad.ST    (ST, runST)
 import Data.Bits (shiftR)
 import Data.Function (on)
 import Data.STRef
@@ -29,26 +30,33 @@ import qualified Data.Vector.Algorithms.Intro as I
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Generic.Mutable as GM
 
+import Statistics.Types (StatisticsException(..))
+
+
 -- | /O(nlogn)/ Compute the Kendall's tau from a vector of paired data.
--- Return NaN when number of pairs <= 1.
-kendall :: (Ord a, Ord b, G.Vector v (a, b)) => v (a, b) -> Double
+--   Return NaN when number of pairs <= 1.
+kendall :: (MonadThrow m, Ord a, Ord b, G.Vector v (a, b))
+        => v (a, b) -> m Double
 kendall xy'
-  | G.length xy' <= 1 = 0/0
-  | otherwise  = runST $ do
-    xy <- G.thaw xy'
-    let n = GM.length xy
-    n_dRef <- newSTRef 0
-    I.sort xy
-    tieX <- numOfTiesBy ((==) `on` fst) xy
-    tieXY <- numOfTiesBy (==) xy
-    tmp <- GM.new n
-    mergeSort (compare `on` snd) xy tmp n_dRef
-    tieY <- numOfTiesBy ((==) `on` snd) xy
-    n_d <- readSTRef n_dRef
-    let n_0 = (fromIntegral n * (fromIntegral n-1)) `shiftR` 1 :: Integer
-        n_c = n_0 - n_d - tieX - tieY + tieXY
-    return $ fromIntegral (n_c - n_d) /
-             (sqrt.fromIntegral) ((n_0 - tieX) * (n_0 - tieY))
+  | n <= 1     = throwM $ InvalidSample
+                            "Statistics.Correlation.Kendall.kendall"
+                            "Sample is too small"
+  | otherwise  = return $ runST $ do
+      xy <- G.thaw xy'
+      n_dRef <- newSTRef 0
+      I.sort xy
+      tieX <- numOfTiesBy ((==) `on` fst) xy
+      tieXY <- numOfTiesBy (==) xy
+      tmp <- GM.new n
+      mergeSort (compare `on` snd) xy tmp n_dRef
+      tieY <- numOfTiesBy ((==) `on` snd) xy
+      n_d <- readSTRef n_dRef
+      let n_0 = (fromIntegral n * (fromIntegral n-1)) `shiftR` 1 :: Integer
+          n_c = n_0 - n_d - tieX - tieY + tieXY
+      return $ fromIntegral (n_c - n_d) /
+               (sqrt.fromIntegral) ((n_0 - tieX) * (n_0 - tieY))
+ where
+   n = G.length xy'
 {-# INLINE kendall #-}
 
 -- calculate number of tied pairs in a sorted vector
