@@ -514,6 +514,7 @@ data StatisticsException
     --   string.
   | ProbabilityOutOf_01_Range String
     -- ^ Probability is out of 0,1 range
+  | TestFailure String String
   deriving (Show)
 
 instance Exception StatisticsException

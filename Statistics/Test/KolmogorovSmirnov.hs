@@ -28,13 +28,14 @@ module Statistics.Test.KolmogorovSmirnov (
   , module Statistics.Test.Types
   ) where
 
-import Control.Monad (when)
+import Control.Monad       (when)
+import Control.Monad.Catch (MonadThrow(..))
 import Prelude hiding (exponent, sum)
 import Statistics.Distribution (Distribution(..))
 import Statistics.Function (gsort, unsafeModify)
 import Statistics.Matrix (center, exponent, for, fromVector, power)
 import Statistics.Test.Types
-import Statistics.Types (mkPValue,partial)
+import Statistics.Types (mkPValue,partial,StatisticsException(..))
 import qualified Data.Vector          as V
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Unboxed  as U
@@ -52,10 +53,10 @@ import qualified Data.Vector.Unboxed.Mutable as M
 --
 --   This test uses Marsaglia-Tsang-Wang exact algorithm for
 --   calculation of p-value.
-kolmogorovSmirnovTest :: (Distribution d, G.Vector v Double)
+kolmogorovSmirnovTest :: (MonadThrow m, Distribution d, G.Vector v Double)
                       => d        -- ^ Distribution
                       -> v Double -- ^ Data sample
-                      -> Maybe (Test ())
+                      -> m (Test ())
 {-# INLINE kolmogorovSmirnovTest #-}
 kolmogorovSmirnovTest d
   = kolmogorovSmirnovTestCdf (cumulative d)
@@ -63,14 +64,16 @@ kolmogorovSmirnovTest d
 
 -- | Variant of 'kolmogorovSmirnovTest' which uses CDF in form of
 --   function.
-kolmogorovSmirnovTestCdf :: (G.Vector v Double)
+kolmogorovSmirnovTestCdf :: (MonadThrow m, G.Vector v Double)
                          => (Double -> Double) -- ^ CDF of distribution
                          -> v Double           -- ^ Data sample
-                         -> Maybe (Test ())
+                         -> m (Test ())
 {-# INLINE kolmogorovSmirnovTestCdf #-}
 kolmogorovSmirnovTestCdf cdf sample
-  | G.null sample = Nothing
-  | otherwise     = Just Test
+  | G.null sample = throwM $ TestFailure
+                               "KolmogorovSmirnov.kolmogorovSmirnovTestCdf"
+                               "Empty sample"
+  | otherwise     = return Test
       { testSignificance = partial $ mkPValue $ 1 - prob
       , testStatistics   = d
       , testDistribution = ()
@@ -86,13 +89,15 @@ kolmogorovSmirnovTestCdf cdf sample
 --   returns Nothing.
 --
 --   This test uses approximate formula for computing p-value.
-kolmogorovSmirnovTest2 :: (G.Vector v Double)
+kolmogorovSmirnovTest2 :: (MonadThrow m, G.Vector v Double)
                        => v Double -- ^ Sample 1
                        -> v Double -- ^ Sample 2
-                       -> Maybe (Test ())
+                       -> m (Test ())
 kolmogorovSmirnovTest2 xs1 xs2
-  | G.null xs1 || G.null xs2 = Nothing
-  | otherwise                = Just Test
+  | G.null xs1 || G.null xs2 = throwM $ TestFailure
+                                 "KolmogorovSmirnov.kolmogorovSmirnovTest2"
+                                 "One of samples is empty"
+  | otherwise                = return Test
       { testSignificance = partial $ mkPValue $ 1 - prob d
       , testStatistics   = d
       , testDistribution = ()

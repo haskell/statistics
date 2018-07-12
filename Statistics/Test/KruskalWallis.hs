@@ -16,6 +16,7 @@ module Statistics.Test.KruskalWallis
   , module Statistics.Test.Types
   ) where
 
+import Control.Monad.Catch (MonadThrow(..))
 import Data.Ord (comparing)
 import Data.Foldable (foldMap)
 import qualified Data.Vector.Unboxed as U
@@ -80,15 +81,16 @@ kruskalWallis samples = (nTot - 1) * numerator / denominator
 --
 -- It uses /Chi-Squared/ distribution for approximation as long as the sizes are
 -- larger than 5. Otherwise the test returns 'Nothing'.
-kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test ())
-kruskalWallisTest []      = Nothing
+kruskalWallisTest :: (MonadThrow m, Ord a, U.Unbox a) => [U.Vector a] -> m (Test ())
+kruskalWallisTest []      = throwM $ TestFailure "KruskalWallis.kruskalWallisTest" "Empty list of samples"
 kruskalWallisTest samples
   -- We use chi-squared approximation here
-  | all (>4) ns = Just Test { testSignificance = partial $ mkPValue $ complCumulative d k
-                            , testStatistics   = k
-                            , testDistribution = ()
-                            }
-  | otherwise   = Nothing
+  | all (>4) ns = return Test
+                    { testSignificance = partial $ mkPValue $ complCumulative d k
+                    , testStatistics   = k
+                    , testDistribution = ()
+                    }
+  | otherwise   = throwM $ TestFailure "KruskalWallis.kruskalWallisTest" "Samples are too small"
   where
     k  = kruskalWallis samples
     ns = map U.length samples

@@ -11,11 +11,12 @@ module Statistics.Test.StudentT
     , module Statistics.Test.Types
     ) where
 
+import Control.Monad.Catch (MonadThrow(..))
 import Statistics.Distribution hiding (mean)
 import Statistics.Distribution.StudentT
 import Statistics.Sample (mean, varianceUnbiased)
 import Statistics.Test.Types
-import Statistics.Types    (mkPValue,PValue,partial)
+import Statistics.Types    (mkPValue,PValue,partial,StatisticsException(..))
 import Statistics.Function (square)
 import qualified Data.Vector.Generic  as G
 import qualified Data.Vector.Unboxed  as U
@@ -27,14 +28,15 @@ import qualified Data.Vector          as V
 -- | Two-sample Student's t-test. It assumes that both samples are
 --   normally distributed and have same variance. Returns @Nothing@ if
 --   sample sizes are not sufficient.
-studentTTest :: (G.Vector v Double)
+studentTTest :: (MonadThrow m, G.Vector v Double)
              => PositionTest  -- ^ one- or two-tailed test
              -> v Double      -- ^ Sample A
              -> v Double      -- ^ Sample B
-             -> Maybe (Test StudentT)
+             -> m (Test StudentT)
 studentTTest test sample1 sample2
-  | G.length sample1 < 2 || G.length sample2 < 2 = Nothing
-  | otherwise                                    = Just Test
+  | G.length sample1 < 2 || G.length sample2 < 2 = throwM $ TestFailure
+      "StudentT.studentTTest" "Samples are too small"
+  | otherwise                                    = return Test
       { testSignificance = significance test t ndf
       , testStatistics   = t
       , testDistribution = studentT ndf
@@ -42,21 +44,25 @@ studentTTest test sample1 sample2
   where
     (t, ndf) = tStatistics True sample1 sample2
 {-# INLINABLE  studentTTest #-}
-{-# SPECIALIZE studentTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Maybe (Test StudentT) #-}
-{-# SPECIALIZE studentTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Maybe (Test StudentT) #-}
-{-# SPECIALIZE studentTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Maybe (Test StudentT) #-}
+{-# SPECIALIZE studentTTest :: MonadThrow m => PositionTest ->
+      U.Vector Double -> U.Vector Double -> m (Test StudentT) #-}
+{-# SPECIALIZE studentTTest :: MonadThrow m => PositionTest ->
+      S.Vector Double -> S.Vector Double -> m (Test StudentT) #-}
+{-# SPECIALIZE studentTTest :: MonadThrow m => PositionTest ->
+      V.Vector Double -> V.Vector Double -> m (Test StudentT) #-}
 
 -- | Two-sample Welch's t-test. It assumes that both samples are
 --   normally distributed but doesn't assume that they have same
 --   variance. Returns @Nothing@ if sample sizes are not sufficient.
-welchTTest :: (G.Vector v Double)
+welchTTest :: (MonadThrow m, G.Vector v Double)
            => PositionTest  -- ^ one- or two-tailed test
            -> v Double      -- ^ Sample A
            -> v Double      -- ^ Sample B
-           -> Maybe (Test StudentT)
+           -> m (Test StudentT)
 welchTTest test sample1 sample2
-  | G.length sample1 < 2 || G.length sample2 < 2 = Nothing
-  | otherwise                                    = Just Test
+  | G.length sample1 < 2 || G.length sample2 < 2 = throwM $ TestFailure
+      "StudentT.welchTTest" "Samples are too small"
+  | otherwise                                    = return Test
       { testSignificance = significance test t ndf
       , testStatistics   = t
       , testDistribution = studentT ndf
@@ -64,20 +70,24 @@ welchTTest test sample1 sample2
   where
     (t, ndf) = tStatistics False sample1 sample2
 {-# INLINABLE  welchTTest #-}
-{-# SPECIALIZE welchTTest :: PositionTest -> U.Vector Double -> U.Vector Double -> Maybe (Test StudentT) #-}
-{-# SPECIALIZE welchTTest :: PositionTest -> S.Vector Double -> S.Vector Double -> Maybe (Test StudentT) #-}
-{-# SPECIALIZE welchTTest :: PositionTest -> V.Vector Double -> V.Vector Double -> Maybe (Test StudentT) #-}
+{-# SPECIALIZE welchTTest :: MonadThrow m => PositionTest
+      -> U.Vector Double -> U.Vector Double -> m (Test StudentT) #-}
+{-# SPECIALIZE welchTTest :: MonadThrow m => PositionTest
+      -> S.Vector Double -> S.Vector Double -> m (Test StudentT) #-}
+{-# SPECIALIZE welchTTest :: MonadThrow m => PositionTest
+      -> V.Vector Double -> V.Vector Double -> m (Test StudentT) #-}
 
 -- | Paired two-sample t-test. Two samples are paired in a
 -- within-subject design. Returns @Nothing@ if sample size is not
 -- sufficient.
-pairedTTest :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
+pairedTTest :: (MonadThrow m, G.Vector v (Double, Double), G.Vector v Double)
             => PositionTest          -- ^ one- or two-tailed test
             -> v (Double, Double)    -- ^ paired samples
-            -> Maybe (Test StudentT)
+            -> m (Test StudentT)
 pairedTTest test sample
-  | G.length sample < 2 = Nothing
-  | otherwise           = Just Test
+  | G.length sample < 2 = throwM $ TestFailure
+      "StudentT.pairedTTest" "Sample is too small"
+  | otherwise           = return Test
       { testSignificance = significance test t ndf
       , testStatistics   = t
       , testDistribution = studentT ndf
@@ -85,8 +95,8 @@ pairedTTest test sample
   where
     (t, ndf) = tStatisticsPaired sample
 {-# INLINABLE  pairedTTest #-}
-{-# SPECIALIZE pairedTTest :: PositionTest -> U.Vector (Double,Double) -> Maybe (Test StudentT) #-}
-{-# SPECIALIZE pairedTTest :: PositionTest -> V.Vector (Double,Double) -> Maybe (Test StudentT) #-}
+{-# SPECIALIZE pairedTTest :: MonadThrow m => PositionTest -> U.Vector (Double,Double) -> m (Test StudentT) #-}
+{-# SPECIALIZE pairedTTest :: MonadThrow m => PositionTest -> V.Vector (Double,Double) -> m (Test StudentT) #-}
 
 
 -------------------------------------------------------------------------------
