@@ -52,9 +52,10 @@ module Statistics.Sample
     -- $references
     ) where
 
+import Control.Monad.Catch (MonadThrow(..))
 import Statistics.Function (minMax)
 import Statistics.Sample.Internal (robustSumVar, sum)
-import Statistics.Types.Internal  (Sample,WeightedSample)
+import Statistics.Types.Internal  (Sample,WeightedSample,StatisticsException(..))
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -64,9 +65,10 @@ import Prelude hiding ((^), sum)
 
 -- | /O(n)/ Range. The difference between the largest and smallest
 -- elements of a sample.
-range :: (G.Vector v Double) => v Double -> Double
-range s = hi - lo
-    where (lo , hi) = minMax s
+range :: (G.Vector v Double, MonadThrow m) => v Double -> m Double
+range xs
+  | G.null xs = modErr "range" "Empty sample"
+  | otherwise = return $! let (lo , hi) = minMax xs in hi - lo
 {-# INLINE range #-}
 
 -- | /O(n)/ Arithmetic mean.  This uses Kahan-Babuška-Neumaier
@@ -369,6 +371,9 @@ $wfold :: Double#
 yielding to boxed returns and heap checks.
 
 -}
+
+modErr :: MonadThrow m => String -> String -> m a
+modErr f err = throwM $ InvalidSample ("Statistics.Sample." ++ f) err
 
 -- $references
 --

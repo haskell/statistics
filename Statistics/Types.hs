@@ -69,11 +69,10 @@ module Statistics.Types
 import Control.Monad                ((<=<), liftM2, liftM3)
 import Control.Monad.Catch          (MonadThrow(..))
 import Control.DeepSeq              (NFData(..))
-import Control.Exception            (Exception,throw)
+import Control.Exception            (throw)
 import Data.Aeson                   (FromJSON(..), ToJSON)
 import Data.Binary                  (Binary(..))
 import Data.Data                    (Data,Typeable)
-import Data.Maybe                   (fromMaybe)
 import Data.Vector.Unboxed          (Unbox)
 import Data.Vector.Unboxed.Deriving (derivingUnbox)
 import GHC.Generics                 (Generic)
@@ -505,19 +504,6 @@ instance Monad Partial where
 instance MonadThrow Partial where
   throwM = throw
 
-
--- | Generic exception for use in statistics package
-data StatisticsException
-  = InvalidSample String String
-    -- ^ Quantity of interest couldn't be calculated for given
-    --   sample. Parameters are function name and human-readable error
-    --   string.
-  | ProbabilityOutOf_01_Range String
-    -- ^ Probability is out of 0,1 range
-  | TestFailure String String
-  deriving (Show)
-
-instance Exception StatisticsException
 
 ----------------------------------------------------------------
 -- Deriving unbox instances

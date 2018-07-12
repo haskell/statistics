@@ -122,7 +122,7 @@ library
   if impl(ghc < 7.6)
     build-depends:
       ghc-prim
-  ghc-options: -O2 -Wall -fwarn-tabs -funbox-strict-fields
+  ghc-options: -Wall -fwarn-tabs -funbox-strict-fields
 
 test-suite tests
   type:           exitcode-stdio-1.0
