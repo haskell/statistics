@@ -141,6 +141,5 @@ errMsg l = "Statistics.Distribution.Exponential.exponential: scale parameter mus
 --   made to check whether it truly is exponential.
 instance D.FromSample ExponentialDistribution Double where
   fromSample xs
-    | G.null xs       = Nothing
     | G.all (>= 0) xs = Nothing
-    | otherwise       = Just $! ED (S.mean xs)
+    | otherwise       = ED <$> S.mean xs

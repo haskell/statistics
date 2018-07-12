@@ -48,7 +48,7 @@ tested-with: GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.1
 
 library
   exposed-modules:
-    Statistics.Autocorrelation
+    -- Statistics.Autocorrelation
     Statistics.ConfidenceInt
     Statistics.Correlation
     Statistics.Correlation.Kendall
@@ -76,18 +76,18 @@ library
     Statistics.Matrix.Mutable
     Statistics.Matrix.Types
     Statistics.Quantile
-    Statistics.Regression
-    Statistics.Resampling
-    Statistics.Resampling.Bootstrap
+    -- Statistics.Regression
+    -- Statistics.Resampling
+    -- Statistics.Resampling.Bootstrap
     Statistics.Sample
     Statistics.Sample.Histogram
     Statistics.Sample.KernelDensity
-    Statistics.Sample.KernelDensity.Simple
+    -- Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Normalize
     Statistics.Sample.Powers
     Statistics.Test.ChiSquared
     Statistics.Test.KolmogorovSmirnov
-    Statistics.Test.KruskalWallis
+    -- Statistics.Test.KruskalWallis
     Statistics.Test.MannWhitneyU
 --    Statistics.Test.Runs
     Statistics.Test.StudentT

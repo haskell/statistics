@@ -137,12 +137,10 @@ errMsg _ sd = "Statistics.Distribution.Normal.normalDistr: standard deviation mu
 --   Returns @Nothing@ if sample contains less than one element or
 --   variance is zero (all elements are equal)
 instance D.FromSample NormalDistribution Double where
-  fromSample xs
-    | G.length xs <= 1 = Nothing
-    | v == 0           = Nothing
-    | otherwise        = Just $! normalDistr m (sqrt v)
-    where
-      (m,v) = S.meanVariance xs
+  fromSample xs = do
+    m <- S.mean xs
+    v <- S.variance xs
+    return $! normalDistr m (sqrt v)
 
 logDensity :: NormalDistribution -> Double -> Double
 logDensity d x = (-xm * xm / (2 * sd * sd)) - ndPdfDenom d
