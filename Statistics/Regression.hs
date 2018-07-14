@@ -88,7 +88,7 @@ solve r b
   rfor n 0 $ \i -> do
     si <- (/ unsafeIndex r i i) <$> M.unsafeRead s i
     M.unsafeWrite s i si
-    for 0 i $ \j -> F.unsafeModify s j $ subtract (unsafeIndex r j i * si)
+    F.for 0 i $ \j -> F.unsafeModify s j $ subtract (unsafeIndex r j i * si)
   return s
   where n = rows r
         l = U.length b

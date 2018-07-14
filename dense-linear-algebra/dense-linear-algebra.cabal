@@ -1,0 +1,48 @@
+name:                dense-linear-algebra
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/githubuser/dense-linear-algebra
+license:             BSD3
+license-file:        LICENSE
+author:              Author name here
+maintainer:          example@example.com
+copyright:           2018 Author name here
+category:            Math, Statistics, Numeric
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+tested-with: GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.1
+
+library
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+  hs-source-dirs:      src
+  exposed-modules:     Statistics.Matrix
+                       Statistics.Matrix.Algorithms
+                       Statistics.Matrix.Function
+                       Statistics.Matrix.Mutable
+                       Statistics.Matrix.Types
+  build-depends:       base                    >= 4.5 && < 5
+                     , deepseq                 >= 1.1.0.2
+                     , math-functions          >= 0.1.7                     
+                     , primitive               >= 0.3
+                     , vector                  >= 0.10
+                     , vector-algorithms       >= 0.4
+                     , vector-th-unbox
+                     , vector-binary-instances >= 0.2.1
+
+test-suite spec
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             LibSpec.hs
+  build-depends:       base
+                     , dense-linear-algebra
+                     , hspec
+                     , QuickCheck
+
+source-repository head
+  type:     git
+  location: https://github.com/githubuser/dense-linear-algebra

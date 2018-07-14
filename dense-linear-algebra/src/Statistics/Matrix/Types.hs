@@ -29,15 +29,11 @@ type MVector s = M.MVector s Double
 data Matrix = Matrix {
       rows     :: {-# UNPACK #-} !Int -- ^ Rows of matrix.
     , cols     :: {-# UNPACK #-} !Int -- ^ Columns of matrix.
-    , exponent :: {-# UNPACK #-} !Int
-      -- ^ In order to avoid overflows during matrix multiplication, a
-      -- large exponent is stored separately.
-    , _vector  :: !Vector  -- ^ Matrix data.
+    , _vector  :: !Vector             -- ^ Matrix data.
     } deriving (Eq)
 
 -- | Two-dimensional mutable matrix, stored in row-major order.
 data MMatrix s = MMatrix
-                 {-# UNPACK #-} !Int
                  {-# UNPACK #-} !Int
                  {-# UNPACK #-} !Int
                  !(MVector s)
@@ -47,7 +43,7 @@ instance Show Matrix where
     show = debug
 
 debug :: Matrix -> String
-debug (Matrix r c _ vs) = unlines $ zipWith (++) (hdr0 : repeat hdr) rrows
+debug (Matrix r c vs) = unlines $ zipWith (++) (hdr0 : repeat hdr) rrows
   where
     rrows         = map (cleanEnd . unwords) . split $ zipWith (++) ldone tdone
     hdr0          = show (r,c) ++ " "
