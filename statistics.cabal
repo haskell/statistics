@@ -70,7 +70,6 @@ library
     Statistics.Distribution.Transform
     Statistics.Distribution.Uniform
     Statistics.Function
-    Statistics.Math.RootFinding
     Statistics.Quantile
     Statistics.Regression
     Statistics.Resampling
@@ -100,7 +99,7 @@ library
   build-depends: base                    >= 4.5 && < 5
                , base-orphans            >= 0.6 && <0.9
                  --
-               , math-functions          >= 0.1.7
+               , math-functions          >= 0.3
                , mwc-random              >= 0.13.0.0
                  --
                , aeson                   >= 0.6.0.0
