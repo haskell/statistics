@@ -17,7 +17,7 @@ import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 import Statistics.Matrix
 import Statistics.Sample
-import Statistics.Types         (partial)
+import Statistics.Types         (partial,StatisticsException(..))
 import Statistics.Test.Internal (rankUnsorted)
 
 
@@ -33,12 +33,14 @@ pearson = correlation
 {-# INLINE pearson #-}
 
 -- | Compute pairwise pearson correlation between rows of a matrix
-pearsonMatByRow :: Matrix -> Matrix
+pearsonMatByRow :: MonadThrow m => Matrix -> m Matrix
 pearsonMatByRow m
-  = generateSym (rows m)
+  | nC < 2    = throwM $ InvalidSample "Statistics.Correlation.pearsonMatByRow" "Insufficient sample size"
+  | otherwise = return $ generateSym (rows m)
       (\i j -> partial $ pearson $ row m i `U.zip` row m j)
+  where
+    (_, nC) = dimension m
 {-# INLINE pearsonMatByRow #-}
--- FIXME: partial
 
 
 ----------------------------------------------------------------
@@ -68,7 +70,10 @@ spearman xy
 {-# INLINE spearman #-}
 
 -- | compute pairwise spearman correlation between rows of a matrix
-spearmanMatByRow :: Matrix -> Matrix
-spearmanMatByRow
-  = pearsonMatByRow . fromRows . fmap rankUnsorted . toRows
+spearmanMatByRow :: MonadThrow m => Matrix -> m Matrix
+spearmanMatByRow m
+  | nC < 2    = throwM $ InvalidSample "Statistics.Correlation.pearsonMatByRow" "Insufficient sample size"
+  | otherwise = pearsonMatByRow $ fromRows $ fmap rankUnsorted $ toRows m
+  where
+    (_, nC) = dimension m
 {-# INLINE spearmanMatByRow #-}
