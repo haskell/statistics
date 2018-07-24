@@ -406,10 +406,11 @@ correlation xy
   
 -- | Pair two samples. It's like 'G.zip' but requires that both
 --   samples have equal size.
-pair :: (G.Vector v a, G.Vector v b, G.Vector v (a,b)) => v a -> v b -> v (a,b)
+pair :: (G.Vector v a, G.Vector v b, G.Vector v (a,b), MonadThrow m)
+     => v a -> v b -> m (v (a,b))
 pair va vb
-  | G.length va == G.length vb = G.zip va vb
-  | otherwise = error "Statistics.Sample.pair: vector must have same length"
+  | G.length va == G.length vb = return $ G.zip va vb
+  | otherwise                  = modErr "pair" "vectors must have same length"
 {-# INLINE pair #-}
 
 ------------------------------------------------------------------------
