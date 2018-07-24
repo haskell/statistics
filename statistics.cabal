@@ -82,7 +82,6 @@ library
     Statistics.Sample
     Statistics.Sample.Histogram
     Statistics.Sample.KernelDensity
-    -- Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Normalize
     Statistics.Sample.Powers
     Statistics.Test.ChiSquared
