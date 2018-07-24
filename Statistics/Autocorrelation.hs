@@ -17,21 +17,39 @@ module Statistics.Autocorrelation
     , autocorrelation
     ) where
 
-import Prelude hiding (sum)
-import Statistics.Function (square)
-import Statistics.Sample (mean)
-import Statistics.Sample.Internal (sum)
 import qualified Data.Vector.Generic as G
+import Prelude hiding (sum)
+
+import Statistics.Function        (square)
+import Statistics.Sample          (mean)
+import Statistics.Sample.Internal (sum)
+import Statistics.Types           (partial)
+
 
 -- | Compute the autocovariance of a sample, i.e. the covariance of
--- the sample against a shifted version of itself.
-autocovariance :: (G.Vector v Double, G.Vector v Int) => v Double -> v Double
-autocovariance a = G.map f . G.enumFromTo 0 $ l-2
+--   the sample against a shifted version of itself:
+--
+--   \[
+--   \operatorname{cov}(X_i, X_{i+k})
+--   \]
+--
+--   Function returns array of covariances where i'th element
+--   corresponds to autocovariance with offset @i@. Note that
+--   autocovariance at offset 0 coincides with variance of sample. If
+--   sample contains less that 2 elements empty vector is returned.
+autocovariance
+  :: (G.Vector v Double, G.Vector v Int)
+  => v Double -> v Double
+autocovariance xs
+  = G.generate (n - 2) auto
   where
-    f k = sum (G.zipWith (*) (G.take (l-k) c) (G.slice k (l-k) c))
-          / fromIntegral l
-    c   = G.map (subtract (mean a)) a
-    l   = G.length a
+    auto k = sum (G.zipWith (*) (G.take (n-k) xs') (G.drop k xs'))
+           / fromIntegral n
+    xs'    = G.map (subtract mu) xs
+    -- SAFE: It's never called if sample size if too small
+    mu     = partial $ mean xs
+    n      = G.length xs
+
 
 -- | Compute the autocorrelation function of a sample, and the upper
 -- and lower bounds of confidence intervals for each element.
