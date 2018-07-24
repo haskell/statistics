@@ -33,7 +33,8 @@ import Control.Monad.Catch (MonadThrow(..))
 import Prelude hiding (exponent, sum)
 import Statistics.Distribution (Distribution(..))
 import Statistics.Function (gsort, unsafeModify)
-import Statistics.Matrix (center, exponent, for, fromVector, power)
+import Statistics.Matrix (center, for, fromVector)
+import qualified Statistics.Matrix as Mat
 import Statistics.Test.Types
 import Statistics.Types (mkPValue,partial,StatisticsException(..))
 import qualified Data.Vector          as V
@@ -218,7 +219,7 @@ kolmogorovSmirnovProbability n d
   -- Avoid potentially lengthy calculations for large N and D > 0.999
   | s > 7.24 || (s > 3.76 && n > 99) = 1 - 2 * exp( -(2.000071 + 0.331 / sqrt n' + 1.409 / n') * s)
   -- Exact computation
-  | otherwise = fini $ matrix `power` n
+  | otherwise = fini $ KSMatrix 0 matrix `power` n
   where
     s  = n' * d * d
     n' = fromIntegral n
@@ -254,13 +255,34 @@ kolmogorovSmirnovProbability n d
             return mat
       in fromVector size size m
     -- Last calculation
-    fini m = loop 1 (center m) (exponent m)
+    fini (KSMatrix e m) = loop 1 (center m) e
       where
         loop i ss eQ
           | i  > n       = ss * 10 ^^ eQ
           | ss' < 1e-140 = loop (i+1) (ss' * 1e140) (eQ - 140)
           | otherwise    = loop (i+1)  ss'           eQ
           where ss' = ss * fromIntegral i / fromIntegral n
+
+data KSMatrix = KSMatrix Int Mat.Matrix
+
+
+multiply :: KSMatrix -> KSMatrix -> KSMatrix
+multiply (KSMatrix e1 m1) (KSMatrix e2 m2) = KSMatrix (e1+e2) (Mat.multiply m1 m2)
+
+power :: KSMatrix -> Int -> KSMatrix
+power mat 1 = mat
+power mat n = avoidOverflow res
+  where
+    mat2 = power mat (n `quot` 2)
+    pow  = multiply mat2 mat2
+    res | odd n     = multiply pow mat
+        | otherwise = pow
+
+avoidOverflow :: KSMatrix -> KSMatrix
+avoidOverflow ksm@(KSMatrix e m)
+  | center m > 1e140 = KSMatrix (e + 140) (Mat.map (* 1e-140) m)
+  | otherwise        = ksm
+
 
 ----------------------------------------------------------------
 
