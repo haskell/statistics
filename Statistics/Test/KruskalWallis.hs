@@ -16,6 +16,7 @@ module Statistics.Test.KruskalWallis
   , module Statistics.Test.Types
   ) where
 
+import Control.Monad       (liftM)
 import Control.Monad.Catch (MonadThrow(..))
 import Data.Ord (comparing)
 import Data.Foldable (foldMap)
@@ -58,21 +59,22 @@ kruskalWallisRank samples = groupByTags
 --
 -- In textbooks the output value is usually represented by 'K' or 'H'. This
 -- function already does the ranking.
-kruskalWallis :: (U.Unbox a, Ord a) => [U.Vector a] -> Double
-kruskalWallis samples = (nTot - 1) * numerator / denominator
-  where
-    -- Total number of elements in all samples
-    nTot    = fromIntegral $ sumWith rsamples U.length
-    -- Average rank of all samples
-    avgRank = (nTot + 1) / 2
-    --
-    numerator = sumWith rsamples $ \sample ->
-        let n = fromIntegral $ U.length sample
-        in  n * square (mean sample - avgRank)
-    denominator = sumWith rsamples $ \sample ->
+kruskalWallis :: (U.Unbox a, Ord a, MonadThrow m) => [U.Vector a] -> m Double
+kruskalWallis samples = do
+  let -- Total number of elements in all samples
+      nTot    = fromIntegral $ sumWith rsamples U.length
+      -- Average rank of all samples
+      avgRank = (nTot + 1) / 2
+      --
+      rsamples = kruskalWallisRank samples
+  numerator <- sumWithM rsamples $ \sample -> do
+    let n = fromIntegral $ U.length sample
+    mu <- mean sample
+    return $! n * square (mu - avgRank)
+  let denominator = sumWith rsamples $ \sample ->
         Sample.sum $ U.map (\r -> square (r - avgRank)) sample
+  return $ (nTot - 1) * numerator / denominator
 
-    rsamples = kruskalWallisRank samples
 
 
 -- | Perform Kruskal-Wallis Test for the given samples and required
@@ -85,14 +87,15 @@ kruskalWallisTest :: (MonadThrow m, Ord a, U.Unbox a) => [U.Vector a] -> m (Test
 kruskalWallisTest []      = throwM $ TestFailure "KruskalWallis.kruskalWallisTest" "Empty list of samples"
 kruskalWallisTest samples
   -- We use chi-squared approximation here
-  | all (>4) ns = return Test
-                    { testSignificance = partial $ mkPValue $ complCumulative d k
-                    , testStatistics   = k
-                    , testDistribution = ()
-                    }
+  | all (>4) ns = do
+      k <- kruskalWallis samples
+      return Test
+        { testSignificance = partial $ mkPValue $ complCumulative d k
+        , testStatistics   = k
+        , testDistribution = ()
+        }
   | otherwise   = throwM $ TestFailure "KruskalWallis.kruskalWallisTest" "Samples are too small"
   where
-    k  = kruskalWallis samples
     ns = map U.length samples
     d  = chiSquared (length ns - 1)
 
@@ -101,3 +104,7 @@ kruskalWallisTest samples
 sumWith :: Num a => [Sample] -> (Sample -> a) -> a
 sumWith samples f = Prelude.sum $ fmap f samples
 {-# INLINE sumWith #-}
+
+sumWithM :: (Monad m, Num a) => [Sample] -> (Sample -> m a) -> m a
+sumWithM samples f = liftM Prelude.sum $ mapM f samples
+{-# INLINE sumWithM #-}

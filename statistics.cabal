@@ -82,7 +82,7 @@ library
     Statistics.Sample.Powers
     Statistics.Test.ChiSquared
     Statistics.Test.KolmogorovSmirnov
-    -- Statistics.Test.KruskalWallis
+    Statistics.Test.KruskalWallis
     Statistics.Test.MannWhitneyU
 --    Statistics.Test.Runs
     Statistics.Test.StudentT
