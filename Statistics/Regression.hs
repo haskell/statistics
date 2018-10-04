@@ -141,8 +141,9 @@ bootstrapRegress gen0 numResamples cl rgrss preds0 resp0
       (coeffss, r2s) = rgrss preds0 resp0
       est s v = estimateFromInterval s (w G.! lo, w G.! hi) cl
         where w  = F.sort v
-              lo = round c
-              hi = truncate (n - c)
+              bounded i = min (U.length w - 1) (max 0 i)
+              lo = bounded $ round c
+              hi = bounded $ truncate (n - c)
               n  = fromIntegral numResamples
               c  = n * (significanceLevel cl / 2)
   return (coeffs, r2)

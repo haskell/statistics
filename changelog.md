@@ -1,6 +1,7 @@
 ## Unreleased
 
- * Fix vector index out of bounds in `bootstrapBCA` (see issue #149)
+ * Fix vector index out of bounds in `bootstrapBCA` and `bootstrapRegress`
+   (see issue #149)
 
 ## Changes in 0.14.0.2
 
