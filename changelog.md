@@ -1,3 +1,7 @@
+## Unreleased
+
+ * Fix vector index out of bounds in `bootstrapBCA` (see issue #149)
+
 ## Changes in 0.14.0.2
 
  * Compatibility fixes with older GHC
