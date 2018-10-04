@@ -57,10 +57,10 @@ bootstrapBCA confidenceLevel sample resampledData
           estimateFromInterval pt (resample ! lo, resample ! hi) confidenceLevel
       where
         -- Quantile estimates for given CL
-        lo    = max (cumn a1) 0
+        lo    = min (max (cumn a1) 0) (ni - 1)
           where a1 = bias + b1 / (1 - accel * b1)
                 b1 = bias + z1
-        hi    = min (cumn a2) (ni - 1)
+        hi    = max (min (cumn a2) (ni - 1)) 0
           where a2 = bias + b2 / (1 - accel * b2)
                 b2 = bias - z1
         -- Number of resamples
