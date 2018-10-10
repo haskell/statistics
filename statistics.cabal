@@ -140,8 +140,9 @@ test-suite tests
     Tests.Quantile
   ghc-options:
     -Wall -threaded -rtsopts -fsimpl-tick-factor=500
-
   build-depends: base
+               , statistics
+               , dense-linear-algebra
                , HUnit
                , QuickCheck >= 2.7.5
                , binary
@@ -151,7 +152,6 @@ test-suite tests
                , math-functions
                , mwc-random
                , primitive
-               , statistics
                , test-framework
                , test-framework-hunit
                , test-framework-quickcheck2

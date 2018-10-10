@@ -23,7 +23,7 @@ fromMat :: Mat Double -> Matrix
 fromMat (Mat r c xs) = fromList r c (concat xs)
 
 toMat :: Matrix -> Mat Double
-toMat (Matrix r c _ v) = Mat r c . split . U.toList $ v
+toMat (Matrix r c v) = Mat r c . split . U.toList $ v
   where split xs@(_:_) = let (h,t) = splitAt c xs
                          in h : split t
         split []       = []
