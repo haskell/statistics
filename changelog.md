@@ -1,4 +1,22 @@
-## Unreleased
+## Changes in 0.15.0.0
+
+ * Modules `Statistics.Matrix.*` are split into new package
+   `dense-linear-algebra` and exponent field is removed from `Matrix` data type.
+
+ * Module `Statistics.Normalize` which contains functions for normalization of
+   samples
+
+ * Module `Statistics.Quantile` reworked:
+
+   - `ContParam` given `Default` instance
+   - `quantile` should be used instead of `continuousBy`
+   - `median` and `mad` are added
+   - `quantiles` and `quantilesVec` functions for computation of set of
+     quantiles added.
+
+ * Modules `Statistics.Function.Comparison` and `Statistics.Math.RootFinding`
+   are removed. Corresponding functionality could be found in `math-functions`
+   package.
 
  * Fix vector index out of bounds in `bootstrapBCA` and `bootstrapRegress`
    (see issue #149)
