@@ -26,8 +26,8 @@ license:        BSD2
 license-file:   LICENSE
 homepage:       https://github.com/bos/statistics
 bug-reports:    https://github.com/bos/statistics/issues
-author:         Bryan O'Sullivan <bos@serpentine.com>
-maintainer:     Bryan O'Sullivan <bos@serpentine.com>
+author:         Bryan O'Sullivan <bos@serpentine.com>, Alexey Khudaykov <alexey.skladnoy@gmail.com>
+maintainer:     Bryan O'Sullivan <bos@serpentine.com>, Alexey Khudaykov <alexey.skladnoy@gmail.com>
 copyright:      2009-2014 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
@@ -161,7 +161,3 @@ test-suite tests
 source-repository head
   type:     git
   location: https://github.com/bos/statistics
-
-source-repository head
-  type:     mercurial
-  location: https://bitbucket.org/bos/statistics

@@ -5,11 +5,10 @@ description:
   This library is simply collection of linear-algebra related modules
   split from statistics library.
 
--- homepage:            https://github.com/githubuser/dense-linear-algebra
-license:             BSD3
+license:             BSD2
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
+author:              Bryan O'Sullivan <bos@serpentine.com>
+maintainer:          Alexey Khudaykov <alexey.skladnoy@gmail.com>
 copyright:           2018 Author name here
 category:            Math, Statistics, Numeric
 build-type:          Simple
@@ -48,4 +47,4 @@ test-suite spec
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/dense-linear-algebra
+  location: https://github.com/bos/statistics
