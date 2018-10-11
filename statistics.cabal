@@ -107,7 +107,7 @@ library
                , binary                  >= 0.5.1.0
                , monad-par               >= 0.3.4
                , primitive               >= 0.3
-               , dense-linear-algebra
+               , dense-linear-algebra    >= 0.1 && <0.2
                , vector                  >= 0.10
                , vector-algorithms       >= 0.4
                , vector-th-unbox
