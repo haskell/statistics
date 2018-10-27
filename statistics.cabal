@@ -26,8 +26,8 @@ license:        BSD2
 license-file:   LICENSE
 homepage:       https://github.com/bos/statistics
 bug-reports:    https://github.com/bos/statistics/issues
-author:         Bryan O'Sullivan <bos@serpentine.com>
-maintainer:     Bryan O'Sullivan <bos@serpentine.com>
+author:         Bryan O'Sullivan <bos@serpentine.com>, Alexey Khudaykov <alexey.skladnoy@gmail.com>
+maintainer:     Bryan O'Sullivan <bos@serpentine.com>, Alexey Khudaykov <alexey.skladnoy@gmail.com>
 copyright:      2009-2014 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
@@ -107,7 +107,7 @@ library
                , monad-par               >= 0.3.4
                , exceptions              >= 0.10
                , primitive               >= 0.3
-               , dense-linear-algebra
+               , dense-linear-algebra    >= 0.1 && <0.2
                , vector                  >= 0.10
                , vector-algorithms       >= 0.4
                , vector-th-unbox
@@ -140,8 +140,9 @@ test-suite tests
     Tests.Quantile
   ghc-options:
     -Wall -threaded -rtsopts -fsimpl-tick-factor=500
-
   build-depends: base
+               , statistics
+               , dense-linear-algebra
                , HUnit
                , QuickCheck >= 2.7.5
                , binary
@@ -151,7 +152,6 @@ test-suite tests
                , math-functions
                , mwc-random
                , primitive
-               , statistics
                , test-framework
                , test-framework-hunit
                , test-framework-quickcheck2
@@ -161,7 +161,3 @@ test-suite tests
 source-repository head
   type:     git
   location: https://github.com/bos/statistics
-
-source-repository head
-  type:     mercurial
-  location: https://bitbucket.org/bos/statistics

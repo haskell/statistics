@@ -78,8 +78,8 @@ instance ApproxEq (V.Vector Double) where
 instance ApproxEq Matrix where
     type Bounds Matrix = Double
 
-    eq eps (Matrix r1 c1 e1 v1) (Matrix r2 c2 e2 v2) =
-      (r1,c1,e1) == (r2,c2,e2) && eq eps v1 v2
+    eq eps (Matrix r1 c1 v1) (Matrix r2 c2 v2) =
+      (r1,c1) == (r2,c2) && eq eps v1 v2
     (=~)  = eq m_epsilon
     eql eps a b = eqll dimension M.toList (`quotRem` cols a) eps a b
     (==~) = eql m_epsilon

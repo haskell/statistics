@@ -17,7 +17,8 @@ import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (newChan, readChan, writeChan)
 import Control.DeepSeq (rnf)
-import Control.Monad (forM_, replicateM)
+import Control.Monad (forM_, replicateM, when)
+import Data.List (nub)
 import GHC.Conc (getNumCapabilities)
 import Prelude hiding (pred, sum)
 import Statistics.Function as F
@@ -123,6 +124,20 @@ bootstrapRegress gen0 numResamples cl rgrss preds0 resp0
   | numResamples < 1   = error $ "bootstrapRegress: number of resamples " ++
                                  "must be positive"
   | otherwise = do
+
+  -- some error checks so that we do not run into vector index out of bounds.
+  case nub (map U.length preds0) of
+    [] -> error "bootstrapRegress: predictor vectors must not be empty"
+    [plen] -> do
+        let rlen = U.length resp0
+        when (plen /= rlen) $
+            error $ "bootstrapRegress: responder vector length ["
+                ++ show rlen
+                ++ "] must be the same as predictor vectors' length ["
+                ++ show plen ++ "]"
+    xs -> error $ "bootstrapRegress: all predictor vectors must be of the same \
+        \length, lengths provided are: " ++ show xs
+
   caps <- getNumCapabilities
   gens <- splitGen caps gen0
   done <- newChan
@@ -141,8 +156,9 @@ bootstrapRegress gen0 numResamples cl rgrss preds0 resp0
       (coeffss, r2s) = rgrss preds0 resp0
       est s v = estimateFromInterval s (w G.! lo, w G.! hi) cl
         where w  = F.sort v
-              lo = round c
-              hi = truncate (n - c)
+              bounded i = min (U.length w - 1) (max 0 i)
+              lo = bounded $ round c
+              hi = bounded $ truncate (n - c)
               n  = fromIntegral numResamples
               c  = n * (significanceLevel cl / 2)
   return (coeffs, r2)
