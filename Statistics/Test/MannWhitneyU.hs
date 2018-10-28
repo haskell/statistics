@@ -25,6 +25,7 @@ module Statistics.Test.MannWhitneyU (
   ) where
 
 import Control.Applicative ((<$>))
+import Control.Monad.Catch (MonadThrow(..))
 import Data.List (findIndex)
 import Data.Ord (comparing)
 import Numeric.SpecFunctions (choose)
@@ -35,7 +36,7 @@ import Statistics.Function (sortBy)
 import Statistics.Sample.Internal (sum)
 import Statistics.Test.Internal (rank, splitByTags)
 import Statistics.Test.Types (TestResult(..), PositionTest(..), significant)
-import Statistics.Types (PValue,pValue)
+import Statistics.Types (PValue,pValue,StatisticsException(..))
 import qualified Data.Vector.Unboxed as U
 
 -- | The Wilcoxon Rank Sums Test.
@@ -104,21 +105,24 @@ mannWhitneyU xs1 xs2
 -- simple unoptimised generating function given in section 2 of \"The Mann Whitney
 -- Wilcoxon Distribution Using Linked Lists\"
 mannWhitneyUCriticalValue
-  :: (Int, Int)     -- ^ The sample size
+  :: MonadThrow m
+  => (Int, Int)     -- ^ The sample size
   -> PValue Double  -- ^ The p-value (e.g. 0.05) for which you want the critical value.
-  -> Maybe Int      -- ^ The critical value (of U).
+  -> m Int          -- ^ The critical value (of U).
 mannWhitneyUCriticalValue (m, n) p
-  | m < 1 || n < 1 = Nothing    -- Sample must be nonempty
-  | p' <= 1        = Nothing    -- p-value is too small. Null hypothesis couldn't be disproved
-  | otherwise      = findIndex (>= p')
-                   $ take (m*n)
-                   $ tail
-                   $ alookup !! (m+n-2) !! (min m n - 1)
+  | m < 1 || n < 1 = failure "Sample must be nonempty"
+  | p' <= 1        = failure "p-value is too small. Null hypothesis couldn't be disproved"
+  | otherwise      = case res of
+      Nothing -> failure "can't find critical value"
+      Just i  -> return i
   where
     mnCn = (m+n) `choose` n
     p'   = mnCn * pValue p
-
-
+    res  = findIndex (>= p')
+         $ take (m*n)
+         $ tail
+         $ alookup !! (m+n-2) !! (min m n - 1)
+    failure = throwM . TestFailure "MannWhitneyU.mannWhitneyUCriticalValue"
 {-
 -- Original function, without memoisation, from Cheung and Klotz:
 -- Double is needed to avoid integer overflows.
@@ -181,11 +185,12 @@ alookup = gen 2 [1 : repeat 2]
 -- significantly larger than the second.  If you want the opposite, simply reverse
 -- the order in both the sample size and the (U₁, U₂) pairs.
 mannWhitneyUSignificant
-  :: PositionTest     -- ^ Perform one-tailed test (see description above).
+  :: MonadThrow m
+  => PositionTest     -- ^ Perform one-tailed test (see description above).
   -> (Int, Int)       -- ^ The samples' size from which the (U₁,U₂) values were derived.
   -> PValue Double    -- ^ The p-value at which to test (e.g. 0.05)
   -> (Double, Double) -- ^ The (U₁, U₂) values from 'mannWhitneyU'.
-  -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too
+  -> m TestResult     -- ^ Return 'Nothing' if the sample was too
                       --   small to make a decision.
 mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
   -- Use normal approximation
@@ -193,10 +198,10 @@ mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
     let mean  = n1 * n2 / 2     -- (u1+u2) / 2
         sigma = sqrt $ n1*n2*(n1 + n2 + 1) / 12
         z     = (mean - u1) / sigma
-    in Just $ case test of
-                AGreater      -> significant $ z     < quantile standard p
-                BGreater      -> significant $ (-z)  < quantile standard p
-                SamplesDiffer -> significant $ abs z > abs (quantile standard (p/2))
+    in return $ case test of
+         AGreater      -> significant $ z     < quantile standard p
+         BGreater      -> significant $ (-z)  < quantile standard p
+         SamplesDiffer -> significant $ abs z > abs (quantile standard (p/2))
   -- Use exact critical value
   | otherwise = do crit <- fromIntegral <$> mannWhitneyUCriticalValue (in1, in2) pVal
                    return $ case test of
@@ -217,12 +222,12 @@ mannWhitneyUSignificant test (in1, in2) pVal (u1, u2)
 -- One-tailed test checks whether first sample is significantly larger
 -- than second. Two-tailed whether they are significantly different.
 mannWhitneyUtest
-  :: (Ord a, U.Unbox a)
+  :: (Ord a, U.Unbox a, MonadThrow m)
   => PositionTest     -- ^ Perform one-tailed test (see description above).
   -> PValue Double    -- ^ The p-value at which to test (e.g. 0.05)
   -> U.Vector a       -- ^ First sample
   -> U.Vector a       -- ^ Second sample
-  -> Maybe TestResult -- ^ Return 'Nothing' if the sample was too small to
+  -> m TestResult     -- ^ Return 'Nothing' if the sample was too small to
                       --   make a decision.
 mannWhitneyUtest ontTail p smp1 smp2 =
   mannWhitneyUSignificant ontTail (n1,n2) p $ mannWhitneyU smp1 smp2
