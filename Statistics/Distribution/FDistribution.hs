@@ -14,15 +14,14 @@ module Statistics.Distribution.FDistribution (
     FDistribution
     -- * Constructors
   , fDistribution
-  , fDistributionE
   , fDistributionReal
-  , fDistributionRealE
     -- * Accessors
   , fDistributionNDF1
   , fDistributionNDF2
   ) where
 
 import Control.Applicative
+import Control.Monad.Catch    (MonadThrow(..))
 import Data.Aeson             (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary            (Binary(..))
 import Data.Data              (Data, Typeable)
@@ -34,6 +33,7 @@ import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified Statistics.Distribution as D
 import Statistics.Function (square)
 import Statistics.Internal
+import Statistics.Types    (StatisticsException(..))
 
 
 -- | F distribution
@@ -46,14 +46,14 @@ data FDistribution = F { fDistributionNDF1 :: {-# UNPACK #-} !Double
 instance Show FDistribution where
   showsPrec i (F n m _) = defaultShow2 "fDistributionReal" n m i
 instance Read FDistribution where
-  readPrec = defaultReadPrecM2 "fDistributionReal" fDistributionRealE
+  readPrec = defaultReadPrecM2 "fDistributionReal" fDistributionReal
 
 instance ToJSON FDistribution
 instance FromJSON FDistribution where
   parseJSON (Object v) = do
     n <- v .: "fDistributionNDF1"
     m <- v .: "fDistributionNDF2"
-    maybe (fail $ errMsgR n m) return $ fDistributionRealE n m
+    maybe (fail $ errMsgR n m) return $ fDistributionReal n m
   parseJSON _ = empty
 
 instance Binary FDistribution where
@@ -61,29 +61,23 @@ instance Binary FDistribution where
   get = do
     n <- get
     m <- get
-    maybe (fail $ errMsgR n m) return $ fDistributionRealE n m
+    maybe (fail $ errMsgR n m) return $ fDistributionReal n m
 
-fDistribution :: Int -> Int -> FDistribution
-fDistribution n m = maybe (error $ errMsg n m) id $ fDistributionE n m
-
-fDistributionReal :: Double -> Double -> FDistribution
-fDistributionReal n m = maybe (error $ errMsgR n m) id $ fDistributionRealE n m
-
-fDistributionE :: Int -> Int -> Maybe FDistribution
-fDistributionE n m
+fDistribution :: MonadThrow m => Int -> Int -> m FDistribution
+fDistribution n m
   | n > 0 && m > 0 =
     let n' = fromIntegral n
         m' = fromIntegral m
         f' = 0.5 * (log m' * m' + log n' * n') - logBeta (0.5*n') (0.5*m')
-    in Just $ F n' m' f'
-  | otherwise = Nothing
+    in return $ F n' m' f'
+  | otherwise = throwM $ InvalidDistribution "F distribution" (errMsg n m)
 
-fDistributionRealE :: Double -> Double -> Maybe FDistribution
-fDistributionRealE n m
+fDistributionReal :: MonadThrow m => Double -> Double -> m FDistribution
+fDistributionReal n m
   | n > 0 && m > 0 =
     let f' = 0.5 * (log m * m + log n * n) - logBeta (0.5*n) (0.5*m)
-    in Just $ F n m f'
-  | otherwise = Nothing
+    in return $ F n m f'
+  | otherwise = throwM $ InvalidDistribution "F distribution" (errMsgR n m)
 
 errMsg :: Int -> Int -> String
 errMsg _ _ = "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
