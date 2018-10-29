@@ -69,8 +69,8 @@ binomialCI cl@(significanceLevel -> p) ni ki
     k   = fromIntegral ki
     n   = fromIntegral ni
     eff = k / n
-    lb  = quantile      (betaDistr  k      (n - k + 1)) (p/2)
-    ub  = complQuantile (betaDistr (k + 1) (n - k)    ) (p/2)
+    lb  = quantile      (partial $ betaDistr  k      (n - k + 1)) (p/2)
+    ub  = complQuantile (partial $ betaDistr (k + 1) (n - k)    ) (p/2)
 
 
 -- $references
