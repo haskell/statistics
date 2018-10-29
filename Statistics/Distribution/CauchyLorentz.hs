@@ -19,18 +19,19 @@ module Statistics.Distribution.CauchyLorentz (
   , cauchyDistribScale
     -- * Constructors
   , cauchyDistribution
-  , cauchyDistributionE
   , standardCauchy
   ) where
 
 import Control.Applicative
+import Control.Monad.Catch    (MonadThrow(..))
 import Data.Aeson             (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary            (Binary(..))
-import Data.Maybe             (fromMaybe)
 import Data.Data              (Data, Typeable)
 import GHC.Generics           (Generic)
 import qualified Statistics.Distribution as D
 import Statistics.Internal
+import Statistics.Types    (StatisticsException(..))
+
 
 -- | Cauchy-Lorentz distribution.
 data CauchyDistribution = CD {
@@ -48,14 +49,14 @@ data CauchyDistribution = CD {
 instance Show CauchyDistribution where
   showsPrec i (CD m s) = defaultShow2 "cauchyDistribution" m s i
 instance Read CauchyDistribution where
-  readPrec = defaultReadPrecM2 "cauchyDistribution" cauchyDistributionE
+  readPrec = defaultReadPrecM2 "cauchyDistribution" cauchyDistribution
 
 instance ToJSON   CauchyDistribution
 instance FromJSON CauchyDistribution where
   parseJSON (Object v) = do
     m <- v .: "cauchyDistribMedian"
     s <- v .: "cauchyDistribScale"
-    maybe (fail $ errMsg m s) return $ cauchyDistributionE m s
+    maybe (fail $ errMsg m s) return $ cauchyDistribution m s
   parseJSON _ = empty
 
 instance Binary CauchyDistribution where
@@ -63,25 +64,17 @@ instance Binary CauchyDistribution where
     get = do
       m <- get
       s <- get
-      maybe (error $ errMsg m s) return $ cauchyDistributionE m s
+      maybe (error $ errMsg m s) return $ cauchyDistribution m s
 
 
 -- | Cauchy distribution
-cauchyDistribution :: Double    -- ^ Central point
+cauchyDistribution :: MonadThrow m
+                   => Double    -- ^ Central point
                    -> Double    -- ^ Scale parameter (FWHM)
-                   -> CauchyDistribution
+                   -> m CauchyDistribution
 cauchyDistribution m s
-  = fromMaybe (error $ errMsg m s)
-  $ cauchyDistributionE m s
-
-
--- | Cauchy distribution
-cauchyDistributionE :: Double    -- ^ Central point
-                    -> Double    -- ^ Scale parameter (FWHM)
-                    -> Maybe CauchyDistribution
-cauchyDistributionE m s
-  | s > 0     = Just (CD m s)
-  | otherwise = Nothing
+  | s > 0     = return (CD m s)
+  | otherwise = throwM $ InvalidDistribution "Cauchy-Lorentz" (errMsg m s)
 
 errMsg :: Double -> Double -> String
 errMsg _ s

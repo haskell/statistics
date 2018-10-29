@@ -22,13 +22,13 @@ module Statistics.Distribution.Laplace
       LaplaceDistribution
     -- * Constructors
     , laplace
-    , laplaceE
     -- * Accessors
     , ldLocation
     , ldScale
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch  (MonadThrow(..))
 import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary          (Binary(..))
 import Data.Data            (Data, Typeable)
@@ -38,6 +38,7 @@ import qualified Statistics.Distribution         as D
 import qualified Statistics.Quantile             as Q
 import qualified Statistics.Sample               as S
 import Statistics.Internal
+import Statistics.Types    (StatisticsException(..))
 
 
 data LaplaceDistribution = LD {
@@ -50,14 +51,14 @@ data LaplaceDistribution = LD {
 instance Show LaplaceDistribution where
   showsPrec i (LD l s) = defaultShow2 "laplace" l s i
 instance Read LaplaceDistribution where
-  readPrec = defaultReadPrecM2 "laplace" laplaceE
+  readPrec = defaultReadPrecM2 "laplace" laplace
 
 instance ToJSON LaplaceDistribution
 instance FromJSON LaplaceDistribution where
   parseJSON (Object v) = do
     l <- v .: "ldLocation"
     s <- v .: "ldScale"
-    maybe (fail $ errMsg l s) return $ laplaceE l s
+    maybe (fail $ errMsg l s) return $ laplace l s
   parseJSON _ = empty
 
 instance Binary LaplaceDistribution where
@@ -65,7 +66,7 @@ instance Binary LaplaceDistribution where
   get = do
     l <- get
     s <- get
-    maybe (fail $ errMsg l s) return $ laplaceE l s
+    maybe (fail $ errMsg l s) return $ laplace l s
 
 instance D.Distribution LaplaceDistribution where
     cumulative      = cumulative
@@ -134,18 +135,13 @@ complQuantile (LD l s) p
     inf = 1 / 0
 
 -- | Create an Laplace distribution.
-laplace :: Double         -- ^ Location
+laplace :: MonadThrow m
+        => Double        -- ^ Location
         -> Double        -- ^ Scale
-        -> LaplaceDistribution
-laplace l s = maybe (error $ errMsg l s) id $ laplaceE l s
-
--- | Create an Laplace distribution.
-laplaceE :: Double         -- ^ Location
-         -> Double        -- ^ Scale
-         -> Maybe LaplaceDistribution
-laplaceE l s
-  | s >= 0    = Just (LD l s)
-  | otherwise = Nothing
+        -> m LaplaceDistribution
+laplace l s
+  | s >= 0    = return (LD l s)
+  | otherwise = throwM $ InvalidDistribution "Laplace" (errMsg l s)
 
 errMsg :: Double -> Double -> String
 errMsg _ s = "Statistics.Distribution.Laplace.laplace: scale parameter must be positive. Got " ++ show s

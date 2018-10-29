@@ -15,13 +15,13 @@ module Statistics.Distribution.Uniform
       UniformDistribution
     -- * Constructors
     , uniformDistr
-    , uniformDistrE
     -- ** Accessors
     , uniformA
     , uniformB
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch (MonadThrow(..))
 import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary         (Binary(..))
 import Data.Data           (Data, Typeable)
@@ -30,7 +30,7 @@ import qualified System.Random.MWC       as MWC
 
 import qualified Statistics.Distribution as D
 import Statistics.Internal
-
+import Statistics.Types    (StatisticsException(..))
 
 
 -- | Uniform distribution from A to B
@@ -42,14 +42,14 @@ data UniformDistribution = UniformDistribution {
 instance Show UniformDistribution where
   showsPrec i (UniformDistribution a b) = defaultShow2 "uniformDistr" a b i
 instance Read UniformDistribution where
-  readPrec = defaultReadPrecM2 "uniformDistr" uniformDistrE
+  readPrec = defaultReadPrecM2 "uniformDistr" uniformDistr
 
 instance ToJSON UniformDistribution
 instance FromJSON UniformDistribution where
   parseJSON (Object v) = do
     a <- v .: "uniformA"
     b <- v .: "uniformB"
-    maybe (fail errMsg) return $ uniformDistrE a b
+    maybe (fail errMsg) return $ uniformDistr a b
   parseJSON _ = empty
 
 instance Binary UniformDistribution where
@@ -57,18 +57,14 @@ instance Binary UniformDistribution where
   get = do
     a <- get
     b <- get
-    maybe (fail errMsg) return $ uniformDistrE a b
+    maybe (fail errMsg) return $ uniformDistr a b
 
 -- | Create uniform distribution.
-uniformDistr :: Double -> Double -> UniformDistribution
-uniformDistr a b = maybe (error errMsg) id $ uniformDistrE a b
-
--- | Create uniform distribution.
-uniformDistrE :: Double -> Double -> Maybe UniformDistribution
-uniformDistrE a b
-  | b < a     = Just $ UniformDistribution b a
-  | a < b     = Just $ UniformDistribution a b
-  | otherwise = Nothing
+uniformDistr :: MonadThrow m => Double -> Double -> m UniformDistribution
+uniformDistr a b
+  | b < a     = return $ UniformDistribution b a
+  | a < b     = return $ UniformDistribution a b
+  | otherwise = throwM $ InvalidDistribution "uniform" errMsg
 -- NOTE: failure is in default branch to guard against NaNs.
 
 errMsg :: String
