@@ -19,7 +19,6 @@ module Statistics.Distribution.Poisson
       PoissonDistribution
     -- * Constructors
     , poisson
-    , poissonE
     -- * Accessors
     , poissonLambda
     -- * References
@@ -27,6 +26,7 @@ module Statistics.Distribution.Poisson
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch  (MonadThrow(..))
 import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary          (Binary(..))
 import Data.Data            (Data, Typeable)
@@ -37,6 +37,7 @@ import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Statistics.Internal
+import Statistics.Types  (StatisticsException(..))
 
 
 
@@ -47,20 +48,20 @@ newtype PoissonDistribution = PD {
 instance Show PoissonDistribution where
   showsPrec i (PD l) = defaultShow1 "poisson" l i
 instance Read PoissonDistribution where
-  readPrec = defaultReadPrecM1 "poisson" poissonE
+  readPrec = defaultReadPrecM1 "poisson" poisson
 
 instance ToJSON PoissonDistribution
 instance FromJSON PoissonDistribution where
   parseJSON (Object v) = do
     l <- v .: "poissonLambda"
-    maybe (fail $ errMsg l) return $ poissonE l
+    maybe (fail $ errMsg l) return $ poisson l
   parseJSON _ = empty
 
 instance Binary PoissonDistribution where
   put = put . poissonLambda
   get = do
     l <- get
-    maybe (fail $ errMsg l) return $ poissonE l
+    maybe (fail $ errMsg l) return $ poisson l
 
 instance D.Distribution PoissonDistribution where
     cumulative (PD lambda) x
@@ -94,14 +95,10 @@ instance D.MaybeEntropy PoissonDistribution where
   maybeEntropy = Just . D.entropy
 
 -- | Create Poisson distribution.
-poisson :: Double -> PoissonDistribution
-poisson l = maybe (error $ errMsg l) id $ poissonE l
-
--- | Create Poisson distribution.
-poissonE :: Double -> Maybe PoissonDistribution
-poissonE l
-  | l >=  0   = Just (PD l)
-  | otherwise = Nothing
+poisson :: (MonadThrow m) => Double -> m PoissonDistribution
+poisson l
+  | l >=  0   = return (PD l)
+  | otherwise = throwM $ InvalidDistribution "Poisson" (errMsg l)
 
 errMsg :: Double -> String
 errMsg l = "Statistics.Distribution.Poisson.poisson: lambda must be non-negative. Got "
