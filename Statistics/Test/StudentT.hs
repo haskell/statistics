@@ -38,9 +38,10 @@ studentTTest test sample1 sample2
       "StudentT.studentTTest" "Samples are too small"
   | otherwise                                    = do
       (t, ndf) <- tStatistics True sample1 sample2
-      return Test { testSignificance = significance test t ndf
+      tDistr   <- studentT ndf
+      return Test { testSignificance = significance test t tDistr
                   , testStatistics   = t
-                  , testDistribution = studentT ndf
+                  , testDistribution = tDistr
                   }
 {-# INLINABLE  studentTTest #-}
 {-# SPECIALIZE studentTTest :: MonadThrow m => PositionTest ->
@@ -63,9 +64,10 @@ welchTTest test sample1 sample2
       "StudentT.welchTTest" "Samples are too small"
   | otherwise                                    = do
       (t, ndf) <- tStatistics False sample1 sample2
-      return Test { testSignificance = significance test t ndf
+      tDistr   <- studentT ndf
+      return Test { testSignificance = significance test t tDistr
                   , testStatistics   = t
-                  , testDistribution = studentT ndf
+                  , testDistribution = tDistr
                   }
 {-# INLINABLE  welchTTest #-}
 {-# SPECIALIZE welchTTest :: MonadThrow m => PositionTest
@@ -85,11 +87,13 @@ pairedTTest :: (MonadThrow m, G.Vector v (Double, Double), G.Vector v Double)
 pairedTTest test sample
   | G.length sample < 2 = throwM $ TestFailure
       "StudentT.pairedTTest" "Sample is too small"
-  | otherwise           = return Test
-      { testSignificance = significance test t ndf
-      , testStatistics   = t
-      , testDistribution = studentT ndf
-      }
+  | otherwise           = do
+      tDistr <- studentT ndf
+      return Test
+        { testSignificance = significance test t tDistr
+        , testStatistics   = t
+        , testDistribution = tDistr
+        }
   where
     (t, ndf) = tStatisticsPaired sample
 {-# INLINABLE  pairedTTest #-}
@@ -101,16 +105,16 @@ pairedTTest test sample
 
 significance :: PositionTest    -- ^ one- or two-tailed
              -> Double          -- ^ t statistics
-             -> Double          -- ^ degree of freedom
+             -> StudentT        -- ^ Student T distribution in question
              -> PValue Double   -- ^ p-value
-significance test t df =
+significance test t tDistr =
   case test of
     -- Here we exploit symmetry of T-distribution and calculate small tail
     SamplesDiffer -> partial $ mkPValue $ 2 * tailArea (negate (abs t))
     AGreater      -> partial $ mkPValue $ tailArea (negate t)
     BGreater      -> partial $ mkPValue $ tailArea  t
   where
-    tailArea = cumulative (studentT df)
+    tailArea = cumulative tDistr
 
 
 -- Calculate T statistics for two samples

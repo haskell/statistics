@@ -14,13 +14,13 @@ module Statistics.Distribution.StudentT (
     StudentT
     -- * Constructors
   , studentT
-  , studentTE
   , studentTUnstandardized
     -- * Accessors
   , studentTndf
   ) where
 
 import Control.Applicative
+import Control.Monad.Catch (MonadThrow(..))
 import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary         (Binary(..))
 import Data.Data           (Data, Typeable)
@@ -31,6 +31,7 @@ import Numeric.SpecFunctions (
 import qualified Statistics.Distribution as D
 import Statistics.Distribution.Transform (LinearTransform (..))
 import Statistics.Internal
+import Statistics.Types    (StatisticsException(..))
 
 
 -- | Student-T distribution
@@ -40,30 +41,26 @@ newtype StudentT = StudentT { studentTndf :: Double }
 instance Show StudentT where
   showsPrec i (StudentT ndf) = defaultShow1 "studentT" ndf i
 instance Read StudentT where
-  readPrec = defaultReadPrecM1 "studentT" studentTE
+  readPrec = defaultReadPrecM1 "studentT" studentT
 
 instance ToJSON StudentT
 instance FromJSON StudentT where
   parseJSON (Object v) = do
     ndf <- v .: "studentTndf"
-    maybe (fail $ errMsg ndf) return $ studentTE ndf
+    maybe (fail $ errMsg ndf) return $ studentT ndf
   parseJSON _ = empty
 
 instance Binary StudentT where
   put = put . studentTndf
   get = do
     ndf <- get
-    maybe (fail $ errMsg ndf) return $ studentTE ndf
+    maybe (fail $ errMsg ndf) return $ studentT ndf
 
 -- | Create Student-T distribution. Number of parameters must be positive.
-studentT :: Double -> StudentT
-studentT ndf = maybe (error $ errMsg ndf) id $ studentTE ndf
-
--- | Create Student-T distribution. Number of parameters must be positive.
-studentTE :: Double -> Maybe StudentT
-studentTE ndf
-  | ndf > 0   = Just (StudentT ndf)
-  | otherwise = Nothing
+studentT :: MonadThrow m => Double -> m StudentT
+studentT ndf
+  | ndf > 0   = return (StudentT ndf)
+  | otherwise = throwM $ InvalidDistribution "student T" (errMsg ndf)   
 
 errMsg :: Double -> String
 errMsg _ = modErr "studentT" "non-positive number of degrees of freedom"
@@ -128,13 +125,17 @@ instance D.ContGen StudentT where
   genContVar = D.genContinuous
 
 -- | Create an unstandardized Student-t distribution.
-studentTUnstandardized :: Double -- ^ Number of degrees of freedom
-                       -> Double -- ^ Central value (0 for standard Student T distribution)
-                       -> Double -- ^ Scale parameter
-                       -> LinearTransform StudentT
+studentTUnstandardized
+  :: MonadThrow m
+  => Double -- ^ Number of degrees of freedom
+  -> Double -- ^ Central value (0 for standard Student T distribution)
+  -> Double -- ^ Scale parameter
+  -> m (LinearTransform StudentT)
 studentTUnstandardized ndf mu sigma
-  | sigma > 0 = LinearTransform mu sigma $ studentT ndf
-  | otherwise = modErr "studentTUnstandardized" $ "sigma must be > 0. Got: " ++ show sigma
+  | sigma > 0 = LinearTransform mu sigma <$> studentT ndf
+  | otherwise = throwM $ InvalidDistribution
+                ("student T unstandartadized")
+                (modErr "studentTUnstandardized" $ "sigma must be > 0. Got: " ++ show sigma)
 
 modErr :: String -> String -> a
 modErr fun msg = error $ "Statistics.Distribution.StudentT." ++ fun ++ ": " ++ msg
