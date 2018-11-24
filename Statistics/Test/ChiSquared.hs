@@ -36,16 +36,18 @@ chi2test :: (MonadThrow m, G.Vector v (Int,Double), G.Vector v Double)
          -> m (Test ChiSquared)
 chi2test ndf vec
   | ndf < 0   = throwM $ TestFailure "ChiSquare.chi2test" ("negative NDF: " ++ show ndf)
-  | n   > 0   = return Test
+  | n   > 0   = do
+      d  <- chiSquared n
+      d' <- chiSquared ndf
+      return Test
               { testSignificance = partial $ mkPValue $ complCumulative d chi2
               , testStatistics   = chi2
-              , testDistribution = chiSquared ndf
+              , testDistribution = d'
               }
   | otherwise = throwM $ TestFailure "ChiSquare.chi2test" "Not enough data points"
   where
     n     = G.length vec - ndf - 1
     chi2  = sum $ G.map (\(o,e) -> square (fromIntegral o - e) / e) vec
-    d     = chiSquared n
 {-# INLINABLE  chi2test #-}
 {-# SPECIALIZE
     chi2test :: MonadThrow m => Int -> U.Vector (Int,Double) -> m (Test ChiSquared) #-}
@@ -63,16 +65,18 @@ chi2testCont
   -> m (Test ChiSquared)
 chi2testCont ndf vec
   | ndf < 0   = throwM $ TestFailure "ChiSquare.chi2testCont" ("negative NDF: " ++ show ndf)
-  | n   > 0   = return Test
+  | n   > 0   = do
+      d  <- chiSquared n
+      d' <- chiSquared ndf
+      return Test
               { testSignificance = partial $ mkPValue $ complCumulative d chi2
               , testStatistics   = chi2
-              , testDistribution = chiSquared ndf
+              , testDistribution = d'
               }
   | otherwise = throwM $ TestFailure "ChiSquare.chi2test" "Not enough data points"
   where
     n     = G.length vec - ndf - 1
     chi2  = sum $ G.map (\(Estimate o (NormalErr s),e) -> square (o - e) / s) vec
-    d     = chiSquared n
 {-# INLINABLE  chi2testCont #-}
 {-# SPECIALIZE
     chi2testCont :: MonadThrow m => Int -> U.Vector (Estimate NormalErr Double,Double) -> m (Test ChiSquared) #-}

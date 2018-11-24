@@ -198,7 +198,7 @@ wilcoxonMatchedPairSignificance n t
 -- | Normal approximation for Wilcoxon T statistics
 normalApprox :: Int -> NormalDistribution
 normalApprox ni
-  = normalDistr m s
+  = partial $ normalDistr m s
   where
     m = n * (n + 1) / 4
     s = sqrt $ (n * (n + 1) * (2*n + 1)) / 24

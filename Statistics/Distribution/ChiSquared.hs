@@ -17,10 +17,10 @@ module Statistics.Distribution.ChiSquared (
         , chiSquaredNDF
         -- * Constructors
         , chiSquared
-        , chiSquaredE
         ) where
 
 import Control.Applicative
+import Control.Monad.Catch   (MonadThrow(..))
 import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary           (Binary(..))
 import Data.Data             (Data, Typeable)
@@ -31,7 +31,7 @@ import qualified System.Random.MWC.Distributions as MWC
 
 import qualified Statistics.Distribution         as D
 import Statistics.Internal
-
+import Statistics.Types      (StatisticsException(..))
 
 
 -- | Chi-squared distribution
@@ -44,32 +44,26 @@ newtype ChiSquared = ChiSquared
 instance Show ChiSquared where
   showsPrec i (ChiSquared n) = defaultShow1 "chiSquared" n i
 instance Read ChiSquared where
-  readPrec = defaultReadPrecM1 "chiSquared" chiSquaredE
+  readPrec = defaultReadPrecM1 "chiSquared" chiSquared
 
 instance ToJSON ChiSquared
 instance FromJSON ChiSquared where
   parseJSON (Object v) = do
     n <- v .: "chiSquaredNDF"
-    maybe (fail $ errMsg n) return $ chiSquaredE n
+    maybe (fail $ errMsg n) return $ chiSquared n
   parseJSON _ = empty
 
 instance Binary ChiSquared where
   put (ChiSquared x) = put x
   get = do n <- get
-           maybe (fail $ errMsg n) return $ chiSquaredE n
-
-
--- | Construct chi-squared distribution. Number of degrees of freedom
---   must be positive.
-chiSquared :: Int -> ChiSquared
-chiSquared n = maybe (error $ errMsg n) id $ chiSquaredE n
+           maybe (fail $ errMsg n) return $ chiSquared n
 
 -- | Construct chi-squared distribution. Number of degrees of freedom
 --   must be positive.
-chiSquaredE :: Int -> Maybe ChiSquared
-chiSquaredE n
-  | n <= 0    = Nothing
-  | otherwise = Just (ChiSquared n)
+chiSquared :: MonadThrow m => Int -> m ChiSquared
+chiSquared n
+  | n <= 0    = throwM $ InvalidDistribution "chi squared" (errMsg n)
+  | otherwise = return $ ChiSquared n
 
 errMsg :: Int -> String
 errMsg n = "Statistics.Distribution.ChiSquared.chiSquared: N.D.F. must be positive. Got " ++ show n
@@ -121,7 +115,7 @@ instance D.MaybeEntropy ChiSquared where
   maybeEntropy = Just . D.entropy
 
 instance D.ContGen ChiSquared where
-    genContVar (ChiSquared n) = MWC.chiSquare n
+  genContVar (ChiSquared n) = MWC.chiSquare n
 
 
 cumulative :: ChiSquared -> Double -> Double

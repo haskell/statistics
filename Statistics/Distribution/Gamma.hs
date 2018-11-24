@@ -20,15 +20,14 @@ module Statistics.Distribution.Gamma
       GammaDistribution
     -- * Constructors
     , gammaDistr
-    , gammaDistrE
     , improperGammaDistr
-    , improperGammaDistrE
     -- * Accessors
     , gdShape
     , gdScale
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch  (MonadThrow(..))
 import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary          (Binary(..))
 import Data.Data            (Data, Typeable)
@@ -40,6 +39,7 @@ import qualified System.Random.MWC.Distributions as MWC
 import Statistics.Distribution.Poisson.Internal as Poisson
 import qualified Statistics.Distribution as D
 import Statistics.Internal
+import Statistics.Types      (StatisticsException(..))
 
 
 -- | The gamma distribution.
@@ -51,7 +51,7 @@ data GammaDistribution = GD {
 instance Show GammaDistribution where
   showsPrec i (GD k theta) = defaultShow2 "improperGammaDistr" k theta i
 instance Read GammaDistribution where
-  readPrec = defaultReadPrecM2 "improperGammaDistr" improperGammaDistrE
+  readPrec = defaultReadPrecM2 "improperGammaDistr" improperGammaDistr
 
 
 instance ToJSON GammaDistribution
@@ -59,7 +59,7 @@ instance FromJSON GammaDistribution where
   parseJSON (Object v) = do
     k     <- v .: "gdShape"
     theta <- v .: "gdScale"
-    maybe (fail $ errMsgI k theta) return $ improperGammaDistrE k theta
+    maybe (fail $ errMsgI k theta) return $ improperGammaDistr k theta
   parseJSON _ = empty
 
 instance Binary GammaDistribution where
@@ -67,16 +67,9 @@ instance Binary GammaDistribution where
   get = do
     k     <- get
     theta <- get
-    maybe (fail $ errMsgI k theta) return $ improperGammaDistrE k theta
+    maybe (fail $ errMsgI k theta) return $ improperGammaDistr k theta
 
 
--- | Create gamma distribution. Both shape and scale parameters must
--- be positive.
-gammaDistr :: Double            -- ^ Shape parameter. /k/
-           -> Double            -- ^ Scale parameter, &#977;.
-           -> GammaDistribution
-gammaDistr k theta
-  = maybe (error $ errMsg k theta) id $ gammaDistrE k theta
 
 errMsg :: Double -> Double -> String
 errMsg k theta
@@ -87,21 +80,14 @@ errMsg k theta
 
 -- | Create gamma distribution. Both shape and scale parameters must
 -- be positive.
-gammaDistrE :: Double            -- ^ Shape parameter. /k/
-            -> Double            -- ^ Scale parameter, &#977;.
-            -> Maybe GammaDistribution
-gammaDistrE k theta
-  | k > 0 && theta > 0 = Just (GD k theta)
-  | otherwise          = Nothing
+gammaDistr :: MonadThrow m
+           => Double            -- ^ Shape parameter. /k/
+           -> Double            -- ^ Scale parameter, &#977;.
+           -> m GammaDistribution
+gammaDistr k theta
+  | k > 0 && theta > 0 = return (GD k theta)
+  | otherwise          = throwM $ InvalidDistribution "gamma" (errMsg k theta)
 
-
--- | Create gamma distribution. Both shape and scale parameters must
--- be non-negative.
-improperGammaDistr :: Double            -- ^ Shape parameter. /k/
-                   -> Double            -- ^ Scale parameter, &#977;.
-                   -> GammaDistribution
-improperGammaDistr k theta
-  = maybe (error $ errMsgI k theta) id $ improperGammaDistrE k theta
 
 errMsgI :: Double -> Double -> String
 errMsgI k theta
@@ -112,12 +98,13 @@ errMsgI k theta
 
 -- | Create gamma distribution. Both shape and scale parameters must
 -- be non-negative.
-improperGammaDistrE :: Double            -- ^ Shape parameter. /k/
-                    -> Double            -- ^ Scale parameter, &#977;.
-                    -> Maybe GammaDistribution
-improperGammaDistrE k theta
-  | k >= 0 && theta >= 0 = Just (GD k theta)
-  | otherwise            = Nothing
+improperGammaDistr :: MonadThrow m
+                   => Double            -- ^ Shape parameter. /k/
+                   -> Double            -- ^ Scale parameter, &#977;.
+                   -> m GammaDistribution
+improperGammaDistr k theta
+  | k >= 0 && theta >= 0 = return (GD k theta)
+  | otherwise            = throwM $ InvalidDistribution "gamma" (errMsgI k theta)
 
 instance D.Distribution GammaDistribution where
     cumulative = cumulative

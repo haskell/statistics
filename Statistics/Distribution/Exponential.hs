@@ -20,12 +20,12 @@ module Statistics.Distribution.Exponential
       ExponentialDistribution
     -- * Constructors
     , exponential
-    , exponentialE
     -- * Accessors
     , edLambda
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch             (MonadThrow(..))
 import Data.Aeson                      (FromJSON(..),ToJSON,Value(..),(.:))
 import Data.Binary                     (Binary, put, get)
 import Data.Data                       (Data, Typeable)
@@ -38,7 +38,7 @@ import qualified Data.Vector.Generic as G
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
 import Statistics.Internal
-
+import Statistics.Types     (StatisticsException(..))
 
 
 newtype ExponentialDistribution = ED {
@@ -48,20 +48,20 @@ newtype ExponentialDistribution = ED {
 instance Show ExponentialDistribution where
   showsPrec n (ED l) = defaultShow1 "exponential" l n
 instance Read ExponentialDistribution where
-  readPrec = defaultReadPrecM1 "exponential" exponentialE
+  readPrec = defaultReadPrecM1 "exponential" exponential
 
 instance ToJSON ExponentialDistribution
 instance FromJSON ExponentialDistribution where
   parseJSON (Object v) = do
     l <- v .: "edLambda"
-    maybe (fail $ errMsg l) return $ exponentialE l
+    maybe (fail $ errMsg l) return $ exponential l
   parseJSON _ = empty
 
 instance Binary ExponentialDistribution where
   put = put . edLambda
   get = do
     l <- get
-    maybe (fail $ errMsg l) return $ exponentialE l
+    maybe (fail $ errMsg l) return $ exponential l
 
 instance D.Distribution ExponentialDistribution where
     cumulative      = cumulative
@@ -122,16 +122,12 @@ complQuantile (ED l) p
     error $ "Statistics.Distribution.Exponential.quantile: p must be in [0,1] range. Got: "++show p
 
 -- | Create an exponential distribution.
-exponential :: Double            -- ^ Rate parameter.
-            -> ExponentialDistribution
-exponential l = maybe (error $ errMsg l) id $ exponentialE l
-
--- | Create an exponential distribution.
-exponentialE :: Double            -- ^ Rate parameter.
-             -> Maybe ExponentialDistribution
-exponentialE l
-  | l > 0     = Just (ED l)
-  | otherwise = Nothing
+exponential :: MonadThrow m
+            => Double            -- ^ Rate parameter.
+            -> m ExponentialDistribution
+exponential l
+  | l > 0     = return (ED l)
+  | otherwise = throwM $ InvalidDistribution "exponential" (errMsg l)
 
 errMsg :: Double -> String
 errMsg l = "Statistics.Distribution.Exponential.exponential: scale parameter must be positive. Got " ++ show l

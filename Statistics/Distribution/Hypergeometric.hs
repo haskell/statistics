@@ -22,7 +22,6 @@ module Statistics.Distribution.Hypergeometric
       HypergeometricDistribution
     -- * Constructors
     , hypergeometric
-    , hypergeometricE
     -- ** Accessors
     , hdM
     , hdL
@@ -30,6 +29,7 @@ module Statistics.Distribution.Hypergeometric
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch  (MonadThrow(..))
 import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary          (Binary(..))
 import Data.Data            (Data, Typeable)
@@ -39,7 +39,7 @@ import Numeric.SpecFunctions (choose,logChoose)
 
 import qualified Statistics.Distribution as D
 import Statistics.Internal
-
+import Statistics.Types      (StatisticsException(..))
 
 data HypergeometricDistribution = HD {
       hdM :: {-# UNPACK #-} !Int
@@ -50,7 +50,7 @@ data HypergeometricDistribution = HD {
 instance Show HypergeometricDistribution where
   showsPrec i (HD m l k) = defaultShow3 "hypergeometric" m l k i
 instance Read HypergeometricDistribution where
-  readPrec = defaultReadPrecM3 "hypergeometric" hypergeometricE
+  readPrec = defaultReadPrecM3 "hypergeometric" hypergeometric
 
 instance ToJSON HypergeometricDistribution
 instance FromJSON HypergeometricDistribution where
@@ -58,7 +58,7 @@ instance FromJSON HypergeometricDistribution where
     m <- v .: "hdM"
     l <- v .: "hdL"
     k <- v .: "hdK"
-    maybe (fail $ errMsg m l k) return $ hypergeometricE m l k
+    maybe (fail $ errMsg m l k) return $ hypergeometric m l k
   parseJSON _ = empty
 
 instance Binary HypergeometricDistribution where
@@ -67,7 +67,7 @@ instance Binary HypergeometricDistribution where
     m <- get
     l <- get
     k <- get
-    maybe (fail $ errMsg m l k) return $ hypergeometricE m l k
+    maybe (fail $ errMsg m l k) return $ hypergeometric m l k
 
 instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative
@@ -112,24 +112,17 @@ directEntropy d@(HD m _ _)
   $ dropWhile (not . (< negate m_epsilon))
     [ let x = probability d n in x * log x | n <- [0..m]]
 
-
 hypergeometric :: Int               -- ^ /m/
-               -> Int               -- ^ /l/
-               -> Int               -- ^ /k/
-               -> HypergeometricDistribution
-hypergeometric m l k
-  = maybe (error $ errMsg m l k) id $ hypergeometricE m l k
-
-hypergeometricE :: Int               -- ^ /m/
                 -> Int               -- ^ /l/
                 -> Int               -- ^ /k/
                 -> Maybe HypergeometricDistribution
-hypergeometricE m l k
-  | not (l > 0)            = Nothing
-  | not (m >= 0 && m <= l) = Nothing
-  | not (k > 0  && k <= l) = Nothing
+hypergeometric m l k
+  | not (l > 0)            = failure
+  | not (m >= 0 && m <= l) = failure
+  | not (k > 0  && k <= l) = failure
   | otherwise              = Just (HD m l k)
-
+  where
+    failure = throwM $ InvalidDistribution "hypergeometric" (errMsg m l k)
 
 errMsg :: Int -> Int -> Int -> String
 errMsg m l k

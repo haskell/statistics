@@ -25,15 +25,14 @@ module Statistics.Distribution.Geometric
     , GeometricDistribution0
     -- * Constructors
     , geometric
-    , geometricE
     , geometric0
-    , geometric0E
     -- ** Accessors
     , gdSuccess
     , gdSuccess0
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch (MonadThrow(..))
 import Control.Monad       (liftM)
 import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary         (Binary(..))
@@ -44,7 +43,7 @@ import qualified System.Random.MWC.Distributions as MWC
 
 import qualified Statistics.Distribution as D
 import Statistics.Internal
-
+import Statistics.Types      (StatisticsException(..))
 
 
 ----------------------------------------------------------------
@@ -57,20 +56,20 @@ newtype GeometricDistribution = GD {
 instance Show GeometricDistribution where
   showsPrec i (GD x) = defaultShow1 "geometric" x i
 instance Read GeometricDistribution where
-  readPrec = defaultReadPrecM1 "geometric" geometricE
+  readPrec = defaultReadPrecM1 "geometric" geometric
 
 instance ToJSON GeometricDistribution
 instance FromJSON GeometricDistribution where
   parseJSON (Object v) = do
     x <- v .: "gdSuccess"
-    maybe (fail $ errMsg x) return  $ geometricE x
+    maybe (fail $ errMsg x) return  $ geometric x
   parseJSON _ = empty
 
 instance Binary GeometricDistribution where
   put (GD x) = put x
   get = do
     x <- get
-    maybe (fail $ errMsg x) return  $ geometricE x
+    maybe (fail $ errMsg x) return  $ geometric x
 
 
 instance D.Distribution GeometricDistribution where
@@ -122,16 +121,12 @@ cumulative (GD s) x
 
 
 -- | Create geometric distribution.
-geometric :: Double                -- ^ Success rate
-          -> GeometricDistribution
-geometric x = maybe (error $ errMsg x) id $ geometricE x
-
--- | Create geometric distribution.
-geometricE :: Double                -- ^ Success rate
-           -> Maybe GeometricDistribution
-geometricE x
-  | x >= 0 && x <= 1 = Just (GD x)
-  | otherwise        = Nothing
+geometric :: MonadThrow m
+          => Double                -- ^ Success rate
+          -> m GeometricDistribution
+geometric x
+  | x >= 0 && x <= 1 = return (GD x)
+  | otherwise        = throwM $ InvalidDistribution "geometric" (errMsg x)
 
 errMsg :: Double -> String
 errMsg x = "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x

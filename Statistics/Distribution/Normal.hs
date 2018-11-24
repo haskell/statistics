@@ -18,11 +18,11 @@ module Statistics.Distribution.Normal
       NormalDistribution
     -- * Constructors
     , normalDistr
-    , normalDistrE
     , standard
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch   (MonadThrow(..))
 import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary           (Binary(..))
 import Data.Data             (Data, Typeable)
@@ -35,6 +35,7 @@ import qualified Data.Vector.Generic as G
 import qualified Statistics.Distribution as D
 import qualified Statistics.Sample as S
 import Statistics.Internal
+import Statistics.Types.Internal (StatisticsException(..))
 
 
 -- | The normal distribution.
@@ -48,14 +49,14 @@ data NormalDistribution = ND {
 instance Show NormalDistribution where
   showsPrec i (ND m s _ _) = defaultShow2 "normalDistr" m s i
 instance Read NormalDistribution where
-  readPrec = defaultReadPrecM2 "normalDistr" normalDistrE
+  readPrec = defaultReadPrecM2 "normalDistr" normalDistr
 
 instance ToJSON NormalDistribution
 instance FromJSON NormalDistribution where
   parseJSON (Object v) = do
     m  <- v .: "mean"
     sd <- v .: "stdDev"
-    maybe (fail $ errMsg m sd) return $ normalDistrE m sd
+    maybe (fail $ errMsg m sd) return $ normalDistr m sd
   parseJSON _ = empty
 
 instance Binary NormalDistribution where
@@ -63,7 +64,7 @@ instance Binary NormalDistribution where
     get = do
       m  <- get
       sd <- get
-      maybe (fail $ errMsg m sd) return $ normalDistrE m sd
+      maybe (fail $ errMsg m sd) return $ normalDistr m sd
 
 instance D.Distribution NormalDistribution where
     cumulative      = cumulative
@@ -108,25 +109,17 @@ standard = ND { mean       = 0.0
 --
 -- IMPORTANT: prior to 0.10 release second parameter was variance not
 -- standard deviation.
-normalDistr :: Double            -- ^ Mean of distribution
+normalDistr :: MonadThrow m
+            => Double            -- ^ Mean of distribution
             -> Double            -- ^ Standard deviation of distribution
-            -> NormalDistribution
-normalDistr m sd = maybe (error $ errMsg m sd) id $ normalDistrE m sd
-
--- | Create normal distribution from parameters.
---
--- IMPORTANT: prior to 0.10 release second parameter was variance not
--- standard deviation.
-normalDistrE :: Double            -- ^ Mean of distribution
-             -> Double            -- ^ Standard deviation of distribution
-             -> Maybe NormalDistribution
-normalDistrE m sd
-  | sd > 0    = Just ND { mean       = m
-                        , stdDev     = sd
-                        , ndPdfDenom = log $ m_sqrt_2_pi * sd
-                        , ndCdfDenom = m_sqrt_2 * sd
-                        }
-  | otherwise = Nothing
+            -> m NormalDistribution
+normalDistr m sd
+  | sd > 0    = return ND { mean       = m
+                          , stdDev     = sd
+                          , ndPdfDenom = log $ m_sqrt_2_pi * sd
+                          , ndCdfDenom = m_sqrt_2 * sd
+                          }
+  | otherwise = throwM $ InvalidDistribution "normal" (errMsg m sd)
 
 errMsg :: Double -> Double -> String
 errMsg _ sd = "Statistics.Distribution.Normal.normalDistr: standard deviation must be positive. Got " ++ show sd
@@ -140,7 +133,7 @@ instance D.FromSample NormalDistribution Double where
   fromSample xs = do
     m <- S.mean xs
     v <- S.variance xs
-    return $! normalDistr m (sqrt v)
+    normalDistr m (sqrt v)
 
 logDensity :: NormalDistribution -> Double -> Double
 logDensity d x = (-xm * xm / (2 * sd * sd)) - ndPdfDenom d

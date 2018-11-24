@@ -97,7 +97,7 @@ kruskalWallisTest samples
   | otherwise   = throwM $ TestFailure "KruskalWallis.kruskalWallisTest" "Samples are too small"
   where
     ns = map U.length samples
-    d  = chiSquared (length ns - 1)
+    d  = partial $ chiSquared (length ns - 1)
 
 -- * Helper functions
 

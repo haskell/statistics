@@ -19,13 +19,13 @@ module Statistics.Distribution.Binomial
       BinomialDistribution
     -- * Constructors
     , binomial
-    , binomialE
     -- * Accessors
     , bdTrials
     , bdProbability
     ) where
 
 import Control.Applicative
+import Control.Monad.Catch   (MonadThrow(..))
 import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary           (Binary(..))
 import Data.Data             (Data, Typeable)
@@ -36,7 +36,7 @@ import Numeric.MathFunctions.Constants (m_epsilon)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Statistics.Internal
-
+import Statistics.Types      (StatisticsException(..))
 
 -- | The binomial distribution.
 data BinomialDistribution = BD {
@@ -49,14 +49,14 @@ data BinomialDistribution = BD {
 instance Show BinomialDistribution where
   showsPrec i (BD n p) = defaultShow2 "binomial" n p i
 instance Read BinomialDistribution where
-  readPrec = defaultReadPrecM2 "binomial" binomialE
+  readPrec = defaultReadPrecM2 "binomial" binomial
 
 instance ToJSON BinomialDistribution
 instance FromJSON BinomialDistribution where
   parseJSON (Object v) = do
     n <- v .: "bdTrials"
     p <- v .: "bdProbability"
-    maybe (fail $ errMsg n p) return $ binomialE n p
+    maybe (fail $ errMsg n p) return $ binomial n p
   parseJSON _ = empty
 
 instance Binary BinomialDistribution where
@@ -64,7 +64,7 @@ instance Binary BinomialDistribution where
   get = do
     n <- get
     p <- get
-    maybe (fail $ errMsg n p) return $ binomialE n p
+    maybe (fail $ errMsg n p) return $ binomial n p
 
 
 
@@ -145,20 +145,16 @@ directEntropy d@(BD n _) =
 
 -- | Construct binomial distribution. Number of trials must be
 --   non-negative and probability must be in [0,1] range
-binomial :: Int                 -- ^ Number of trials.
-         -> Double              -- ^ Probability.
-         -> BinomialDistribution
-binomial n p = maybe (error $ errMsg n p) id $ binomialE n p
-
--- | Construct binomial distribution. Number of trials must be
---   non-negative and probability must be in [0,1] range
-binomialE :: Int                 -- ^ Number of trials.
+binomial :: MonadThrow m
+          => Int                 -- ^ Number of trials.
           -> Double              -- ^ Probability.
-          -> Maybe BinomialDistribution
-binomialE n p
-  | n < 0            = Nothing
-  | p >= 0 || p <= 1 = Just (BD n p)
-  | otherwise        = Nothing
+          -> m BinomialDistribution
+binomial n p
+  | n < 0            = failure
+  | p >= 0 || p <= 1 = return (BD n p)
+  | otherwise        = failure
+  where
+    failure = throwM $ InvalidDistribution "binomial" (errMsg n p)
 
 errMsg :: Int -> Double -> String
 errMsg n p
