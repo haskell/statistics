@@ -14,10 +14,9 @@ module Statistics.Regression
     ) where
 
 import Control.Applicative ((<$>))
-import Control.Concurrent (forkIO)
-import Control.Concurrent.Chan (newChan, readChan, writeChan)
+import Control.Concurrent.Async (forConcurrently)
 import Control.DeepSeq (rnf)
-import Control.Monad (forM_, replicateM, when)
+import Control.Monad (when)
 import Data.List (nub)
 import GHC.Conc (getNumCapabilities)
 import Prelude hiding (pred, sum)
@@ -140,16 +139,15 @@ bootstrapRegress gen0 numResamples cl rgrss preds0 resp0
 
   caps <- getNumCapabilities
   gens <- splitGen caps gen0
-  done <- newChan
-  forM_ (zip gens (balance caps numResamples)) $ \(gen,count) -> forkIO $ do
+  vs <- forConcurrently (zip gens (balance caps numResamples)) $ \(gen,count) -> do
       v <- V.replicateM count $ do
            let n = U.length resp0
            ixs <- U.replicateM n $ uniformR (0,n-1) gen
            let resp  = U.backpermute resp0 ixs
                preds = map (flip U.backpermute ixs) preds0
            return $ rgrss preds resp
-      rnf v `seq` writeChan done v
-  (coeffsv, r2v) <- (G.unzip . V.concat) <$> replicateM caps (readChan done)
+      rnf v `seq` return v
+  let (coeffsv, r2v) = G.unzip (V.concat vs)
   let coeffs  = flip G.imap (G.convert coeffss) $ \i x ->
                 est x . U.generate numResamples $ \k -> (coeffsv G.! k) G.! i
       r2      = est r2s (G.convert r2v)

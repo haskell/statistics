@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- |
 -- Module    : Statistics.Resampling.Bootstrap
 -- Copyright : (c) 2009, 2011 Bryan O'Sullivan
@@ -16,7 +17,6 @@ module Statistics.Resampling.Bootstrap
     -- $references
     ) where
 
-import Control.Monad.Par (parMap, runPar)
 import           Data.Vector.Generic ((!))
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
@@ -31,6 +31,9 @@ import Statistics.Function (gsort)
 
 import qualified Statistics.Resampling as R
 
+#if !defined(__GHCJS__)
+import Control.Monad.Par (parMap, runPar)
+#endif
 
 data T = {-# UNPACK #-} !Double :< {-# UNPACK #-} !Double
 infixl 2 :<
@@ -48,7 +51,15 @@ bootstrapBCA
   --   this.
   -> [Estimate ConfInt Double]
 bootstrapBCA confidenceLevel sample resampledData
+#if defined(__GHCJS__)
+  -- monad-par causes seems to cause "thread blocked indefinitely on MVar"
+  -- on GHCJS still
+  --
+  -- I (phadej) would change the interface to return IO, and use mapConcurrently from async
+  = map e resampledData
+#else
   = runPar $ parMap e resampledData
+#endif
   where
     e (est, Bootstrap pt resample)
       | U.length sample == 1 || isInfinite bias =

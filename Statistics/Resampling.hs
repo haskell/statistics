@@ -37,8 +37,8 @@ module Statistics.Resampling
 
 import Data.Aeson (FromJSON, ToJSON)
 import Control.Applicative
-import Control.Concurrent (forkIO, newChan, readChan, writeChan)
-import Control.Monad (forM_, forM, replicateM, replicateM_, liftM2)
+import Control.Concurrent.Async (forConcurrently_)
+import Control.Monad (forM_, forM, replicateM, liftM2)
 import Control.Monad.Primitive (PrimMonad(..))
 import Data.Binary (Binary(..))
 import Data.Data (Data, Typeable)
@@ -164,18 +164,17 @@ resample gen ests numResamples samples = do
                         (replicate r 1 ++ repeat 0)
           where (q,r) = numResamples `quotRem` numCapabilities
   results <- mapM (const (MU.new numResamples)) ests
-  done <- newChan
   gens <- splitGen numCapabilities gen
-  forM_ (zip3 ixs (tail ixs) gens) $ \ (start,!end,gen') ->
-    forkIO $ do
-      let loop k ers | k >= end = writeChan done ()
+  forConcurrently_ (zip3 ixs (tail ixs) gens) $ \ (start,!end,gen') -> do
+    -- on GHCJS it doesn't make sense to do any forking.
+    -- JavaScript runtime has only single capability.
+      let loop k ers | k >= end = return ()
                      | otherwise = do
             re <- resampleVector gen' samples
             forM_ ers $ \(est,arr) ->
                 MU.write arr k . est $ re
             loop (k+1) ers
       loop start (zip ests' results)
-  replicateM_ numCapabilities $ readChan done
   mapM_ sort results
   -- Build resamples
   res <- mapM unsafeFreeze results
