@@ -1,3 +1,11 @@
+## Changes in 0.16.0.0
+
+ * `bootstrapBCA` type changes to have `IO`.
+
+ * Drop dependency on `monad-par`.
+
+ * Use `async` for concurrent computations.
+
 ## Changes in 0.15.0.0
 
  * Modules `Statistics.Matrix.*` are split into new package

@@ -1,5 +1,5 @@
 name:           statistics
-version:        0.15.0.0
+version:        0.16.0.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -106,7 +106,6 @@ library
                , async                   >= 2.2.2 && <2.3
                , deepseq                 >= 1.1.0.2
                , binary                  >= 0.5.1.0
-               , monad-par               >= 0.3.4
                , primitive               >= 0.3
                , dense-linear-algebra    >= 0.1 && <0.2
                , vector                  >= 0.10
