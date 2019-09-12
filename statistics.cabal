@@ -117,7 +117,6 @@ library
                , async                   >= 2.2.2 && <2.3
                , deepseq                 >= 1.1.0.2
                , binary                  >= 0.5.1.0
-               , monad-par               >= 0.3.4
                , primitive               >= 0.3
                , dense-linear-algebra    >= 0.1 && <0.2
                , vector                  >= 0.10
@@ -125,6 +124,10 @@ library
                , vector-th-unbox
                , vector-binary-instances >= 0.2.1
                , data-default-class      >= 0.1.2
+  if !impl(ghcjs)
+    build-depends:
+      monad-par               >= 0.3.4
+  -- Older GHC
   if impl(ghc < 7.6)
     build-depends:
       ghc-prim
