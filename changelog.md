@@ -1,3 +1,8 @@
+## Changes in 0.15.1.1
+
+ * Fix build for GHC8.0 & 7.10
+
+
 ## Changes in 0.15.1.0
 
  * GHCJS support
