@@ -1,3 +1,10 @@
+## Changes in 0.15.1.0
+
+ * GHCJS support
+
+ * Concurrent resampling now uses `async` instead of hand-rolled primitives
+
+
 ## Changes in 0.15.0.0
 
  * Modules `Statistics.Matrix.*` are split into new package
