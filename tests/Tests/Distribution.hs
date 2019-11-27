@@ -2,7 +2,7 @@
     ViewPatterns #-}
 module Tests.Distribution (tests) where
 
-import Control.Applicative ((<$), (<$>), (<*>))
+import Control.Applicative ((<$))
 import qualified Control.Exception as E
 import Data.List (find)
 import Data.Typeable (Typeable)
