@@ -55,7 +55,6 @@ import           Data.Binary            (Binary)
 import           Data.Aeson             (ToJSON,FromJSON)
 import           Data.Data              (Data,Typeable)
 import           Data.Default.Class
-import           Data.Functor
 import qualified Data.Foldable        as F
 import           Data.Vector.Generic ((!))
 import qualified Data.Vector          as V
