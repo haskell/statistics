@@ -25,7 +25,7 @@ import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform, linTransDistr)
 import Statistics.Distribution.Uniform        (UniformDistribution)
-import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
+import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck as QC
