@@ -40,7 +40,6 @@ module Statistics.Resampling
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative
 import Control.Concurrent.Async (forConcurrently_)
 import Control.Monad (forM_, forM, replicateM, liftM2)
 import Control.Monad.Primitive (PrimMonad(..))
