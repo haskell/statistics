@@ -21,11 +21,11 @@ module Tests.Helpers (
 
 import Data.Typeable
 import Numeric.MathFunctions.Constants (m_tiny)
-import Test.Framework
-import Test.Framework.Providers.HUnit
+import Test.Tasty
+import Test.Tasty.HUnit
 import Test.QuickCheck
-import qualified Numeric.IEEE as IEEE
-import qualified Test.HUnit as HU
+import qualified Numeric.IEEE     as IEEE
+import qualified Test.Tasty.HUnit as HU
 
 -- | Phantom typed value used to select right instance in QC tests
 data T a = T
@@ -75,10 +75,10 @@ monotonicallyIncreasesIEEE f x1 x2 =
 -- HUnit helpers
 ----------------------------------------------------------------
 
-testAssertion :: String -> Bool -> Test
+testAssertion :: String -> Bool -> TestTree
 testAssertion str cont = testCase str $ HU.assertBool str cont
 
-testEquality :: (Show a, Eq a) => String -> a -> a -> Test
+testEquality :: (Show a, Eq a) => String -> a -> a -> TestTree
 testEquality msg a b = testCase msg $ HU.assertEqual msg a b
 
 unsquare :: (Arbitrary a, Show a, Testable b) => (a -> b) -> Property

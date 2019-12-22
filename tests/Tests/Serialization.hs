@@ -23,15 +23,15 @@ import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
 import Statistics.Types
 
-import Test.Framework                       (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Tasty            (TestTree, testGroup)
+import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck         as QC
 
 import Tests.Helpers
 import Tests.Orphanage ()
 
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "Test for data serialization"
   [ serializationTests (T :: T (CL Float))
   , serializationTests (T :: T (CL Double))
@@ -65,13 +65,13 @@ tests = testGroup "Test for data serialization"
 
 serializationTests
   :: (Eq a, Typeable a, Binary a, Show a, Read a, ToJSON a, FromJSON a, Arbitrary a)
-  => T a -> Test
+  => T a -> TestTree
 serializationTests t = serializationTests' (typeName t) t
 
 -- Not all types are Typeable, unfortunately
 serializationTests'
   :: (Eq a, Binary a, Show a, Read a, ToJSON a, FromJSON a, Arbitrary a)
-  => String -> T a -> Test
+  => String -> T a -> TestTree
 serializationTests' name t = testGroup ("Tests for: " ++ name)
   [ testProperty "show/read" (p_showRead t)
   , testProperty "binary"    (p_binary   t)

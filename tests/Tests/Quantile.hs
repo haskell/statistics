@@ -5,15 +5,13 @@ module Tests.Quantile (tests) where
 
 import Control.Exception
 import qualified Data.Vector.Unboxed as U
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.Framework.Providers.QuickCheck2
-import Test.HUnit (Assertion,assertEqual,assertFailure)
-import Test.QuickCheck hiding (sample)
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck hiding (sample)
 import Numeric.MathFunctions.Comparison (ulpDelta,ulpDistance)
 import Statistics.Quantile
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "Quantiles"
   [ testCase "R alg. 4" $ compareWithR cadpw (0.00, 0.50, 2.50, 8.25, 10.00)
   , testCase "R alg. 5" $ compareWithR hazen (0.00, 1.00, 5.00, 9.00, 10.00)

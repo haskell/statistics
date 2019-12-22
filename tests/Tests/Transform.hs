@@ -12,8 +12,8 @@ import Data.Functor ((<$>))
 import Numeric.Sum (kbn, sumVector)
 import Statistics.Function (within)
 import Statistics.Transform (CD, dct, fft, idct, ifft)
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck ( Positive(..), Arbitrary(..), Blind(..), (==>), Gen
                        , choose, vectorOf, counterexample, forAll)
 import Test.QuickCheck.Property (Property(..))
@@ -23,7 +23,7 @@ import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "fft" [
           testProperty "t_impulse"        t_impulse
         , testProperty "t_impulse_offset" t_impulse_offset
@@ -103,13 +103,13 @@ t_fftInverse roundtrip =
      $ nd <= 3e-14 * nx
 
 -- Test discrete cosine transform
-testDCT :: [Double] -> [Double] -> Test
+testDCT :: [Double] -> [Double] -> TestTree
 testDCT (U.fromList -> vec) (U.fromList -> res)
   = testAssertion ("DCT test for " ++ show vec)
   $ vecEqual 3e-14 (dct vec) res
 
 -- Test inverse discrete cosine transform
-testIDCT :: [Double] -> [Double] -> Test
+testIDCT :: [Double] -> [Double] -> TestTree
 testIDCT (U.fromList -> vec) (U.fromList -> res)
   = testAssertion ("IDCT test for " ++ show vec)
   $ vecEqual 3e-14 (idct vec) res

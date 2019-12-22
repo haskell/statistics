@@ -8,10 +8,9 @@ import qualified Data.Vector as V
 import Statistics.Correlation
 import Statistics.Correlation.Kendall
 import Test.QuickCheck ((==>),Property,counterexample)
-import Test.Framework
-import Test.Framework.Providers.QuickCheck2
-import Test.Framework.Providers.HUnit
-import Test.HUnit (Assertion, (@=?))
+import Test.Tasty
+import Test.Tasty.QuickCheck
+import Test.Tasty.HUnit
 
 import Tests.ApproxEq
 
@@ -19,7 +18,7 @@ import Tests.ApproxEq
 -- Tests list
 ----------------------------------------------------------------
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "Correlation"
     [ testProperty "Pearson correlation"           testPearson
     , testProperty "Spearman correlation is scale invariant" testSpearmanScale

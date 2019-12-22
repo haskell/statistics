@@ -3,17 +3,17 @@ module Tests.KDE (
   tests
   )where
 
-import Data.Vector.Unboxed ((!))
-import Numeric.Sum (kbn, sumVector)
+import Data.Vector.Unboxed             ((!))
+import Numeric.Sum                     (kbn, sumVector)
 import Statistics.Sample.KernelDensity
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck (Property, (==>), counterexample)
-import Text.Printf (printf)
+import Test.Tasty                      (TestTree, testGroup)
+import Test.Tasty.QuickCheck           (testProperty)
+import Test.QuickCheck                 (Property, (==>), counterexample)
+import Text.Printf                     (printf)
 import qualified Data.Vector.Unboxed as U
 
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "KDE"
   [ testProperty "integral(PDF) == 1" t_densityIsPDF
   ]

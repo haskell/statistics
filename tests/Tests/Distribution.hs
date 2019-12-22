@@ -26,8 +26,8 @@ import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform, linTransDistr)
 import Statistics.Distribution.Uniform        (UniformDistribution)
 import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck as QC
 import Test.QuickCheck.Monadic as QC
 import Text.Printf (printf)
@@ -38,7 +38,7 @@ import Tests.Helpers   (monotonicallyIncreasesIEEE,isDenorm)
 import Tests.Orphanage ()
 
 -- | Tests for all distributions
-tests :: Test
+tests :: TestTree
 tests = testGroup "Tests for all distributions"
   [ contDistrTests (T :: T BetaDistribution        )
   , contDistrTests (T :: T CauchyDistribution      )
@@ -67,7 +67,7 @@ tests = testGroup "Tests for all distributions"
 ----------------------------------------------------------------
 
 -- Tests for continuous distribution
-contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
+contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> TestTree
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck     t
@@ -78,7 +78,7 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for discrete distribution
-discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> Test
+discreteDistrTests :: (Param d, DiscreteDistr d, QC.Arbitrary d, Typeable d, Show d) => T d -> TestTree
 discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
@@ -88,7 +88,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   ]
 
 -- Tests for distributions which have CDF
-cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [Test]
+cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [TestTree]
 cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
   , testProperty "CDF limit at +inf"    $ cdfLimitAtPosInfinity  t
@@ -298,7 +298,7 @@ instance Param FDistribution where
 -- Unit tests
 ----------------------------------------------------------------
 
-unitTests :: Test
+unitTests :: TestTree
 unitTests = testGroup "Unit tests"
   [ testAssertion "density (gammaDistr 150 1/150) 1 == 4.883311" $
       4.883311418525483 =~ density (gammaDistr 150 (1/150)) 1

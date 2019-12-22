@@ -4,11 +4,11 @@ import Data.Maybe (fromJust)
 import Statistics.Test.StudentT
 import Statistics.Types
 import qualified Data.Vector.Unboxed as U
-import Test.Framework (testGroup)
+import Test.Tasty (testGroup)
 import Tests.Helpers  (testEquality)
-import qualified Test.Framework as Tst
+import qualified Test.Tasty as Tst
 
-tests :: Tst.Test
+tests :: Tst.TestTree
 tests = testGroup "Parametric tests" studentTTests
 
 -- 2 samples x 20 obs data
@@ -71,14 +71,14 @@ sample2 = U.fromList [
 testTTest :: String
           -> PValue Double
           -> Test d
-          -> [Tst.Test]
+          -> [Tst.TestTree]
 testTTest name pVal test =
   [ testEquality name (isSignificant pVal test) NotSignificant
   , testEquality name (isSignificant (mkPValue $ pValue pVal + 1e-5) test)
     Significant
   ]
   
-studentTTests :: [Tst.Test]
+studentTTests :: [Tst.TestTree]
 studentTTests = concat
   [ -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
     testTTest "two-sample t-test SamplesDiffer Student"

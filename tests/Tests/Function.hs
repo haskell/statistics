@@ -1,14 +1,14 @@
 module Tests.Function ( tests ) where
 
 import Statistics.Function
-import Test.Framework
-import Test.Framework.Providers.QuickCheck2
+import Test.Tasty
+import Test.Tasty.QuickCheck
 import Test.QuickCheck
 import Tests.Helpers
 import qualified Data.Vector.Unboxed as U
 
 
-tests :: Test
+tests :: TestTree
 tests = testGroup "S.Function"
   [ testProperty  "Sort is sort"                p_sort
   , testAssertion "nextHighestPowerOfTwo is OK" p_nextHighestPowerOfTwo

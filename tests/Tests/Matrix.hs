@@ -2,8 +2,8 @@ module Tests.Matrix (tests) where
 
 import Statistics.Matrix hiding (map)
 import Statistics.Matrix.Algorithms
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck
 import Tests.ApproxEq (ApproxEq(..))
 import Tests.Matrix.Types
@@ -31,9 +31,9 @@ t_qr :: Matrix -> Property
 t_qr a = hasNaN p .||. eql 1e-10 a p
   where p = uncurry multiply (qr a)
 
-tests :: Test
-tests = testGroup "Matrix" [
-    testProperty "t_row" t_row
+tests :: TestTree
+tests = testGroup "Matrix"
+  [ testProperty "t_row" t_row
   , testProperty "t_column" t_column
   , testProperty "t_center" t_center
   , testProperty "t_transpose" t_transpose
