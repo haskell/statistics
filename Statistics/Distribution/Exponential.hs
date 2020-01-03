@@ -30,7 +30,7 @@ import Data.Aeson                      (FromJSON(..),ToJSON,Value(..),(.:))
 import Data.Binary                     (Binary, put, get)
 import Data.Data                       (Data, Typeable)
 import GHC.Generics                    (Generic)
-import Numeric.SpecFunctions           (log1p)
+import Numeric.SpecFunctions           (log1p,expm1)
 import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified System.Random.MWC.Distributions as MWC
 import qualified Data.Vector.Generic as G
@@ -101,7 +101,7 @@ instance D.ContGen ExponentialDistribution where
 
 cumulative :: ExponentialDistribution -> Double -> Double
 cumulative (ED l) x | x <= 0    = 0
-                    | otherwise = 1 - exp (-l * x)
+                    | otherwise = - expm1 (-l * x)
 
 complCumulative :: ExponentialDistribution -> Double -> Double
 complCumulative (ED l) x | x <= 0    = 1
