@@ -6,8 +6,7 @@ import Control.Applicative ((<$), (<$>), (<*>))
 import qualified Control.Exception as E
 import Data.List (find)
 import Data.Typeable (Typeable)
-import qualified Numeric.IEEE as IEEE
-import Numeric.MathFunctions.Constants (m_tiny,m_huge)
+import Numeric.MathFunctions.Constants (m_tiny,m_huge,m_epsilon)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
 import Statistics.Distribution.Beta           (BetaDistribution)
@@ -148,7 +147,7 @@ cdfComplementIsCorrect :: (Distribution d) => T d -> d -> Double -> Bool
 cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d x)
 
 -- CDF for discrete distribution uses <= for comparison
-cdfDiscreteIsCorrect :: (DiscreteDistr d) => T d -> d -> Property
+cdfDiscreteIsCorrect :: (Param d, DiscreteDistr d) => T d -> d -> Property
 cdfDiscreteIsCorrect _ d
   = counterexample (unlines badN)
   $ null badN
@@ -167,8 +166,9 @@ cdfDiscreteIsCorrect _ d
                  dp     = probability d i
                  relerr = ((p1 - p) - dp) / max p1 dp
            ,  not (p == 0 && p1 == 0 && dp == 0)
-           && relerr > 1e-14
+           && relerr > tol
            ]
+    tol = prec_discreteCDF d
 
 logDensityCheck :: (ContDistr d) => T d -> d -> Double -> Property
 logDensityCheck _ d x
@@ -298,7 +298,9 @@ class Param a where
   -- | Precision for 'quantileIsInvCDF' test
   prec_quantile_CDF :: a -> (Double,Double)
   prec_quantile_CDF _ = (16,16)
-
+  -- |
+  prec_discreteCDF :: a -> Double
+  prec_discreteCDF _ = 32 * m_epsilon
 
 instance Param StudentT where
   -- FIXME: disabled unless incompleteBeta troubles are sorted out
@@ -313,9 +315,8 @@ instance Param FDistribution where
 instance Param ChiSquared where
   prec_quantile_CDF _ = (32,32)
 
-
-
-instance Param BinomialDistribution
+instance Param BinomialDistribution where
+  prec_discreteCDF _ = 1e-13
 instance Param CauchyDistribution
 instance Param DiscreteUniform
 instance Param ExponentialDistribution
