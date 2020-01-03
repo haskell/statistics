@@ -7,7 +7,7 @@ import qualified Control.Exception as E
 import Data.List (find)
 import Data.Typeable (Typeable)
 import qualified Numeric.IEEE as IEEE
-import Numeric.MathFunctions.Constants (m_tiny)
+import Numeric.MathFunctions.Constants (m_tiny,m_huge)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
 import Statistics.Distribution.Beta           (BetaDistribution)
@@ -125,22 +125,23 @@ cdfAtNegInfinity _ d
   = cumulative d (-1/0) == 0
 
 -- CDF limit at +∞ is 1
-cdfLimitAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Property
-cdfLimitAtPosInfinity _ d =
-  okForInfLimit d ==> counterexample ("Last elements: " ++ show (drop 990 probs))
-                    $ Just 1.0 == (find (>=1) probs)
+cdfLimitAtPosInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfLimitAtPosInfinity _ d
+  = Just 1.0 == find (>=1) probs
   where
-    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) 1000
+    probs = map (cumulative d)
+          $ takeWhile (< (m_huge/2))
+          $ iterate (*1.4) 1
 
 -- CDF limit at -∞ is 0
-cdfLimitAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Property
-cdfLimitAtNegInfinity _ d =
-  okForInfLimit d ==> counterexample ("Last elements: " ++ show (drop 990 probs))
-                    $ case find (< IEEE.epsilon) probs of
-                        Nothing -> False
-                        Just p  -> p >= 0
+cdfLimitAtNegInfinity :: (Param d, Distribution d) => T d -> d -> Bool
+cdfLimitAtNegInfinity _ d
+  = Just 0 == find (<=0) probs
   where
-    probs = take 1000 $ map (cumulative d) $ iterate (*1.4) (-1)
+    probs = map (cumulative d)
+          $ takeWhile (> (-m_huge/2))
+          $ iterate (*1.4) (-1)
+
 
 -- CDF's complement is implemented correctly
 cdfComplementIsCorrect :: (Distribution d) => T d -> d -> Double -> Bool
@@ -287,23 +288,27 @@ class Param a where
   -- | Precision for 'quantileIsInvCDF' test
   prec_quantile_CDF :: a -> (Double,Double)
   prec_quantile_CDF _ = (16,16)
-  -- Distribution is OK for testing limits
-  okForInfLimit :: a -> Bool
-  okForInfLimit _ = True
 
 
 instance Param StudentT where
-  okForInfLimit d = studentTndf d > 0.75
-
+  -- FIXME: disabled unless incompleteBeta troubles are sorted out
+  quantileIsInvCDF_enabled _ = False
 instance Param BetaDistribution where
   -- FIXME: See https://github.com/bos/statistics/issues/161 for details
   quantileIsInvCDF_enabled _ = False
+instance Param FDistribution where
+  -- FIXME: disabled unless incompleteBeta troubles are sorted out
+  quantileIsInvCDF_enabled _ = False
+
+instance Param ChiSquared where
+  prec_quantile_CDF _ = (32,32)
+
+
+
 instance Param BinomialDistribution
 instance Param CauchyDistribution
-instance Param ChiSquared
 instance Param DiscreteUniform
 instance Param ExponentialDistribution
-instance Param FDistribution
 instance Param GammaDistribution
 instance Param GeometricDistribution
 instance Param GeometricDistribution0
