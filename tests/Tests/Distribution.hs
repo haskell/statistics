@@ -143,8 +143,11 @@ cdfLimitAtNegInfinity _ d
 
 
 -- CDF's complement is implemented correctly
-cdfComplementIsCorrect :: (Distribution d) => T d -> d -> Double -> Bool
-cdfComplementIsCorrect _ d x = (eq 1e-14) 1 (cumulative d x + complCumulative d x)
+cdfComplementIsCorrect :: (Distribution d, Param d) => T d -> d -> Double -> Bool
+cdfComplementIsCorrect _ d x
+  = 1 - (cumulative d x + complCumulative d x) <= tol
+  where
+    tol = prec_complementCDF d
 
 -- CDF for discrete distribution uses <= for comparison
 cdfDiscreteIsCorrect :: (Param d, DiscreteDistr d) => T d -> d -> Property
@@ -301,6 +304,9 @@ class Param a where
   -- |
   prec_discreteCDF :: a -> Double
   prec_discreteCDF _ = 32 * m_epsilon
+  -- | Precision of CDF's complement
+  prec_complementCDF :: a -> Double
+  prec_complementCDF _ = 1e-14
 
 instance Param StudentT where
   -- FIXME: disabled unless incompleteBeta troubles are sorted out
