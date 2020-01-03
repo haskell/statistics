@@ -7,7 +7,7 @@ import qualified Control.Exception as E
 import Data.List (find)
 import Data.Typeable (Typeable)
 import qualified Numeric.IEEE as IEEE
-import Numeric.MathFunctions.Constants (m_tiny,m_epsilon)
+import Numeric.MathFunctions.Constants (m_tiny)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
 import Statistics.Distribution.Beta           (BetaDistribution)
@@ -23,11 +23,12 @@ import Statistics.Distribution.Laplace        (LaplaceDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
-import Statistics.Distribution.Transform      (LinearTransform, linTransDistr)
+import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
-import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (testProperty)
+import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
+import Test.Tasty                 (TestTree, testGroup)
+import Test.Tasty.QuickCheck      (testProperty)
+import Test.Tasty.ExpectedFailure (ignoreTest)
 import Test.QuickCheck as QC
 import Test.QuickCheck.Monadic as QC
 import Text.Printf (printf)
@@ -72,11 +73,9 @@ contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck     t
   ] ++
-  ( if quantileIsInvCDF_enabled t
-    then [ testProperty "Quantile is CDF inverse" $ quantileIsInvCDF t ]
-    else []
-  ) ++
-  [ testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
+  [ (if quantileIsInvCDF_enabled t then id else ignoreTest)
+  $ testProperty "Quantile is CDF inverse" $ quantileIsInvCDF t
+  , testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
   , testProperty "log density check"       $ logDensityCheck    t
   , testProperty "complQuantile"           $ complQuantileCheck t
   ]

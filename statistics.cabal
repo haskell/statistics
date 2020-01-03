@@ -169,6 +169,7 @@ test-suite tests
                , tasty
                , tasty-hunit
                , tasty-quickcheck
+               , tasty-expected-failure
                , vector
                , vector-algorithms
 
