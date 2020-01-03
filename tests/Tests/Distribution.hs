@@ -274,7 +274,7 @@ logProbabilityCheck _ d x
 class Param a where
   -- | Precision for 'quantileIsInvCDF' test
   prec_quantile_CDF :: a -> (Double,Double)
-  prec_quantile_CDF _ = (64,64)
+  prec_quantile_CDF _ = (16,16)
   -- Distribution is OK for testing limits
   okForInfLimit :: a -> Bool
   okForInfLimit _ = True
