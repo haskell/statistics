@@ -40,6 +40,7 @@ import Data.Binary         (Binary(..))
 import Data.Data           (Data, Typeable)
 import GHC.Generics        (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_neg_inf)
+import Numeric.SpecFunctions           (log1p,expm1)
 import qualified System.Random.MWC.Distributions as MWC
 
 import qualified Statistics.Distribution as D
@@ -118,7 +119,7 @@ cumulative (GD s) x
   | x < 1        = 0
   | isInfinite x = 1
   | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
-  | otherwise    = 1 - (1-s) ^ (floor x :: Int)
+  | otherwise    = negate $ expm1 $ fromIntegral (floor x :: Int) * log1p (-s)
 
 
 -- | Create geometric distribution.
