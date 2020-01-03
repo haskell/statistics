@@ -278,7 +278,11 @@ logProbabilityCheck _ d x
   $ counterexample (printf "eps            = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
   $ or [ p == 0     && logP == (-1/0)
        , p < 1e-308 && logP < 609
-       , eq 1e-14 (log p) logP
+         -- To avoid problems with roundtripping error in case
+         -- when density is computed as exponent of logDensity we
+         -- accept either inequality
+       ,  (ulpDistance (log p) logP <= 32)
+       || (ulpDistance p (exp logP) <= 32)
        ]
   where
     p    = probability d x
