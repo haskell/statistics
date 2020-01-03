@@ -195,11 +195,17 @@ pdfSanityCheck _ d x = p >= 0
   where p = density d x
 
 complQuantileCheck :: (ContDistr d) => T d -> d -> Double01 -> Property
-complQuantileCheck _ d (Double01 p) =
+complQuantileCheck _ d (Double01 p)
+  = counterexample (printf "x0 = %g" x0)
+  $ counterexample (printf "x1 = %g" x1)
   -- We avoid extreme tails of distributions
   --
   -- FIXME: all parameters are arbitrary at the moment
-  p > 0.01 && p < 0.99 ==> (abs (x1 - x0) < 1e-6)
+  $ and [ p > 0.01
+        , p < 0.99
+        , not $ isInfinite x0
+        , not $ isInfinite x1
+        ] ==> (abs (x1 - x0) < 1e-6)
   where
     x0 = quantile      d (1 - p)
     x1 = complQuantile d p
