@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, OverlappingInstances, ScopedTypeVariables,
+{-# LANGUAGE FlexibleInstances, ScopedTypeVariables,
     ViewPatterns #-}
 module Tests.Distribution (tests) where
 
@@ -197,9 +197,9 @@ complQuantileCheck _ d (Double01 p) =
     x1 = complQuantile d p
 
 -- Quantile is inverse of CDF
-quantileIsInvCDF :: (ContDistr d) => T d -> d -> Double01 -> Property
+quantileIsInvCDF :: (Param d, ContDistr d) => T d -> d -> Double01 -> Property
 quantileIsInvCDF _ d (Double01 p) =
-  and [ p > 1e-250
+  and [ p > m_tiny
       , p < 1
       , x > m_tiny
       , dens > 0
@@ -210,17 +210,18 @@ quantileIsInvCDF _ d (Double01 p) =
     $ counterexample (printf "Expected err. = %g" err)
     $ counterexample (printf "Rel. error    = %g" (relativeError p p'))
     $ counterexample (printf "Abs. error    = %e" (abs $ p - p'))
-    $ eqRelErr err p p'
+    $ ulpDistance p p' <= round err
     )
   where
     -- Algorithm for error estimation is taken from here
     --
     -- http://sepulcarium.org/posts/2012-07-19-rounding_effect_on_inverse.html
     dens = density    d x
-    err  = 64 * m_epsilon * (1 + abs (x / p) * dens)
+    err  = eps + eps' * abs (x / p) * dens
     --
     x    = quantile   d p
     p'   = cumulative d x
+    (eps,eps') = prec_quantile_CDF d
 
 -- Test that quantile fails if p<0 or p>1
 quantileShouldFail :: (ContDistr d) => T d -> d -> Double -> Property
@@ -268,29 +269,36 @@ logProbabilityCheck _ d x
     logP = logProbability d x
 
 
--- Parameters for distribution testing. Some distribution require
--- relaxing parameters a bit
+-- | Parameters for distribution testing. Some distribution require
+--   relaxing parameters a bit
 class Param a where
-  -- Precision for quantileIsInvCDF
-  invQuantilePrec :: a -> Double
-  invQuantilePrec _ = 1e-14
+  -- | Precision for 'quantileIsInvCDF' test
+  prec_quantile_CDF :: a -> (Double,Double)
+  prec_quantile_CDF _ = (64,64)
   -- Distribution is OK for testing limits
   okForInfLimit :: a -> Bool
   okForInfLimit _ = True
 
 
-instance Param a
-
 instance Param StudentT where
-  invQuantilePrec _ = 1e-13
-  okForInfLimit   d = studentTndf d > 0.75
+  okForInfLimit d = studentTndf d > 0.75
 
-instance Param (LinearTransform StudentT) where
-  invQuantilePrec _ = 1e-13
-  okForInfLimit   d = (studentTndf . linTransDistr) d > 0.75
-
-instance Param FDistribution where
-  invQuantilePrec _ = 1e-12
+instance Param BetaDistribution
+instance Param BinomialDistribution
+instance Param CauchyDistribution
+instance Param ChiSquared
+instance Param DiscreteUniform
+instance Param ExponentialDistribution
+instance Param FDistribution
+instance Param GammaDistribution
+instance Param GeometricDistribution
+instance Param GeometricDistribution0
+instance Param HypergeometricDistribution
+instance Param LaplaceDistribution
+instance Param NormalDistribution
+instance Param PoissonDistribution
+instance Param UniformDistribution
+instance Param a => Param (LinearTransform a)
 
 
 
