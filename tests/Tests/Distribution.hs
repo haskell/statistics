@@ -168,8 +168,10 @@ cdfDiscreteIsCorrect _ d
                  p1     = cumulative d $ fromIntegral i
                  dp     = probability d i
                  relerr = ((p1 - p) - dp) / max p1 dp
-           ,  not (p == 0 && p1 == 0 && dp == 0)
-           && relerr > tol
+           , p  > m_tiny || p == 0
+           , p1 > m_tiny
+           , dp > m_tiny
+           , relerr > tol
            ]
     tol = prec_discreteCDF d
 
