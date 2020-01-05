@@ -8,6 +8,8 @@
  * Avoid loss of precision when computing CDF for geometric districution. Add
    complement of CDF.
 
+ * Correctly handle case of n=0 in poissonCI
+
 
 ## Changes in 0.15.1.1
 

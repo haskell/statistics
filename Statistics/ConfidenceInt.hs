@@ -30,7 +30,7 @@ poissonNormalCI n
 poissonCI :: CL Double -> Int -> Estimate ConfInt Double
 poissonCI cl@(significanceLevel -> p) n
   | n <  0    = error "Statistics.ConfidenceInt.poissonCI: negative number of trials"
-  | n == 0    = estimateFromInterval m (m1,m2) cl
+  | n == 0    = estimateFromInterval m (0 ,m2) cl
   | otherwise = estimateFromInterval m (m1,m2) cl
   where
     m  = fromIntegral n
