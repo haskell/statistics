@@ -1,3 +1,14 @@
+## Changes in 0.15.2.0
+
+ * Test suite is finally fixed (#42, #123). It took very-very-very long
+   time but finally happened.
+
+ * Avoid loss of precision when computing CDF for exponential districution.
+
+ * Avoid loss of precision when computing CDF for geometric districution. Add
+   complement of CDF.
+
+
 ## Changes in 0.15.1.1
 
  * Fix build for GHC8.0 & 7.10
