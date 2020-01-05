@@ -75,7 +75,8 @@ instance Binary GeometricDistribution where
 
 
 instance D.Distribution GeometricDistribution where
-    cumulative = cumulative
+    cumulative      = cumulative
+    complCumulative = complCumulative
 
 instance D.DiscreteDistr GeometricDistribution where
     probability (GD s) n
@@ -121,6 +122,13 @@ cumulative (GD s) x
   | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
   | otherwise    = negate $ expm1 $ fromIntegral (floor x :: Int) * log1p (-s)
 
+complCumulative :: GeometricDistribution -> Double -> Double
+complCumulative (GD s) x
+  | x < 1        = 1
+  | isInfinite x = 0
+  | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
+  | otherwise    = exp $ fromIntegral (floor x :: Int) * log1p (-s)
+
 
 -- | Create geometric distribution.
 geometric :: Double                -- ^ Success rate
@@ -165,7 +173,8 @@ instance Binary GeometricDistribution0 where
 
 
 instance D.Distribution GeometricDistribution0 where
-    cumulative (GD0 s) x = cumulative (GD s) (x + 1)
+    cumulative      (GD0 s) x = cumulative      (GD s) (x + 1)
+    complCumulative (GD0 s) x = complCumulative (GD s) (x + 1)
 
 instance D.DiscreteDistr GeometricDistribution0 where
     probability    (GD0 s) n = D.probability    (GD s) (n + 1)
