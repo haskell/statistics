@@ -21,6 +21,7 @@ module Statistics.Distribution.Weibull
     , weibullDistr
     , weibullDistrE
     , weibullStandard
+    , weibullDistrApproxMeanStddevE
     ) where
 
 import Control.Applicative
@@ -31,8 +32,10 @@ import Data.Maybe            (fromMaybe)
 import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_eulerMascheroni)
 import Numeric.SpecFunctions (expm1, log1p, logGamma)
+import qualified Data.Vector.Generic as G
 
 import qualified Statistics.Distribution as D
+import qualified Statistics.Sample as S
 import Statistics.Internal
 
 
@@ -130,6 +133,60 @@ errMsg k l =
     ++ show k
     ++ " and lambda "
     ++ show l
+
+-- | Create weibull distribution from mean and standard deviation.
+--
+-- The algorithm is from "Methods for Estimating Wind Speed Frequency
+-- Distributions", C. G. Justus, W. R. Hargreaves, A. Mikhail, D. Graber, 1977.
+-- Given the identity:
+--
+-- \[
+-- (\frac{\sigma}{\mu})^2 = \frac{\Gamma(1+2/k)}{\Gamma(1+1/k)^2} - 1
+-- \]
+--
+-- \(k\) can be approximated by
+--
+-- \[
+-- k \approx (\frac{\sigma}{\mu})^{-1.086}
+-- \]
+--
+-- \(\lambda\) is then calculated straightforwardly via the identity
+--
+-- \[
+-- \lambda = \frac{\mu}{\Gamma(1+1/k)}
+-- \]
+--
+-- Numerically speaking, the approximation for \(k\) is accurate only within a
+-- certain range. We arbitrarily pick the range \(0.033 \le \frac{\sigma}{\mu} \le 1.45\)
+-- where it is good to ~6%, and will refuse to create a distribution outside of
+-- this range. The paper does not cover these details but it is straightforward
+-- to check them numerically.
+weibullDistrApproxMeanStddevE
+  :: Double            -- ^ Mean
+  -> Double            -- ^ Stddev
+  -> Maybe WeibullDistribution
+weibullDistrApproxMeanStddevE m s = if r > 1.45 || r < 0.033
+    then Nothing
+    else weibullDistrE k l
+  where r = s / m
+        k = (s / m) ** (-1.086)
+        l = m / exp (logGamma (1 + 1/k))
+
+-- | Uses an approximation based on the mean and standard deviation in
+--   'weibullDistrEstMeanStddevE', with standard deviation estimated
+--   using maximum likelihood method (unbiased estimation).
+--
+--   Returns @Nothing@ if sample contains less than one element or
+--   variance is zero (all elements are equal), or if the estimated mean
+--   and standard-deviation lies outside the range for which the
+--   approximation is accurate.
+instance D.FromSample WeibullDistribution Double where
+  fromSample xs
+    | G.length xs <= 1 = Nothing
+    | v == 0           = Nothing
+    | otherwise        = weibullDistrApproxMeanStddevE m (sqrt v)
+    where
+      (m,v) = S.meanVarianceUnb xs
 
 logDensity :: WeibullDistribution -> Double -> Double
 logDensity (WD k l) x

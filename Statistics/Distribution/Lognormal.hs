@@ -20,6 +20,7 @@ module Statistics.Distribution.Lognormal
       -- * Constructors
     , lognormalDistr
     , lognormalDistrE
+    , lognormalDistrMeanStddevE
     , lognormalStandard
     ) where
 
@@ -29,7 +30,7 @@ import Data.Data             (Data, Typeable)
 import Data.Maybe            (fromMaybe)
 import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_huge, m_sqrt_2_pi)
-import Numeric.SpecFunctions (expm1)
+import Numeric.SpecFunctions (expm1, log1p)
 import qualified Data.Vector.Generic as G
 
 import qualified Statistics.Distribution as D
@@ -129,6 +130,17 @@ errMsg mu sig =
   "Statistics.Distribution.Lognormal.lognormalDistr: sigma must be > 0 && < "
     ++ show lim ++ ". Got " ++ show sig
   where lim = sqrt (log m_huge - 2 * mu)
+
+-- | Create log normal distribution from mean and standard deviation.
+lognormalDistrMeanStddevE
+  :: Double            -- ^ Mu
+  -> Double            -- ^ Sigma
+  -> Maybe LognormalDistribution
+lognormalDistrMeanStddevE m sd = LND <$> N.normalDistrE mu sig
+  where r = sd / m
+        sig2 = log1p (r * r)
+        sig = sqrt sig2
+        mu = log m - sig2 / 2
 
 -- | Variance is estimated using maximum likelihood method
 --   (biased estimation) over the log of the data.
