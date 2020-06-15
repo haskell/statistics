@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Lognormal
@@ -22,6 +23,8 @@ module Statistics.Distribution.Weibull
     , weibullStandard
     ) where
 
+import Control.Applicative
+import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary           (Binary(..))
 import Data.Data             (Data, Typeable)
 import Data.Maybe            (fromMaybe)
@@ -43,6 +46,14 @@ instance Show WeibullDistribution where
   showsPrec i (WD k l) = defaultShow2 "weibullDistr" k l i
 instance Read WeibullDistribution where
   readPrec = defaultReadPrecM2 "weibullDistr" weibullDistrE
+
+instance ToJSON WeibullDistribution
+instance FromJSON WeibullDistribution where
+  parseJSON (Object v) = do
+    k <- v .: "wdShape"
+    l <- v .: "wdLambda"
+    maybe (fail $ errMsg k l) return $ weibullDistrE k l
+  parseJSON _ = empty
 
 instance Binary WeibullDistribution where
   put (WD k l) = put k >> put l
@@ -109,8 +120,8 @@ weibullDistrE
   :: Double            -- ^ Shape
   -> Double            -- ^ Lambda (scale)
   -> Maybe WeibullDistribution
-weibullDistrE k l | k < 0     = Nothing
-                  | l < 0     = Nothing
+weibullDistrE k l | k <= 0     = Nothing
+                  | l <= 0     = Nothing
                   | otherwise = Just $ WD k l
 
 errMsg :: Double -> Double -> String
@@ -130,7 +141,7 @@ cumulative (WD k l) x | x < 0     = 0
                       | otherwise = -expm1 (-(x / l) ** k)
 
 complCumulative :: WeibullDistribution -> Double -> Double
-complCumulative (WD k l) x | x < 0     = 0
+complCumulative (WD k l) x | x < 0     = 1
                            | otherwise = exp (-(x / l) ** k)
 
 quantile :: WeibullDistribution -> Double -> Double

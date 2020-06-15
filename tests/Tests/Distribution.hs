@@ -19,11 +19,13 @@ import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
+import Statistics.Distribution.Lognormal      (LognormalDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
+import Statistics.Distribution.Weibull        (WeibullDistribution)
 import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
 import Test.Tasty                 (TestTree, testGroup)
 import Test.Tasty.QuickCheck      (testProperty)
@@ -46,8 +48,10 @@ tests = testGroup "Tests for all distributions"
   , contDistrTests (T :: T ExponentialDistribution )
   , contDistrTests (T :: T GammaDistribution       )
   , contDistrTests (T :: T LaplaceDistribution     )
+  , contDistrTests (T :: T LognormalDistribution   )
   , contDistrTests (T :: T NormalDistribution      )
   , contDistrTests (T :: T UniformDistribution     )
+  , contDistrTests (T :: T WeibullDistribution     )
   , contDistrTests (T :: T StudentT                )
   , contDistrTests (T :: T (LinearTransform NormalDistribution))
   , contDistrTests (T :: T FDistribution           )
@@ -203,6 +207,8 @@ complQuantileCheck :: (ContDistr d) => T d -> d -> Double01 -> Property
 complQuantileCheck _ d (Double01 p)
   = counterexample (printf "x0 = %g" x0)
   $ counterexample (printf "x1 = %g" x1)
+  $ counterexample (printf "abs err = %g" $ abs (x1 - x0))
+  $ counterexample (printf "rel err = %g" $ relativeError x1 x0)
   -- We avoid extreme tails of distributions
   --
   -- FIXME: all parameters are arbitrary at the moment
@@ -210,7 +216,7 @@ complQuantileCheck _ d (Double01 p)
         , p < 0.99
         , not $ isInfinite x0
         , not $ isInfinite x1
-        ] ==> (abs (x1 - x0) < 1e-6)
+        ] ==> (if x0 < 1e6 then abs (x1 - x0) < 1e-6 else relativeError x1 x0 < 1e-12)
   where
     x0 = quantile      d (1 - p)
     x1 = complQuantile d p
@@ -333,9 +339,12 @@ instance Param GeometricDistribution
 instance Param GeometricDistribution0
 instance Param HypergeometricDistribution
 instance Param LaplaceDistribution
+instance Param LognormalDistribution where
+  prec_quantile_CDF _ = (64,64)
 instance Param NormalDistribution
 instance Param PoissonDistribution
 instance Param UniformDistribution
+instance Param WeibullDistribution
 instance Param a => Param (LinearTransform a)
 
 

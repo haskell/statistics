@@ -23,11 +23,12 @@ module Statistics.Distribution.Lognormal
     , lognormalStandard
     ) where
 
+import Data.Aeson            (FromJSON, ToJSON)
 import Data.Binary           (Binary (..))
 import Data.Data             (Data, Typeable)
 import Data.Maybe            (fromMaybe)
 import GHC.Generics          (Generic)
-import Numeric.MathFunctions.Constants (m_sqrt_2_pi)
+import Numeric.MathFunctions.Constants (m_huge, m_sqrt_2_pi)
 import Numeric.SpecFunctions (expm1)
 import qualified Data.Vector.Generic as G
 
@@ -47,6 +48,9 @@ instance Show LognormalDistribution where
     s = D.stdDev d
 instance Read LognormalDistribution where
   readPrec = defaultReadPrecM2 "lognormalDistr" lognormalDistrE
+
+instance ToJSON LognormalDistribution
+instance FromJSON LognormalDistribution
 
 instance Binary LognormalDistribution where
   put (LND d) = put m >> put s
@@ -116,12 +120,15 @@ lognormalDistrE
   :: Double            -- ^ Mu
   -> Double            -- ^ Sigma
   -> Maybe LognormalDistribution
-lognormalDistrE mu sig = LND <$> N.normalDistrE mu sig
+lognormalDistrE mu sig
+  | sig >= sqrt (log m_huge - 2 * mu) = Nothing
+  | otherwise = LND <$> N.normalDistrE mu sig
 
 errMsg :: Double -> Double -> String
-errMsg _ sig =
-  "Statistics.Distribution.Lognormal.lognormalDistr: sigma must be positive. Got "
-    ++ show sig
+errMsg mu sig =
+  "Statistics.Distribution.Lognormal.lognormalDistr: sigma must be > 0 && < "
+    ++ show lim ++ ". Got " ++ show sig
+  where lim = sqrt (log m_huge - 2 * mu)
 
 -- | Variance is estimated using maximum likelihood method
 --   (biased estimation) over the log of the data.
@@ -132,13 +139,19 @@ instance D.FromSample LognormalDistribution Double where
   fromSample = fmap LND . D.fromSample . G.map log
 
 logDensity :: LognormalDistribution -> Double -> Double
-logDensity (LND d) x = D.logDensity d lx - lx where lx = log x
+logDensity (LND d) x
+  | x > 0 = let lx = log x in D.logDensity d lx - lx
+  | otherwise = 0
 
 cumulative :: LognormalDistribution -> Double -> Double
-cumulative (LND d) = D.cumulative d . log
+cumulative (LND d) x
+  | x > 0 = D.cumulative d $ log x
+  | otherwise = 0
 
 complCumulative :: LognormalDistribution -> Double -> Double
-complCumulative (LND d) = D.complCumulative d . log
+complCumulative (LND d) x
+  | x > 0 = D.complCumulative d $ log x
+  | otherwise = 1
 
 quantile :: LognormalDistribution -> Double -> Double
 quantile (LND d) = exp . D.quantile d
