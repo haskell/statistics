@@ -19,16 +19,15 @@ module Statistics.Distribution.Weibull
       WeibullDistribution
       -- * Constructors
     , weibullDistr
-    , weibullDistrE
+    , weibullDistrErr
     , weibullStandard
-    , weibullDistrApproxMeanStddevE
+    , weibullDistrApproxMeanStddevErr
     ) where
 
 import Control.Applicative
 import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary           (Binary(..))
 import Data.Data             (Data, Typeable)
-import Data.Maybe            (fromMaybe)
 import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_eulerMascheroni)
 import Numeric.SpecFunctions (expm1, log1p, logGamma)
@@ -48,14 +47,15 @@ data WeibullDistribution = WD {
 instance Show WeibullDistribution where
   showsPrec i (WD k l) = defaultShow2 "weibullDistr" k l i
 instance Read WeibullDistribution where
-  readPrec = defaultReadPrecM2 "weibullDistr" weibullDistrE
+  readPrec = defaultReadPrecM2 "weibullDistr" $
+    (either (const Nothing) Just .) . weibullDistrErr
 
 instance ToJSON WeibullDistribution
 instance FromJSON WeibullDistribution where
   parseJSON (Object v) = do
     k <- v .: "wdShape"
     l <- v .: "wdLambda"
-    maybe (fail $ errMsg k l) return $ weibullDistrE k l
+    either fail return $ weibullDistrErr k l
   parseJSON _ = empty
 
 instance Binary WeibullDistribution where
@@ -63,7 +63,7 @@ instance Binary WeibullDistribution where
   get = do
     k <- get
     l <- get
-    maybe (fail $ errMsg k l) return $ weibullDistrE k l
+    either fail return $ weibullDistrErr k l
 
 instance D.Distribution WeibullDistribution where
   cumulative      = cumulative
@@ -112,20 +112,20 @@ weibullDistr
   :: Double            -- ^ Shape
   -> Double            -- ^ Lambda (scale)
   -> WeibullDistribution
-weibullDistr k l = fromMaybe (error $ errMsg k l) $ weibullDistrE k l
+weibullDistr k l = either error id $ weibullDistrErr k l
 
 -- | Create weibull distribution from parameters.
 --
 -- If the shape (first) parameter is @1.0@, the distribution is equivalent to a
 -- 'Statistics.Distribution.Exponential.ExponentialDistribution' with parameter
 -- @1 / lambda@ the scale (second) parameter.
-weibullDistrE
+weibullDistrErr
   :: Double            -- ^ Shape
   -> Double            -- ^ Lambda (scale)
-  -> Maybe WeibullDistribution
-weibullDistrE k l | k <= 0     = Nothing
-                  | l <= 0     = Nothing
-                  | otherwise = Just $ WD k l
+  -> Either String WeibullDistribution
+weibullDistrErr k l | k <= 0     = Left $ errMsg k l
+                    | l <= 0     = Left $ errMsg k l
+                    | otherwise = Right $ WD k l
 
 errMsg :: Double -> Double -> String
 errMsg k l =
@@ -161,19 +161,22 @@ errMsg k l =
 -- where it is good to ~6%, and will refuse to create a distribution outside of
 -- this range. The paper does not cover these details but it is straightforward
 -- to check them numerically.
-weibullDistrApproxMeanStddevE
+weibullDistrApproxMeanStddevErr
   :: Double            -- ^ Mean
   -> Double            -- ^ Stddev
-  -> Maybe WeibullDistribution
-weibullDistrApproxMeanStddevE m s = if r > 1.45 || r < 0.033
-    then Nothing
-    else weibullDistrE k l
+  -> Either String WeibullDistribution
+weibullDistrApproxMeanStddevErr m s = if r > 1.45 || r < 0.033
+    then Left msg
+    else weibullDistrErr k l
   where r = s / m
         k = (s / m) ** (-1.086)
         l = m / exp (logGamma (1 + 1/k))
+        msg = "Statistics.Distribution.Weibull.weibullDistr: stddev-mean ratio "
+          ++ "outside approximation accuracy range [0.033, 1.45]. Got "
+          ++ "stddev " ++ show s ++ " and mean " ++ show m
 
 -- | Uses an approximation based on the mean and standard deviation in
---   'weibullDistrEstMeanStddevE', with standard deviation estimated
+--   'weibullDistrEstMeanStddevErr', with standard deviation estimated
 --   using maximum likelihood method (unbiased estimation).
 --
 --   Returns @Nothing@ if sample contains less than one element or
@@ -184,7 +187,8 @@ instance D.FromSample WeibullDistribution Double where
   fromSample xs
     | G.length xs <= 1 = Nothing
     | v == 0           = Nothing
-    | otherwise        = weibullDistrApproxMeanStddevE m (sqrt v)
+    | otherwise        = either (const Nothing) Just $
+      weibullDistrApproxMeanStddevErr m (sqrt v)
     where
       (m,v) = S.meanVarianceUnb xs
 

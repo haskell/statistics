@@ -19,15 +19,14 @@ module Statistics.Distribution.Lognormal
       LognormalDistribution
       -- * Constructors
     , lognormalDistr
-    , lognormalDistrE
-    , lognormalDistrMeanStddevE
+    , lognormalDistrErr
+    , lognormalDistrMeanStddevErr
     , lognormalStandard
     ) where
 
 import Data.Aeson            (FromJSON, ToJSON)
 import Data.Binary           (Binary (..))
 import Data.Data             (Data, Typeable)
-import Data.Maybe            (fromMaybe)
 import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_huge, m_sqrt_2_pi)
 import Numeric.SpecFunctions (expm1, log1p)
@@ -48,7 +47,8 @@ instance Show LognormalDistribution where
     m = D.mean d
     s = D.stdDev d
 instance Read LognormalDistribution where
-  readPrec = defaultReadPrecM2 "lognormalDistr" lognormalDistrE
+  readPrec = defaultReadPrecM2 "lognormalDistr" $
+    (either (const Nothing) Just .) . lognormalDistrErr
 
 instance ToJSON LognormalDistribution
 instance FromJSON LognormalDistribution
@@ -61,7 +61,7 @@ instance Binary LognormalDistribution where
   get = do
     m  <- get
     sd <- get
-    maybe (fail $ errMsg m sd) return $ lognormalDistrE m sd
+    either fail return $ lognormalDistrErr m sd
 
 instance D.Distribution LognormalDistribution where
   cumulative      = cumulative
@@ -114,16 +114,16 @@ lognormalDistr
   :: Double            -- ^ Mu
   -> Double            -- ^ Sigma
   -> LognormalDistribution
-lognormalDistr mu sig = fromMaybe (error $ errMsg mu sig) $ lognormalDistrE mu sig
+lognormalDistr mu sig = either error id $ lognormalDistrErr mu sig
 
 -- | Create log normal distribution from parameters.
-lognormalDistrE
+lognormalDistrErr
   :: Double            -- ^ Mu
   -> Double            -- ^ Sigma
-  -> Maybe LognormalDistribution
-lognormalDistrE mu sig
-  | sig >= sqrt (log m_huge - 2 * mu) = Nothing
-  | otherwise = LND <$> N.normalDistrE mu sig
+  -> Either String LognormalDistribution
+lognormalDistrErr mu sig
+  | sig >= sqrt (log m_huge - 2 * mu) = Left $ errMsg mu sig
+  | otherwise = LND <$> N.normalDistrErr mu sig
 
 errMsg :: Double -> Double -> String
 errMsg mu sig =
@@ -132,11 +132,11 @@ errMsg mu sig =
   where lim = sqrt (log m_huge - 2 * mu)
 
 -- | Create log normal distribution from mean and standard deviation.
-lognormalDistrMeanStddevE
+lognormalDistrMeanStddevErr
   :: Double            -- ^ Mu
   -> Double            -- ^ Sigma
-  -> Maybe LognormalDistribution
-lognormalDistrMeanStddevE m sd = LND <$> N.normalDistrE mu sig
+  -> Either String LognormalDistribution
+lognormalDistrMeanStddevErr m sd = LND <$> N.normalDistrErr mu sig
   where r = sd / m
         sig2 = log1p (r * r)
         sig = sqrt sig2

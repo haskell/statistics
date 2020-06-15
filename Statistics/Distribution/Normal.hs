@@ -19,6 +19,7 @@ module Statistics.Distribution.Normal
     -- * Constructors
     , normalDistr
     , normalDistrE
+    , normalDistrErr
     , standard
     ) where
 
@@ -55,7 +56,7 @@ instance FromJSON NormalDistribution where
   parseJSON (Object v) = do
     m  <- v .: "mean"
     sd <- v .: "stdDev"
-    maybe (fail $ errMsg m sd) return $ normalDistrE m sd
+    either fail return $ normalDistrErr m sd
   parseJSON _ = empty
 
 instance Binary NormalDistribution where
@@ -63,7 +64,7 @@ instance Binary NormalDistribution where
     get = do
       m  <- get
       sd <- get
-      maybe (fail $ errMsg m sd) return $ normalDistrE m sd
+      either fail return $ normalDistrErr m sd
 
 instance D.Distribution NormalDistribution where
     cumulative      = cumulative
@@ -111,7 +112,7 @@ standard = ND { mean       = 0.0
 normalDistr :: Double            -- ^ Mean of distribution
             -> Double            -- ^ Standard deviation of distribution
             -> NormalDistribution
-normalDistr m sd = maybe (error $ errMsg m sd) id $ normalDistrE m sd
+normalDistr m sd = either error id $ normalDistrErr m sd
 
 -- | Create normal distribution from parameters.
 --
@@ -120,13 +121,20 @@ normalDistr m sd = maybe (error $ errMsg m sd) id $ normalDistrE m sd
 normalDistrE :: Double            -- ^ Mean of distribution
              -> Double            -- ^ Standard deviation of distribution
              -> Maybe NormalDistribution
-normalDistrE m sd
-  | sd > 0    = Just ND { mean       = m
-                        , stdDev     = sd
-                        , ndPdfDenom = log $ m_sqrt_2_pi * sd
-                        , ndCdfDenom = m_sqrt_2 * sd
-                        }
-  | otherwise = Nothing
+normalDistrE m sd = either (const Nothing) Just $ normalDistrErr m sd
+
+-- | Create normal distribution from parameters.
+--
+normalDistrErr :: Double            -- ^ Mean of distribution
+               -> Double            -- ^ Standard deviation of distribution
+               -> Either String NormalDistribution
+normalDistrErr m sd
+  | sd > 0    = Right $ ND { mean       = m
+                           , stdDev     = sd
+                           , ndPdfDenom = log $ m_sqrt_2_pi * sd
+                           , ndCdfDenom = m_sqrt_2 * sd
+                           }
+  | otherwise = Left $ errMsg m sd
 
 errMsg :: Double -> Double -> String
 errMsg _ sd = "Statistics.Distribution.Normal.normalDistr: standard deviation must be positive. Got " ++ show sd
