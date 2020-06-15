@@ -28,6 +28,7 @@ import Data.Data             (Data, Typeable)
 import Data.Maybe            (fromMaybe)
 import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_sqrt_2_pi)
+import Numeric.SpecFunctions (expm1)
 import qualified Data.Vector.Generic as G
 
 import qualified Statistics.Distribution as D
@@ -80,7 +81,7 @@ instance D.MaybeVariance LognormalDistribution where
   maybeVariance = Just . D.variance
 
 instance D.Variance LognormalDistribution where
-  variance (LND d) = (exp v - 1) * exp (2 * m + v)
+  variance (LND d) = expm1 v * exp (2 * m + v)
    where
     m = D.mean d
     v = D.variance d
@@ -108,19 +109,19 @@ lognormalDistr
   :: Double            -- ^ Mu
   -> Double            -- ^ Sigma
   -> LognormalDistribution
-lognormalDistr m sd = fromMaybe (error $ errMsg m sd) $ lognormalDistrE m sd
+lognormalDistr mu sig = fromMaybe (error $ errMsg mu sig) $ lognormalDistrE mu sig
 
 -- | Create log normal distribution from parameters.
 lognormalDistrE
   :: Double            -- ^ Mu
   -> Double            -- ^ Sigma
   -> Maybe LognormalDistribution
-lognormalDistrE m sd = LND <$> N.normalDistrE m sd
+lognormalDistrE mu sig = LND <$> N.normalDistrE mu sig
 
 errMsg :: Double -> Double -> String
-errMsg _ sd =
+errMsg _ sig =
   "Statistics.Distribution.Lognormal.lognormalDistr: sigma must be positive. Got "
-    ++ show sd
+    ++ show sig
 
 -- | Variance is estimated using maximum likelihood method
 --   (biased estimation) over the log of the data.

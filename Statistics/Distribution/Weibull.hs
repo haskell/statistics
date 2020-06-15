@@ -27,7 +27,7 @@ import Data.Data             (Data, Typeable)
 import Data.Maybe            (fromMaybe)
 import GHC.Generics          (Generic)
 import Numeric.MathFunctions.Constants (m_eulerMascheroni)
-import Numeric.SpecFunctions (logGamma)
+import Numeric.SpecFunctions (expm1, log1p, logGamma)
 
 import qualified Statistics.Distribution as D
 import Statistics.Internal
@@ -127,7 +127,7 @@ logDensity (WD k l) x
 
 cumulative :: WeibullDistribution -> Double -> Double
 cumulative (WD k l) x | x < 0     = 0
-                      | otherwise = 1 - exp (-(x / l) ** k)
+                      | otherwise = -expm1 (-(x / l) ** k)
 
 complCumulative :: WeibullDistribution -> Double -> Double
 complCumulative (WD k l) x | x < 0     = 0
@@ -137,7 +137,7 @@ quantile :: WeibullDistribution -> Double -> Double
 quantile (WD k l) p
   | p == 0         = 0
   | p == 1         = inf
-  | p > 0 && p < 1 = l * (-log (1 - p)) ** (1 / k)
+  | p > 0 && p < 1 = l * (-log1p (-p)) ** (1 / k)
   | otherwise      =
     error $ "Statistics.Distribution.Weibull.quantile: p must be in [0,1] range. Got: " ++ show p
   where inf = 1 / 0
