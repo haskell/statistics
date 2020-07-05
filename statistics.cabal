@@ -134,7 +134,7 @@ library
       ghc-prim
   ghc-options: -O2 -Wall -fwarn-tabs -funbox-strict-fields
 
-test-suite tests
+test-suite statistics-tests
   type:           exitcode-stdio-1.0
   hs-source-dirs: tests
   main-is:        tests.hs
