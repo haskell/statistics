@@ -143,11 +143,14 @@ cdfLimitAtNegInfinity _ d
 
 
 -- CDF's complement is implemented correctly
-cdfComplementIsCorrect :: (Distribution d, Param d) => T d -> d -> Double -> Bool
+cdfComplementIsCorrect :: (Distribution d, Param d) => T d -> d -> Double -> Property
 cdfComplementIsCorrect _ d x
-  = 1 - (cumulative d x + complCumulative d x) <= tol
+  = counterexample ("err. tolerance = " ++ show tol)
+  $ counterexample ("difference     = " ++ show delta)
+  $ delta <= tol
   where
-    tol = prec_complementCDF d
+    tol   = prec_complementCDF d
+    delta = 1 - (cumulative d x + complCumulative d x)
 
 -- CDF for discrete distribution uses <= for comparison
 cdfDiscreteIsCorrect :: (Param d, DiscreteDistr d) => T d -> d -> Property
