@@ -109,15 +109,36 @@ instance D.ContDistr FDistribution where
 cumulative :: FDistribution -> Double -> Double
 cumulative (F n m _) x
   | x <= 0       = 0
-  | isInfinite x = 1            -- Only matches +∞
-  | otherwise    = let y = n*x in incompleteBeta (0.5 * n) (0.5 * m) (y / (m + y))
+  -- Only matches +∞
+  | isInfinite x = 1
+  -- NOTE: Here we rely on implementation detail of incompleteBeta. It
+  --       computes using series expansion for sufficiently small x
+  --       and uses following identity otherwise:
+  --
+  --           I(x; a, b) = 1 - I(1-x; b, a)
+  --
+  --       Point is we can compute 1-x as m/(m+y) without loss of
+  --       precision for large x. Sadly this switchover point is
+  --       implementation detail.
+  | n >= (n+m)*bx = incompleteBeta (0.5 * n) (0.5 * m) bx
+  | otherwise     = 1 - incompleteBeta (0.5 * m) (0.5 * n) bx1
+  where
+    y   = n * x
+    bx  = y / (m + y)
+    bx1 = m / (m + y)
 
 complCumulative :: FDistribution -> Double -> Double
 complCumulative (F n m _) x
-  | x <= 0       = 1
-  | isInfinite x = 0            -- Only matches +∞
-  | otherwise    = let y = n*x
-                   in incompleteBeta (0.5 * m) (0.5 * n) (m / (m + y))
+  | x <= 0        = 1
+  -- Only matches +∞
+  | isInfinite x  = 0
+  -- See NOTE at cumulative
+  | m >= (n+m)*bx = incompleteBeta (0.5 * m) (0.5 * n) bx
+  | otherwise     = 1 - incompleteBeta (0.5 * n) (0.5 * m) bx1
+  where
+    y   = n*x
+    bx  = m / (m + y)
+    bx1 = y / (m + y)
 
 logDensity :: FDistribution -> Double -> Double
 logDensity (F n m fac) x

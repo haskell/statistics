@@ -322,8 +322,9 @@ instance Param BetaDistribution where
 instance Param FDistribution where
   -- FIXME: disabled unless incompleteBeta troubles are sorted out
   quantileIsInvCDF_enabled _ = False
-  -- FIXME: "Fix" for prec_complementCDF
-  prec_complementCDF _ = 4e-14
+  -- We compute CDF and complement using same method so precision
+  -- should be very good here.
+  prec_complementCDF _ = 2 * m_epsilon
 
 instance Param ChiSquared where
   prec_quantile_CDF _ = (32,32)
