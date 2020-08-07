@@ -71,8 +71,7 @@ contDistrTests :: (Param d, ContDistr d, QC.Arbitrary d, Typeable d, Show d) => 
 contDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   cdfTests t ++
   [ testProperty "PDF sanity"              $ pdfSanityCheck     t
-  ] ++
-  [ (if quantileIsInvCDF_enabled t then id else ignoreTest)
+  , (if quantileIsInvCDF_enabled t then id else ignoreTest)
   $ testProperty "Quantile is CDF inverse" $ quantileIsInvCDF t
   , testProperty "quantile fails p<0||p>1" $ quantileShouldFail t
   , testProperty "log density check"       $ logDensityCheck    t
@@ -94,7 +93,8 @@ cdfTests :: (Param d, Distribution d, QC.Arbitrary d, Show d) => T d -> [TestTre
 cdfTests t =
   [ testProperty "C.D.F. sanity"        $ cdfSanityCheck         t
   , testProperty "CDF limit at +inf"    $ cdfLimitAtPosInfinity  t
-  , testProperty "CDF limit at -inf"    $ cdfLimitAtNegInfinity  t
+  , (if cdfLimitAtNegInfinity_enabled t then id else ignoreTest)
+  $ testProperty "CDF limit at -inf"    $ cdfLimitAtNegInfinity  t
   , testProperty "CDF at +inf = 1"      $ cdfAtPosInfinity       t
   , testProperty "CDF at -inf = 1"      $ cdfAtNegInfinity       t
   , testProperty "CDF is nondecreasing" $ cdfIsNondecreasing     t
@@ -303,6 +303,9 @@ class Param a where
   -- | Whether quantileIsInvCDF is enabled
   quantileIsInvCDF_enabled :: T a -> Bool
   quantileIsInvCDF_enabled _ = True
+  -- | Whether cdfLimitAtNegInfinity is enabled
+  cdfLimitAtNegInfinity_enabled :: T a -> Bool
+  cdfLimitAtNegInfinity_enabled _ = True
   -- | Precision for 'quantileIsInvCDF' test
   prec_quantile_CDF :: a -> (Double,Double)
   prec_quantile_CDF _ = (16,16)
@@ -316,9 +319,11 @@ class Param a where
 instance Param StudentT where
   -- FIXME: disabled unless incompleteBeta troubles are sorted out
   quantileIsInvCDF_enabled _ = False
+
 instance Param BetaDistribution where
   -- FIXME: See https://github.com/bos/statistics/issues/161 for details
   quantileIsInvCDF_enabled _ = False
+
 instance Param FDistribution where
   -- FIXME: disabled unless incompleteBeta troubles are sorted out
   quantileIsInvCDF_enabled _ = False
@@ -331,7 +336,11 @@ instance Param ChiSquared where
 
 instance Param BinomialDistribution where
   prec_discreteCDF _ = 1e-13
-instance Param CauchyDistribution
+
+instance Param CauchyDistribution where
+  -- Distribution is long-tailed enough that we may never get to zero
+  cdfLimitAtNegInfinity_enabled _ = False
+
 instance Param DiscreteUniform
 instance Param ExponentialDistribution
 instance Param GammaDistribution
