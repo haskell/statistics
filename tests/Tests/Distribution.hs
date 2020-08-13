@@ -343,7 +343,11 @@ instance Param CauchyDistribution where
 
 instance Param DiscreteUniform
 instance Param ExponentialDistribution
-instance Param GammaDistribution
+instance Param GammaDistribution where
+  -- We lose precision near `incompleteGamma 10` because of error
+  -- introuced by exp . logGamma.  This could only be fixed in
+  -- math-function by implementing gamma
+  prec_quantile_CDF _ = (24,24)
 instance Param GeometricDistribution
 instance Param GeometricDistribution0
 instance Param HypergeometricDistribution

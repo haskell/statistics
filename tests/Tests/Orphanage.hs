@@ -38,7 +38,7 @@ instance QC.Arbitrary ExponentialDistribution where
 instance QC.Arbitrary LaplaceDistribution where
   arbitrary = laplace <$> QC.choose (-10,10) <*> QC.choose (0, 2)
 instance QC.Arbitrary GammaDistribution where
-  arbitrary = gammaDistr <$> QC.choose (0.1,10) <*> QC.choose (0.1,10)
+  arbitrary = gammaDistr <$> QC.choose (0.1,100) <*> QC.choose (0.1,100)
 instance QC.Arbitrary BetaDistribution where
   arbitrary = betaDistr <$> QC.choose (1e-3,10) <*> QC.choose (1e-3,10)
 instance QC.Arbitrary GeometricDistribution where
