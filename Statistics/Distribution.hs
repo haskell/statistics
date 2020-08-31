@@ -29,7 +29,6 @@ module Statistics.Distribution
     , ContGen(..)
     , DiscreteGen(..)
     , genContinuous
-    , genContinous
       -- * Helper functions
     , findRoot
     , sumProbabilities
@@ -186,11 +185,6 @@ genContinuous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Doubl
 genContinuous d gen = do
   x <- uniform gen
   return $! quantile d x
-
--- | Backwards compatibility with genContinuous.
-genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
-genContinous = genContinuous
-{-# DEPRECATED genContinous "Use genContinuous" #-}
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 
