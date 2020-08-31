@@ -36,9 +36,10 @@ module Statistics.Distribution
 
 import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
-import Statistics.Function (square)
+import Statistics.Function        (square)
 import Statistics.Sample.Internal (sum)
-import System.Random.MWC (Gen, uniform)
+import System.Random.Stateful     (StatefulGen, uniformDouble01M)
+import System.Random.MWC          (Gen)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
@@ -181,9 +182,9 @@ class FromSample d a where
 
 -- | Generate variates from continuous distribution using inverse
 --   transform rule.
-genContinuous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
+genContinuous :: (ContDistr d, StatefulGen g m) => d -> g -> m Double
 genContinuous d gen = do
-  x <- uniform gen
+  x <- uniformDouble01M gen
   return $! quantile d x
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
