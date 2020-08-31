@@ -35,7 +35,6 @@ module Statistics.Distribution
     , sumProbabilities
     ) where
 
-import Control.Applicative ((<$>), Applicative(..))
 import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
 import Statistics.Function (square)
@@ -56,7 +55,7 @@ class Distribution d where
     -- > cumulative d +∞ = 1
     -- > cumulative d -∞ = 0
     cumulative :: d -> Double -> Double
-
+    cumulative d x = 1 - complCumulative d x
     -- | One's complement of cumulative distribution:
     --
     -- > complCumulative d x = 1 - cumulative d x
@@ -67,17 +66,18 @@ class Distribution d where
     -- encouraged to provide more precise implementation.
     complCumulative :: d -> Double -> Double
     complCumulative d x = 1 - cumulative d x
+    {-# MINIMAL (cumulative | complCumulative) #-}
+
 
 -- | Discrete probability distribution.
 class Distribution  d => DiscreteDistr d where
     -- | Probability of n-th outcome.
     probability :: d -> Int -> Double
     probability d = exp . logProbability d
-
     -- | Logarithm of probability of n-th outcome
     logProbability :: d -> Int -> Double
     logProbability d = log . probability d
-
+    {-# MINIMAL (probability | logProbability) #-}
 
 -- | Continuous probability distribution.
 --
@@ -89,22 +89,20 @@ class Distribution d => ContDistr d where
     -- [/x/,/x+/&#948;/x/) equal to /density(x)/&#8901;&#948;/x/
     density :: d -> Double -> Double
     density d = exp . logDensity d
-
+    -- | Natural logarithm of density.
+    logDensity :: d -> Double -> Double
+    logDensity d = log . density d
     -- | Inverse of the cumulative distribution function. The value
     -- /x/ for which P(/X/&#8804;/x/) = /p/. If probability is outside
     -- of [0,1] range function should call 'error'
     quantile :: d -> Double -> Double
-
+    quantile d x = complQuantile d (1 - x)
     -- | 1-complement of @quantile@:
     --
     -- > complQuantile x ≡ quantile (1 - x)
     complQuantile :: d -> Double -> Double
     complQuantile d x = quantile d (1 - x)
-
-    -- | Natural logarithm of density.
-    logDensity :: d -> Double -> Double
-    logDensity d = log . density d
-
+    {-# MINIMAL (density | logDensity), (quantile | complQuantile) #-}
 
 -- | Type class for distributions with mean. 'maybeMean' should return
 --   'Nothing' if it's undefined for current value of data
@@ -126,9 +124,10 @@ class MaybeMean d => Mean d where
 --   Minimal complete definition is 'maybeVariance' or 'maybeStdDev'
 class MaybeMean d => MaybeVariance d where
     maybeVariance :: d -> Maybe Double
-    maybeVariance d = (*) <$> x <*> x where x = maybeStdDev d
+    maybeVariance = fmap square . maybeStdDev
     maybeStdDev   :: d -> Maybe Double
-    maybeStdDev = fmap sqrt . maybeVariance
+    maybeStdDev   = fmap sqrt . maybeVariance
+    {-# MINIMAL (maybeVariance | maybeStdDev) #-}
 
 -- | Type class for distributions with variance. If distribution have
 --   finite variance for all valid parameter values it should be
@@ -140,6 +139,8 @@ class (Mean d, MaybeVariance d) => Variance d where
     variance d = square (stdDev d)
     stdDev   :: d -> Double
     stdDev = sqrt . variance
+    {-# MINIMAL (variance | stdDev) #-}
+
 
 -- | Type class for distributions with entropy, meaning Shannon entropy
 --   in the case of a discrete distribution, or differential entropy in the
