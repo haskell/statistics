@@ -1,3 +1,13 @@
+## Changes in NEXT_VERSION
+
+ * Support of GHC<7.10 is dropped
+
+ * Computation of CDF and quantiles of Cauchy distribution is now numerically
+   stable.
+ 
+ * Fix loss of precision in computing of CDF of gamma distribution
+
+
 ## Changes in 0.15.2.0
 
  * Test suite is finally fixed (#42, #123). It took very-very-very long
