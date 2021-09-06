@@ -1,4 +1,5 @@
 # Statistics: efficient, general purpose statistics
+[![Build status](https://github.com/haskell/statistics/actions/workflows/ci.yml/badge.svg)](https://github.com/haskell/statistics/actions/workflows/ci.yml)
 
 This package provides the Statistics module, a Haskell library for
 working with statistical data in a space- and time-efficient way.
