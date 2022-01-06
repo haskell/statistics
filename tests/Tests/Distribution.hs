@@ -189,6 +189,7 @@ logDensityCheck _ d x
       $ counterexample (printf "logDensity = %g" logP)
       $ counterexample (printf "log p      = %g" (log p))
       $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+      $ counterexample (printf "ulps       = %i" (ulpDistance (log p) logP))
       $ or [ p == 0      && logP == (-1/0)
            , p <= m_tiny && logP < log m_tiny
              -- To avoid problems with roundtripping error in case

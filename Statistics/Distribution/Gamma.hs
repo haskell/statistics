@@ -36,6 +36,7 @@ import GHC.Generics         (Generic)
 import Numeric.MathFunctions.Constants (m_pos_inf, m_NaN, m_neg_inf)
 import Numeric.SpecFunctions (incompleteGamma, invIncompleteGamma, logGamma, digamma)
 import qualified System.Random.MWC.Distributions as MWC
+import qualified Numeric.Sum as Sum
 
 import Statistics.Distribution.Poisson.Internal as Poisson
 import qualified Statistics.Distribution as D
@@ -126,7 +127,11 @@ instance D.ContDistr GammaDistribution where
     density    = density
     logDensity (GD k theta) x
       | x <= 0    = m_neg_inf
-      | otherwise = log x * (k - 1) - (x / theta) - logGamma k - log theta * k
+      | otherwise = Sum.sum Sum.kbn [ log x * (k - 1)
+                                    , - (x / theta)
+                                    , - logGamma k
+                                    , - log theta * k
+                                    ]
     quantile   = quantile
 
 instance D.Variance GammaDistribution where
