@@ -74,11 +74,13 @@ library
     Statistics.Distribution.Geometric
     Statistics.Distribution.Hypergeometric
     Statistics.Distribution.Laplace
+    Statistics.Distribution.Lognormal
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
     Statistics.Distribution.StudentT
     Statistics.Distribution.Transform
     Statistics.Distribution.Uniform
+    Statistics.Distribution.Weibull
     Statistics.Function
     Statistics.Quantile
     Statistics.Regression

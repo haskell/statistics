@@ -16,11 +16,13 @@ import Statistics.Distribution.Gamma           (GammaDistribution, gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace         (LaplaceDistribution, laplace)
+import Statistics.Distribution.Lognormal       (LognormalDistribution, lognormalDistr)
 import Statistics.Distribution.Normal          (NormalDistribution, normalDistr)
 import Statistics.Distribution.Poisson         (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform       (LinearTransform, scaleAround)
 import Statistics.Distribution.Uniform         (UniformDistribution, uniformDistr)
+import Statistics.Distribution.Weibull         (WeibullDistribution, weibullDistr)
 import Statistics.Distribution.DiscreteUniform (DiscreteUniform, discreteUniformAB)
 import Statistics.Types
 
@@ -50,6 +52,9 @@ instance QC.Arbitrary HypergeometricDistribution where
                  m <- QC.choose (0,l)
                  k <- QC.choose (1,l)
                  return $ hypergeometric m l k
+instance QC.Arbitrary LognormalDistribution where
+  -- can't choose sigma too big, otherwise goes outside of double-float limit
+  arbitrary = lognormalDistr <$> QC.choose (-100,100) <*> QC.choose (1e-10, 20)
 instance QC.Arbitrary NormalDistribution where
   arbitrary = normalDistr <$> QC.choose (-100,100) <*> QC.choose (1e-3, 1e3)
 instance QC.Arbitrary PoissonDistribution where
@@ -60,6 +65,8 @@ instance QC.Arbitrary UniformDistribution where
   arbitrary = do a <- QC.arbitrary
                  b <- QC.arbitrary `suchThat` (/= a)
                  return $ uniformDistr a b
+instance QC.Arbitrary WeibullDistribution where
+  arbitrary = weibullDistr <$> QC.choose (1e-3,1e3) <*> QC.choose (1e-3, 1e3)
 instance QC.Arbitrary CauchyDistribution where
   arbitrary = cauchyDistribution
                 <$> arbitrary

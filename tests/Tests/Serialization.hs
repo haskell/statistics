@@ -16,11 +16,13 @@ import Statistics.Distribution.Gamma          (GammaDistribution)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
+import Statistics.Distribution.Lognormal      (LognormalDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
+import Statistics.Distribution.Weibull        (WeibullDistribution)
 import Statistics.Types
 
 import Test.Tasty            (TestTree, testGroup)
@@ -50,8 +52,10 @@ tests = testGroup "Test for data serialization"
   , serializationTests (T :: T ExponentialDistribution )
   , serializationTests (T :: T GammaDistribution       )
   , serializationTests (T :: T LaplaceDistribution     )
+  , serializationTests (T :: T LognormalDistribution   )
   , serializationTests (T :: T NormalDistribution      )
   , serializationTests (T :: T UniformDistribution     )
+  , serializationTests (T :: T WeibullDistribution     )
   , serializationTests (T :: T StudentT                )
   , serializationTests (T :: T (LinearTransform NormalDistribution))
   , serializationTests (T :: T FDistribution           )
