@@ -24,7 +24,6 @@ module Statistics.Test.MannWhitneyU (
     -- $references
   ) where
 
-import Control.Applicative ((<$>))
 import Data.List (findIndex)
 import Data.Ord (comparing)
 import Numeric.SpecFunctions (choose)

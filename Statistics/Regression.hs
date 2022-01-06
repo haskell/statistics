@@ -13,7 +13,6 @@ module Statistics.Regression
     , bootstrapRegress
     ) where
 
-import Control.Applicative ((<$>))
 import Control.Concurrent.Async (forConcurrently)
 import Control.DeepSeq (rnf)
 import Control.Monad (when)

@@ -17,7 +17,6 @@ module Statistics.Test.KruskalWallis
   ) where
 
 import Data.Ord (comparing)
-import Data.Foldable (foldMap)
 import qualified Data.Vector.Unboxed as U
 import Statistics.Function (sort, sortBy, square)
 import Statistics.Distribution (complCumulative)

@@ -39,7 +39,6 @@ module Statistics.Test.WilcoxonT (
 -- the sum of negative ranks (the ranks of the differences where the second parameter is higher).
 -- to the length of the shorter sample.
 
-import Control.Applicative ((<$>))
 import Data.Function (on)
 import Data.List (findIndex)
 import Data.Ord (comparing)
