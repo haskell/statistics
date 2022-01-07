@@ -351,7 +351,7 @@ instance Param ChiSquared where
 
 instance Param BinomialDistribution where
   prec_discreteCDF _ = 1e-13
-
+  prec_logDensity  _ = 48
 instance Param CauchyDistribution where
   -- Distribution is long-tailed enough that we may never get to zero
   cdfLimitAtNegInfinity_enabled _ = False
