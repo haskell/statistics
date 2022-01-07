@@ -112,7 +112,7 @@ library
                , base-orphans            >= 0.6 && <0.9
                  --
                , math-functions          >= 0.3.4.1
-               , mwc-random              >= 0.13.0.0
+               , mwc-random              >= 0.15.0.0
                , random                  >= 1.2
                  --
                , aeson                   >= 0.6.0.0
@@ -166,7 +166,6 @@ test-suite statistics-tests
                , aeson
                , ieee754 >= 0.7.3
                , math-functions
-               , mwc-random
                , primitive
                , tasty
                , tasty-hunit

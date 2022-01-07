@@ -34,12 +34,10 @@ module Statistics.Distribution
     , sumProbabilities
     ) where
 
-import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
 import Statistics.Function        (square)
 import Statistics.Sample.Internal (sum)
 import System.Random.Stateful     (StatefulGen, uniformDouble01M)
-import System.Random.MWC          (Gen)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
@@ -162,13 +160,13 @@ class (MaybeEntropy d) => Entropy d where
 -- | Generate discrete random variates which have given
 --   distribution.
 class Distribution d => ContGen d where
-  genContVar :: PrimMonad m => d -> Gen (PrimState m) -> m Double
+  genContVar :: (StatefulGen g m) => d -> g -> m Double
 
 -- | Generate discrete random variates which have given
 --   distribution. 'ContGen' is superclass because it's always possible
 --   to generate real-valued variates from integer values
 class (DiscreteDistr d, ContGen d) => DiscreteGen d where
-  genDiscreteVar :: PrimMonad m => d -> Gen (PrimState m) -> m Int
+  genDiscreteVar :: (StatefulGen g m) => d -> g -> m Int
 
 -- | Estimate distribution from sample. First parameter in sample is
 --   distribution type and second is element type.
