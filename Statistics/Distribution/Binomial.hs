@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternGuards     #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Binomial
@@ -31,7 +32,7 @@ import Data.Binary           (Binary(..))
 import Data.Data             (Data, Typeable)
 import GHC.Generics          (Generic)
 import Numeric.SpecFunctions           (choose,logChoose,incompleteBeta,log1p)
-import Numeric.MathFunctions.Constants (m_epsilon)
+import Numeric.MathFunctions.Constants (m_epsilon,m_tiny)
 
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
@@ -104,9 +105,16 @@ probability (BD n p) k
   | n == 0         = 1
     -- choose could overflow Double for n >= 1030 so we switch to
     -- log-domain to calculate probability
-  | n < 1000       = choose n k * p^k * (1-p)^(n-k)
-  | otherwise      = exp $ logChoose n k + log p * k' + log1p (-p) * nk'
+    --
+    -- We also want to avoid underflow when computing p^k &
+    -- (1-p)^(n-k).
+  | n < 1000
+  , pK  >= m_tiny
+  , pNK >= m_tiny = choose n k * pK * pNK
+  | otherwise     = exp $ logChoose n k + log p * k' + log1p (-p) * nk'
   where
+    pK  = p^k
+    pNK = (1-p)^(n-k)
     k'  = fromIntegral k
     nk' = fromIntegral $ n - k
 
