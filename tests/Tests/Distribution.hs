@@ -350,7 +350,7 @@ instance Param ChiSquared where
   prec_quantile_CDF _ = (32,32)
 
 instance Param BinomialDistribution where
-  prec_discreteCDF _ = 1e-13
+  prec_discreteCDF _ = 1e-12
   prec_logDensity  _ = 48
 instance Param CauchyDistribution where
   -- Distribution is long-tailed enough that we may never get to zero
