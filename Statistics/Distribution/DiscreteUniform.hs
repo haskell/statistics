@@ -32,6 +32,7 @@ import Control.Applicative (empty)
 import Data.Aeson   (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary  (Binary(..))
 import Data.Data    (Data, Typeable)
+import System.Random.Stateful (uniformRM)
 import GHC.Generics (Generic)
 
 import qualified Statistics.Distribution as D
@@ -93,6 +94,12 @@ instance D.Entropy DiscreteUniform where
 
 instance D.MaybeEntropy DiscreteUniform where
   maybeEntropy = Just . D.entropy
+
+instance D.ContGen DiscreteUniform where
+  genContVar d = fmap fromIntegral . D.genDiscreteVar d
+
+instance D.DiscreteGen DiscreteUniform where
+  genDiscreteVar (U a b) = uniformRM (a,b)
 
 -- | Construct discrete uniform distribution on support {1, ..., n}.
 --   Range /n/ must be >0.

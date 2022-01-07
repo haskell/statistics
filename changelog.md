@@ -11,6 +11,8 @@
  
  * Fix loss of precision in computing of CDF of gamma distribution
 
+ * `DiscreteGen` instance added for `DiscreteUniform`
+
 
 ## Changes in 0.15.2.0
 
