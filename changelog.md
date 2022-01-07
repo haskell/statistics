@@ -1,6 +1,10 @@
-## Changes in NEXT_VERSION
+## Changes in 0.16.0.0
+
+ * Random number generation switched to API introduced in random-1.2
 
  * Support of GHC<7.10 is dropped
+
+ * Fix for chi-squared test (#167) which was completely wrong
 
  * Computation of CDF and quantiles of Cauchy distribution is now numerically
    stable.

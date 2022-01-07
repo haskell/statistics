@@ -2,10 +2,10 @@
     ViewPatterns #-}
 module Tests.Distribution (tests) where
 
-import Control.Applicative ((<$))
 import qualified Control.Exception as E
 import Data.List (find)
 import Data.Typeable (Typeable)
+import Data.Word
 import Numeric.MathFunctions.Constants (m_tiny,m_huge,m_epsilon)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
@@ -285,7 +285,7 @@ discreteCDFcorrect _ d a b
     p1 = cumulative d (fromIntegral m + 0.5) - cumulative d (fromIntegral n - 0.5)
     p2 = sum $ map (probability d) [n .. m]
 
-logProbabilityCheck :: (DiscreteDistr d) => T d -> d -> Int -> Property
+logProbabilityCheck :: (Param d, DiscreteDistr d) => T d -> d -> Int -> Property
 logProbabilityCheck _ d x
   = counterexample (printf "probability    = %g" p)
   $ counterexample (printf "logProbability = %g" logP)
@@ -296,12 +296,13 @@ logProbabilityCheck _ d x
          -- To avoid problems with roundtripping error in case
          -- when density is computed as exponent of logDensity we
          -- accept either inequality
-       ,  (ulpDistance (log p) logP <= 32)
-       || (ulpDistance p (exp logP) <= 32)
+       ,  (ulpDistance (log p) logP <= n)
+       || (ulpDistance p (exp logP) <= n)
        ]
   where
     p    = probability d x
     logP = logProbability d x
+    n    = prec_logDensity d
 
 
 -- | Parameters for distribution testing. Some distribution require
@@ -322,6 +323,9 @@ class Param a where
   -- | Precision of CDF's complement
   prec_complementCDF :: a -> Double
   prec_complementCDF _ = 1e-14
+  -- | Precision for logDensity check
+  prec_logDensity :: a -> Word64
+  prec_logDensity _ = 32
 
 instance Param StudentT where
   -- FIXME: disabled unless incompleteBeta troubles are sorted out
@@ -355,6 +359,7 @@ instance Param GammaDistribution where
   -- introuced by exp . logGamma.  This could only be fixed in
   -- math-function by implementing gamma
   prec_quantile_CDF _ = (24,24)
+  prec_logDensity   _ = 64
 instance Param GeometricDistribution
 instance Param GeometricDistribution0
 instance Param HypergeometricDistribution
