@@ -75,7 +75,7 @@ histogram_ numBins lo hi xs0 = G.create (GM.replicate numBins 0 >>= bin xs0)
          go (i+1)
        write' bins' b !e = GM.write bins' b e
        len = G.length xs
-       d = ((hi - lo) * (1 + realToFrac m_epsilon)) / fromIntegral numBins
+       d = ((hi - lo) / fromIntegral numBins) * (1 + realToFrac m_epsilon)
 {-# INLINE histogram_ #-}
 
 -- | /O(n)/ Compute decent defaults for the lower and upper bounds of
