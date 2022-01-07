@@ -28,7 +28,7 @@ module Statistics.Distribution.DiscreteUniform
     , rangeTo
     ) where
 
-import Control.Applicative ((<$>), (<*>), empty)
+import Control.Applicative (empty)
 import Data.Aeson   (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary  (Binary(..))
 import Data.Data    (Data, Typeable)

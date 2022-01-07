@@ -22,11 +22,11 @@ module Statistics.Distribution.Uniform
     ) where
 
 import Control.Applicative
-import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
-import Data.Binary         (Binary(..))
-import Data.Data           (Data, Typeable)
-import GHC.Generics        (Generic)
-import qualified System.Random.MWC       as MWC
+import Data.Aeson             (FromJSON(..), ToJSON, Value(..), (.:))
+import Data.Binary            (Binary(..))
+import Data.Data              (Data, Typeable)
+import System.Random.Stateful (uniformRM)
+import GHC.Generics           (Generic)
 
 import qualified Statistics.Distribution as D
 import Statistics.Internal
@@ -117,4 +117,4 @@ instance D.MaybeEntropy UniformDistribution where
   maybeEntropy = Just . D.entropy
 
 instance D.ContGen UniformDistribution where
-    genContVar (UniformDistribution a b) gen = MWC.uniformR (a,b) gen
+    genContVar (UniformDistribution a b) = uniformRM (a,b)

@@ -29,17 +29,15 @@ module Statistics.Distribution
     , ContGen(..)
     , DiscreteGen(..)
     , genContinuous
-    , genContinous
       -- * Helper functions
     , findRoot
     , sumProbabilities
     ) where
 
-import Control.Monad.Primitive (PrimMonad,PrimState)
 import Prelude hiding (sum)
-import Statistics.Function (square)
+import Statistics.Function        (square)
 import Statistics.Sample.Internal (sum)
-import System.Random.MWC (Gen, uniform)
+import System.Random.Stateful     (StatefulGen, uniformDouble01M)
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Generic as G
 
@@ -162,13 +160,13 @@ class (MaybeEntropy d) => Entropy d where
 -- | Generate discrete random variates which have given
 --   distribution.
 class Distribution d => ContGen d where
-  genContVar :: PrimMonad m => d -> Gen (PrimState m) -> m Double
+  genContVar :: (StatefulGen g m) => d -> g -> m Double
 
 -- | Generate discrete random variates which have given
 --   distribution. 'ContGen' is superclass because it's always possible
 --   to generate real-valued variates from integer values
 class (DiscreteDistr d, ContGen d) => DiscreteGen d where
-  genDiscreteVar :: PrimMonad m => d -> Gen (PrimState m) -> m Int
+  genDiscreteVar :: (StatefulGen g m) => d -> g -> m Int
 
 -- | Estimate distribution from sample. First parameter in sample is
 --   distribution type and second is element type.
@@ -182,15 +180,10 @@ class FromSample d a where
 
 -- | Generate variates from continuous distribution using inverse
 --   transform rule.
-genContinuous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
+genContinuous :: (ContDistr d, StatefulGen g m) => d -> g -> m Double
 genContinuous d gen = do
-  x <- uniform gen
+  x <- uniformDouble01M gen
   return $! quantile d x
-
--- | Backwards compatibility with genContinuous.
-genContinous :: (ContDistr d, PrimMonad m) => d -> Gen (PrimState m) -> m Double
-genContinous = genContinuous
-{-# DEPRECATED genContinous "Use genContinuous" #-}
 
 data P = P {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 

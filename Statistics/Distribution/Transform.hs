@@ -18,11 +18,9 @@ module Statistics.Distribution.Transform
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Control.Applicative ((<*>))
 import Data.Binary (Binary)
 import Data.Binary (put, get)
 import Data.Data (Data, Typeable)
-import Data.Functor ((<$>))
 import GHC.Generics (Generic)
 import qualified Statistics.Distribution as D
 
