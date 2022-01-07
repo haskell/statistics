@@ -39,7 +39,7 @@ chi2test ndf vec
   | n   > 0   = Just Test
               { testSignificance = mkPValue $ complCumulative d chi2
               , testStatistics   = chi2
-              , testDistribution = chiSquared ndf
+              , testDistribution = chiSquared n
               }
   | otherwise = Nothing
   where
@@ -66,7 +66,7 @@ chi2testCont ndf vec
   | n   > 0   = Just Test
               { testSignificance = mkPValue $ complCumulative d chi2
               , testStatistics   = chi2
-              , testDistribution = chiSquared ndf
+              , testDistribution = chiSquared n
               }
   | otherwise = Nothing
   where
