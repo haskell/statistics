@@ -182,25 +182,27 @@ cdfDiscreteIsCorrect _ d
            ]
     tol = prec_discreteCDF d
 
-logDensityCheck :: (ContDistr d) => T d -> d -> Double -> Property
+logDensityCheck :: (Param d, ContDistr d) => T d -> d -> Double -> Property
 logDensityCheck _ d x
   = not (isDenorm x)
   ==> ( counterexample (printf "density    = %g" p)
       $ counterexample (printf "logDensity = %g" logP)
       $ counterexample (printf "log p      = %g" (log p))
-      $ counterexample (printf "eps        = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
-      $ counterexample (printf "ulps       = %i" (ulpDistance (log p) logP))
+      $ counterexample (printf "ulps[log]  = %i" ulpsLog)
+      $ counterexample (printf "ulps[lin]  = %i" ulpsLin)
       $ or [ p == 0      && logP == (-1/0)
            , p <= m_tiny && logP < log m_tiny
              -- To avoid problems with roundtripping error in case
              -- when density is computed as exponent of logDensity we
              -- accept either inequality
-           ,  (ulpDistance (log p) logP <= 32)
-           || (ulpDistance p (exp logP) <= 32)
+           ,  (ulpsLog <= n) || (ulpsLin <= n)
            ])
   where
-    p    = density d x
-    logP = logDensity d x
+    p       = density d x
+    logP    = logDensity d x
+    n       = prec_logDensity d
+    ulpsLog = ulpDistance (log p) logP
+    ulpsLin = ulpDistance p       (exp logP)
 
 -- PDF is positive
 pdfSanityCheck :: (ContDistr d) => T d -> d -> Double -> Bool
@@ -290,19 +292,21 @@ logProbabilityCheck _ d x
   = counterexample (printf "probability    = %g" p)
   $ counterexample (printf "logProbability = %g" logP)
   $ counterexample (printf "log p          = %g" (log p))
-  $ counterexample (printf "eps            = %g" (abs (logP - log p) / max (abs (log p)) (abs logP)))
+  $ counterexample (printf "ulps[log]      = %i" ulpsLog)
+  $ counterexample (printf "ulps[lin]      = %i" ulpsLin)
   $ or [ p == 0     && logP == (-1/0)
        , p < 1e-308 && logP < 609
          -- To avoid problems with roundtripping error in case
          -- when density is computed as exponent of logDensity we
          -- accept either inequality
-       ,  (ulpDistance (log p) logP <= n)
-       || (ulpDistance p (exp logP) <= n)
+       ,  (ulpsLog <= n) || (ulpsLin <= n)
        ]
   where
     p    = probability d x
     logP = logProbability d x
     n    = prec_logDensity d
+    ulpsLog = ulpDistance (log p) logP
+    ulpsLin = ulpDistance p       (exp logP)
 
 
 -- | Parameters for distribution testing. Some distribution require
@@ -346,8 +350,8 @@ instance Param ChiSquared where
   prec_quantile_CDF _ = (32,32)
 
 instance Param BinomialDistribution where
-  prec_discreteCDF _ = 1e-13
-
+  prec_discreteCDF _ = 1e-12
+  prec_logDensity  _ = 48
 instance Param CauchyDistribution where
   -- Distribution is long-tailed enough that we may never get to zero
   cdfLimitAtNegInfinity_enabled _ = False
