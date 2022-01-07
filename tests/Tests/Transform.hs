@@ -8,7 +8,6 @@ module Tests.Transform
 
 import Data.Bits ((.&.), shiftL)
 import Data.Complex (Complex((:+)))
-import Data.Functor ((<$>))
 import Numeric.Sum (kbn, sumVector)
 import Statistics.Function (within)
 import Statistics.Transform (CD, dct, fft, idct, ifft)
