@@ -11,6 +11,8 @@
  
  * Fix loss of precision in computing of CDF of gamma distribution
 
+ * Log-normal and Weibull distributions added.
+ 
  * `DiscreteGen` instance added for `DiscreteUniform`
 
 

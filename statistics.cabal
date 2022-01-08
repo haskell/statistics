@@ -108,8 +108,7 @@ library
     Statistics.Internal
     Statistics.Test.Internal
     Statistics.Types.Internal
-  build-depends: base                    >= 4.8 && < 5
-               , base-orphans            >= 0.6 && <0.9
+  build-depends: base                    >= 4.9 && < 5
                  --
                , math-functions          >= 0.3.4.1
                , mwc-random              >= 0.15.0.0
