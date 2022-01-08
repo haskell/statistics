@@ -24,14 +24,14 @@ description:
 
 license:        BSD2
 license-file:   LICENSE
-homepage:       https://github.com/bos/statistics
-bug-reports:    https://github.com/bos/statistics/issues
+homepage:       https://github.com/haskell/statistics
+bug-reports:    https://github.com/haskell/statistics/issues
 author:         Bryan O'Sullivan <bos@serpentine.com>, Alexey Khudaykov <alexey.skladnoy@gmail.com>
-maintainer:     Bryan O'Sullivan <bos@serpentine.com>, Alexey Khudaykov <alexey.skladnoy@gmail.com>
+maintainer:     Alexey Khudaykov <alexey.skladnoy@gmail.com>
 copyright:      2009-2014 Bryan O'Sullivan
 category:       Math, Statistics
 build-type:     Simple
-cabal-version:  >= 1.8
+cabal-version:  >= 1.10
 extra-source-files:
   README.markdown
   benchmark/bench.hs
@@ -46,17 +46,17 @@ extra-source-files:
   tests/utils/fftw.c
 
 tested-with:
-    GHC ==7.10.3
-     || ==8.0.2
+    GHC ==8.0.2
      || ==8.2.2
      || ==8.4.4
      || ==8.6.5
-     || ==8.8.3
-     || ==8.10.1
-  , GHCJS ==8.4
-
+     || ==8.8.4
+     || ==8.10.7
+     || ==9.0.1
+     || ==9.2.1
 
 library
+  default-language: Haskell2010
   exposed-modules:
     Statistics.Autocorrelation
     Statistics.ConfidenceInt
@@ -135,6 +135,7 @@ library
   ghc-options: -O2 -Wall -fwarn-tabs -funbox-strict-fields
 
 test-suite statistics-tests
+  default-language: Haskell2010
   type:           exitcode-stdio-1.0
   hs-source-dirs: tests
   main-is:        tests.hs
@@ -175,4 +176,4 @@ test-suite statistics-tests
 
 source-repository head
   type:     git
-  location: https://github.com/bos/statistics
+  location: https://github.com/haskell/statistics
