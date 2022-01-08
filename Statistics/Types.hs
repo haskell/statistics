@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -72,12 +71,6 @@ import Data.Maybe                   (fromMaybe)
 import Data.Vector.Unboxed          (Unbox)
 import Data.Vector.Unboxed.Deriving (derivingUnbox)
 import GHC.Generics                 (Generic)
-
-#if __GLASGOW_HASKELL__ == 704
-import qualified Data.Vector.Generic
-import qualified Data.Vector.Generic.Mutable
-#endif
-
 import Statistics.Internal
 import Statistics.Types.Internal
 import Statistics.Distribution
@@ -324,9 +317,7 @@ data Estimate e a = Estimate
     , estError           :: !(e a)
       -- ^ Confidence interval for estimate.
     } deriving (Eq, Read, Show, Generic
-#if __GLASGOW_HASKELL__ >= 708
                , Typeable, Data
-#endif
                )
 
 instance (Binary   (e a), Binary   a) => Binary   (Estimate e a) where
