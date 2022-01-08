@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, CPP, FlexibleContexts #-}
+{-# LANGUAGE BangPatterns, FlexibleContexts #-}
 -- |
 -- Module      : Statistics.Correlation.Kendall
 --
@@ -130,11 +130,6 @@ merge cmp src buf mid count = do GM.unsafeCopy tmp lower
         _  -> do GM.unsafeWrite src iIns eLow
                  wroteLow low (iLow+1) high iHigh eHigh (iIns+1)
 {-# INLINE merge #-}
-
-#if !MIN_VERSION_base(4,6,0)
-modifySTRef' :: STRef s a -> (a -> a) -> ST s ()
-modifySTRef' = modifySTRef
-#endif
 
 -- $references
 --

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFoldable     #-}
 {-# LANGUAGE DeriveFunctor      #-}
@@ -195,7 +194,7 @@ quantiles param qs nQ xs
   | F.any (badQ nQ) qs = modErr "quantiles" "Wrong quantile number"
   | G.any isNaN xs     = modErr "quantiles" "Sample contains NaNs"
   -- Doesn't matter what we put into empty container
-  | fnull qs           = 0 <$ qs
+  | null qs            = 0 <$ qs
   | otherwise          = fmap (estimateQuantile sortedXs) ks'
   where
     ks'      = fmap (\q -> toPk param n q nQ) qs
@@ -208,14 +207,6 @@ quantiles param qs nQ xs
       :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> U.Vector Double -> f Double #-}
 {-# SPECIALIZE quantiles
       :: (Functor f, F.Foldable f) => ContParam -> f Int -> Int -> S.Vector Double -> f Double #-}
-
--- COMPAT
-fnull :: F.Foldable f => f a -> Bool
-#if !MIN_VERSION_base(4,8,0)
-fnull = F.foldr (\_ _ -> False) True
-#else
-fnull = null
-#endif
 
 -- | O(/k·n/·log /n/). Same as quantiles but uses 'G.Vector' container
 --   instead of 'Foldable' one.

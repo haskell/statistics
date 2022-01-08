@@ -1,5 +1,4 @@
 {-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFoldable     #-}
 {-# LANGUAGE DeriveFunctor      #-}
@@ -87,9 +86,7 @@ data Bootstrap v a = Bootstrap
   , resamples  :: v a
   }
   deriving (Eq, Read, Show , Generic, Functor, T.Foldable, T.Traversable
-#if __GLASGOW_HASKELL__ >= 708
            , Typeable, Data
-#endif
            )
 
 instance (Binary a,   Binary   (v a)) => Binary   (Bootstrap v a) where
