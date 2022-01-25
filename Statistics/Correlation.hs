@@ -14,9 +14,12 @@ module Statistics.Correlation
 
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
+import Statistics.Distribution
+import Statistics.Distribution.StudentT
 import Statistics.Matrix
 import Statistics.Sample
 import Statistics.Test.Internal (rankUnsorted)
+import Statistics.Types (mkPValue, PValue)
 
 
 ----------------------------------------------------------------
@@ -26,15 +29,20 @@ import Statistics.Test.Internal (rankUnsorted)
 -- | Pearson correlation for sample of pairs. Exactly same as
 -- 'Statistics.Sample.correlation'
 pearson :: (G.Vector v (Double, Double), G.Vector v Double)
-        => v (Double, Double) -> Double
-pearson = correlation
+        => v (Double, Double) -> (Double, PValue Double)
+pearson xy = (coeff, p)
+  where
+    coeff = correlation xy
+    n     = fromIntegral . G.length $ xy
+    stat  = coeff * ((sqrt (n - 2)) / (1 - (coeff ** 2)))
+    p     = mkPValue $ 2 * (complCumulative (studentT (n - 2)) . abs $ stat)
 {-# INLINE pearson #-}
 
 -- | Compute pairwise pearson correlation between rows of a matrix
 pearsonMatByRow :: Matrix -> Matrix
 pearsonMatByRow m
   = generateSym (rows m)
-      (\i j -> pearson $ row m i `U.zip` row m j)
+      (\i j -> fst . pearson $ row m i `U.zip` row m j)
 {-# INLINE pearsonMatByRow #-}
 
 
@@ -43,7 +51,8 @@ pearsonMatByRow m
 -- Spearman
 ----------------------------------------------------------------
 
--- | compute spearman correlation between two samples
+-- | Compute spearman correlation between two samples with p value. P value is
+-- calculated using Student's /t/ distribution with /n - 2/ degrees of freedom
 spearman :: ( Ord a
             , Ord b
             , G.Vector v a
@@ -56,7 +65,7 @@ spearman :: ( Ord a
             , G.Vector v (Int, b)
             )
          => v (a, b)
-         -> Double
+         -> (Double, PValue Double)
 spearman xy
   = pearson
   $ G.zip (rankUnsorted x) (rankUnsorted y)
