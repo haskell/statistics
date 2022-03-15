@@ -60,8 +60,8 @@ monotonicallyIncreases f x1 x2 = f (min x1 x2) <= f (max x1 x2)
 -- Check that function is nondecreasing taking rounding errors into
 -- account.
 --
--- In fact funstion is allowed to decrease less than one ulp in order
--- to guard againist problems with excess precision. On x86 FPU works
+-- In fact function is allowed to decrease less than one ulp in order
+-- to guard against problems with excess precision. On x86 FPU works
 -- with 80-bit numbers but doubles are 64-bit so rounding happens
 -- whenever values are moved from registers to memory
 monotonicallyIncreasesIEEE :: (Ord a, IEEE.IEEE b)  => (a -> b) -> a -> a -> Bool

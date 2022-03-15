@@ -164,7 +164,7 @@ directEntropy lambda =
   dropWhile (not . (< negate m_epsilon * lambda)) $
   [ let x = probability lambda k in x * log x | k <- [0..]]
 
--- | Compute the entropy of a poisson distribution using the best available
+-- | Compute the entropy of a Poisson distribution using the best available
 -- method.
 poissonEntropy :: Double -> Double
 poissonEntropy lambda

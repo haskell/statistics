@@ -11,7 +11,7 @@
 -- Portability : portable
 --
 -- The exponential distribution.  This is the continuous probability
--- distribution of the times between events in a poisson process, in
+-- distribution of the times between events in a Poisson process, in
 -- which events occur continuously and independently at a constant
 -- average rate.
 

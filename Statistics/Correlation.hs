@@ -30,7 +30,7 @@ pearson :: (G.Vector v (Double, Double), G.Vector v Double)
 pearson = correlation
 {-# INLINE pearson #-}
 
--- | Compute pairwise pearson correlation between rows of a matrix
+-- | Compute pairwise Pearson correlation between rows of a matrix
 pearsonMatByRow :: Matrix -> Matrix
 pearsonMatByRow m
   = generateSym (rows m)
@@ -43,7 +43,7 @@ pearsonMatByRow m
 -- Spearman
 ----------------------------------------------------------------
 
--- | compute spearman correlation between two samples
+-- | compute Spearman correlation between two samples
 spearman :: ( Ord a
             , Ord b
             , G.Vector v a
@@ -64,7 +64,7 @@ spearman xy
     (x, y) = G.unzip xy
 {-# INLINE spearman #-}
 
--- | compute pairwise spearman correlation between rows of a matrix
+-- | compute pairwise Spearman correlation between rows of a matrix
 spearmanMatByRow :: Matrix -> Matrix
 spearmanMatByRow
   = pearsonMatByRow . fromRows . fmap rankUnsorted . toRows
