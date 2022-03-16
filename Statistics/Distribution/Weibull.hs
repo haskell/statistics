@@ -10,7 +10,7 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- The weibull distribution.  This is a continuous probability
+-- The Weibull distribution.  This is a continuous probability
 -- distribution that describes the occurrence of a single event whose
 -- probability changes over time, controlled by the shape parameter.
 
@@ -38,7 +38,7 @@ import qualified Statistics.Sample as S
 import Statistics.Internal
 
 
--- | The weibull distribution.
+-- | The Weibull distribution.
 data WeibullDistribution = WD {
       wdShape  :: {-# UNPACK #-} !Double
     , wdLambda :: {-# UNPACK #-} !Double
@@ -99,11 +99,11 @@ instance D.MaybeEntropy WeibullDistribution where
 instance D.ContGen WeibullDistribution where
   genContVar d = D.genContinuous d
 
--- | Standard weibull distribution with scale factor (lambda) 1.
+-- | Standard Weibull distribution with scale factor (lambda) 1.
 weibullStandard :: Double -> WeibullDistribution
 weibullStandard k = weibullDistr k 1.0
 
--- | Create weibull distribution from parameters.
+-- | Create Weibull distribution from parameters.
 --
 -- If the shape (first) parameter is @1.0@, the distribution is equivalent to a
 -- 'Statistics.Distribution.Exponential.ExponentialDistribution' with parameter
@@ -114,7 +114,7 @@ weibullDistr
   -> WeibullDistribution
 weibullDistr k l = either error id $ weibullDistrErr k l
 
--- | Create weibull distribution from parameters.
+-- | Create Weibull distribution from parameters.
 --
 -- If the shape (first) parameter is @1.0@, the distribution is equivalent to a
 -- 'Statistics.Distribution.Exponential.ExponentialDistribution' with parameter
@@ -134,7 +134,7 @@ errMsg k l =
     ++ " and lambda "
     ++ show l
 
--- | Create weibull distribution from mean and standard deviation.
+-- | Create Weibull distribution from mean and standard deviation.
 --
 -- The algorithm is from "Methods for Estimating Wind Speed Frequency
 -- Distributions", C. G. Justus, W. R. Hargreaves, A. Mikhail, D. Graber, 1977.

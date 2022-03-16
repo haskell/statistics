@@ -215,7 +215,7 @@ kurtosis xs = c4 / (c2 * c2) - 3
 
 -- $variance
 --
--- The variance&#8212;and hence the standard deviation&#8212;of a
+-- The variance — and hence the standard deviation — of a
 -- sample of fewer than two elements are both defined to be zero.
 
 -- $robust
