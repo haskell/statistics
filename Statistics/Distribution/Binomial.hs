@@ -165,7 +165,7 @@ binomialE :: Int                 -- ^ Number of trials.
           -> Maybe BinomialDistribution
 binomialE n p
   | n < 0            = Nothing
-  | p >= 0 || p <= 1 = Just (BD n p)
+  | p >= 0 && p <= 1 = Just (BD n p)
   | otherwise        = Nothing
 
 errMsg :: Int -> Double -> String

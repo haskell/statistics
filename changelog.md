@@ -1,3 +1,9 @@
+## Changes in 0.16.0.2
+
+ * Bug in constructor of binomial distribution is fixed (#181). It accepted
+   out-of range probability before.
+
+
 ## Changes in 0.16.0.0
 
  * Random number generation switched to API introduced in random-1.2
