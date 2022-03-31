@@ -47,7 +47,7 @@ import qualified Data.Vector.Generic as G
 class Distribution d where
     -- | Cumulative distribution function.  The probability that a
     -- random variable /X/ is less or equal than /x/,
-    -- i.e. P(/X/&#8804;/x/). Cumulative should be defined for
+    -- i.e. P(/X/≤/x/). Cumulative should be defined for
     -- infinities as well:
     --
     -- > cumulative d +∞ = 1
@@ -84,14 +84,14 @@ class Distribution  d => DiscreteDistr d where
 class Distribution d => ContDistr d where
     -- | Probability density function. Probability that random
     -- variable /X/ lies in the infinitesimal interval
-    -- [/x/,/x+/&#948;/x/) equal to /density(x)/&#8901;&#948;/x/
+    -- [/x/,/x+/δ/x/) equal to /density(x)/⋅δ/x/
     density :: d -> Double -> Double
     density d = exp . logDensity d
     -- | Natural logarithm of density.
     logDensity :: d -> Double -> Double
     logDensity d = log . density d
     -- | Inverse of the cumulative distribution function. The value
-    -- /x/ for which P(/X/&#8804;/x/) = /p/. If probability is outside
+    -- /x/ for which P(/X/≤/x/) = /p/. If probability is outside
     -- of [0,1] range function should call 'error'
     quantile :: d -> Double -> Double
     quantile d x = complQuantile d (1 - x)
