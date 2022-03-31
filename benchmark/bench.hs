@@ -16,7 +16,7 @@ sample = runST $ flip uniformVector 10000 =<< create
 sampleW :: U.Vector (Double,Double)
 sampleW = U.zip sample (U.reverse sample)
 
--- Comlex vector for FFT tests
+-- Complex vector for FFT tests
 sampleC :: U.Vector (Complex Double)
 sampleC = U.zipWith (:+) sample (U.reverse sample)
 
