@@ -61,7 +61,7 @@ alyThm2Upper lambda coefficients =
   1.4189385332046727 + 0.5 * log lambda +
   zipCoefficients lambda coefficients
 
--- | Returns the average of the upper and lower bounds accounding to
+-- | Returns the average of the upper and lower bounds according to
 -- theorem 2.
 alyThm2 :: Double -> [Double] -> [Double] -> Double
 alyThm2 lambda upper lower =
