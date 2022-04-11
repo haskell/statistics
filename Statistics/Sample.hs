@@ -51,7 +51,7 @@ module Statistics.Sample
     , fastVarianceUnbiased
     , fastStdDev
 
-    -- * Joint distirbutions
+    -- * Joint distributions
     , covariance
     , correlation
     , pair

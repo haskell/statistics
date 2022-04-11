@@ -166,9 +166,9 @@ cdfDiscreteIsCorrect _ d
     --
     -- > CDF(i) - CDF(i-e) = P(i)
     --
-    -- Apporixmate equality is tricky here. Scale is set by maximum
-    -- value of CDF and probability. Case when all proabilities are
-    -- zero should be trated specially.
+    -- Approximate equality is tricky here. Scale is set by maximum
+    -- value of CDF and probability. Case when all probabilities are
+    -- zero should be treated specially.
     badN = [ printf "N=%3i    p[i]=%g\tp[i+1]=%g\tdP=%g\trelerr=%g" i p p1 dp ((p1-p-dp) / max p1 dp)
            | i <- [0 .. 100]
            , let p      = cumulative d $ fromIntegral i - 1e-6
@@ -277,9 +277,9 @@ discreteCDFcorrect _ d a b
   $ counterexample (printf "Sum   = %g" p2)
   $ counterexample (printf "Delta = %g" (abs (p1 - p2)))
   $ abs (p1 - p2) < 3e-10
-  -- Avoid too large differeneces. Otherwise there is to much to sum
+  -- Avoid too large differences. Otherwise there is to much to sum
   --
-  -- Absolute difference is used guard againist precision loss when
+  -- Absolute difference is used guard against precision loss when
   -- close values of CDF are subtracted
   where
     n  = min a b
@@ -360,7 +360,7 @@ instance Param DiscreteUniform
 instance Param ExponentialDistribution
 instance Param GammaDistribution where
   -- We lose precision near `incompleteGamma 10` because of error
-  -- introuced by exp . logGamma.  This could only be fixed in
+  -- introduced by exp . logGamma.  This could only be fixed in
   -- math-function by implementing gamma
   prec_quantile_CDF _ = (24,24)
   prec_logDensity   _ = 64
