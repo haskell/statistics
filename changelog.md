@@ -27,9 +27,9 @@
  * Test suite is finally fixed (#42, #123). It took very-very-very long
    time but finally happened.
 
- * Avoid loss of precision when computing CDF for exponential districution.
+ * Avoid loss of precision when computing CDF for exponential distribution.
 
- * Avoid loss of precision when computing CDF for geometric districution. Add
+ * Avoid loss of precision when computing CDF for geometric distribution. Add
    complement of CDF.
 
  * Correctly handle case of n=0 in poissonCI
@@ -257,17 +257,17 @@ p-value. Also API for statistical tests is changed.
 
   * Accesors for uniform distribution are added.
 
-  * ContGen instances for all continuous distribtuions are added.
+  * ContGen instances for all continuous distributions are added.
 
   * Beta distribution is added.
 
-  * Constructor for improper gamma distribtuion is added.
+  * Constructor for improper gamma distribution is added.
 
   * Binomial distribution allows zero trials.
 
   * Poisson distribution now accept zero parameter.
 
-  * Integer overflow in caculation of Wilcoxon-T test is fixed.
+  * Integer overflow in calculation of Wilcoxon-T test is fixed.
 
   * Bug in 'ContGen' instance for normal distribution is fixed.
 
@@ -308,7 +308,7 @@ p-value. Also API for statistical tests is changed.
   * Root finding is added, in S.Math.RootFinding.
 
   * The complCumulative function is added to the Distribution
-    class in order to accurately assess probalities P(X>x) which are
+    class in order to accurately assess probabilities P(X>x) which are
     used in one-tailed tests.
 
   * A stdDev function is added to the Variance class for
@@ -323,7 +323,7 @@ p-value. Also API for statistical tests is changed.
   * Bugs in quantile estimations for chi-square and gamma distribution
     are fixed.
 
-  * Integer overlow in mannWhitneyUCriticalValue is fixed. It
+  * Integer overflow in mannWhitneyUCriticalValue is fixed. It
     produced incorrect critical values for moderately large
     samples. Something around 20 for 32-bit machines and 40 for 64-bit
     ones.
@@ -345,18 +345,18 @@ p-value. Also API for statistical tests is changed.
 
   * Mean and variance for gamma distribution are fixed.
 
-  * Much faster cumulative probablity functions for Poisson and
+  * Much faster cumulative probability functions for Poisson and
     hypergeometric distributions.
 
   * Better density functions for gamma and Poisson distributions.
 
   * Student-T, Fisher-Snedecor F-distributions and Cauchy-Lorentz
-    distrbution are added.
+    distribution are added.
 
   * The function S.Function.create is removed. Use generateM from
     the vector package instead.
 
-  * Function to perform approximate comparion of doubles is added to
+  * Function to perform approximate comparison of doubles is added to
     S.Function.Comparison
 
   * Regularized incomplete beta function and its inverse are added to
