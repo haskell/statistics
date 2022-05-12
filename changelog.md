@@ -1,3 +1,8 @@
+## Changes in 0.16.1.0
+
+ * Dependency on monad-par is dropped. `parMap` from `parallel` is used instead.
+
+
 ## Changes in 0.16.0.2
 
  * Bug in constructor of binomial distribution is fixed (#181). It accepted
