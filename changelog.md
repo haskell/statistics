@@ -91,12 +91,12 @@ Breaking update. It seriously changes parts of API. It adds new data types for
 dealing with with estimates, confidence intervals, confidence levels and
 p-value. Also API for statistical tests is changed.
 
- * Module `Statistis.Types` now contains new data types for estimates,
+ * Module `Statistics.Types` now contains new data types for estimates,
    upper/lower bounds, confidence level, and p-value.
 
 	- `CL` for representing confidence level
 	- `PValue` for representing p-values
-	- `Estimate` data type moved here from `Statistis.Resampling.Bootstrap` and
+	- `Estimate` data type moved here from `Statistics.Resampling.Bootstrap` and
       now parametrized by type of error.
 	- `NormalError` — represents normal error.
     - `ConfInt` — generic confidence interval
@@ -241,7 +241,7 @@ p-value. Also API for statistical tests is changed.
 
 ## Changes in 0.10.5.0
 
-  * Enthropy type class for distributions is added.
+  * Entropy type class for distributions is added.
 
   * Probability and probability density of distribution is given in
     log domain too.
@@ -260,7 +260,7 @@ p-value. Also API for statistical tests is changed.
 
   * Bugs in DCT and IDCT are fixed.
 
-  * Accesors for uniform distribution are added.
+  * Accessors for uniform distribution are added.
 
   * ContGen instances for all continuous distributions are added.
 
@@ -308,7 +308,7 @@ p-value. Also API for statistical tests is changed.
 
   * Histogram computation is added, in S.Sample.Histogram.
 
-  * Discrete Fourie transform is added, in S.Transform
+  * Discrete Fourier transform is added, in S.Transform
 
   * Root finding is added, in S.Math.RootFinding.
 
