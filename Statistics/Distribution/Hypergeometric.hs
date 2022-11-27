@@ -71,6 +71,7 @@ instance Binary HypergeometricDistribution where
 
 instance D.Distribution HypergeometricDistribution where
     cumulative = cumulative
+    complCumulative = complCumulative
 
 instance D.DiscreteDistr HypergeometricDistribution where
     probability    = probability
@@ -133,10 +134,10 @@ hypergeometricE m l k
 
 errMsg :: Int -> Int -> Int -> String
 errMsg m l k
-  =  "Statistics.Distribution.Hypergeometric.hypergeometric: "
-  ++ "m=" ++ show m
-  ++ "l=" ++ show l
-  ++ "k=" ++ show k
+  =  "Statistics.Distribution.Hypergeometric.hypergeometric:"
+  ++ " m=" ++ show m
+  ++ " l=" ++ show l
+  ++ " k=" ++ show k
   ++ " should hold: l>0 & m in [0,l] & k in (0,l]"
 
 -- Naive implementation
@@ -164,6 +165,18 @@ cumulative d@(HD mi li ki) x
   | n <  minN    = 0
   | n >= maxN    = 1
   | otherwise    = D.sumProbabilities d minN n
+  where
+    n    = floor x
+    minN = max 0 (mi+ki-li)
+    maxN = min mi ki
+
+complCumulative :: HypergeometricDistribution -> Double -> Double
+complCumulative d@(HD mi li ki) x
+  | isNaN x      = error "Statistics.Distribution.Hypergeometric.complCumulative: NaN argument"
+  | isInfinite x = if x > 0 then 0 else 1
+  | n <  minN    = 1
+  | n >= maxN    = 0
+  | otherwise    = D.sumProbabilities d (n + 1) maxN
   where
     n    = floor x
     minN = max 0 (mi+ki-li)
