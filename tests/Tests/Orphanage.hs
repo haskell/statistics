@@ -17,6 +17,7 @@ import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace         (LaplaceDistribution, laplace)
 import Statistics.Distribution.Lognormal       (LognormalDistribution, lognormalDistr)
+import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution, negativeBinomial)
 import Statistics.Distribution.Normal          (NormalDistribution, normalDistr)
 import Statistics.Distribution.Poisson         (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
@@ -55,6 +56,8 @@ instance QC.Arbitrary HypergeometricDistribution where
 instance QC.Arbitrary LognormalDistribution where
   -- can't choose sigma too big, otherwise goes outside of double-float limit
   arbitrary = lognormalDistr <$> QC.choose (-100,100) <*> QC.choose (1e-10, 20)
+instance QC.Arbitrary NegativeBinomialDistribution where
+  arbitrary = negativeBinomial <$> QC.choose (1,100) <*> QC.choose (1e-10,1)
 instance QC.Arbitrary NormalDistribution where
   arbitrary = normalDistr <$> QC.choose (-100,100) <*> QC.choose (1e-3, 1e3)
 instance QC.Arbitrary PoissonDistribution where
