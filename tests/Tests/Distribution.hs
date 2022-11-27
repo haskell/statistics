@@ -20,6 +20,7 @@ import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
 import Statistics.Distribution.Lognormal      (LognormalDistribution)
+import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
@@ -60,6 +61,7 @@ tests = testGroup "Tests for all distributions"
   , discreteDistrTests (T :: T GeometricDistribution      )
   , discreteDistrTests (T :: T GeometricDistribution0     )
   , discreteDistrTests (T :: T HypergeometricDistribution )
+  , discreteDistrTests (T :: T NegativeBinomialDistribution )
   , discreteDistrTests (T :: T PoissonDistribution        )
   , discreteDistrTests (T :: T DiscreteUniform            )
 
@@ -370,6 +372,9 @@ instance Param HypergeometricDistribution
 instance Param LaplaceDistribution
 instance Param LognormalDistribution where
   prec_quantile_CDF _ = (64,64)
+instance Param NegativeBinomialDistribution where
+  prec_discreteCDF  _ = 1e-12
+  prec_logDensity   _ = 48
 instance Param NormalDistribution
 instance Param PoissonDistribution
 instance Param UniformDistribution
