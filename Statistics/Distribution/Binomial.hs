@@ -71,6 +71,7 @@ instance Binary BinomialDistribution where
 
 instance D.Distribution BinomialDistribution where
     cumulative = cumulative
+    complCumulative = complCumulative
 
 instance D.DiscreteDistr BinomialDistribution where
     probability    = probability
@@ -127,7 +128,6 @@ logProbability (BD n p) k
     k'  = fromIntegral   k
     nk' = fromIntegral $ n - k
 
--- Summation from different sides required to reduce roundoff errors
 cumulative :: BinomialDistribution -> Double -> Double
 cumulative (BD n p) x
   | isNaN x      = error "Statistics.Distribution.Binomial.cumulative: NaN input"
@@ -135,6 +135,16 @@ cumulative (BD n p) x
   | k <  0       = 0
   | k >= n       = 1
   | otherwise    = incompleteBeta (fromIntegral (n-k)) (fromIntegral (k+1)) (1 - p)
+  where
+    k = floor x
+
+complCumulative :: BinomialDistribution -> Double -> Double
+complCumulative (BD n p) x
+  | isNaN x      = error "Statistics.Distribution.Binomial.complCumulative: NaN input"
+  | isInfinite x = if x > 0 then 0 else 1
+  | k <  0       = 1
+  | k >= n       = 0
+  | otherwise    = incompleteBeta (fromIntegral (k+1)) (fromIntegral (n-k)) p
   where
     k = floor x
 
