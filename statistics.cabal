@@ -75,6 +75,7 @@ library
     Statistics.Distribution.Hypergeometric
     Statistics.Distribution.Laplace
     Statistics.Distribution.Lognormal
+    Statistics.Distribution.NegativeBinomial
     Statistics.Distribution.Normal
     Statistics.Distribution.Poisson
     Statistics.Distribution.StudentT
