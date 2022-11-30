@@ -81,10 +81,10 @@ instance D.Distribution GeometricDistribution where
 instance D.DiscreteDistr GeometricDistribution where
     probability (GD s) n
       | n < 1     = 0
-      | otherwise = s * (1-s) ** (fromIntegral n - 1)
+      | otherwise = s * (exp $ log1p (-s) * (fromIntegral n - 1))
     logProbability (GD s) n
        | n < 1     = m_neg_inf
-       | otherwise = log s + log (1-s) * (fromIntegral n - 1)
+       | otherwise = log s + log1p (-s) * (fromIntegral n - 1)
 
 
 instance D.Mean GeometricDistribution where
@@ -104,7 +104,7 @@ instance D.Entropy GeometricDistribution where
   entropy (GD s)
     | s == 0 = m_pos_inf
     | s == 1 = 0
-    | otherwise = negate $ (s * log s + (1-s) * log (1-s)) / s
+    | otherwise = -(s * log s + (1-s) * log1p (-s)) / s
 
 instance D.MaybeEntropy GeometricDistribution where
   maybeEntropy = Just . D.entropy
