@@ -39,7 +39,7 @@ import Data.Aeson          (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary         (Binary(..))
 import Data.Data           (Data, Typeable)
 import GHC.Generics        (Generic)
-import Numeric.MathFunctions.Constants (m_pos_inf, m_neg_inf)
+import Numeric.MathFunctions.Constants (m_neg_inf)
 import Numeric.SpecFunctions           (log1p,expm1)
 import qualified System.Random.MWC.Distributions as MWC
 
@@ -102,7 +102,6 @@ instance D.MaybeVariance GeometricDistribution where
 
 instance D.Entropy GeometricDistribution where
   entropy (GD s)
-    | s == 0 = m_pos_inf
     | s == 1 = 0
     | otherwise = -(s * log s + (1-s) * log1p (-s)) / s
 
@@ -126,7 +125,7 @@ complCumulative :: GeometricDistribution -> Double -> Double
 complCumulative (GD s) x
   | x < 1        = 1
   | isInfinite x = 0
-  | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
+  | isNaN      x = error "Statistics.Distribution.Geometric.complCumulative: NaN input"
   | otherwise    = exp $ fromIntegral (floor x :: Int) * log1p (-s)
 
 
@@ -139,11 +138,11 @@ geometric x = maybe (error $ errMsg x) id $ geometricE x
 geometricE :: Double                -- ^ Success rate
            -> Maybe GeometricDistribution
 geometricE x
-  | x >= 0 && x <= 1 = Just (GD x)
+  | x > 0 && x <= 1  = Just (GD x)
   | otherwise        = Nothing
 
 errMsg :: Double -> String
-errMsg x = "Statistics.Distribution.Geometric.geometric: probability must be in [0,1] range. Got " ++ show x
+errMsg x = "Statistics.Distribution.Geometric.geometric: probability must be in (0,1] range. Got " ++ show x
 
 
 ----------------------------------------------------------------
@@ -215,8 +214,8 @@ geometric0 x = maybe (error $ errMsg0 x) id $ geometric0E x
 geometric0E :: Double                -- ^ Success rate
             -> Maybe GeometricDistribution0
 geometric0E x
-  | x >= 0 && x <= 1 = Just (GD0 x)
+  | x > 0 && x <= 1  = Just (GD0 x)
   | otherwise        = Nothing
 
 errMsg0 :: Double -> String
-errMsg0 x = "Statistics.Distribution.Geometric.geometric0: probability must be in [0,1] range. Got " ++ show x
+errMsg0 x = "Statistics.Distribution.Geometric.geometric0: probability must be in (0,1] range. Got " ++ show x
