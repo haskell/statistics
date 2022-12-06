@@ -17,6 +17,7 @@ import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
 import Statistics.Distribution.Lognormal      (LognormalDistribution)
+import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
@@ -53,6 +54,7 @@ tests = testGroup "Test for data serialization"
   , serializationTests (T :: T GammaDistribution       )
   , serializationTests (T :: T LaplaceDistribution     )
   , serializationTests (T :: T LognormalDistribution   )
+  , serializationTests (T :: T NegativeBinomialDistribution         )
   , serializationTests (T :: T NormalDistribution      )
   , serializationTests (T :: T UniformDistribution     )
   , serializationTests (T :: T WeibullDistribution     )
