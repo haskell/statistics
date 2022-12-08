@@ -1,9 +1,0 @@
-resolver: lts-12.12
-
-packages:
- - .
- - dense-linear-algebra/
-
-extra-deps:
- - async-2.2.2
- - math-functions-0.3.0.2
