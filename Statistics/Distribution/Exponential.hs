@@ -142,5 +142,5 @@ errMsg l = "Statistics.Distribution.Exponential.exponential: scale parameter mus
 instance D.FromSample ExponentialDistribution Double where
   fromSample xs
     | G.null xs       = Nothing
-    | G.any (>= 0) xs = Just $! ED (S.mean xs)
+    | G.all (>= 0) xs = Just $! ED (S.mean xs)
     | otherwise       = Nothing

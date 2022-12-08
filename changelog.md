@@ -1,4 +1,4 @@
-## Changes in 0.16.1.1
+## Changes in 0.16.1.2
 
  * Fixed bug in `fromSample` for exponential distribudion (#190)
 
