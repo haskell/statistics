@@ -1,3 +1,8 @@
+## Changes in 0.16.1.1
+
+ * Fixed bug in `fromSample` for exponential distribudion (#190)
+
+
 ## Changes in 0.16.1.0
 
  * Dependency on monad-par is dropped. `parMap` from `parallel` is used instead.
