@@ -33,7 +33,6 @@ import GHC.Generics                    (Generic)
 import Numeric.SpecFunctions           (log1p,expm1)
 import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified System.Random.MWC.Distributions as MWC
-import qualified Data.Vector.Generic as G
 
 import qualified Statistics.Distribution         as D
 import qualified Statistics.Sample               as S
@@ -136,11 +135,9 @@ exponentialE l
 errMsg :: Double -> String
 errMsg l = "Statistics.Distribution.Exponential.exponential: scale parameter must be positive. Got " ++ show l
 
--- | Create exponential distribution from sample. Returns @Nothing@ if
---   sample is empty or contains negative elements. No other tests are
---   made to check whether it truly is exponential.
+-- | Create exponential distribution from sample.  Estimates the rate
+--   with the maximum likelihood estimator, which is biased. Returns
+--   @Nothing@ if the sample mean does not exist or is not positive.
 instance D.FromSample ExponentialDistribution Double where
-  fromSample xs
-    | G.null xs       = Nothing
-    | G.all (>= 0) xs = Just $! ED (S.mean xs)
-    | otherwise       = Nothing
+  fromSample xs = let m = S.mean xs
+                  in  if m > 0 then Just (ED (1/m)) else Nothing
