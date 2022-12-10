@@ -151,9 +151,9 @@ errMsg :: Double -> Double -> String
 errMsg _ s = "Statistics.Distribution.Laplace.laplace: scale parameter must be positive. Got " ++ show s
 
 
--- | Create Laplace distribution from sample. No tests are made to
---   check whether it truly is Laplace. Location of distribution
---   estimated as median of sample.
+-- | Create Laplace distribution from sample.  The location is estimated
+--   as the median of the sample, and the scale as the mean absolute
+--   deviation of the median.
 instance D.FromSample LaplaceDistribution Double where
   fromSample xs
     | G.null xs = Nothing
