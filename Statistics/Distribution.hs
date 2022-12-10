@@ -171,9 +171,9 @@ class (DiscreteDistr d, ContGen d) => DiscreteGen d where
 -- | Estimate distribution from sample. First parameter in sample is
 --   distribution type and second is element type.
 class FromSample d a where
-  -- | Estimate distribution from sample. Returns 'Nothing' is there's
-  --   not enough data to estimate, or if no usable fit results from the
-  --   method used, e.g., the estimated distribution parameters would be
+  -- | Estimate distribution from sample. Returns 'Nothing' if there is
+  --   not enough data, or if no usable fit results from the method
+  --   used, e.g., the estimated distribution parameters would be
   --   invalid or inaccurate.
   fromSample :: G.Vector v a => v a -> Maybe d
 
