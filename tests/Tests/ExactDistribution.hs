@@ -391,6 +391,6 @@ exactDistributionTests = testGroup "Test distributions against exact"
   [
     distTests (Tag :: Tag ExactBinomialDistr)       "Binomial"          1.0e-12
   , distTests (Tag :: Tag ExactDiscreteUniformDistr) "DiscreteUniform"  1.0e-12
-  , distTests (Tag :: Tag ExactGeometricDistr)      "Geometric"         1.0e-12
+  , distTests (Tag :: Tag ExactGeometricDistr)      "Geometric"         1.0e-13
   , distTests (Tag :: Tag ExactHypergeomDistr)      "Hypergeometric"    1.0e-12
   ]
