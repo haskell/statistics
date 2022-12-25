@@ -81,6 +81,7 @@ instance D.Distribution GeometricDistribution where
 instance D.DiscreteDistr GeometricDistribution where
     probability (GD s) n
       | n < 1     = 0
+      | s >= 0.5  = s * (1 - s)^(n - 1)
       | otherwise = s * (exp $ log1p (-s) * (fromIntegral n - 1))
     logProbability (GD s) n
        | n < 1     = m_neg_inf
@@ -119,14 +120,18 @@ cumulative (GD s) x
   | x < 1        = 0
   | isInfinite x = 1
   | isNaN      x = error "Statistics.Distribution.Geometric.cumulative: NaN input"
-  | otherwise    = negate $ expm1 $ fromIntegral (floor x :: Int) * log1p (-s)
+  | s >= 0.5     = 1 - (1 - s)^k
+  | otherwise    = negate $ expm1 $ fromIntegral k * log1p (-s)
+    where k = floor x :: Int
 
 complCumulative :: GeometricDistribution -> Double -> Double
 complCumulative (GD s) x
   | x < 1        = 1
   | isInfinite x = 0
   | isNaN      x = error "Statistics.Distribution.Geometric.complCumulative: NaN input"
-  | otherwise    = exp $ fromIntegral (floor x :: Int) * log1p (-s)
+  | s >= 0.5     = (1 - s)^k
+  | otherwise    = exp $ fromIntegral k * log1p (-s)
+    where k = floor x :: Int
 
 
 -- | Create geometric distribution.
