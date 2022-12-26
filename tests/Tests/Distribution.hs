@@ -35,6 +35,7 @@ import Test.QuickCheck.Monadic as QC
 import Text.Printf (printf)
 
 import Tests.ApproxEq  (ApproxEq(..))
+import Tests.ExactDistribution (exactDistributionTests)
 import Tests.Helpers   (T(..), Double01(..), testAssertion, typeName)
 import Tests.Helpers   (monotonicallyIncreasesIEEE,isDenorm)
 import Tests.Orphanage ()
@@ -63,6 +64,7 @@ tests = testGroup "Tests for all distributions"
   , discreteDistrTests (T :: T PoissonDistribution        )
   , discreteDistrTests (T :: T DiscreteUniform            )
 
+  , exactDistributionTests
   , unitTests
   ]
 
@@ -375,8 +377,6 @@ instance Param PoissonDistribution
 instance Param UniformDistribution
 instance Param WeibullDistribution
 instance Param a => Param (LinearTransform a)
-
-
 
 ----------------------------------------------------------------
 -- Unit tests

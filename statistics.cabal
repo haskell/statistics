@@ -142,6 +142,7 @@ test-suite statistics-tests
     Tests.ApproxEq
     Tests.Correlation
     Tests.Distribution
+    Tests.ExactDistribution
     Tests.Function
     Tests.Helpers
     Tests.KDE
