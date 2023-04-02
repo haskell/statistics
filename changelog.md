@@ -265,7 +265,7 @@ p-value. Also API for statistical tests is changed.
 
   * Bugs in DCT and IDCT are fixed.
 
-  * Accesors for uniform distribution are added.
+  * Accessors for uniform distribution are added.
 
   * ContGen instances for all continuous distributions are added.
 

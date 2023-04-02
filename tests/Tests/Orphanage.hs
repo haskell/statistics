@@ -30,7 +30,7 @@ import Test.QuickCheck         as QC
 
 
 ----------------------------------------------------------------
--- Arbitrary instances for ditributions
+-- Arbitrary instances for distributions
 ----------------------------------------------------------------
 
 instance QC.Arbitrary BinomialDistribution where

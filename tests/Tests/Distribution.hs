@@ -91,7 +91,7 @@ discreteDistrTests t = testGroup ("Tests for: " ++ typeName t) $
   [ testProperty "Prob. sanity"         $ probSanityCheck       t
   , testProperty "CDF is sum of prob."  $ discreteCDFcorrect    t
   , testProperty "Discrete CDF is OK"   $ cdfDiscreteIsCorrect  t
-  , testProperty "log probabilty check" $ logProbabilityCheck   t
+  , testProperty "log probability check" $ logProbabilityCheck   t
   ]
 
 -- Tests for distributions which have CDF
