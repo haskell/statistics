@@ -21,7 +21,7 @@ module Statistics.Test.KolmogorovSmirnov (
   , kolmogorovSmirnovCdfD
   , kolmogorovSmirnovD
   , kolmogorovSmirnov2D
-    -- * Probablities
+    -- * Probabilities
   , kolmogorovSmirnovProbability
     -- * References
     -- $references

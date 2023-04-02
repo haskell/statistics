@@ -33,7 +33,7 @@ probability lambda x
                            (m_sqrt_2_pi * sqrt x)
 
 -- -- | Compute entropy using Theorem 1 from "Sharp Bounds on the Entropy
--- -- of the Poisson Law".  This function is unused because 'directEntorpy'
+-- -- of the Poisson Law".  This function is unused because 'directEntropy'
 -- -- is just as accurate and is faster by about a factor of 4.
 -- alyThm1 :: Double -> Double
 -- alyThm1 lambda =
