@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, BangPatterns #-}
+{-# LANGUAGE FlexibleContexts, BangPatterns, ScopedTypeVariables #-}
 
 -- |
 -- Module    : Statistics.Sample.Histogram
@@ -19,6 +19,7 @@ module Statistics.Sample.Histogram
     , range
     ) where
 
+import Control.Monad.ST
 import Numeric.MathFunctions.Constants (m_epsilon,m_tiny)
 import Statistics.Function (minMax)
 import qualified Data.Vector.Generic as G
@@ -49,7 +50,7 @@ histogram numBins xs = (G.generate numBins step, histogram_ numBins lo hi xs)
 --
 -- Interval (bin) sizes are uniform, based on the supplied upper
 -- and lower bounds.
-histogram_ :: (Num b, RealFrac a, G.Vector v0 a, G.Vector v1 b) =>
+histogram_ :: forall b a v0 v1. (Num b, RealFrac a, G.Vector v0 a, G.Vector v1 b) =>
               Int
            -- ^ Number of bins.  This value must be positive.  A zero
            -- or negative value will cause an error.
@@ -65,6 +66,7 @@ histogram_ :: (Num b, RealFrac a, G.Vector v0 a, G.Vector v1 b) =>
            -> v1 b
 histogram_ numBins lo hi xs0 = G.create (GM.replicate numBins 0 >>= bin xs0)
   where
+    bin :: forall s. v0 a -> G.Mutable v1 s b -> ST s (G.Mutable v1 s b)
     bin xs bins = go 0
      where
        go i | i >= len = return bins
