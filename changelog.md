@@ -1,3 +1,11 @@
+## Changes in 0.16.2.0
+
+ * Improved precision for `complCumulative` for hypergeometric and binomial
+   distributions. Precision improvements of geometric distribution
+
+ * Negative binomial distribution added.
+
+
 ## Changes in 0.16.1.2
 
  * Fixed bug in `fromSample` for exponential distribudion (#190)
