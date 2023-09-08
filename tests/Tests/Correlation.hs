@@ -5,11 +5,11 @@ module Tests.Correlation
 
 import Control.Arrow (Arrow(..))
 import qualified Data.Vector as V
+import Data.Maybe
 import Statistics.Correlation
 import Statistics.Correlation.Kendall
-import Test.QuickCheck ((==>),Property,counterexample)
 import Test.Tasty
-import Test.Tasty.QuickCheck
+import Test.Tasty.QuickCheck hiding (sample)
 import Test.Tasty.HUnit
 
 import Tests.ApproxEq
@@ -34,15 +34,19 @@ tests = testGroup "Correlation"
 
 testPearson :: [(Double,Double)] -> Property
 testPearson sample
-  = (length sample > 1) ==> (exact ~= fast)
+  = (length sample > 1 && isJust exact) ==> (case exact of
+                                               Just e  -> e ~= fast
+                                               Nothing -> property False
+                                            )
   where
     (~=) = eql 1e-12
     exact = exactPearson $ map (realToFrac *** realToFrac) sample
     fast  = pearson $ V.fromList sample
 
-exactPearson :: [(Rational,Rational)] -> Double
+exactPearson :: [(Rational,Rational)] -> Maybe Double
 exactPearson sample
-  = realToFrac cov / sqrt (realToFrac (varX * varY))
+  | varX == 0 || varY == 0 = Nothing
+  | otherwise              = Just $ realToFrac cov / sqrt (realToFrac (varX * varY))
   where
     (xs,ys) = unzip sample
     n       = fromIntegral $ length sample
