@@ -134,16 +134,16 @@ tStatistics varequal sample1 sample2 = (t, ndf)
 
 
 -- Calculate T-statistics for paired sample
-tStatisticsPaired :: (G.Vector v (Double, Double), G.Vector v Double)
+tStatisticsPaired :: (G.Vector v (Double, Double))
                   => v (Double, Double)
                   -> (Double, Double)
 {-# INLINE tStatisticsPaired #-}
 tStatisticsPaired sample = (t, ndf)
   where
     -- t-statistics
-    t = let d    = G.map (uncurry (-)) sample
-            sumd = G.sum d
-        in sumd / sqrt ((n * G.sum (G.map square d) - square sumd) / ndf)
+    t = let d    = U.map (uncurry (-)) $ G.convert sample
+            sumd = U.sum d
+        in sumd / sqrt ((n * U.sum (U.map square d) - square sumd) / ndf)
     -- degree of freedom
     ndf = n - 1
     n   = fromIntegral $ G.length sample
