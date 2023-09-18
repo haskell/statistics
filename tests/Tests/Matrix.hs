@@ -5,7 +5,6 @@ import Statistics.Matrix.Algorithms
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (testProperty)
 import Test.QuickCheck
-import Tests.ApproxEq (ApproxEq(..))
 import Tests.Matrix.Types
 import qualified Data.Vector.Unboxed as U
 
@@ -27,9 +26,20 @@ t_transpose :: Matrix -> Property
 t_transpose m = U.concat (map (column n) [0..rows m-1]) === toVector m
   where n = transpose m
 
-t_qr :: Matrix -> Property
-t_qr a = hasNaN p .||. eql 1e-10 a p
-  where p = uncurry multiply (qr a)
+t_qr :: Property
+t_qr = property $ do
+  a <- do (r,c) <- arbitrary
+          fromMat <$> arbMatWith r c (fromIntegral <$> choose (-10, 10::Int))
+  let (q,r) = qr a
+      a'    = multiply q r
+  pure $ counterexample ("A  = \n"++show a)
+       $ counterexample ("A' = \n"++show a')
+       $ counterexample ("Q  = \n"++show q)
+       $ counterexample ("R  = \n"++show r)
+       $ dimension a == dimension a'
+      && ( hasNaN a'
+        || and (zipWith (\x y -> abs (x - y) < 1e-12) (toList a) (toList a'))
+         )
 
 tests :: TestTree
 tests = testGroup "Matrix"
