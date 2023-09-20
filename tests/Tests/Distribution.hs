@@ -348,7 +348,7 @@ instance Param FDistribution where
   quantileIsInvCDF_enabled _ = False
   -- We compute CDF and complement using same method so precision
   -- should be very good here.
-  prec_complementCDF _ = 2 * m_epsilon
+  prec_complementCDF _ = 64 * m_epsilon
 
 instance Param ChiSquared where
   prec_quantile_CDF _ = (32,32)
