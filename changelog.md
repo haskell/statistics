@@ -1,3 +1,10 @@
+## Changes in 0.16.2.1
+
+ * Unnecessary constraint dropped from `tStatisticsPaired`.
+
+ * Compatibility with QuickCheck-2.14. Test suite doesn't fail every time.
+
+
 ## Changes in 0.16.2.0
 
  * Improved precision for `complCumulative` for hypergeometric and binomial
