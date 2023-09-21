@@ -367,7 +367,7 @@ instance Param GammaDistribution where
   -- introduced by exp . logGamma.  This could only be fixed in
   -- math-function by implementing gamma
   prec_quantile_CDF _ = (24,24)
-  prec_logDensity   _ = 64
+  prec_logDensity   _ = 512
 instance Param GeometricDistribution
 instance Param GeometricDistribution0
 instance Param HypergeometricDistribution
