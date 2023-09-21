@@ -18,21 +18,21 @@ jobs:
       matrix:
         include:
           # Linux
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "8.4.4"  }
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "8.6.5"  }
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "8.8.4"  }
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "8.10.7" }
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "9.0.1"  }
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "9.2.7"  }
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "9.4.4"  }
-          - { cabal: "3.6", os: ubuntu-latest,  ghc: "9.6.1"  }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.4.4"  }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.6.5"  }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.8.4"  }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.10.7" }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.0.2"  }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.2.8"  }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.4.6"  }
+          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.6.2"  }
       fail-fast: false
 
     steps:
     # ----------------
     - uses: actions/checkout@v2
     # ----------------
-    - uses: haskell/actions/setup@v1
+    - uses: haskell/actions/setup@v2
       id: setup-haskell-cabal
       name: Setup Haskell
       with:

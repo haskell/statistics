@@ -348,7 +348,7 @@ instance Param FDistribution where
   quantileIsInvCDF_enabled _ = False
   -- We compute CDF and complement using same method so precision
   -- should be very good here.
-  prec_complementCDF _ = 2 * m_epsilon
+  prec_complementCDF _ = 64 * m_epsilon
 
 instance Param ChiSquared where
   prec_quantile_CDF _ = (32,32)
@@ -367,7 +367,7 @@ instance Param GammaDistribution where
   -- introduced by exp . logGamma.  This could only be fixed in
   -- math-function by implementing gamma
   prec_quantile_CDF _ = (24,24)
-  prec_logDensity   _ = 64
+  prec_logDensity   _ = 512
 instance Param GeometricDistribution
 instance Param GeometricDistribution0
 instance Param HypergeometricDistribution
