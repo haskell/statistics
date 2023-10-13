@@ -299,6 +299,7 @@ errMkPValue = "Statistics.Types.mkPValue: probability is out if [0,1] range"
 -- >                       , confIntUDX = 6
 -- >                       , confIntCL  = cl95
 -- >                       }
+-- >          }
 --
 -- Prior to statistics 0.14 @Estimate@ data type used following definition:
 --
