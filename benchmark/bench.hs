@@ -1,24 +1,26 @@
-import Control.Monad.ST (runST)
-import Criterion.Main
 import Data.Complex
 import Statistics.Sample
 import Statistics.Transform
-import Statistics.Correlation.Pearson
+import Statistics.Correlation
 import System.Random.MWC
-import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed as VU
+import qualified Data.Vector.Unboxed.Mutable as MVU
+
+import Bench
 
 
 -- Test sample
-sample :: U.Vector Double
-sample = runST $ flip uniformVector 10000 =<< create
+sample :: VU.Vector Double
+sample = VU.create $ do g <- create
+                        MVU.replicateM 10000 (uniform g)
 
 -- Weighted test sample
-sampleW :: U.Vector (Double,Double)
-sampleW = U.zip sample (U.reverse sample)
+sampleW :: VU.Vector (Double,Double)
+sampleW = VU.zip sample (VU.reverse sample)
 
 -- Complex vector for FFT tests
-sampleC :: U.Vector (Complex Double)
-sampleC = U.zipWith (:+) sample (U.reverse sample)
+sampleC :: VU.Vector (Complex Double)
+sampleC = VU.zipWith (:+) sample (VU.reverse sample)
 
 
 -- Simple benchmark for functions from Statistics.Sample
@@ -37,9 +39,7 @@ main =
     , bench "varianceUnbiased" $ nf (\x -> varianceUnbiased x) sample
     , bench "varianceWeighted" $ nf (\x -> varianceWeighted x) sampleW
       -- Correlation
-    , bench "pearson"          $ nf (\x -> pearson (U.reverse sample) x) sample
-    , bench "pearson'"          $ nf (\x -> pearson' (U.reverse sample) x) sample
-    , bench "pearsonFast"      $ nf (\x -> pearsonFast (U.reverse sample) x) sample
+    , bench "pearson"          $ nf pearson sampleW
       -- Other
     , bench "stdDev"           $ nf (\x -> stdDev x)           sample
     , bench "skewness"         $ nf (\x -> skewness x)         sample
@@ -52,17 +52,17 @@ main =
     ]
   , bgroup "FFT"
     [ bgroup "fft"
-      [ bench  (show n) $ whnf fft   (U.take n sampleC) | n <- fftSizes ]
+      [ bench  (show n) $ whnf fft   (VU.take n sampleC) | n <- fftSizes ]
     , bgroup "ifft"
-      [ bench  (show n) $ whnf ifft  (U.take n sampleC) | n <- fftSizes ]
+      [ bench  (show n) $ whnf ifft  (VU.take n sampleC) | n <- fftSizes ]
     , bgroup "dct"
-      [ bench  (show n) $ whnf dct   (U.take n sample)  | n <- fftSizes ]
+      [ bench  (show n) $ whnf dct   (VU.take n sample)  | n <- fftSizes ]
     , bgroup "dct_"
-      [ bench  (show n) $ whnf dct_  (U.take n sampleC) | n <- fftSizes ]
+      [ bench  (show n) $ whnf dct_  (VU.take n sampleC) | n <- fftSizes ]
     , bgroup "idct"
-      [ bench  (show n) $ whnf idct  (U.take n sample)  | n <- fftSizes ]
+      [ bench  (show n) $ whnf idct  (VU.take n sample)  | n <- fftSizes ]
     , bgroup "idct_"
-      [ bench  (show n) $ whnf idct_ (U.take n sampleC) | n <- fftSizes ]
+      [ bench  (show n) $ whnf idct_ (VU.take n sampleC) | n <- fftSizes ]
     ]
   ]
 

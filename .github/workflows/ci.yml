@@ -4,7 +4,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [master, GA]
+    branches: [master]
 
 defaults:
   run:
@@ -18,32 +18,40 @@ jobs:
       matrix:
         include:
           # Linux
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.4.4"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.6.5"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.8.4"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.10.7" }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.0.2"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.2.8"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.4.6"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.6.2"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.4.4"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.6.5"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.8.4"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.10.7" }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.0.2"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.2.8"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.4.8"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.6.6"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.8.4"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.10.1" }
+          # Fails to resolve aeson [2025.01.14]
+          # - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.12.1" }
       fail-fast: false
 
     steps:
     # ----------------
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     # ----------------
-    - uses: haskell/actions/setup@v2
+    - uses: haskell-actions/setup@v2
       id: setup-haskell-cabal
       name: Setup Haskell
       with:
         ghc-version: ${{ matrix.ghc }}
         cabal-version: ${{ matrix.cabal }}
     # ----------------
-    - uses: actions/cache@v1
+    - uses: actions/cache@v3
       name: Cache ~/.cabal/store
       with:
         path: ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
         key: ${{ runner.os }}-${{ matrix.ghc }}--${{ github.Shah }}-CACHE_V3
+    # ----------------
+    - name: "Install PAPI"
+      run: |
+        sudo apt-get install -y libpapi-dev
     # ----------------
     - name: Versions
       run: |
