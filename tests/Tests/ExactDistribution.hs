@@ -1,8 +1,9 @@
-{-# LANGUAGE BangPatterns,
-             FlexibleInstances,
-             FlexibleContexts,
-             ScopedTypeVariables
-  #-}
+{-# LANGUAGE BangPatterns        #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeFamilies        #-}
 -- |
 -- Module    : Tests.ExactDistribution
 -- Copyright : (c) 2022 Lorenz Minder
@@ -64,8 +65,6 @@ module Tests.ExactDistribution (
     , ExactHypergeomDistr(..)
 
     -- * Linking to production distributions
-    , ProductionProbFuncs(..)
-    , productionProbFuncs
     , ProductionLinkage
 
     -- * Individual test routines
@@ -295,44 +294,28 @@ instance QC.Arbitrary (TestCase ExactHypergeomDistr) where
 --
 ----------------------------------------------------------------
 
--- | Distribution evaluation functions.
---
--- This is used to store a
-data ProductionProbFuncs = ProductionProbFuncs {
-        prodProb            :: Int -> Double
-    ,   prodCumulative      :: Double -> Double
-    ,   prodComplCumulative :: Double -> Double
-    }
-
-productionProbFuncs :: (DiscreteDistr a) => a -> ProductionProbFuncs
-productionProbFuncs d = ProductionProbFuncs {
-        prodProb = probability d
-    ,   prodCumulative = cumulative d
-    ,   prodComplCumulative = complCumulative d
-    }
-
-class (ExactDiscreteDistr a) => ProductionLinkage a where
-    productionLinkage :: a -> ProductionProbFuncs
+class (ExactDiscreteDistr a, DiscreteDistr (ProdDistrib a)
+      ) => ProductionLinkage a where
+  type ProdDistrib a
+  toProd :: a -> ProdDistrib a
 
 instance ProductionLinkage ExactBinomialDistr where
-    productionLinkage (ExactBD n p) =
-        let d = binomial (fromIntegral n) (fromRational p)
-        in  productionProbFuncs d
+  type ProdDistrib ExactBinomialDistr = BinomialDistribution
+  toProd (ExactBD n p) = binomial (fromIntegral n) (fromRational p)
 
 instance ProductionLinkage ExactDiscreteUniformDistr where
-    productionLinkage (ExactDU lower upper) =
-        let d = discreteUniformAB (fromIntegral lower) (fromIntegral upper)
-        in  productionProbFuncs d
+  type ProdDistrib ExactDiscreteUniformDistr = DiscreteUniform
+  toProd (ExactDU lower upper) = discreteUniformAB (fromIntegral lower) (fromIntegral upper)
 
 instance ProductionLinkage ExactGeometricDistr where
-    productionLinkage (ExactGeom p) =
-        let d = geometric $ fromRational p
-        in  productionProbFuncs d
+  type ProdDistrib ExactGeometricDistr = GeometricDistribution
+  toProd (ExactGeom p) = geometric $ fromRational p
 
 instance ProductionLinkage ExactHypergeomDistr where
-    productionLinkage (ExactHG nK nN n) =
-        let d = hypergeometric (fromIntegral nK) (fromIntegral nN) (fromIntegral n)
-        in  productionProbFuncs d
+  type ProdDistrib ExactHypergeomDistr = HypergeometricDistribution
+  toProd (ExactHG nK nN n) =
+    hypergeometric (fromIntegral nK) (fromIntegral nN) (fromIntegral n)
+
 
 ----------------------------------------------------------------
 -- Tests
@@ -347,9 +330,8 @@ pmfMatch tol (TestCase dExact k)
   $ counterexample ("Approx = " ++ show pa)
   $ relativeError pe pa < tol
   where
-    dProd = productionLinkage dExact
     pe = fromRational $ exactProb dExact k
-    pa = prodProb dProd k'
+    pa = probability (toProd dExact) k'
     k' = fromIntegral k :: Int
 
 
@@ -358,9 +340,8 @@ pmfMatch tol (TestCase dExact k)
 -- Inputs:  tolerance (max relative error) and test case.
 cdfMatch :: (Show a, ProductionLinkage a) => Double -> TestCase a -> Bool
 cdfMatch tol (TestCase dExact k) =
-    let dProd = productionLinkage dExact
-        pe = fromRational $ exactCumulative dExact k
-        pa = prodCumulative dProd k'
+    let pe = fromRational $ exactCumulative dExact k
+        pa = cumulative (toProd dExact) k'
         k' = fromIntegral k
     in  relativeError pe pa < tol
 
@@ -369,22 +350,21 @@ cdfMatch tol (TestCase dExact k) =
 -- Inputs:  tolerance (max relative error) and test case.
 complCdfMatch :: (Show a, ProductionLinkage a) => Double -> TestCase a -> Bool
 complCdfMatch tol (TestCase dExact k) =
-    let dProd = productionLinkage dExact
-        pe = fromRational $ 1 - exactCumulative dExact k
-        pa = prodComplCumulative dProd k'
+    let pe = fromRational $ 1 - exactCumulative dExact k
+        pa = complCumulative (toProd dExact) k'
         k' = fromIntegral k
     in  relativeError pe pa < tol
 
 -- Phantom type to encode an exact distribution.
 data Tag a = Tag
 
-distTests :: (Show a, ProductionLinkage a, Arbitrary (TestCase a)) =>
+distTests :: forall a. (Show a, ProductionLinkage a, Arbitrary (TestCase a)) =>
     Tag a -> String -> Double -> TestTree
 distTests (Tag :: Tag a) name tol =
   testGroup ("Exact tests for " ++ name)
-    [ testProperty "PMF match" $ ((pmfMatch tol) :: TestCase a -> Property)
-    , testProperty "CDF match" $ ((cdfMatch tol) :: TestCase a -> Bool)
-    , testProperty "1 - CDF match" $ ((complCdfMatch tol) :: TestCase a -> Bool)
+    [ testProperty "PMF match"     $ pmfMatch      @a tol
+    , testProperty "CDF match"     $ cdfMatch      @a tol
+    , testProperty "1 - CDF match" $ complCdfMatch @a tol
     ]
 
 
@@ -392,9 +372,8 @@ distTests (Tag :: Tag a) name tol =
 
 exactDistributionTests :: TestTree
 exactDistributionTests = testGroup "Test distributions against exact"
-  [
-    distTests (Tag :: Tag ExactBinomialDistr)       "Binomial"          1.0e-12
-  , distTests (Tag :: Tag ExactDiscreteUniformDistr) "DiscreteUniform"  1.0e-12
-  , distTests (Tag :: Tag ExactGeometricDistr)      "Geometric"         1.0e-13
-  , distTests (Tag :: Tag ExactHypergeomDistr)      "Hypergeometric"    1.0e-12
+  [ distTests (Tag @ExactBinomialDistr)        "Binomial"         1.0e-12
+  , distTests (Tag @ExactDiscreteUniformDistr) "DiscreteUniform"  1.0e-12
+  , distTests (Tag @ExactGeometricDistr)       "Geometric"        1.0e-13
+  , distTests (Tag @ExactHypergeomDistr)       "Hypergeometric"   1.0e-12
   ]
