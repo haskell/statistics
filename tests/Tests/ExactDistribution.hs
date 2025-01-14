@@ -87,6 +87,7 @@ import Test.Tasty                       (TestTree, testGroup)
 import Test.Tasty.QuickCheck            (testProperty)
 import Test.QuickCheck as QC
 import Numeric.MathFunctions.Comparison (relativeError)
+import Numeric.MathFunctions.Constants  (m_tiny)
 
 import Statistics.Distribution
 import Statistics.Distribution.Binomial
@@ -321,6 +322,15 @@ instance ProductionLinkage ExactHypergeomDistr where
 -- Tests
 ----------------------------------------------------------------
 
+-- Compare that probabilities agree. If they are denormalized just
+-- return True. You can't say much about precision
+probabilityAgree :: Double -> Double -> Double -> Bool
+probabilityAgree tol pe pa
+  | pa < 0      = False
+  | pe < 0      = False
+  | pe < m_tiny = True
+  | otherwise   = relativeError pe pa < tol
+
 -- Check production probability mass function accuracy.
 --
 -- Inputs: tolerance (max relative error) and test case
@@ -328,32 +338,30 @@ pmfMatch :: (Show a, ProductionLinkage a) => Double -> TestCase a -> Property
 pmfMatch tol (TestCase dExact k)
   = counterexample ("Exact  = " ++ show pe)
   $ counterexample ("Approx = " ++ show pa)
-  $ relativeError pe pa < tol
+  $ probabilityAgree tol pe pa
   where
     pe = fromRational $ exactProb dExact k
-    pa = probability (toProd dExact) k'
-    k' = fromIntegral k :: Int
-
+    pa = probability (toProd dExact) (fromIntegral k)
 
 -- Check production cumulative probability function accuracy.
 --
 -- Inputs:  tolerance (max relative error) and test case.
 cdfMatch :: (Show a, ProductionLinkage a) => Double -> TestCase a -> Bool
-cdfMatch tol (TestCase dExact k) =
-    let pe = fromRational $ exactCumulative dExact k
-        pa = cumulative (toProd dExact) k'
-        k' = fromIntegral k
-    in  relativeError pe pa < tol
+cdfMatch tol (TestCase dExact k)
+  = probabilityAgree tol pe pa
+  where
+    pe = fromRational $ exactCumulative dExact k
+    pa = cumulative (toProd dExact) (fromIntegral k)
 
 -- Check production complement cumulative function accuracy.
 --
 -- Inputs:  tolerance (max relative error) and test case.
 complCdfMatch :: (Show a, ProductionLinkage a) => Double -> TestCase a -> Bool
-complCdfMatch tol (TestCase dExact k) =
-    let pe = fromRational $ 1 - exactCumulative dExact k
-        pa = complCumulative (toProd dExact) k'
-        k' = fromIntegral k
-    in  relativeError pe pa < tol
+complCdfMatch tol (TestCase dExact k)
+  = probabilityAgree tol pe pa
+  where
+    pe = fromRational $ 1 - exactCumulative dExact k
+    pa = complCumulative (toProd dExact) (fromIntegral k)
 
 -- Phantom type to encode an exact distribution.
 data Tag a = Tag
