@@ -341,13 +341,17 @@ instance ProductionLinkage ExactHypergeomDistr where
 -- Check production probability mass function accuracy.
 --
 -- Inputs: tolerance (max relative error) and test case
-pmfMatch :: (Show a, ProductionLinkage a) => Double -> TestCase a -> Bool
-pmfMatch tol (TestCase dExact k) =
-    let dProd = productionLinkage dExact
-        pe = fromRational $ exactProb dExact k
-        pa = prodProb dProd k'
-        k' = fromIntegral k
-    in  relativeError pe pa < tol
+pmfMatch :: (Show a, ProductionLinkage a) => Double -> TestCase a -> Property
+pmfMatch tol (TestCase dExact k)
+  = counterexample ("Exact  = " ++ show pe)
+  $ counterexample ("Approx = " ++ show pa)
+  $ relativeError pe pa < tol
+  where
+    dProd = productionLinkage dExact
+    pe = fromRational $ exactProb dExact k
+    pa = prodProb dProd k'
+    k' = fromIntegral k :: Int
+
 
 -- Check production cumulative probability function accuracy.
 --
@@ -377,10 +381,10 @@ data Tag a = Tag
 distTests :: (Show a, ProductionLinkage a, Arbitrary (TestCase a)) =>
     Tag a -> String -> Double -> TestTree
 distTests (Tag :: Tag a) name tol =
-    testGroup ("Exact tests for " ++ name) [
-        testProperty "PMF match" $ ((pmfMatch tol) :: TestCase a -> Bool)
-    ,   testProperty "CDF match" $ ((cdfMatch tol) :: TestCase a -> Bool)
-    ,   testProperty "1 - CDF match" $ ((complCdfMatch tol) :: TestCase a -> Bool)
+  testGroup ("Exact tests for " ++ name)
+    [ testProperty "PMF match" $ ((pmfMatch tol) :: TestCase a -> Property)
+    , testProperty "CDF match" $ ((cdfMatch tol) :: TestCase a -> Bool)
+    , testProperty "1 - CDF match" $ ((complCdfMatch tol) :: TestCase a -> Bool)
     ]
 
 
