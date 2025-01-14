@@ -1,3 +1,6 @@
+cabal-version:  3.0
+build-type:     Simple
+
 name:           statistics
 version:        0.16.2.1
 synopsis:       A library of statistical types, data, and functions
@@ -22,7 +25,7 @@ description:
   * Common statistical tests for significant differences between
     samples.
 
-license:        BSD2
+license:        BSD-2-Clause
 license-file:   LICENSE
 homepage:       https://github.com/haskell/statistics
 bug-reports:    https://github.com/haskell/statistics/issues
@@ -30,11 +33,9 @@ author:         Bryan O'Sullivan <bos@serpentine.com>, Alexey Khudaykov <alexey.
 maintainer:     Alexey Khudaykov <alexey.skladnoy@gmail.com>
 copyright:      2009-2014 Bryan O'Sullivan
 category:       Math, Statistics
-build-type:     Simple
-cabal-version:  >= 1.10
+
 extra-source-files:
   README.markdown
-  benchmark/bench.hs
   changelog.md
   examples/kde/KDE.hs
   examples/kde/data/faithful.csv
@@ -46,15 +47,26 @@ extra-source-files:
   tests/utils/fftw.c
 
 tested-with:
-    GHC ==8.4.4
-    GHC ==8.6.5
-    GHC ==8.8.4
-    GHC ==8.10.7
-    GHC ==9.0.2
-    GHC ==9.2.8
-    GHC ==9.4.6
-    GHC ==9.6.2
+  GHC ==8.4.4
+   || ==8.6.5
+   || ==8.8.4
+   || ==8.10.7
+   || ==9.0.2
+   || ==9.2.8
+   || ==9.4.8
+   || ==9.6.6
+   || ==9.8.4
+   || ==9.10.1
 
+source-repository head
+  type:     git
+  location: https://github.com/haskell/statistics
+
+flag BenchPAPI
+  Description: Enable building of benchmarks which use instruction counters.
+               It requires libpapi and only works on Linux so it's protected by flag
+  Default: False
+  Manual:  True
 
 library
   default-language: Haskell2010
@@ -176,6 +188,32 @@ test-suite statistics-tests
                , vector
                , vector-algorithms
 
-source-repository head
-  type:     git
-  location: https://github.com/haskell/statistics
+-- We want to be able to build benchmarks using both tasty-bench and tasty-papi.
+-- They have similar API so we just create two shim modules which reexport
+-- definitions from corresponding library and pick one in cabal file.
+common bench-stanza
+  ghc-options:      -Wall
+  default-language: Haskell2010
+  build-depends: base < 5
+               , vector          >= 0.12.3
+               , statistics
+               , mwc-random
+               , tasty           >=1.3.1
+
+benchmark statistics-bench
+  import:         bench-stanza
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: benchmark bench-time
+  main-is:        bench.hs
+  Other-modules:  Bench
+  build-depends:  tasty-bench >= 0.3
+
+benchmark statistics-bench-papi
+  import:         bench-stanza
+  type:           exitcode-stdio-1.0
+  if impl(ghcjs) || !flag(BenchPAPI)
+     buildable: False
+  hs-source-dirs: benchmark bench-papi
+  main-is:        bench.hs
+  Other-modules:  Bench
+  build-depends:  tasty-papi >= 0.1.2
