@@ -102,11 +102,11 @@ testSpearmanNonlinear sample0
         , not (isNaN c3)
         , not (isNaN c4)
         ]
-  ==> ( counterexample (show sample0)
-      $ counterexample (show sample1)
-      $ counterexample (show sample2)
-      $ counterexample (show sample3)
-      $ counterexample (show sample4)
+  ==> ( counterexample ("S0 = " ++ show sample0)
+      $ counterexample ("S1 = " ++ show sample1)
+      $ counterexample ("S2 = " ++ show sample2)
+      $ counterexample ("S3 = " ++ show sample3)
+      $ counterexample ("S4 = " ++ show sample4)
       $ counterexample (show (c1,c2,c3,c4))
       $ and [ c1 == c2
             , c1 == c3
@@ -117,8 +117,8 @@ testSpearmanNonlinear sample0
     -- We need to stretch sample into [-10 .. 10] range to avoid
     -- problems with under/overflows etc.
     stretch xs
-      | a == b = xs
-      | otherwise = [ (x - a - 10) * 20 / (a - b) | x <- xs ]
+      | a == b    = xs
+      | otherwise = [ ((x - a)/(b - a) - 0.5) * 20 | x <- xs ]
       where
         a = minimum xs
         b = maximum xs
