@@ -20,6 +20,7 @@ module Statistics.Sample
     , range
 
     -- * Statistics of location
+    , expectation
     , mean
     , welfordMean
     , meanWeighted
@@ -59,12 +60,13 @@ module Statistics.Sample
     -- $references
     ) where
 
-import Statistics.Function (minMax)
+import Statistics.Function (minMax,square)
 import Statistics.Sample.Internal (robustSumVar, sum)
 import Statistics.Types.Internal  (Sample,WeightedSample)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
+import Numeric.Sum (kbn, Summation(zero,add))
 
 -- Operator ^ will be overridden
 import Prelude hiding ((^), sum)
@@ -76,9 +78,17 @@ range s = hi - lo
     where (lo , hi) = minMax s
 {-# INLINE range #-}
 
+-- | /O(n)/ Compute expectation of function over for sample. This is
+--   simply @mean . map f@ but won't create intermediate vector.
+expectation :: (G.Vector v a) => (a -> Double) -> v a -> Double
+expectation f xs = kbn (G.foldl' (\s -> add s . f) zero xs)
+                 / fromIntegral (G.length xs)
+{-# INLINE expectation #-}
+
 -- | /O(n)/ Arithmetic mean.  This uses Kahan-Babuška-Neumaier
 -- summation, so is more accurate than 'welfordMean' unless the input
--- values are very large.
+-- values are very large. This function is not subject to stream
+-- fusion.
 mean :: (G.Vector v Double) => v Double -> Double
 mean xs = sum xs / fromIntegral (G.length xs)
 {-# SPECIALIZE mean :: U.Vector Double -> Double #-}
@@ -122,7 +132,7 @@ harmonicMean = fini . G.foldl' go (T 0 0)
 
 -- | /O(n)/ Geometric mean of a sample containing no negative values.
 geometricMean :: (G.Vector v Double) => v Double -> Double
-geometricMean = exp . mean . G.map log
+geometricMean = exp . expectation log
 {-# INLINE geometricMean #-}
 
 -- | Compute the /k/th central moment of a sample.  The central moment
@@ -138,7 +148,7 @@ centralMoment a xs
     | a < 0  = error "Statistics.Sample.centralMoment: negative input"
     | a == 0 = 1
     | a == 1 = 0
-    | otherwise = sum (G.map go xs) / fromIntegral (G.length xs)
+    | otherwise = expectation go xs
   where
     go x = (x-m) ^ a
     m    = mean xs
@@ -354,38 +364,34 @@ fastStdDev = sqrt . fastVariance
 
 -- | Covariance of sample of pairs. For empty sample it's set to
 --   zero
-covariance :: (G.Vector v (Double,Double), G.Vector v Double)
+covariance :: (G.Vector v (Double,Double))
            => v (Double,Double)
            -> Double
 covariance xy
   | n == 0    = 0
-  | otherwise = mean $ G.zipWith (*)
-                         (G.map (\x -> x - muX) xs)
-                         (G.map (\y -> y - muY) ys)
+  | otherwise = expectation (\(x,y) -> (x - muX)*(y - muY)) xy
   where
-    n       = G.length xy
-    (xs,ys) = G.unzip xy
-    muX     = mean xs
-    muY     = mean ys
+    n   = G.length xy
+    muX = expectation fst xy
+    muY = expectation snd xy
 {-# SPECIALIZE covariance :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE covariance :: V.Vector (Double,Double) -> Double #-}
 
 -- | Correlation coefficient for sample of pairs. Also known as
 --   Pearson's correlation. For empty sample it's set to zero.
-correlation :: (G.Vector v (Double,Double), G.Vector v Double)
+correlation :: (G.Vector v (Double,Double))
            => v (Double,Double)
            -> Double
 correlation xy
   | n == 0    = 0
   | otherwise = cov / sqrt (varX * varY)
   where
-    n       = G.length xy
-    (xs,ys) = G.unzip xy
-    (muX,varX) = meanVariance xs
-    (muY,varY) = meanVariance ys
-    cov = mean $ G.zipWith (*)
-            (G.map (\x -> x - muX) xs)
-            (G.map (\y -> y - muY) ys)
+    n    = G.length xy
+    muX  = expectation (\(x,_) -> x) xy
+    muY  = expectation (\(_,y) -> y) xy
+    varX = expectation (\(x,_) -> square (x - muX))    xy
+    varY = expectation (\(_,y) -> square (y - muY))    xy
+    cov  = expectation (\(x,y) -> (x - muX)*(y - muY)) xy
 {-# SPECIALIZE correlation :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE correlation :: V.Vector (Double,Double) -> Double #-}
 
