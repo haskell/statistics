@@ -94,7 +94,7 @@ import Statistics.Distribution.Normal
 -- second from @1 - CL@ or significance level.
 --
 -- >>> cl95
--- mkCLFromSignificance 0.05
+-- mkCLFromSignificance 5.0e-2
 --
 -- Prior to 0.14 confidence levels were passed to function as plain
 -- @Doubles@. Use 'mkCL' to convert them to @CL@.
@@ -134,7 +134,7 @@ instance Ord a => Ord (CL a) where
 --   exception if parameter is out of [0,1] range
 --
 -- >>> mkCL 0.95    -- same as cl95
--- mkCLFromSignificance 0.05
+-- mkCLFromSignificance 5.0000000000000044e-2
 mkCL :: (Ord a, Num a) => a -> CL a
 mkCL
   = fromMaybe (error "Statistics.Types.mkCL: probability is out if [0,1] range")
@@ -144,7 +144,7 @@ mkCL
 --   parameter is out of [0,1] range
 --
 -- >>> mkCLE 0.95    -- same as cl95
--- Just (mkCLFromSignificance 0.05)
+-- Just (mkCLFromSignificance 5.0000000000000044e-2)
 mkCLE :: (Ord a, Num a) => a -> Maybe (CL a)
 mkCLE p
   | p >= 0 && p <= 1 = Just $ CL (1 - p)
@@ -155,7 +155,7 @@ mkCLE p
 --   throw exception if parameter is out of [0,1] range
 --
 -- >>> mkCLFromSignificance 0.05    -- same as cl95
--- mkCLFromSignificance 0.05
+-- mkCLFromSignificance 5.0e-2
 mkCLFromSignificance :: (Ord a, Num a) => a -> CL a
 mkCLFromSignificance = fromMaybe (error errMkCL) . mkCLFromSignificanceE
 
@@ -163,7 +163,7 @@ mkCLFromSignificance = fromMaybe (error errMkCL) . mkCLFromSignificanceE
 --   parameter is out of [0,1] range
 --
 -- >>> mkCLFromSignificanceE 0.05    -- same as cl95
--- Just (mkCLFromSignificance 0.05)
+-- Just (mkCLFromSignificance 5.0e-2)
 mkCLFromSignificanceE :: (Ord a, Num a) => a -> Maybe (CL a)
 mkCLFromSignificanceE p
   | p >= 0 && p <= 1 = Just $ CL p

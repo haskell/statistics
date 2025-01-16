@@ -41,8 +41,6 @@ extra-source-files:
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
-  tests/Tests/Math/Tables.hs
-  tests/Tests/Math/gen.py
   tests/utils/Makefile
   tests/utils/fftw.c
 
@@ -187,6 +185,23 @@ test-suite statistics-tests
                , tasty-expected-failure
                , vector
                , vector-algorithms
+
+test-suite statistics-doctests
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   tests
+  main-is:          doctest.hs
+  if impl(ghcjs) || impl(ghc < 8.0)
+    Buildable: False
+  -- Linker on macos prints warnings to console which confuses doctests.
+  -- We simply disable doctests on ma for older GHC
+  -- > warning: -single_module is obsolete
+  if os(darwin) && impl(ghc < 9.6)
+    buildable: False
+  build-depends:
+            base       -any
+          , statistics -any
+          , doctest    >=0.15 && <0.24
 
 -- We want to be able to build benchmarks using both tasty-bench and tasty-papi.
 -- They have similar API so we just create two shim modules which reexport

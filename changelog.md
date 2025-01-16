@@ -1,3 +1,14 @@
+## Changes in NEXT_VERSIONS
+
+ * Computation of `rSquare` has special case for case when data variation is 0.
+
+ * Doctests added.
+
+ * Benchmarks using `tasty-bench` and `tasty-papi` added.
+
+ * Spurious test failures fixed.
+
+
 ## Changes in 0.16.2.1
 
  * Unnecessary constraint dropped from `tStatisticsPaired`.

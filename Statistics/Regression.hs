@@ -41,8 +41,15 @@ import qualified Data.Vector.Unboxed.Mutable as M
 --   element than the list of predictors; the last element is the
 --   /y/-intercept value.
 --
--- * /R&#0178;/, the coefficient of determination (see 'rSquare' for
+-- * /R²/, the coefficient of determination (see 'rSquare' for
 --   details).
+--
+-- >>> import qualified Data.Vector.Unboxed as VU
+-- >>> :{
+--  olsRegress [ VU.fromList [0,1,2,3]
+--             ] (VU.fromList [1000, 1001, 1002, 1003])
+-- :}
+-- ([1.0000000000000218,999.9999999999999],1.0)
 olsRegress :: [Vector]
               -- ^ Non-empty list of predictor vectors.  Must all have
               -- the same length.  These will become the columns of
@@ -65,7 +72,30 @@ olsRegress preds@(_:_) resps
     lss@(n:ls) = map G.length preds
 olsRegress _ _ = error "no predictors given"
 
--- | Compute the ordinary least-squares solution to /A x = b/.
+-- | Compute the ordinary least-squares solution to overdetermined
+--   linear system \(Ax = b\). In other words it finds
+--
+--   \[ \operatorname{argmin}|Ax-b|^2 \].
+--
+--   All columns of \(A\) must be linearly independent. It's not
+--   checked function will return nonsensical result if resulting
+--   linear system is poorly conditioned.
+--
+-- >>> import qualified Data.Vector.Unboxed as VU
+-- >>> :{
+--  ols (fromColumns [ VU.fromList [0,1,2,3]
+--                   , VU.fromList [1,1,1,1]
+--                   ]) (VU.fromList [1000, 1001, 1002, 1003])
+-- :}
+-- [1.0000000000000218,999.9999999999999]
+--
+-- >>> :{
+--  ols (fromColumns [ VU.fromList [0,1,2,3]
+--                   , VU.fromList [4,2,1,1]
+--                   , VU.fromList [1,1,1,1]
+--                   ]) (VU.fromList [1000, 1001, 1002, 1003])
+-- :}
+-- [1.0000000000005393,4.2290644612446807e-13,999.9999999999983]
 ols :: Matrix     -- ^ /A/ has at least as many rows as columns.
     -> Vector     -- ^ /b/ has the same length as columns in /A/.
     -> Vector
@@ -92,7 +122,7 @@ solve r b
   where n = rows r
         l = U.length b
 
--- | Compute /R&#0178;/, the coefficient of determination that
+-- | Compute /R²/, the coefficient of determination that
 -- indicates goodness-of-fit of a regression.
 --
 -- This value will be 1 if the predictors fit perfectly, dropping to 0
@@ -101,11 +131,19 @@ rSquare :: Matrix               -- ^ Predictors (regressors).
         -> Vector               -- ^ Responders.
         -> Vector               -- ^ Regression coefficients.
         -> Double
-rSquare pred resp coeff = 1 - r / t
+rSquare pred resp coeff
+  -- Data has zero variance. If fit is perfect we set R² to 1 else to
+  -- 0. This is not perfect heuristic. Fit residuals may be nonzero
+  -- due to rounding.
+  | t == 0             = if r == 0 then 1 else 0
+  -- If fit residuals are worse than average we simply set R² to 0
+  | r2 >= 0 && r2 <= 1 = r2
+  | otherwise          = 0
   where
-    r   = sum $ flip U.imap resp $ \i x -> square (x - p i)
-    t   = sum $ flip U.map resp $ \x -> square (x - mean resp)
-    p i = sum . flip U.imap coeff $ \j -> (* unsafeIndex pred i j)
+    r2  = 1 - r / t
+    r   = sum $ flip U.imap resp  $ \i x -> square (x - p i)
+    t   = sum $ flip U.map  resp  $ \x   -> square (x - mean resp)
+    p i = sum $ flip U.imap coeff $ \j x -> x * unsafeIndex pred i j
 
 -- | Bootstrap a regression function.  Returns both the results of the
 -- regression and the requested confidence interval values.
