@@ -27,11 +27,12 @@ data Rank v a = Rank {
 --   In case of ties average of ranks of equal elements is assigned
 --   to each
 --
--- >>> rank (==) (fromList [10,20,30::Int])
--- > fromList [1.0,2.0,3.0]
+-- >>> import qualified Data.Vector.Unboxed as VU
+-- >>> rank (==) (VU.fromList [10,20,30::Int])
+-- [1.0,2.0,3.0]
 --
--- >>> rank (==) (fromList [10,10,10,30::Int])
--- > fromList [2.0,2.0,2.0,4.0]
+-- >>> rank (==) (VU.fromList [10,10,10,30::Int])
+-- [2.0,2.0,2.0,4.0]
 rank :: (G.Vector v a, G.Vector v Double)
      => (a -> a -> Bool)        -- ^ Equivalence relation
      -> v a                     -- ^ Vector to rank
