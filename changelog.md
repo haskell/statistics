@@ -1,5 +1,7 @@
 ## Changes in NEXT_VERSIONS
 
+ * Computation of `rSquare` has special case for case when data variation is 0.
+
  * Doctests added.
 
  * Benchmarks using `tasty-bench` and `tasty-papi` added.

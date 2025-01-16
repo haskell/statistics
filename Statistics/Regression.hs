@@ -131,11 +131,19 @@ rSquare :: Matrix               -- ^ Predictors (regressors).
         -> Vector               -- ^ Responders.
         -> Vector               -- ^ Regression coefficients.
         -> Double
-rSquare pred resp coeff = 1 - r / t
+rSquare pred resp coeff
+  -- Data has zero variance. If fit is perfect we set R² to 1 else to
+  -- 0. This is not perfect heuristic. Fit residuals may be nonzero
+  -- due to rounding.
+  | t == 0             = if r == 0 then 1 else 0
+  -- If fit residuals are worse than average we simply set R² to 0
+  | r2 >= 0 && r2 <= 1 = r2
+  | otherwise          = 0
   where
-    r   = sum $ flip U.imap resp $ \i x -> square (x - p i)
-    t   = sum $ flip U.map resp $ \x -> square (x - mean resp)
-    p i = sum . flip U.imap coeff $ \j -> (* unsafeIndex pred i j)
+    r2  = 1 - r / t
+    r   = sum $ flip U.imap resp  $ \i x -> square (x - p i)
+    t   = sum $ flip U.map  resp  $ \x   -> square (x - mean resp)
+    p i = sum $ flip U.imap coeff $ \j x -> x * unsafeIndex pred i j
 
 -- | Bootstrap a regression function.  Returns both the results of the
 -- regression and the requested confidence interval values.
