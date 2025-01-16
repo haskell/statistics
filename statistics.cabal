@@ -41,8 +41,6 @@ extra-source-files:
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
-  tests/Tests/Math/Tables.hs
-  tests/Tests/Math/gen.py
   tests/utils/Makefile
   tests/utils/fftw.c
 
