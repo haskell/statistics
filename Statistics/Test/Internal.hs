@@ -8,6 +8,7 @@ module Statistics.Test.Internal (
 import Data.Ord
 import           Data.Vector.Generic           ((!))
 import qualified Data.Vector.Generic         as G
+import qualified Data.Vector.Unboxed         as U
 import qualified Data.Vector.Generic.Mutable as M
 import Statistics.Function
 
@@ -33,10 +34,10 @@ data Rank v a = Rank {
 --
 -- >>> rank (==) (VU.fromList [10,10,10,30::Int])
 -- [2.0,2.0,2.0,4.0]
-rank :: (G.Vector v a, G.Vector v Double)
+rank :: (G.Vector v a)
      => (a -> a -> Bool)        -- ^ Equivalence relation
      -> v a                     -- ^ Vector to rank
-     -> v Double
+     -> U.Vector Double
 rank eq vec = G.unfoldr go (Rank 0 (-1) 1 vec)
   where
     go (Rank 0 _ r v)
@@ -59,11 +60,10 @@ rank eq vec = G.unfoldr go (Rank 0 (-1) 1 vec)
 rankUnsorted :: ( Ord a
                 , G.Vector v a
                 , G.Vector v Int
-                , G.Vector v Double
                 , G.Vector v (Int, a)
                 )
              => v a
-             -> v Double
+             -> U.Vector Double
 rankUnsorted xs = G.create $ do
     -- Put ranks into their original positions
     -- NOTE: backpermute will do wrong thing

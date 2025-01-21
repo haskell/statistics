@@ -58,8 +58,6 @@ spearman :: ( Ord a
             , G.Vector v b
             , G.Vector v (a, b)
             , G.Vector v Int
-            , G.Vector v Double
-            , G.Vector v (Double, Double)
             , G.Vector v (Int, a)
             , G.Vector v (Int, b)
             )

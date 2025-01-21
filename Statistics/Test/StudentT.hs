@@ -71,7 +71,7 @@ welchTTest test sample1 sample2
 -- | Paired two-sample t-test. Two samples are paired in a
 -- within-subject design. Returns @Nothing@ if sample size is not
 -- sufficient.
-pairedTTest :: forall v. (G.Vector v (Double, Double), G.Vector v Double)
+pairedTTest :: forall v. (G.Vector v (Double, Double))
             => PositionTest          -- ^ one- or two-tailed test
             -> v (Double, Double)    -- ^ paired samples
             -> Maybe (Test StudentT)
