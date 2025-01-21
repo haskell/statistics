@@ -55,6 +55,8 @@ module Statistics.Sample
     -- * Joint distributions
     , covariance
     , correlation
+    , covariance2
+    , correlation2
     , pair
     -- * References
     -- $references
@@ -394,6 +396,47 @@ correlation xy
     cov  = expectation (\(x,y) -> (x - muX)*(y - muY)) xy
 {-# SPECIALIZE correlation :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE correlation :: V.Vector (Double,Double) -> Double #-}
+
+
+-- | Covariance of two samples. Both vectors must be of the same
+--   length. If both are empty it's set to zero
+covariance2 :: (G.Vector v Double)
+           => v Double
+           -> v Double
+           -> Double
+covariance2 xs ys
+  | nx /= ny  = error $ "Statistics.Sample.covariance2: both samples must have same length"
+  | nx == 0   = 0
+  | otherwise = sum (G.zipWith (\x y -> (x - muX)*(y - muY)) xs ys)
+              / fromIntegral nx
+  where
+    nx  = G.length xs
+    ny  = G.length ys
+    muX = mean xs
+    muY = mean ys
+{-# SPECIALIZE covariance2 :: U.Vector Double -> U.Vector Double -> Double #-}
+{-# SPECIALIZE covariance2 :: V.Vector Double -> V.Vector Double -> Double #-}
+
+-- | Correlation coefficient for two samples. Both vector must have
+--   same length Also known as Pearson's correlation. For empty sample
+--   it's set to zero.
+correlation2 :: (G.Vector v Double)
+             => v Double
+             -> v Double
+             -> Double
+correlation2 xs ys
+  | nx /= ny  = error $ "Statistics.Sample.correlation2: both samples must have same length"
+  | nx == 0   = 0
+  | otherwise = cov / sqrt (varX * varY)
+  where
+    nx         = G.length xs
+    ny         = G.length ys
+    (muX,varX) = meanVariance xs
+    (muY,varY) = meanVariance ys
+    cov = sum (G.zipWith (\x y -> (x - muX)*(y - muY)) xs ys)
+        / fromIntegral nx
+{-# SPECIALIZE correlation2 :: U.Vector Double -> U.Vector Double -> Double #-}
+{-# SPECIALIZE correlation2 :: V.Vector Double -> V.Vector Double -> Double #-}
 
 
 -- | Pair two samples. It's like 'G.zip' but requires that both

@@ -6,6 +6,7 @@
 module Statistics.Correlation
     ( -- * Pearson correlation
       pearson
+    , pearson2
     , pearsonMatByRow
       -- * Spearman correlation
     , spearman
@@ -25,10 +26,17 @@ import Statistics.Test.Internal (rankUnsorted)
 
 -- | Pearson correlation for sample of pairs. Exactly same as
 -- 'Statistics.Sample.correlation'
-pearson :: (G.Vector v (Double, Double), G.Vector v Double)
+pearson :: (G.Vector v (Double, Double))
         => v (Double, Double) -> Double
 pearson = correlation
 {-# INLINE pearson #-}
+
+-- | Pearson correlation for sample of pairs. Exactly same as
+-- 'Statistics.Sample.correlation'
+pearson2 :: (G.Vector v Double)
+         => v Double -> v Double -> Double
+pearson2 = correlation2
+{-# INLINE pearson2 #-}
 
 -- | Compute pairwise Pearson correlation between rows of a matrix
 pearsonMatByRow :: Matrix -> Matrix
