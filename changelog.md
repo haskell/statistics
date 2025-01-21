@@ -1,6 +1,17 @@
-## Changes in NEXT_VERSIONS
+## Changes in 0.16.3.0
 
- * Computation of `rSquare` has special case for case when data variation is 0.
+ * `S.Sample.correlation`, `S.Sample.covariance`,
+   `S.Correlation.pearson` do not allocate temporary arrays.
+
+ * Variants of correlation which take two vectors as input are added:
+   `S.Sample.correlation2`, `S.Sample.covariance2`, `S.Correlation.pearson2`,
+   `S.Correlation.spearman2`.
+
+ * Contexts for `S.Function.indexed`, `S.Correlation.spearman`, `S.pairedTTest`,
+   `S.Sample.correlation`, `S.Sample.covariance`, reduced.
+
+ * Computation of `rSquare` in linear regression has special case for case when
+   data variation is 0.
 
  * Doctests added.
 
