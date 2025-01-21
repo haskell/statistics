@@ -76,8 +76,8 @@ indices a = G.enumFromTo 0 (G.length a - 1)
 {-# INLINE indices #-}
 
 -- | Zip a vector with its indices.
-indexed :: (G.Vector v e, G.Vector v Int, G.Vector v (Int,e)) => v e -> v (Int,e)
-indexed a = G.zip (indices a) a
+indexed :: (G.Vector v e, G.Vector v (Int,e)) => v e -> v (Int,e)
+indexed xs = G.imap (,) xs
 {-# INLINE indexed #-}
 
 data MM = MM {-# UNPACK #-} !Double {-# UNPACK #-} !Double

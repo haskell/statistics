@@ -39,7 +39,11 @@ main =
     , bench "varianceUnbiased" $ nf (\x -> varianceUnbiased x) sample
     , bench "varianceWeighted" $ nf (\x -> varianceWeighted x) sampleW
       -- Correlation
-    , bench "pearson"          $ nf pearson sampleW
+    , bench "pearson"          $ nf pearson     sampleW
+    , bench "covariance"       $ nf covariance  sampleW
+    , bench "correlation"      $ nf correlation sampleW
+    , bench "covariance2"      $ nf (covariance2  sample) sample
+    , bench "correlation2"     $ nf (correlation2 sample) sample
       -- Other
     , bench "stdDev"           $ nf (\x -> stdDev x)           sample
     , bench "skewness"         $ nf (\x -> skewness x)         sample
