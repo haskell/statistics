@@ -26,7 +26,7 @@ import Data.Binary         (Binary(..))
 import Data.Data           (Data, Typeable)
 import GHC.Generics        (Generic)
 import Numeric.SpecFunctions (
-  logBeta, incompleteBeta, invIncompleteBeta, digamma)
+  logBeta, incompleteBeta, invIncompleteBeta, digamma, log1p)
 
 import qualified Statistics.Distribution as D
 import Statistics.Distribution.Transform (LinearTransform (..))
@@ -94,8 +94,9 @@ complCumulative (StudentT ndf) x
 
 
 logDensityUnscaled :: StudentT -> Double -> Double
-logDensityUnscaled (StudentT ndf) x =
-    log (ndf / (ndf + x*x)) * (0.5 * (1 + ndf)) - logBeta 0.5 (0.5 * ndf)
+logDensityUnscaled (StudentT ndf) x
+  = log1p (x*x/ndf) * (-(0.5 * (1 + ndf)))
+  - logBeta 0.5 (0.5 * ndf)
 
 quantile :: StudentT -> Double -> Double
 quantile (StudentT ndf) p
