@@ -1,3 +1,13 @@
+## Unreleased
+
+- **New Features**:
+  - Implemented Bartlett's test (`Statistics.Test.Bartlett`) for homogeneity of variances.
+  - Implemented Levene's test (`Statistics.Test.Levene`) for homogeneity of variances.
+  - Resolves [#137](https://github.com/haskell/statistics/issues/137).
+
+- **Documentation**:
+  - Added usage examples and Haddock comments for both tests.
+
 ## Changes in 0.16.3.0
 
  * `S.Sample.correlation`, `S.Sample.covariance`,
