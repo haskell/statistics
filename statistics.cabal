@@ -44,6 +44,9 @@ extra-source-files:
   tests/utils/Makefile
   tests/utils/fftw.c
 
+extra-doc-files:
+  changelog.md
+
 tested-with:
   GHC ==8.4.4
    || ==8.6.5
