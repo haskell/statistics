@@ -36,7 +36,6 @@ category:       Math, Statistics
 
 extra-source-files:
   README.markdown
-  changelog.md
   examples/kde/KDE.hs
   examples/kde/data/faithful.csv
   examples/kde/kde.html
