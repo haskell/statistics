@@ -78,14 +78,19 @@ levenesTest alpha center samples
   | length samples < 2 = Left "At least two samples required"
   | otherwise = do
       processed <- mapM processSample samples
-      let (deviations, ni) = unzip processed
-          k = length samples
-          n = sum ni
-          zbari = map Sample.mean deviations
-          zbar = sum (zipWith (*) zbari (map fromIntegral ni)) / fromIntegral n
+      let (deviationsList, niList) = unzip processed
+          deviations = V.fromList deviationsList  -- V.Vector (U.Vector Double)
+          ni = V.fromList niList                  -- V.Vector Int
+          zbari = V.map Sample.mean deviations    -- V.Vector Double
+          k = V.length deviations
+          n = V.sum ni
+          zbar = V.sum (V.zipWith (\z n' -> z * fromIntegral n') zbari ni) / fromIntegral n
 
-          numerator = sum [fromIntegral (ni !! i) * (zbari !! i - zbar) ** 2 | i <- [0..k-1]]
-          denominator = sum [U.sum (U.map (\x -> (x - zbari !! i) ** 2) (deviations !! i)) | i <- [0..k-1]]
+          -- Numerator: Sum over (ni * (zbari - zbar)^2)
+          numerator = V.sum $ V.zipWith (\n z -> fromIntegral n * (z - zbar) ** 2) ni zbari
+
+          -- Denominator: Sum over sum((dev_ij - zbari)^2)
+          denominator = V.sum $ V.zipWith (\dev z -> U.sum (U.map (\x -> (x - z) ** 2) dev)) deviations zbari
           
       -- Handle division by zero and invalid values
       if denominator <= 0 || isNaN denominator || isInfinite denominator
