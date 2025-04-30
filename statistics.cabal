@@ -36,13 +36,15 @@ category:       Math, Statistics
 
 extra-source-files:
   README.markdown
-  changelog.md
   examples/kde/KDE.hs
   examples/kde/data/faithful.csv
   examples/kde/kde.html
   examples/kde/kde.tpl
   tests/utils/Makefile
   tests/utils/fftw.c
+
+extra-doc-files:
+  changelog.md
 
 tested-with:
   GHC ==8.4.4

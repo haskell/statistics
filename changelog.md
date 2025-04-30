@@ -61,11 +61,11 @@
 
  * Computation of CDF and quantiles of Cauchy distribution is now numerically
    stable.
- 
+
  * Fix loss of precision in computing of CDF of gamma distribution
 
  * Log-normal and Weibull distributions added.
- 
+
  * `DiscreteGen` instance added for `DiscreteUniform`
 
 
@@ -130,7 +130,7 @@
 ## Changes in 0.14.0.0
 
 Breaking update. It seriously changes parts of API. It adds new data types for
-dealing with with estimates, confidence intervals, confidence levels and
+dealing with estimates, confidence intervals, confidence levels and
 p-value. Also API for statistical tests is changed.
 
  * Module `Statistis.Types` now contains new data types for estimates,

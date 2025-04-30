@@ -18,18 +18,11 @@ optimisation.
 # Get involved!
 
 Please report bugs via the
-[github issue tracker](https://github.com/bos/statistics/issues).
+[github issue tracker](https://github.com/haskell/statistics/issues).
 
-Master [git mirror](https://github.com/bos/statistics):
+Master [git mirror](https://github.com/haskell/statistics):
 
-* `git clone git://github.com/bos/statistics.git`
-
-There's also a [Mercurial mirror](https://bitbucket.org/bos/statistics):
-
-* `hg clone https://bitbucket.org/bos/statistics`
-
-(You can create and contribute changes using either Mercurial or git.)
-
+* `git clone git://github.com/haskell/statistics.git`
 
 # Authors
 
