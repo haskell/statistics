@@ -47,7 +47,7 @@ import Statistics.Internal
 gChoose :: Double -> Int -> Double
 gChoose n k
     | k < 0             = 0
-    | k' >= 50          = exp $ logChooseFast n k' 
+    | k' >= 50          = exp $ logChooseFast n k'
     | otherwise         = foldl' (*) 1 factors
     where   factors = [ (n - k' + j) / j | j <- [1..k'] ]
             k' = fromIntegral k
@@ -151,7 +151,7 @@ complCumulative (NBD r p) x
   | k < 0        = 1
   | otherwise    = incompleteBeta (fromIntegral (k+1)) r (1 - p)
   where
-    k = (floor x)::Integer
+    k = floor x :: Integer
 
 mean :: NegativeBinomialDistribution -> Double
 mean (NBD r p) = r * (1 - p)/p
@@ -166,14 +166,14 @@ directEntropy d =
   dropWhile (>= -m_epsilon) $
   [ let x = probability d k in x * log x | k <- [0..]]
 
--- | Construct negative binomial distribution. Number of failures /r/
+-- | Construct negative binomial distribution. Number of successes /r/
 --   must be positive and probability must be in (0,1] range
 negativeBinomial :: Double              -- ^ Number of successes.
                  -> Double              -- ^ Success probability.
                  -> NegativeBinomialDistribution
 negativeBinomial r p = maybe (error $ errMsg r p) id $ negativeBinomialE r p
 
--- | Construct negative binomial distribution. Number of failures /r/
+-- | Construct negative binomial distribution. Number of successes /r/
 --   must be positive and probability must be in (0,1] range
 negativeBinomialE :: Double              -- ^ Number of successes.
                   -> Double              -- ^ Success probability.

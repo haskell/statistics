@@ -340,7 +340,7 @@ instance Param StudentT where
   quantileIsInvCDF_enabled _ = False
 
 instance Param BetaDistribution where
-  -- FIXME: See https://github.com/bos/statistics/issues/161 for details
+  -- FIXME: See https://github.com/haskell/statistics/issues/161 for details
   quantileIsInvCDF_enabled _ = False
 
 instance Param FDistribution where
