@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE BangPatterns #-}
+
 {-|
 Module      : Statistics.Test.Levene
 Description : Levene's test for homogeneity of variances.
@@ -11,31 +11,25 @@ Assesses equality of variances, robust to non-normality, and versatile with mean
 -}
 module Statistics.Test.Levene (
     Center(..),
-    TestResult(..),
     levenesTest
 ) where
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Algorithms.Merge as VA
-import Statistics.Distribution
-import Statistics.Distribution.FDistribution (fDistribution)
+import Statistics.Distribution (cumulative)
+import Statistics.Distribution.FDistribution (fDistribution, FDistribution)
+import Statistics.Types (mkPValue)
+import Statistics.Test.Types (Test(..))
 import qualified Statistics.Sample as Sample
 import Control.Exception (assert)
 
--- | Center calculation method with proper documentation
+-- | Center calculation method 
 data Center = 
-    Mean      -- ^ Use arithmetic mean
-  | Median    -- ^ Use median
-  | Trimmed Double  -- ^ Trimmed mean with given proportion to cut from each end
+    Mean               -- ^ Use arithmetic mean
+  | Median             -- ^ Use median
+  | Trimmed Double     -- ^ Trimmed mean with given proportion to cut from each end
   deriving (Eq, Show)
-
--- | Result type with comprehensive information
-data TestResult = TestResult {
-    wStatistic :: Double    -- ^ Levene's W statistic
-  , pValue     :: Double    -- ^ Associated p-value
-  , rejectNull :: Bool      -- ^ Whether to reject null hypothesis at given alpha
-  } deriving (Eq, Show)
 
 -- | Trim data from both ends with error handling and performance optimization
 trimboth :: (Ord a, Fractional a) 
@@ -69,10 +63,10 @@ vectorMedian vec
     mid = len `div` 2
 
 -- | Main Levene's test function with full error handling
-levenesTest :: Double       -- ^ Significance level (alpha)
-            -> Center       -- ^ Center calculation method
-            -> [V.Vector Double] -- ^ Input samples
-            -> Either String TestResult
+levenesTest :: Double              -- ^ Significance level (alpha)
+            -> Center             -- ^ Centering method
+            -> [V.Vector Double]  -- ^ Input samples
+            -> Either String (Test FDistribution)
 levenesTest alpha center samples
   | alpha < 0 || alpha > 1 = Left "Significance level must be between 0 and 1"
   | length samples < 2 = Left "At least two samples required"
@@ -99,13 +93,17 @@ levenesTest alpha center samples
           let wStat = (fromIntegral (n - k) / fromIntegral (k - 1)) * (numerator / denominator)
               df1 = k - 1
               df2 = n - k
-              pVal = 1 - cumulative (fDistribution df1 df2) wStat
-              reject = pVal < alpha
+              fDist = fDistribution df1 df2
+              pVal = mkPValue $ 1 - cumulative fDist wStat
 
           -- Validate distribution parameters
           if df1 < 1 || df2 < 1
             then Left "Invalid degrees of freedom"
-            else Right $ TestResult wStat pVal reject
+            else Right $ Test
+                  { testStatistics   = wStat
+                  , testSignificance = pVal
+                  , testDistribution = fDist
+                  }
   where
     -- Process samples with error handling and optimized sorting
     processSample vec = case center of
@@ -120,15 +118,19 @@ levenesTest alpha center samples
         return (U.convert dev, V.length vec)
         
       Trimmed p -> do
-        trimmed <- trimboth vec p
-        let c = Sample.mean trimmed
-            dev = V.map (abs . subtract c) trimmed
-        return (U.convert dev, V.length trimmed)
+        trimmed_for_center_calculation <- trimboth vec p
+        let robust_center = Sample.mean trimmed_for_center_calculation
+            -- Calculate deviations for ALL ORIGINAL points from the robust_center
+            deviations_from_robust_center = V.map (abs . subtract robust_center) vec -- Use 'vec' (original data)
+        -- Return deviations and the ORIGINAL sample size
+        return (U.convert deviations_from_robust_center, V.length vec) -- Use 'V.length vec'
 
 
 -- Example usage:
 -- import qualified Data.Vector as V
--- import LevenesTest (Center(..), levenesTest, TestResult(..))
+-- import LevenesTest (Center(..), levenesTest)
+-- import Statistics.Test.Types (testStatistics, testSignificance)
+-- import Statistics.Types (pValue)
 
 -- main :: IO ()
 -- main = do
@@ -136,14 +138,15 @@ levenesTest alpha center samples
 --         b = V.fromList [8.88, 8.95, 9.29, 9.44, 9.15, 9.58, 8.36, 9.18, 8.67, 9.05]
 --         c = V.fromList [8.95, 9.12, 8.95, 8.85, 9.03, 8.84, 9.07, 8.98, 8.86, 8.98]
 
---     case levenesTest 0.05 (Trimmed 0.1) [a, b, c] of
+--     case levenesTest (Trimmed 0.05) [a, b, c] of
 --         Left err -> putStrLn $ "Error: " ++ err
 --         Right test -> do
---             putStrLn $ "Levene's W Statistic: " ++ show (wStatistic test)
---             putStrLn $ "P-Value: " ++ show (pValue test)
---             putStrLn $ "Reject null hypothesis at α=0.05: " ++ show (rejectNull test)
+--             putStrLn $ "Levene's W Statistic: " ++ show (testStatistics test)
+--             putStrLn $ "P-Value: " ++ show (pValue (testSignificance test))
+--             putStrLn $ "Reject null hypothesis at α=0.05: " ++ show (testSignificance test < 0.05)
+
 
 -- Sample Output
--- Levene's W Statistic: 0.852
--- P-Value: 0.432
--- Reject null hypothesis at α=0.05: False
+-- Levene's W Statistic: 7.905
+-- P-Value: 0.002
+-- Reject null hypothesis at α=0.05: True
