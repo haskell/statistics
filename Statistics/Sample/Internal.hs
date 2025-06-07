@@ -14,9 +14,10 @@ module Statistics.Sample.Internal
     (
       robustSumVar
     , sum
+    , sumF
     ) where
 
-import Numeric.Sum (kbn, sumVector)
+import qualified Numeric.Sum as Sum
 import Prelude hiding (sum)
 import Statistics.Function (square)
 import qualified Data.Vector.Generic as G
@@ -26,5 +27,9 @@ robustSumVar m = sum . G.map (square . subtract m)
 {-# INLINE robustSumVar #-}
 
 sum :: (G.Vector v Double) => v Double -> Double
-sum = sumVector kbn
+sum = Sum.sumVector Sum.kbn
 {-# INLINE sum #-}
+
+sumF :: Foldable f => f Double -> Double
+sumF = Sum.sum Sum.kbn
+{-# INLINE sumF #-}
