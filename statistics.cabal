@@ -107,6 +107,8 @@ library
     Statistics.Sample.KernelDensity.Simple
     Statistics.Sample.Normalize
     Statistics.Sample.Powers
+    Statistics.Test.Bartlett
+    Statistics.Test.Levene
     Statistics.Test.ChiSquared
     Statistics.Test.KolmogorovSmirnov
     Statistics.Test.KruskalWallis

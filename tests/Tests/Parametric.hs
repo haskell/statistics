@@ -4,12 +4,18 @@ import Data.Maybe (fromJust)
 import Statistics.Test.StudentT
 import Statistics.Types
 import qualified Data.Vector.Unboxed as U
-import Test.Tasty (testGroup)
-import Tests.Helpers  (testEquality)
+import qualified Data.Vector as V
+import Test.Tasty (testGroup, TestTree)
+import Test.Tasty.HUnit (testCase, assertBool)
+import Tests.Helpers (testEquality)
 import qualified Test.Tasty as Tst
 
+import Statistics.Test.Levene
+import Statistics.Test.Bartlett
+
+
 tests :: Tst.TestTree
-tests = testGroup "Parametric tests" studentTTests
+tests = testGroup "Parametric tests" (studentTTests ++ bartlettTests ++ leveneTests)
 
 -- 2 samples x 20 obs data
 --
@@ -77,7 +83,7 @@ testTTest name pVal test =
   , testEquality name (isSignificant (mkPValue $ pValue pVal + 1e-5) test)
     Significant
   ]
-  
+
 studentTTests :: [Tst.TestTree]
 studentTTests = concat
   [ -- R: t.test(sample1, sample2, alt="two.sided", var.equal=T)
@@ -100,3 +106,51 @@ studentTTests = concat
       (mkPValue 0.01705) (fromJust $ pairedTTest BGreater sample12)
   ]
   where sample12 = U.zip sample1 sample2
+
+
+------------------------------------------------------------
+-- Bartlett's Test
+------------------------------------------------------------
+
+bartlettTests :: [TestTree]
+bartlettTests =
+  let
+    a = U.fromList [9.88, 9.12, 9.04, 8.98, 9.00, 9.08, 9.01, 8.85, 9.06, 8.99]
+    b = U.fromList [8.88, 8.95, 9.29, 9.44, 9.15, 9.58, 9.36, 9.18, 8.67, 9.05]
+    c = U.fromList [8.95, 8.12, 8.95, 8.85, 8.03, 8.84, 8.07, 8.98, 8.86, 8.98]
+    result = bartlettTest [a, b, c]
+  in case result of
+       Left err -> [testCase "Bartlett test - failed" (assertBool err False)]
+       Right test ->
+         [ testApproxEqual "Bartlett's Chi-Square Statistic" 1e-3 (testStatistics test) 1.802
+         , testApproxEqual "Bartlett's P-Value" 1e-3 (pValue $ testSignificance test) 0.406
+         , testEquality "Reject null hypothesis at alpha = 0.05"
+             (isSignificant (mkPValue 0.05) test) NotSignificant
+         ]
+
+------------------------------------------------------------
+-- Levene's Test (Trimmed Mean)
+------------------------------------------------------------
+
+-- Local helper for approximate equality
+testApproxEqual :: String -> Double -> Double -> Double -> TestTree
+testApproxEqual name epsilon actual expected =
+  testCase name $
+    let diff = abs (actual - expected)
+    in assertBool (name ++ ": expected ≈ " ++ show expected ++ ", got " ++ show actual) (diff < epsilon)
+
+leveneTests :: [TestTree]
+leveneTests =
+  let
+    a = V.fromList [8.88, 9.12, 9.04, 8.98, 9.00, 9.08, 9.01, 8.85, 9.06, 8.99]
+    b = V.fromList [8.88, 8.95, 9.29, 9.44, 9.15, 9.58, 8.36, 9.18, 8.67, 9.05]
+    c = V.fromList [8.95, 9.12, 8.95, 8.85, 9.03, 8.84, 9.07, 8.98, 8.86, 8.98]
+    result = levenesTest 0.05 (Trimmed 0.05) [a, b, c]
+  in case result of
+       Left err -> [testCase "Levene trimmed mean test - failed" (assertBool err False)]
+       Right test ->
+         [ testApproxEqual "Levene's W Statistic (Trimmed 0.05)" 1e-3 (testStatistics test) 7.905
+         , testApproxEqual "Levene's P-Value (Trimmed 0.05)" 1e-3 (pValue $ testSignificance test) 0.002
+         , testEquality "Reject null hypothesis at alpha = 0.05"
+             (isSignificant (mkPValue 0.05) test) Significant
+         ]
