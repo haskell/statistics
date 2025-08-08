@@ -223,7 +223,7 @@ benchmark statistics-bench
   import:         bench-stanza
   type:           exitcode-stdio-1.0
   hs-source-dirs: benchmark bench-time
-  main-is:        bench.hs
+  main-is:        Main.hs
   Other-modules:  Bench
   build-depends:  tasty-bench >= 0.3
 
