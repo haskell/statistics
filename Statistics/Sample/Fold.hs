@@ -108,7 +108,7 @@ kbnSum = fmap kbn kbnSum'
 
 -- | Compute expectation of function over for sample.
 expectation :: (a -> Double) -> F.Fold a Double
-expectation f = F.premap f kbnSum / F.genericLength
+expectation f = F.premap f kbnSum / doubleLength
 {-# INLINE expectation #-}
 
 -- | Arithmetic mean.  This uses Kahan-Babuška-Neumaier
@@ -116,8 +116,11 @@ expectation f = F.premap f kbnSum / F.genericLength
 -- values are very large. This function is not subject to stream
 -- fusion.
 mean :: F.Fold Double Double
-mean = kbnSum / F.genericLength
+mean = kbnSum / doubleLength
 {-# INLINE mean #-}
+
+doubleLength :: F.Fold a Double
+doubleLength = F.Fold (\n _ -> n+1) (0::Int) fromIntegral
 
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
@@ -265,7 +268,7 @@ kurtosis m = (\(c4, c2) -> c4 / (c2 * c2) - 3) <$> centralMoments 4 2 m
 variance :: Double -> F.Fold Double Double
 variance m =
     liftA2 (\s n -> if n > 1 then s / n else 0)
-           (robustSumVar m) F.genericLength
+           (robustSumVar m) doubleLength
 {-# INLINE variance #-}
 
 
@@ -281,7 +284,7 @@ robustSumVar m = F.premap (square . subtract m) kbnSum
 varianceUnbiased :: Double -> F.Fold Double Double
 varianceUnbiased m =
     liftA2 (\s n -> if n > 1 then s / (n-1) else 0)
-           (robustSumVar m) F.genericLength
+           (robustSumVar m) doubleLength
 {-# INLINE varianceUnbiased #-}
 
 
@@ -319,7 +322,7 @@ stdDev m = fmap sqrt $ varianceUnbiased m
 -- | Standard error of the mean. This is the standard deviation
 -- divided by the square root of the sample size.
 stdErrMean :: Double -> F.Fold Double Double
-stdErrMean m = stdDev m / fmap sqrt F.genericLength
+stdErrMean m = stdDev m / fmap sqrt doubleLength
 
 robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> V
 robustSumVarWeighted samp = G.foldl' go (V 0 0) samp
