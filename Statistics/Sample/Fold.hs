@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE BangPatterns #-}
 -- |
 -- Module    : Statistics.Sample
 -- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan
@@ -11,60 +12,63 @@
 -- Commonly used sample statistics, also known as descriptive
 -- statistics.
 
-module Statistics.Sample.Fold where
-    -- (
-    -- -- * Types
-    --   Sample
-    -- , WeightedSample
-    -- -- * Descriptive functions
-    -- , range
+module Statistics.Sample.Fold
+    (
+    -- * Descriptive functions
+    range
+    , minimum'
+    , maximum'
 
-    -- -- * Statistics of location
-    -- , expectation
-    -- , mean
-    -- , welfordMean
-    -- , meanWeighted
-    -- , harmonicMean
-    -- , geometricMean
+    -- * Statistics of location
+    , expectation
+    , mean
+    , welfordMean
+    , meanWeighted
+    , harmonicMean
+    , geometricMean
 
-    -- -- * Statistics of dispersion
-    -- -- $variance
+    -- * Statistics of dispersion
+    -- $variance
 
-    -- -- ** Functions over central moments
-    -- , centralMoment
-    -- , centralMoments
-    -- , skewness
-    -- , kurtosis
+    -- ** Functions over central moments
+    , centralMoment
+    , centralMoments
+    , skewness
+    , kurtosis
 
-    -- -- ** Two-pass functions (numerically robust)
-    -- -- $robust
-    -- , variance
-    -- , varianceUnbiased
-    -- -- , meanVariance
-    -- -- , meanVarianceUnb
-    -- , stdDev
-    -- , varianceWeighted
-    -- , stdErrMean
+    -- ** Two-pass functions (numerically robust)
+    -- $robust
+    , variance
+    , varianceUnbiased
+    -- , meanVariance
+    -- , meanVarianceUnb
+    , stdDev
+    , varianceWeighted
+    , stdErrMean
+    , robustSumVar
+    , robustSumVarWeighted
 
-    -- -- ** Single-pass functions (faster, less safe)
-    -- -- $cancellation
-    -- , fastVariance
-    -- , fastVarianceUnbiased
-    -- , fastStdDev
+    -- ** Single-pass functions (faster, less safe)
+    -- $cancellation
+    , fastVariance
+    , fastVarianceUnbiased
+    , fastStdDev
 
-    -- -- * Joint distributions
-    -- , covariance
-    -- , correlation
-    -- , covariance2
-    -- , correlation2
-    -- , pair
-    -- -- * References
-    -- -- $references
-    -- ) where
+    -- * Joint distributions
+    , covariance
+    , correlation
+    -- * Strict types and helpers
+    , V(..)
+    , biExpectation
+    , kbnSum
+    , kbnSum'
+    -- * References
+    -- $references
+
+
+    ) where
 
 import Statistics.Function (square)
--- import Statistics.Sample.Internal (robustSumVar, sum)
--- import Statistics.Types.Internal  (Sample,WeightedSample)
 import Numeric.Sum (kbn, Summation(zero,add), KBNSum)
 
 import qualified Control.Foldl as F
@@ -73,15 +77,46 @@ import qualified Control.Foldl as F
 import Prelude hiding ((^), sum)
 
 
-data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
-data T = T {-# UNPACK #-}!Double {-# UNPACK #-}!Int
-data T1 = T1 {-# UNPACK #-}!Int {-# UNPACK #-}!Double {-# UNPACK #-}!Double
+------------------------------------------------------------------------
+-- Helper code. Monomorphic unpacked accumulators.
 
 -- (^) operator from Prelude is just slow.
 (^) :: Double -> Int -> Double
 x ^ 1 = x
-x ^ n = x * (x ^ (n-1))
+-- x ^ n = x * (x ^ (n-1))
+x0 ^ n0 = go (n0-1) x0 where
+    go 0 !acc = acc
+    go n acc = go (n-1) (acc*x0)
 {-# INLINE (^) #-}
+
+
+data V  = V  {-# UNPACK #-}!Double {-# UNPACK #-}!Double
+data T  = T  {-# UNPACK #-}!Double {-# UNPACK #-}!Int
+data T1 = T1 {-# UNPACK #-}!Int    {-# UNPACK #-}!Double {-# UNPACK #-}!Double
+
+-- don't support polymorphism, as we can't get unboxed returns if we use it.
+{-
+
+Consider this core:
+
+with data T a = T !a !Int
+
+$wfold :: Double#
+               -> Int#
+               -> Int#
+               -> (# Double, Int# #)
+
+and without,
+
+$wfold :: Double#
+               -> Int#
+               -> Int#
+               -> (# Double#, Int# #)
+
+yielding to boxed returns and heap checks.
+
+-}
+
 
 -- | /O(n)/ Range. The difference between the largest and smallest
 -- elements of a sample.
@@ -272,8 +307,6 @@ variance m =
 {-# INLINE variance #-}
 
 
-
-
 robustSumVar :: Double -> F.Fold Double Double
 robustSumVar m = F.premap (square . subtract m) kbnSum
 {-# INLINE robustSumVar #-}
@@ -313,34 +346,32 @@ varianceUnbiased m =
 --       m = mean samp
 -- {-# SPECIALIZE meanVarianceUnb :: U.Vector Double -> (Double,Double) #-}
 -- {-# SPECIALIZE meanVarianceUnb :: V.Vector Double -> (Double,Double) #-}
+-}
 
 -- | Standard deviation.  This is simply the square root of the
 -- unbiased estimate of the variance.
 stdDev :: Double -> F.Fold Double Double
 stdDev m = fmap sqrt $ varianceUnbiased m
+{-# INLINE stdDev #-}
 
 -- | Standard error of the mean. This is the standard deviation
 -- divided by the square root of the sample size.
 stdErrMean :: Double -> F.Fold Double Double
 stdErrMean m = stdDev m / fmap sqrt doubleLength
+{-# INLINE stdErrMean #-}
 
-robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> V
-robustSumVarWeighted samp = G.foldl' go (V 0 0) samp
+robustSumVarWeighted :: Double -> F.Fold (Double,Double) V
+robustSumVarWeighted wm = F.Fold go (V 0 0) id
     where
       go (V s w) (x,xw) = V (s + xw*d*d) (w + xw)
-          where d = x - m
-      m = meanWeighted samp
+          where d = x - wm
 {-# INLINE robustSumVarWeighted #-}
 
 -- | Weighted variance. This is biased estimation.
-varianceWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
-varianceWeighted samp
-    | G.length samp > 1 = fini $ robustSumVarWeighted samp
-    | otherwise         = 0
+varianceWeighted :: Double -> F.Fold (Double,Double) Double
+varianceWeighted wm = fini <$> robustSumVarWeighted wm
     where
       fini (V s w) = s / w
-{-# SPECIALIZE varianceWeighted :: U.Vector (Double,Double) -> Double #-}
-{-# SPECIALIZE varianceWeighted :: V.Vector (Double,Double) -> Double #-}
 
 -- $cancellation
 --
@@ -353,8 +384,8 @@ varianceWeighted samp
 -- mean, Knuth's algorithm gives inaccurate results due to
 -- catastrophic cancellation.
 
-fastVar :: (G.Vector v Double) => v Double -> T1
-fastVar = G.foldl' go (T1 0 0 0)
+fastVar ::  F.Fold Double T1
+fastVar = F.Fold go (T1 0 0 0) id
   where
     go (T1 n m s) x = T1 n' m' s'
       where n' = n + 1
@@ -363,16 +394,16 @@ fastVar = G.foldl' go (T1 0 0 0)
             d  = x - m
 
 -- | Maximum likelihood estimate of a sample's variance.
-fastVariance :: (G.Vector v Double) => v Double -> Double
-fastVariance = fini . fastVar
+fastVariance :: F.Fold Double Double
+fastVariance = fmap fini fastVar
   where fini (T1 n _m s)
           | n > 1     = s / fromIntegral n
           | otherwise = 0
 {-# INLINE fastVariance #-}
 
 -- | Unbiased estimate of a sample's variance.
-fastVarianceUnbiased :: (G.Vector v Double) => v Double -> Double
-fastVarianceUnbiased = fini . fastVar
+fastVarianceUnbiased :: F.Fold Double Double
+fastVarianceUnbiased = fmap fini fastVar
   where fini (T1 n _m s)
           | n > 1     = s / fromIntegral (n - 1)
           | otherwise = 0
@@ -380,128 +411,42 @@ fastVarianceUnbiased = fini . fastVar
 
 -- | Standard deviation.  This is simply the square root of the
 -- maximum likelihood estimate of the variance.
-fastStdDev :: (G.Vector v Double) => v Double -> Double
-fastStdDev = sqrt . fastVariance
+fastStdDev :: F.Fold Double Double
+fastStdDev = fmap sqrt fastVariance
 {-# INLINE fastStdDev #-}
+
+-- Avoids computing the length twice
+biExpectation :: (a -> Double) -> (a -> Double) -> F.Fold a V
+biExpectation f s = fini <$> F.length <*> F.premap f kbnSum <*> F.premap s kbnSum
+    where fini n a b = let n' = fromIntegral n in V (a/n') (b/n')
+{-# INLINE biExpectation #-}
 
 -- | Covariance of sample of pairs. For empty sample it's set to
 --   zero
-covariance :: (G.Vector v (Double,Double))
-           => v (Double,Double)
-           -> Double
-covariance xy
-  | n == 0    = 0
-  | otherwise = expectation (\(x,y) -> (x - muX)*(y - muY)) xy
-  where
-    n   = G.length xy
-    muX = expectation fst xy
-    muY = expectation snd xy
-{-# SPECIALIZE covariance :: U.Vector (Double,Double) -> Double #-}
-{-# SPECIALIZE covariance :: V.Vector (Double,Double) -> Double #-}
+covariance ::(Double, Double) -> F.Fold (Double,Double) Double
+covariance (muX, muY) =
+    liftA2 (\n x -> if n > 0 then x else 0)
+        F.length
+        (expectation (\(x,y) -> (x - muX)*(y - muY)))
+{-# INLINE covariance #-}
+
 
 -- | Correlation coefficient for sample of pairs. Also known as
 --   Pearson's correlation. For empty sample it's set to zero.
-correlation :: (G.Vector v (Double,Double))
-           => v (Double,Double)
-           -> Double
-correlation xy
-  | n == 0    = 0
-  | otherwise = cov / sqrt (varX * varY)
+--  The means `muX` and `muY` must be known.
+correlation :: (Double, Double) -> F.Fold (Double,Double) Double
+correlation (muX, muY) =
+    fini <$> F.length <*> covF <*> varsF
   where
-    n    = G.length xy
-    muX  = expectation (\(x,_) -> x) xy
-    muY  = expectation (\(_,y) -> y) xy
-    varX = expectation (\(x,_) -> square (x - muX))    xy
-    varY = expectation (\(_,y) -> square (y - muY))    xy
-    cov  = expectation (\(x,y) -> (x - muX)*(y - muY)) xy
-{-# SPECIALIZE correlation :: U.Vector (Double,Double) -> Double #-}
-{-# SPECIALIZE correlation :: V.Vector (Double,Double) -> Double #-}
+    fini n cov (V varX varY)
+        | n == 0 = 0
+        | otherwise = cov / sqrt (varX * varY)
+    covF  = expectation (\(x,y) -> (x - muX)*(y - muY))
+    varsF = biExpectation (\(x,_) -> square (x - muX))
+                          (\(_,y) -> square (y - muY))
+{-# INLINE correlation #-}
 
-
--- | Covariance of two samples. Both vectors must be of the same
---   length. If both are empty it's set to zero
-covariance2 :: (G.Vector v Double)
-           => v Double
-           -> v Double
-           -> Double
-covariance2 xs ys
-  | nx /= ny  = error $ "Statistics.Sample.covariance2: both samples must have same length"
-  | nx == 0   = 0
-  | otherwise = sum (G.zipWith (\x y -> (x - muX)*(y - muY)) xs ys)
-              / fromIntegral nx
-  where
-    nx  = G.length xs
-    ny  = G.length ys
-    muX = mean xs
-    muY = mean ys
-{-# SPECIALIZE covariance2 :: U.Vector Double -> U.Vector Double -> Double #-}
-{-# SPECIALIZE covariance2 :: V.Vector Double -> V.Vector Double -> Double #-}
-
--- | Correlation coefficient for two samples. Both vector must have
---   same length Also known as Pearson's correlation. For empty sample
---   it's set to zero.
-correlation2 :: (G.Vector v Double)
-             => v Double
-             -> v Double
-             -> Double
-correlation2 xs ys
-  | nx /= ny  = error $ "Statistics.Sample.correlation2: both samples must have same length"
-  | nx == 0   = 0
-  | otherwise = cov / sqrt (varX * varY)
-  where
-    nx         = G.length xs
-    ny         = G.length ys
-    (muX,varX) = meanVariance xs
-    (muY,varY) = meanVariance ys
-    cov = sum (G.zipWith (\x y -> (x - muX)*(y - muY)) xs ys)
-        / fromIntegral nx
-{-# SPECIALIZE correlation2 :: U.Vector Double -> U.Vector Double -> Double #-}
-{-# SPECIALIZE correlation2 :: V.Vector Double -> V.Vector Double -> Double #-}
-
-
--- | Pair two samples. It's like 'G.zip' but requires that both
---   samples have equal size.
-pair :: (G.Vector v a, G.Vector v b, G.Vector v (a,b)) => v a -> v b -> v (a,b)
-pair va vb
-  | G.length va == G.length vb = G.zip va vb
-  | otherwise = error "Statistics.Sample.pair: vector must have same length"
-{-# INLINE pair #-}
-
-------------------------------------------------------------------------
--- Helper code. Monomorphic unpacked accumulators.
-
--- (^) operator from Prelude is just slow.
-(^) :: Double -> Int -> Double
-x ^ 1 = x
-x ^ n = x * (x ^ (n-1))
-{-# INLINE (^) #-}
-
--- don't support polymorphism, as we can't get unboxed returns if we use it.
-data T = T {-# UNPACK #-}!Double {-# UNPACK #-}!Int
-
-data T1 = T1 {-# UNPACK #-}!Int {-# UNPACK #-}!Double {-# UNPACK #-}!Double
-
-{-
-
-Consider this core:
-
-with data T a = T !a !Int
-
-$wfold :: Double#
-               -> Int#
-               -> Int#
-               -> (# Double, Int# #)
-
-and without,
-
-$wfold :: Double#
-               -> Int#
-               -> Int#
-               -> (# Double#, Int# #)
-
-yielding to boxed returns and heap checks.
-
--}
+--------
 
 -- $references
 --
@@ -521,4 +466,3 @@ yielding to boxed returns and heap checks.
 -- * West, D.H.D. (1979) Updating mean and variance estimates: an
 --   improved method. /Communications of the ACM/
 --   22(9):532&#8211;535. <http://doi.acm.org/10.1145/359146.359153>
--}
