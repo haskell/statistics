@@ -392,6 +392,7 @@ fastVar = F.Fold go (T1 0 0 0) id
             m' = m + d / fromIntegral n'
             s' = s + d * (x - m')
             d  = x - m
+{-# INLINE fastVar #-}
 
 -- | Maximum likelihood estimate of a sample's variance.
 fastVariance :: F.Fold Double Double
