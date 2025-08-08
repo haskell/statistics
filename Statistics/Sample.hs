@@ -62,29 +62,37 @@ module Statistics.Sample
     -- $references
     ) where
 
-import Statistics.Function (minMax,square)
+import Statistics.Function (square)
 import Statistics.Sample.Internal (robustSumVar, sum)
 import Statistics.Types.Internal  (Sample,WeightedSample)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
-import Numeric.Sum (kbn, Summation(zero,add))
+-- import Numeric.Sum (kbn, Summation(zero,add))
 
 -- Operator ^ will be overridden
 import Prelude hiding ((^), sum)
 
+import qualified Control.Foldl as F
+import qualified Statistics.Sample.Fold as FF
+
+ffold :: G.Vector v a => F.Fold a b -> v a -> b
+ffold f v = F.purely_ (\s i -> G.foldl s i v) f
+{-# INLINE ffold #-}
+{-# SPECIALIZE ffold :: F.Fold Double b -> U.Vector Double -> b #-}
+{-# SPECIALIZE ffold :: F.Fold Double b -> V.Vector Double -> b #-}
+
+
 -- | /O(n)/ Range. The difference between the largest and smallest
 -- elements of a sample.
 range :: (G.Vector v Double) => v Double -> Double
-range s = hi - lo
-    where (lo , hi) = minMax s
+range = ffold FF.range
 {-# INLINE range #-}
 
 -- | /O(n)/ Compute expectation of function over for sample. This is
 --   simply @mean . map f@ but won't create intermediate vector.
 expectation :: (G.Vector v a) => (a -> Double) -> v a -> Double
-expectation f xs = kbn (G.foldl' (\s -> add s . f) zero xs)
-                 / fromIntegral (G.length xs)
+expectation f xs = ffold (FF.expectation f) xs
 {-# INLINE expectation #-}
 
 -- | /O(n)/ Arithmetic mean.  This uses Kahan-Babuška-Neumaier
@@ -92,7 +100,7 @@ expectation f xs = kbn (G.foldl' (\s -> add s . f) zero xs)
 -- values are very large. This function is not subject to stream
 -- fusion.
 mean :: (G.Vector v Double) => v Double -> Double
-mean xs = sum xs / fromIntegral (G.length xs)
+mean = ffold FF.mean
 {-# SPECIALIZE mean :: U.Vector Double -> Double #-}
 {-# SPECIALIZE mean :: V.Vector Double -> Double #-}
 
@@ -102,39 +110,25 @@ mean xs = sum xs / fromIntegral (G.length xs)
 -- Compared to 'mean', this loses a surprising amount of precision
 -- unless the inputs are very large.
 welfordMean :: (G.Vector v Double) => v Double -> Double
-welfordMean = fini . G.foldl' go (T 0 0)
-  where
-    fini (T a _) = a
-    go (T m n) x = T m' n'
-        where m' = m + (x - m) / fromIntegral n'
-              n' = n + 1
+welfordMean = ffold FF.welfordMean
 {-# SPECIALIZE welfordMean :: U.Vector Double -> Double #-}
 {-# SPECIALIZE welfordMean :: V.Vector Double -> Double #-}
 
 -- | /O(n)/ Arithmetic mean for weighted sample. It uses a single-pass
 -- algorithm analogous to the one used by 'welfordMean'.
 meanWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
-meanWeighted = fini . G.foldl' go (V 0 0)
-    where
-      fini (V a _) = a
-      go (V m w) (x,xw) = V m' w'
-          where m' | w' == 0   = 0
-                   | otherwise = m + xw * (x - m) / w'
-                w' = w + xw
+meanWeighted = ffold FF.meanWeighted
 {-# INLINE meanWeighted #-}
 
 -- | /O(n)/ Harmonic mean.  This algorithm performs a single pass over
 -- the sample.
 harmonicMean :: (G.Vector v Double) => v Double -> Double
-harmonicMean = fini . G.foldl' go (T 0 0)
-  where
-    fini (T b a) = fromIntegral a / b
-    go (T x y) n = T (x + (1/n)) (y+1)
+harmonicMean = ffold FF.harmonicMean
 {-# INLINE harmonicMean #-}
 
 -- | /O(n)/ Geometric mean of a sample containing no negative values.
 geometricMean :: (G.Vector v Double) => v Double -> Double
-geometricMean = exp . expectation log
+geometricMean = ffold FF.geometricMean
 {-# INLINE geometricMean #-}
 
 -- | Compute the /k/th central moment of a sample.  The central moment
@@ -146,14 +140,9 @@ geometricMean = exp . expectation log
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 centralMoment :: (G.Vector v Double) => Int -> v Double -> Double
-centralMoment a xs
-    | a < 0  = error "Statistics.Sample.centralMoment: negative input"
-    | a == 0 = 1
-    | a == 1 = 0
-    | otherwise = expectation go xs
+centralMoment a xs = ffold (FF.centralMoment a m) xs
   where
-    go x = (x-m) ^ a
-    m    = mean xs
+    m = mean xs
 {-# SPECIALIZE centralMoment :: Int -> U.Vector Double -> Double #-}
 {-# SPECIALIZE centralMoment :: Int -> V.Vector Double -> Double #-}
 
@@ -165,18 +154,9 @@ centralMoment a xs
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 centralMoments :: (G.Vector v Double) => Int -> Int -> v Double -> (Double, Double)
-centralMoments a b xs
-    | a < 2 || b < 2 = (centralMoment a xs , centralMoment b xs)
-    | otherwise      = fini . G.foldl' go (V 0 0) $ xs
-  where go (V i j) x = V (i + d^a) (j + d^b)
-            where d  = x - m
-        fini (V i j) = (i / n , j / n)
-        m            = mean xs
-        n            = fromIntegral (G.length xs)
-{-# SPECIALIZE
-    centralMoments :: Int -> Int -> U.Vector Double -> (Double, Double) #-}
-{-# SPECIALIZE
-    centralMoments :: Int -> Int -> V.Vector Double -> (Double, Double) #-}
+centralMoments a b xs = ffold (FF.centralMoments a b m) xs
+  where m = mean xs
+
 
 -- | Compute the skewness of a sample. This is a measure of the
 -- asymmetry of its distribution.
@@ -201,8 +181,8 @@ centralMoments a b xs
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 skewness :: (G.Vector v Double) => v Double -> Double
-skewness xs = c3 * c2 ** (-1.5)
-    where (c3 , c2) = centralMoments 3 2 xs
+skewness xs = ffold (FF.skewness m) xs
+    where m = mean xs
 {-# SPECIALIZE skewness :: U.Vector Double -> Double #-}
 {-# SPECIALIZE skewness :: V.Vector Double -> Double #-}
 
@@ -220,8 +200,8 @@ skewness xs = c3 * c2 ** (-1.5)
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 kurtosis :: (G.Vector v Double) => v Double -> Double
-kurtosis xs = c4 / (c2 * c2) - 3
-    where (c4 , c2) = centralMoments 4 2 xs
+kurtosis xs = ffold (FF.kurtosis m) xs
+    where m = mean xs
 {-# SPECIALIZE kurtosis :: U.Vector Double -> Double #-}
 {-# SPECIALIZE kurtosis :: V.Vector Double -> Double #-}
 
@@ -244,11 +224,8 @@ data V = V {-# UNPACK #-} !Double {-# UNPACK #-} !Double
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.
 variance :: (G.Vector v Double) => v Double -> Double
-variance samp
-    | n > 1     = robustSumVar (mean samp) samp / fromIntegral n
-    | otherwise = 0
-    where
-      n = G.length samp
+variance samp = ffold (FF.variance m) samp
+  where m = mean samp
 {-# SPECIALIZE variance :: U.Vector Double -> Double #-}
 {-# SPECIALIZE variance :: V.Vector Double -> Double #-}
 
@@ -256,11 +233,8 @@ variance samp
 -- | Unbiased estimate of a sample's variance.  Also known as the
 -- sample variance, where the denominator is /n/-1.
 varianceUnbiased :: (G.Vector v Double) => v Double -> Double
-varianceUnbiased samp
-    | n > 1     = robustSumVar (mean samp) samp / fromIntegral (n-1)
-    | otherwise = 0
-    where
-      n = G.length samp
+varianceUnbiased samp = ffold (FF.varianceUnbiased m) samp
+  where m = mean samp
 {-# SPECIALIZE varianceUnbiased :: U.Vector Double -> Double #-}
 {-# SPECIALIZE varianceUnbiased :: V.Vector Double -> Double #-}
 
