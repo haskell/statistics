@@ -117,6 +117,8 @@ expectation f = F.premap f kbnSum / F.genericLength
 -- fusion.
 mean :: F.Fold Double Double
 mean = kbnSum / F.genericLength
+{-# INLINE mean #-}
+
 
 -- | Arithmetic mean.  This uses Welford's algorithm to provide
 -- numerical stability, using a single pass over the sample data.
@@ -178,7 +180,8 @@ centralMoment a m
   where
     go x = (x-m) ^ a
     -- m    = mean xs
---
+{-# INLINE centralMoment #-}
+
 
 -- | Compute the /k/th and /j/th central moments of a sample.
 --
@@ -195,6 +198,9 @@ centralMoments a b m
             where d  = x - m
         fini (T1 n i j) = (i / n' , j / n')
             where n' = fromIntegral n
+{-# INLINE centralMoments #-}
+
+
 -- | Compute the skewness of a sample. This is a measure of the
 -- asymmetry of its distribution.
 --
@@ -219,6 +225,7 @@ centralMoments a b m
 -- function is subject to inaccuracy due to catastrophic cancellation.
 skewness :: Double -> F.Fold Double Double
 skewness m = (\(c3, c2) -> c3 * c2 ** (-1.5)) <$> centralMoments 3 2 m
+{-# INLINE skewness #-}
 
 
 -- | Compute the excess kurtosis of a sample.  This is a measure of
@@ -236,6 +243,8 @@ skewness m = (\(c3, c2) -> c3 * c2 ** (-1.5)) <$> centralMoments 3 2 m
 -- function is subject to inaccuracy due to catastrophic cancellation.
 kurtosis :: Double -> F.Fold Double Double
 kurtosis m = (\(c4, c2) -> c4 / (c2 * c2) - 3) <$> centralMoments 4 2 m
+{-# INLINE kurtosis #-}
+
 
 -- $variance
 --
@@ -257,11 +266,15 @@ variance :: Double -> F.Fold Double Double
 variance m =
     liftA2 (\s n -> if n > 1 then s / n else 0)
            (robustSumVar m) F.genericLength
+{-# INLINE variance #-}
+
 
 
 
 robustSumVar :: Double -> F.Fold Double Double
 robustSumVar m = F.premap (square . subtract m) kbnSum
+{-# INLINE robustSumVar #-}
+
 
 -- | Unbiased estimate of a sample's variance.  Also known as the
 -- sample variance, where the denominator is /n/-1.
@@ -269,6 +282,8 @@ varianceUnbiased :: Double -> F.Fold Double Double
 varianceUnbiased m =
     liftA2 (\s n -> if n > 1 then s / (n-1) else 0)
            (robustSumVar m) F.genericLength
+{-# INLINE varianceUnbiased #-}
+
 
 {-
 -- | Calculate mean and maximum likelihood estimate of variance. This
