@@ -236,6 +236,6 @@ benchmark statistics-bench-papi
   if impl(ghcjs) || !flag(BenchPAPI)
      buildable: False
   hs-source-dirs: benchmark bench-papi
-  main-is:        bench.hs
+  main-is:        Main.hs
   Other-modules:  Bench
   build-depends:  tasty-papi >= 0.1.2
