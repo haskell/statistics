@@ -313,10 +313,9 @@ stdErrMean samp = foldf (FF.stdErrMean m) samp
 {-# SPECIALIZE stdErrMean :: U.Vector Double -> Double #-}
 {-# SPECIALIZE stdErrMean :: V.Vector Double -> Double #-}
 
-robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> FF.V
-robustSumVarWeighted samp = foldf (fmap fini $ FF.robustSumVarWeighted m) samp
+robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> (Double, Double)
+robustSumVarWeighted samp = foldf (FF.robustSumVarWeighted m) samp
     where m = meanWeighted samp
-          fini (FF.V a b) = FF.V a b
 {-# INLINE robustSumVarWeighted #-}
 
 -- | Weighted variance. This is biased estimation.
@@ -325,7 +324,7 @@ varianceWeighted samp
     | G.length samp > 1 = fini $ robustSumVarWeighted samp
     | otherwise         = 0
     where
-      fini (FF.V s w) = s / w
+      fini (s, w) = s / w
 {-# SPECIALIZE varianceWeighted :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE varianceWeighted :: V.Vector (Double,Double) -> Double #-}
 
@@ -364,7 +363,7 @@ covariance :: (G.Vector v (Double,Double))
            -> Double
 covariance xy = foldf (FF.covariance (muX, muY)) xy
   where
-    FF.V muX muY = foldf (FF.biExpectation fst snd) xy
+    (muX, muY) = foldf (FF.biExpectation fst snd) xy
 {-# SPECIALIZE covariance :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE covariance :: V.Vector (Double,Double) -> Double #-}
 
@@ -375,7 +374,7 @@ correlation :: (G.Vector v (Double,Double))
            -> Double
 correlation xy = foldf (FF.correlation (muX, muY)) xy
   where
-    FF.V muX muY = foldf (FF.biExpectation fst snd) xy
+    (muX, muY) = foldf (FF.biExpectation fst snd) xy
 
 {-# SPECIALIZE correlation :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE correlation :: V.Vector (Double,Double) -> Double #-}

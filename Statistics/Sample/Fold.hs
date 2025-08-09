@@ -115,7 +115,6 @@ module Statistics.Sample.Fold
     , correlation
     -- * Strict types and helpers
     , F.fold
-    , V(..)
     , biExpectation
     , kbnSum
     , kbnSum'
@@ -436,8 +435,8 @@ stdErrMean :: Double -> F.Fold Double Double
 stdErrMean m = stdDev m / sqrt doubleLength
 {-# INLINE stdErrMean #-}
 
-robustSumVarWeighted :: Double -> F.Fold (Double,Double) V
-robustSumVarWeighted wm = F.Fold go (V 0 0) id
+robustSumVarWeighted :: Double -> F.Fold (Double,Double) (Double, Double)
+robustSumVarWeighted wm = F.Fold go (V 0 0) (\(V a b) -> (a,b))
     where
       go (V s w) (x,xw) = V (s + xw*d*d) (w + xw)
           where d = x - wm
@@ -447,7 +446,7 @@ robustSumVarWeighted wm = F.Fold go (V 0 0) id
 varianceWeighted :: Double -> F.Fold (Double,Double) Double
 varianceWeighted wm = fini <$> robustSumVarWeighted wm
     where
-      fini (V s w) = s / w
+      fini (s, w) = s / w
 {-# INLINE varianceWeighted #-}
 
 -- $cancellation
@@ -493,9 +492,9 @@ fastStdDev = sqrt fastVariance
 {-# INLINE fastStdDev #-}
 
 -- | Compute two expectations at once, to avoid computing the length twice.
-biExpectation :: (a -> Double) -> (a -> Double) -> F.Fold a V
+biExpectation :: (a -> Double) -> (a -> Double) -> F.Fold a (Double, Double)
 biExpectation f s = fini <$> doubleLength <*> F.premap f kbnSum <*> F.premap s kbnSum
-    where fini n a b =  V (a/n) (b/n)
+    where fini n a b =  (a/n, b/n)
 {-# INLINE biExpectation #-}
 
 -- | Covariance of sample of pairs. For empty sample it's set to
@@ -515,7 +514,7 @@ correlation :: (Double, Double) -> F.Fold (Double,Double) Double
 correlation (muX, muY) =
     fini <$> F.length <*> covF <*> varsF
   where
-    fini n cov (V varX varY)
+    fini n cov (varX, varY)
         | n == 0 = 0
         | otherwise = cov / sqrt (varX * varY)
     covF  = expectation (\(x,y) -> (x - muX)*(y - muY))
