@@ -219,15 +219,17 @@ kbnSum = summationVia kbn
 -- === __Examples:__
 -- >>> xs = [1,2,pi,1e-9]
 -- >>> ys = [4,5,2*pi,1e-11]
--- >>> F.fold kbnSum' xs <> F.fold kbnSum' ys
+-- >>> r1 = F.fold kbnSum' xs <> F.fold kbnSum' ys
+-- >>> r1
 -- KBNSum 21.424777961779377 2.580967484452971e-15
 --
--- >>> kbn it
+-- >>> kbn r1
 -- 21.42477796177938
--- >>> F.fold kbnSum' (xs ++ ys)
+-- >>> r2 = F.fold kbnSum' (xs ++ ys)
+-- >>> r2
 -- KBNSum 21.42477796177938 (-9.7174619434753e-16)
 --
--- >>> kbn it
+-- >>> kbn r2
 -- 21.42477796177938
 kbnSum' :: F.Fold Double KBNSum
 kbnSum' = summation
