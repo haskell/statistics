@@ -114,6 +114,7 @@ module Statistics.Sample.Fold
     , covariance
     , correlation
     -- * Strict types and helpers
+    , F.fold
     , V(..)
     , biExpectation
     , kbnSum
