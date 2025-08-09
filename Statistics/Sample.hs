@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 -- |
 -- Module    : Statistics.Sample
--- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan
+-- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan, 2025 Alex Mason
 -- License   : BSD3
 --
 -- Maintainer  : bos@serpentine.com
@@ -10,6 +10,9 @@
 --
 -- Commonly used sample statistics, also known as descriptive
 -- statistics.
+--
+-- To apply these to structures other than `Vector`s, see "Statistics.Sample.Fold"
+-- which contains the definitions of all algorithms in this module.
 
 module Statistics.Sample
     (
@@ -57,7 +60,11 @@ module Statistics.Sample
     , correlation
     , covariance2
     , correlation2
+
+    -- * Helpers
     , pair
+    , foldf
+    , pairFold
     -- * References
     -- $references
     ) where
@@ -75,18 +82,29 @@ import Prelude hiding ((^), sum)
 import qualified Control.Foldl as F
 import qualified Statistics.Sample.Fold as FF
 
-ffold :: G.Vector v a => F.Fold a b -> v a -> b
-ffold f v = F.purely_ (\s i -> G.foldl s i v) f
-{-# INLINE ffold #-}
-{-# SPECIALIZE ffold :: F.Fold Double b -> U.Vector Double -> b #-}
-{-# SPECIALIZE ffold :: F.Fold Double b -> V.Vector Double -> b #-}
+-- | Apply a 'Fold' to a 'Vector', with specialisations
+-- for [Unboxed]("Data.Vector.Unboxed")
+-- and [Boxed]("Data.Vector") vectors.
+foldf :: G.Vector v a => F.Fold a b -> v a -> b
+foldf f v = F.purely_ (\s i -> G.foldl s i v) f
+{-# INLINE foldf #-}
+{-# SPECIALIZE foldf :: F.Fold Double b -> U.Vector Double -> b #-}
+{-# SPECIALIZE foldf :: F.Fold Double b -> V.Vector Double -> b #-}
 
 data P a = P !a !Int
 
-pfold :: (G.Vector v a, G.Vector v b) => String -> F.Fold (a,b) c -> v a -> v b -> c
-pfold err fld va vb
+-- | Apply a 'Fold' to a pair of 'Vector's, the vectors must be of the same
+-- length and will 'error' if they are not. Because the lengths must be known,
+-- this function is not subject to fusion.
+
+-- TODO: Can this be made fuse by using Stream? Instead of checking
+-- length at the end, error if the end of one vector is reached before
+-- the other. This is the optimistic alternative to the pessimistic
+-- initial length check.
+pairFold :: (G.Vector v a, G.Vector v b) => String -> F.Fold (a,b) c -> v a -> v b -> c
+pairFold err fld va vb
   | la /= lb = error err
-  | otherwise = ffold foldPair va
+  | otherwise = foldf foldPair va
     where la = G.length va
           lb = G.length vb
           -- Pattern match here so we don't end up forcing arguments
@@ -95,21 +113,21 @@ pfold err fld va vb
             (F.Fold step ini end) -> F.Fold step' (P ini 0) end' where
               end' (P a _) = end a
               step' (P x n) a =  P (step x (a, G.unsafeIndex vb n)) (n+1)
-{-# INLINE pfold #-}
-{-# SPECIALIZE pfold :: String -> F.Fold (Double, Double) b -> U.Vector Double -> U.Vector Double -> b #-}
-{-# SPECIALIZE pfold :: String -> F.Fold (Double, Double) b -> V.Vector Double -> V.Vector Double -> b #-}
+{-# INLINE pairFold #-}
+{-# SPECIALIZE pairFold :: String -> F.Fold (Double, Double) b -> U.Vector Double -> U.Vector Double -> b #-}
+{-# SPECIALIZE pairFold :: String -> F.Fold (Double, Double) b -> V.Vector Double -> V.Vector Double -> b #-}
 
 
 -- | /O(n)/ Range. The difference between the largest and smallest
 -- elements of a sample.
 range :: (G.Vector v Double) => v Double -> Double
-range = ffold FF.range
+range = foldf FF.range
 {-# INLINE range #-}
 
 -- | /O(n)/ Compute expectation of function over for sample. This is
 --   simply @mean . map f@ but won't create intermediate vector.
 expectation :: (G.Vector v a) => (a -> Double) -> v a -> Double
-expectation f xs = ffold (FF.expectation f) xs
+expectation f xs = foldf (FF.expectation f) xs
 {-# INLINE expectation #-}
 
 -- | /O(n)/ Arithmetic mean.  This uses Kahan-Babuška-Neumaier
@@ -117,7 +135,7 @@ expectation f xs = ffold (FF.expectation f) xs
 -- values are very large. This function is not subject to stream
 -- fusion.
 mean :: (G.Vector v Double) => v Double -> Double
-mean = ffold FF.mean
+mean = foldf FF.mean
 {-# SPECIALIZE mean :: U.Vector Double -> Double #-}
 {-# SPECIALIZE mean :: V.Vector Double -> Double #-}
 
@@ -127,25 +145,25 @@ mean = ffold FF.mean
 -- Compared to 'mean', this loses a surprising amount of precision
 -- unless the inputs are very large.
 welfordMean :: (G.Vector v Double) => v Double -> Double
-welfordMean = ffold FF.welfordMean
+welfordMean = foldf FF.welfordMean
 {-# SPECIALIZE welfordMean :: U.Vector Double -> Double #-}
 {-# SPECIALIZE welfordMean :: V.Vector Double -> Double #-}
 
 -- | /O(n)/ Arithmetic mean for weighted sample. It uses a single-pass
 -- algorithm analogous to the one used by 'welfordMean'.
 meanWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> Double
-meanWeighted = ffold FF.meanWeighted
+meanWeighted = foldf FF.meanWeighted
 {-# INLINE meanWeighted #-}
 
 -- | /O(n)/ Harmonic mean.  This algorithm performs a single pass over
 -- the sample.
 harmonicMean :: (G.Vector v Double) => v Double -> Double
-harmonicMean = ffold FF.harmonicMean
+harmonicMean = foldf FF.harmonicMean
 {-# INLINE harmonicMean #-}
 
 -- | /O(n)/ Geometric mean of a sample containing no negative values.
 geometricMean :: (G.Vector v Double) => v Double -> Double
-geometricMean = ffold FF.geometricMean
+geometricMean = foldf FF.geometricMean
 {-# INLINE geometricMean #-}
 
 -- | Compute the /k/th central moment of a sample.  The central moment
@@ -157,7 +175,7 @@ geometricMean = ffold FF.geometricMean
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 centralMoment :: (G.Vector v Double) => Int -> v Double -> Double
-centralMoment a xs = ffold (FF.centralMoment a m) xs
+centralMoment a xs = foldf (FF.centralMoment a m) xs
   where
     m = mean xs
 {-# SPECIALIZE centralMoment :: Int -> U.Vector Double -> Double #-}
@@ -171,7 +189,7 @@ centralMoment a xs = ffold (FF.centralMoment a m) xs
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 centralMoments :: (G.Vector v Double) => Int -> Int -> v Double -> (Double, Double)
-centralMoments a b xs = ffold (FF.centralMoments a b m) xs
+centralMoments a b xs = foldf (FF.centralMoments a b m) xs
   where m = mean xs
 
 
@@ -198,7 +216,7 @@ centralMoments a b xs = ffold (FF.centralMoments a b m) xs
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 skewness :: (G.Vector v Double) => v Double -> Double
-skewness xs = ffold (FF.skewness m) xs
+skewness xs = foldf (FF.skewness m) xs
     where m = mean xs
 {-# SPECIALIZE skewness :: U.Vector Double -> Double #-}
 {-# SPECIALIZE skewness :: V.Vector Double -> Double #-}
@@ -217,7 +235,7 @@ skewness xs = ffold (FF.skewness m) xs
 -- For samples containing many values very close to the mean, this
 -- function is subject to inaccuracy due to catastrophic cancellation.
 kurtosis :: (G.Vector v Double) => v Double -> Double
-kurtosis xs = ffold (FF.kurtosis m) xs
+kurtosis xs = foldf (FF.kurtosis m) xs
     where m = mean xs
 {-# SPECIALIZE kurtosis :: U.Vector Double -> Double #-}
 {-# SPECIALIZE kurtosis :: V.Vector Double -> Double #-}
@@ -239,7 +257,7 @@ kurtosis xs = ffold (FF.kurtosis m) xs
 -- | Maximum likelihood estimate of a sample's variance.  Also known
 -- as the population variance, where the denominator is /n/.
 variance :: (G.Vector v Double) => v Double -> Double
-variance samp = ffold (FF.variance m) samp
+variance samp = foldf (FF.variance m) samp
   where m = mean samp
 {-# SPECIALIZE variance :: U.Vector Double -> Double #-}
 {-# SPECIALIZE variance :: V.Vector Double -> Double #-}
@@ -248,7 +266,7 @@ variance samp = ffold (FF.variance m) samp
 -- | Unbiased estimate of a sample's variance.  Also known as the
 -- sample variance, where the denominator is /n/-1.
 varianceUnbiased :: (G.Vector v Double) => v Double -> Double
-varianceUnbiased samp = ffold (FF.varianceUnbiased m) samp
+varianceUnbiased samp = foldf (FF.varianceUnbiased m) samp
   where m = mean samp
 {-# SPECIALIZE varianceUnbiased :: U.Vector Double -> Double #-}
 {-# SPECIALIZE varianceUnbiased :: V.Vector Double -> Double #-}
@@ -258,7 +276,7 @@ varianceUnbiased samp = ffold (FF.varianceUnbiased m) samp
 -- since it will calculate mean only once.
 meanVariance ::  (G.Vector v Double) => v Double -> (Double,Double)
 meanVariance samp
-  | n > 1     = (m, ffold (FF.robustSumVar m) samp / fromIntegral n)
+  | n > 1     = (m, foldf (FF.robustSumVar m) samp / fromIntegral n)
   | otherwise = (m, 0)
     where
       n = G.length samp
@@ -271,7 +289,7 @@ meanVariance samp
 -- since it will calculate mean only once.
 meanVarianceUnb :: (G.Vector v Double) => v Double -> (Double,Double)
 meanVarianceUnb samp
-  | n > 1     = (m, ffold (FF.robustSumVar m) samp / fromIntegral (n-1))
+  | n > 1     = (m, foldf (FF.robustSumVar m) samp / fromIntegral (n-1))
   | otherwise = (m, 0)
     where
       n = G.length samp
@@ -282,7 +300,7 @@ meanVarianceUnb samp
 -- | Standard deviation.  This is simply the square root of the
 -- unbiased estimate of the variance.
 stdDev :: (G.Vector v Double) => v Double -> Double
-stdDev samp = ffold (FF.stdDev m) samp
+stdDev samp = foldf (FF.stdDev m) samp
   where m = mean samp
 {-# SPECIALIZE stdDev :: U.Vector Double -> Double #-}
 {-# SPECIALIZE stdDev :: V.Vector Double -> Double #-}
@@ -290,13 +308,13 @@ stdDev samp = ffold (FF.stdDev m) samp
 -- | Standard error of the mean. This is the standard deviation
 -- divided by the square root of the sample size.
 stdErrMean :: (G.Vector v Double) => v Double -> Double
-stdErrMean samp = ffold (FF.stdErrMean m) samp
+stdErrMean samp = foldf (FF.stdErrMean m) samp
     where m = mean samp
 {-# SPECIALIZE stdErrMean :: U.Vector Double -> Double #-}
 {-# SPECIALIZE stdErrMean :: V.Vector Double -> Double #-}
 
 robustSumVarWeighted :: (G.Vector v (Double,Double)) => v (Double,Double) -> FF.V
-robustSumVarWeighted samp = ffold (fmap fini $ FF.robustSumVarWeighted m) samp
+robustSumVarWeighted samp = foldf (fmap fini $ FF.robustSumVarWeighted m) samp
     where m = meanWeighted samp
           fini (FF.V a b) = FF.V a b
 {-# INLINE robustSumVarWeighted #-}
@@ -322,23 +340,21 @@ varianceWeighted samp
 -- mean, Knuth's algorithm gives inaccurate results due to
 -- catastrophic cancellation.
 
--- fastVar :: (G.Vector v Double) => v Double -> FF.T1
--- fastVar = ffold FF.fastVar
 
 -- | Maximum likelihood estimate of a sample's variance.
 fastVariance :: (G.Vector v Double) => v Double -> Double
-fastVariance = ffold FF.fastVariance
+fastVariance = foldf FF.fastVariance
 {-# INLINE fastVariance #-}
 
 -- | Unbiased estimate of a sample's variance.
 fastVarianceUnbiased :: (G.Vector v Double) => v Double -> Double
-fastVarianceUnbiased = ffold FF.fastVarianceUnbiased
+fastVarianceUnbiased = foldf FF.fastVarianceUnbiased
 {-# INLINE fastVarianceUnbiased #-}
 
--- | Standard deviation.  This is simply the square root of the
+-- | Standard deviation. This is simply the square root of the
 -- maximum likelihood estimate of the variance.
 fastStdDev :: (G.Vector v Double) => v Double -> Double
-fastStdDev = ffold FF.fastStdDev
+fastStdDev = foldf FF.fastStdDev
 {-# INLINE fastStdDev #-}
 
 -- | Covariance of sample of pairs. For empty sample it's set to
@@ -346,9 +362,9 @@ fastStdDev = ffold FF.fastStdDev
 covariance :: (G.Vector v (Double,Double))
            => v (Double,Double)
            -> Double
-covariance xy = ffold (FF.covariance (muX, muY)) xy
+covariance xy = foldf (FF.covariance (muX, muY)) xy
   where
-    FF.V muX muY = ffold (FF.biExpectation fst snd) xy
+    FF.V muX muY = foldf (FF.biExpectation fst snd) xy
 {-# SPECIALIZE covariance :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE covariance :: V.Vector (Double,Double) -> Double #-}
 
@@ -357,9 +373,9 @@ covariance xy = ffold (FF.covariance (muX, muY)) xy
 correlation :: (G.Vector v (Double,Double))
            => v (Double,Double)
            -> Double
-correlation xy = ffold (FF.correlation (muX, muY)) xy
+correlation xy = foldf (FF.correlation (muX, muY)) xy
   where
-    FF.V muX muY = ffold (FF.biExpectation fst snd) xy
+    FF.V muX muY = foldf (FF.biExpectation fst snd) xy
 
 {-# SPECIALIZE correlation :: U.Vector (Double,Double) -> Double #-}
 {-# SPECIALIZE correlation :: V.Vector (Double,Double) -> Double #-}
@@ -372,7 +388,7 @@ covariance2 :: (G.Vector v Double)
            -> v Double
            -> Double
 covariance2 xs ys =
-    pfold "Statistics.Sample.covariance2: both samples must have same length"
+    pairFold "Statistics.Sample.covariance2: both samples must have same length"
           (FF.covariance (muX, muY))
           xs ys
   where
@@ -389,12 +405,9 @@ correlation2 :: (G.Vector v Double)
              -> v Double
              -> Double
 correlation2 xs ys =
-  pfold "Statistics.Sample.correlation2: both samples must have same length"
+  pairFold "Statistics.Sample.correlation2: both samples must have same length"
         (FF.correlation (muX, muY))
         xs ys
-  -- | nx /= ny  = error $ "Statistics.Sample.correlation2: both samples must have same length"
-  -- | nx == 0   = 0
-  -- | otherwise = cov / sqrt (varX * varY)
   where
     muX = mean xs
     muY = mean ys
@@ -411,32 +424,6 @@ pair va vb
   | otherwise = error "Statistics.Sample.pair: vector must have same length"
 {-# INLINE pair #-}
 
-------------------------------------------------------------------------
--- Helper code. Monomorphic unpacked accumulators.
-
--- don't support polymorphism, as we can't get unboxed returns if we use it.
-
-{-
-
-Consider this core:
-
-with data T a = T !a !Int
-
-$wfold :: Double#
-               -> Int#
-               -> Int#
-               -> (# Double, Int# #)
-
-and without,
-
-$wfold :: Double#
-               -> Int#
-               -> Int#
-               -> (# Double#, Int# #)
-
-yielding to boxed returns and heap checks.
-
--}
 
 -- $references
 --
