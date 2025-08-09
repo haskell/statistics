@@ -1,5 +1,9 @@
+module Main where
+
 import Data.Complex
 import Statistics.Sample
+import qualified Statistics.Sample.Fold as F
+import qualified Control.Foldl as CF
 import Statistics.Transform
 import Statistics.Correlation
 import System.Random.MWC
@@ -21,6 +25,15 @@ sampleW = VU.zip sample (VU.reverse sample)
 -- Complex vector for FFT tests
 sampleC :: VU.Vector (Complex Double)
 sampleC = VU.zipWith (:+) sample (VU.reverse sample)
+
+separateLMVSK :: CF.Fold Double F.LMVSK
+separateLMVSK =
+  F.LMVSK
+    <$> CF.length
+    <*> F.mean
+    <*> F.fastVariance
+    <*> F.centralMoment 2 0
+    <*> F.centralMoment 3 0 -- fudge the mean because we don't have a fast skewness or kurtosis
 
 
 -- Simple benchmark for functions from Statistics.Sample
@@ -53,6 +66,8 @@ main =
     , bench "C.M. 3"           $ nf (\x -> centralMoment 3 x)  sample
     , bench "C.M. 4"           $ nf (\x -> centralMoment 4 x)  sample
     , bench "C.M. 5"           $ nf (\x -> centralMoment 5 x)  sample
+    , bench "Applicative LMVSK" $ nf (\x -> foldf separateLMVSK x) sample
+    , bench "fastLMVSK"         $ nf (\x -> foldf F.fastLMVSK x)   sample
     ]
   , bgroup "FFT"
     [ bgroup "fft"

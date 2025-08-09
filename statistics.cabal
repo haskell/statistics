@@ -101,6 +101,7 @@ library
     Statistics.Resampling
     Statistics.Resampling.Bootstrap
     Statistics.Sample
+    Statistics.Sample.Fold
     Statistics.Sample.Internal
     Statistics.Sample.Histogram
     Statistics.Sample.KernelDensity
@@ -142,6 +143,7 @@ library
                , vector-th-unbox
                , vector-binary-instances >= 0.2.1
                , data-default-class      >= 0.1.2
+               , foldl
 
   -- Older GHC
   if impl(ghc < 7.6)
@@ -223,9 +225,10 @@ benchmark statistics-bench
   import:         bench-stanza
   type:           exitcode-stdio-1.0
   hs-source-dirs: benchmark bench-time
-  main-is:        bench.hs
+  main-is:        Main.hs
   Other-modules:  Bench
   build-depends:  tasty-bench >= 0.3
+                , foldl
 
 benchmark statistics-bench-papi
   import:         bench-stanza
@@ -233,6 +236,6 @@ benchmark statistics-bench-papi
   if impl(ghcjs) || !flag(BenchPAPI)
      buildable: False
   hs-source-dirs: benchmark bench-papi
-  main-is:        bench.hs
+  main-is:        Main.hs
   Other-modules:  Bench
   build-depends:  tasty-papi >= 0.1.2
