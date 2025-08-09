@@ -228,6 +228,7 @@ benchmark statistics-bench
   main-is:        Main.hs
   Other-modules:  Bench
   build-depends:  tasty-bench >= 0.3
+                , foldl
 
 benchmark statistics-bench-papi
   import:         bench-stanza

@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DerivingVia #-}
 -- |
 -- Module    : Statistics.Sample.Fold
 -- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan, 2025 Alex Mason
@@ -143,6 +144,7 @@ import qualified Control.Foldl as F
 
 -- Operator ^ will be overridden
 import Prelude hiding ((^), sum)
+import Control.DeepSeq (NFData(..))
 
 
 ------------------------------------------------------------------------
@@ -551,9 +553,13 @@ data LMVSK  = LMVSK
   , lmvskKurtosis :: {-# UNPACK #-}!Double
   } deriving (Show, Eq)
 
+instance NFData LMVSK where
+  rnf !_ = ()
+
 -- | Intermediate state for computing 'LMVSK'. This type's 'Semigroup'
 -- instance allows it to be computed in parallel and combined
 newtype LMVSKState = LMVSKState LMVSK
+  deriving NFData via LMVSK
 
 instance Monoid LMVSKState where
   {-# INLINE mempty #-}
