@@ -150,7 +150,7 @@ import Control.DeepSeq (NFData(..))
 
 -- (^) operator from Prelude is just slow.
 (^) :: Double -> Int -> Double
-!x ^ 1 = x
+x ^ 1 = x
 x ^ 2 = x * x
 x ^ 3 = x * x * x
 x ^ 4 = (x * x) * (x * x)
