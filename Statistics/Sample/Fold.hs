@@ -142,6 +142,7 @@ import qualified Control.Foldl as F
 
 -- Operator ^ will be overridden
 import Prelude hiding ((^), sum)
+import Control.Applicative (liftA2, (<$>), (<*>))
 import Control.DeepSeq (NFData(..))
 
 
