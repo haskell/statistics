@@ -113,6 +113,17 @@ module Statistics.Sample.Fold
     -- * Joint distributions
     , covariance
     , correlation
+
+    -- ** Single pass Length, Mean, Variance, Skewness and Kurtosis
+    -- $lmvsk
+    , LMVSK(..)
+    , LMVSKState
+    , fastLMVSK
+    , fastLMVSKu
+    , foldLMVSKState
+    , getLMVSK
+    , getLMVSKu
+
     -- * Strict types and helpers
     , F.fold
     , biExpectation
@@ -522,6 +533,144 @@ correlation (muX, muY) =
                           (\(_,y) -> square (y - muY))
 {-# INLINE correlation #-}
 
+-- $lmvsk
+--
+-- 'LMVSK' represents the Length, Mean, Variance, Skewness
+-- and Kurtosis of a sample. If you need to compute several
+-- of these statistics at once, using these folds may be more
+-- efficient than combining the 'Fold's above Applicatively.
+--
+-- The algorithm used is similar to the found in 'fastVariance' etc.
+-- but common subexpressions are shared.
+
+data LMVSK  = LMVSK
+  { lmvskLength   :: {-# UNPACK #-}!Int
+  , lmvskMean     :: {-# UNPACK #-}!Double
+  , lmvskVariance :: {-# UNPACK #-}!Double
+  , lmvskSkewness :: {-# UNPACK #-}!Double
+  , lmvskKurtosis :: {-# UNPACK #-}!Double
+  } deriving (Show, Eq)
+
+-- | Intermediate state for computing 'LMVSK'. This type's 'Semigroup'
+-- instance allows it to be computed in parallel and combined
+newtype LMVSKState = LMVSKState LMVSK
+
+instance Monoid LMVSKState where
+  {-# INLINE mempty #-}
+  mempty = LMVSKState lmvskZero
+  {-# INLINE mappend #-}
+  mappend = (<>)
+
+instance Semigroup LMVSKState where
+  {-# INLINE (<>) #-}
+  (LMVSKState (LMVSK an am1 am2 am3 am4)) <> (LMVSKState (LMVSK bn bm1 bm2 bm3 bm4))
+    = LMVSKState (LMVSK n m1 m2 m3 m4) where
+    fi :: Int -> Double
+    fi = fromIntegral
+    -- combined.n = a.n + b.n;
+    n      = an+bn
+    n2     = n*n
+    nd     = fi n
+    nda    = fi an
+    ndb    = fi bn
+    -- delta = b.M1 - a.M1;
+    delta  =    bm1 - am1
+    -- delta2 = delta*delta;
+    delta2 =    delta*delta
+    -- delta3 = delta*delta2;
+    delta3 =    delta*delta2
+    -- delta4 = delta2*delta2;
+    delta4 =    delta2*delta2
+    -- combined.M1 = (a.n*a.M1 + b.n*b.M1) / combined.n;
+    m1     =         (nda*am1  + ndb*bm1 ) / nd
+    -- combined.M2 = a.M2 + b.M2 + delta2*a.n*b.n / combined.n;
+    m2     =          am2 + bm2  + delta2*nda*ndb / nd
+    -- combined.M3 = a.M3 + b.M3 + delta3*a.n*b.n*   (a.n - b.n)/(combined.n*combined.n);
+    m3     =         am3  + bm3  + delta3*nda*ndb* fi( an - bn )/ fi n2
+    -- combined.M3 += 3.0*delta * (a.n*b.M2 - b.n*a.M2) / combined.n;
+           +          3.0*delta * (nda*bm2  - ndb*am2 ) / nd
+    --
+    -- combined.M4 = a.M4 + b.M4 + delta4*a.n*b.n * (a.n*a.n - a.n*b.n + b.n*b.n) /(combined.n*combined.n*combined.n);
+    m4     =         am4  + bm4  + delta4*nda*ndb *fi(an*an  -  an*bn  +  bn*bn ) / fi (n*n*n)
+    -- combined.M4 += 6.0*delta2 * (a.n*a.n*b.M2 + b.n*b.n*a.M2)/(combined.n*combined.n) +
+           +          6.0*delta2 * (nda*nda*bm2  + ndb*ndb*am2) / fi n2
+    --               4.0*delta*(a.n*b.M3 - b.n*a.M3) / combined.n;
+           +         4.0*delta*(nda*bm3  - ndb*am3) / nd
+
+-- | Efficiently compute the
+-- __length, mean, variance, skewness and kurtosis__ with a single pass.
+{-# INLINE fastLMVSK #-}
+fastLMVSK :: F.Fold Double LMVSK
+fastLMVSK = getLMVSK <$> foldLMVSKState
+
+-- | Efficiently compute the
+-- __length, mean, unbiased variance, skewness and kurtosis__ with a single pass.
+{-# INLINE fastLMVSKu #-}
+fastLMVSKu :: F.Fold Double LMVSK
+fastLMVSKu = getLMVSKu <$> foldLMVSKState
+
+-- | Initial 'LMVSKState'
+{-# INLINE lmvskZero #-}
+lmvskZero :: LMVSK
+lmvskZero = LMVSK 0 0 0 0 0
+
+-- | Performs the heavy lifting of fastLMVSK. This is exposed
+--   because the internal `LMVSKState` is monoidal, allowing you
+--   to run these statistics in parallel over datasets which are
+--   split and then combine the results.
+{-# INLINE foldLMVSKState #-}
+foldLMVSKState :: F.Fold Double LMVSKState
+foldLMVSKState = F.Fold stepLMVSKState (LMVSKState lmvskZero) id
+
+{-# INLINE stepLMVSKState #-}
+stepLMVSKState :: LMVSKState -> Double -> LMVSKState
+stepLMVSKState (LMVSKState (LMVSK n1 m1 m2 m3 m4)) x = LMVSKState $ LMVSK n m1' m2' m3' m4' where
+  fi :: Int -> Double
+  fi = fromIntegral
+  -- long long n1 = n;
+  -- n++;
+  n = n1+1
+  -- delta = x - M1;
+  delta =    x - m1
+  -- delta_n = delta / n;
+  delta_n =    delta / fi n
+  -- delta_n2 = delta_n * delta_n;
+  delta_n2 =    delta_n * delta_n
+  -- term1 = delta * delta_n * n1;
+  term1 =    delta * delta_n * fi n1
+  -- M1 +=   delta_n;
+  m1' = m1 + delta_n
+  -- M4 +=   term1 * delta_n2 *    (n*n - 3*n + 3) + 6 * delta_n2 * M2 - 4 * delta_n * M3;
+  m4' = m4 + term1 * delta_n2 * fi (n*n - 3*n + 3) + 6 * delta_n2 * m2 - 4 * delta_n * m3
+  -- M3 +=   term1 * delta_n *    (n - 2) - 3 * delta_n * M2;
+  m3' = m3 + term1 * delta_n * fi (n - 2) - 3 * delta_n * m2
+  -- M2 +=  term1;
+  m2' = m2 + term1
+
+-- | Returns the stats which have been computed in a LMVSKState with /population/ variance.
+getLMVSK :: LMVSKState -> LMVSK
+getLMVSK (LMVSKState (LMVSK n m1 m2 m3 m4)) = LMVSK n m1 m2' m3' m4' where
+  nd = fromIntegral n
+  -- M2/(n-1.0)
+  m2' = m2 / nd
+  --    sqrt(double(n)) * M3/ pow(M2, 1.5)
+  m3' = sqrt nd * m3 / (m2 ** 1.5)
+  -- double(n)*M4 / (M2*M2) - 3.0
+  m4' = nd*m4     / (m2*m2) - 3.0
+
+-- | Returns the stats which have been computed in a LMVSKState,
+--   with the /sample/ variance.
+getLMVSKu :: LMVSKState -> LMVSK
+getLMVSKu (LMVSKState (LMVSK n m1 m2 m3 m4)) = LMVSK n m1 m2' m3' m4' where
+  nd = fromIntegral n
+  -- M2/(n-1.0)
+  m2' = m2 / (nd-1)
+  --    sqrt(double(n)) * M3/ pow(M2, 1.5)
+  m3' = sqrt nd * m3 / (m2 ** 1.5)
+  -- double(n)*M4 / (M2*M2) - 3.0
+  m4' = nd*m4     / (m2*m2) - 3.0
+
+
 --------
 
 -- $references
@@ -542,3 +691,6 @@ correlation (muX, muY) =
 -- * West, D.H.D. (1979) Updating mean and variance estimates: an
 --   improved method. /Communications of the ACM/
 --   22(9):532&#8211;535. <http://doi.acm.org/10.1145/359146.359153>
+--
+-- * John D. Cook. Computing skewness and kurtosis in one pass
+--   <http://www.johndcook.com/blog/skewness_kurtosis/>
