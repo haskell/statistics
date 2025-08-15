@@ -54,9 +54,10 @@ tested-with:
    || ==9.0.2
    || ==9.2.8
    || ==9.4.8
-   || ==9.6.6
+   || ==9.6.7
    || ==9.8.4
-   || ==9.10.1
+   || ==9.10.2
+   || ==9.12.2
 
 source-repository head
   type:     git
@@ -205,7 +206,7 @@ test-suite statistics-doctests
   build-depends:
             base       -any
           , statistics -any
-          , doctest    >=0.15 && <0.24
+          , doctest    >=0.15 && <0.25
 
 -- We want to be able to build benchmarks using both tasty-bench and tasty-papi.
 -- They have similar API so we just create two shim modules which reexport
@@ -223,7 +224,7 @@ benchmark statistics-bench
   import:         bench-stanza
   type:           exitcode-stdio-1.0
   hs-source-dirs: benchmark bench-time
-  main-is:        bench.hs
+  main-is:        Main.hs
   Other-modules:  Bench
   build-depends:  tasty-bench >= 0.3
 
@@ -233,6 +234,6 @@ benchmark statistics-bench-papi
   if impl(ghcjs) || !flag(BenchPAPI)
      buildable: False
   hs-source-dirs: benchmark bench-papi
-  main-is:        bench.hs
+  main-is:        Main.hs
   Other-modules:  Bench
   build-depends:  tasty-papi >= 0.1.2

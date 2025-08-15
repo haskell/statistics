@@ -18,18 +18,22 @@ jobs:
       matrix:
         include:
           # Linux
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.4.4"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.6.5"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.8.4"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.10.7" }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.0.2"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.2.8"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.4.8"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.6.6"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.8.4"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.10.1" }
-          # Fails to resolve aeson [2025.01.14]
-          # - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.12.1" }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "8.4.4"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "8.6.5"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "8.8.4"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "8.10.7" }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.0.2"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.2.8"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.4.8"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.6.7"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.8.4"  }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.10.2" }
+          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.12.2" }
+          # Macos
+          - { cabal: "3.14", os: macos-latest,  ghc: "9.6.7"  }
+          - { cabal: "3.14", os: macos-latest,  ghc: "9.8.4"  }
+          - { cabal: "3.14", os: macos-latest,  ghc: "9.10.2" }
+          - { cabal: "3.14", os: macos-latest,  ghc: "9.12.2" }
       fail-fast: false
 
     steps:
@@ -52,6 +56,8 @@ jobs:
     - name: "Install PAPI"
       run: |
         sudo apt-get install -y libpapi-dev
+        echo FLAG_PAPI=-fBenchPAPI >> "$GITHUB_ENV"
+      if: matrix.os == 'ubuntu-latest'
     # ----------------
     - name: Versions
       run: |
@@ -74,11 +80,16 @@ jobs:
     # ----------------
     - name: Build
       run: |
+        echo FLAG_PAPI=$FLAG_PAPI
         cd unpacked/statistics-*
-        cabal configure --haddock-all --enable-tests --enable-benchmarks
+        cabal configure $FLAG_PAPI --haddock-all --enable-tests --enable-benchmarks --benchmark-option=-l
         cabal build all --write-ghc-environment-files=always
     # ----------------
     - name: Test
       run: |
         cd unpacked/statistics-*
         cabal test all
+    # ----------------
+    - name: Bench
+      run: |
+        cabal bench all

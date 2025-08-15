@@ -1,3 +1,5 @@
+module Main where
+
 import Data.Complex
 import Statistics.Sample
 import Statistics.Transform
