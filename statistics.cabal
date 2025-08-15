@@ -206,7 +206,7 @@ test-suite statistics-doctests
   build-depends:
             base       -any
           , statistics -any
-          , doctest    >=0.15 && <0.24
+          , doctest    >=0.15 && <0.25
 
 -- We want to be able to build benchmarks using both tasty-bench and tasty-papi.
 -- They have similar API so we just create two shim modules which reexport
