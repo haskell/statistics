@@ -453,12 +453,6 @@ pair va vb
 
 -- (^) operator from Prelude is just slow.
 (^) :: Double -> Int -> Double
-x ^ 1 = x
-x ^ 2 = x * x
-x ^ 3 = x * x * x
-x ^ 4 = (x * x) * (x * x)
-x ^ 5 = (x * x) * x * (x * x)
--- x ^ n = x * (x ^ (n-1))
 x0 ^ n0 = go (n0-1) x0 where
     go 0 !acc = acc
     go n  acc = go (n-1) (acc*x0)
