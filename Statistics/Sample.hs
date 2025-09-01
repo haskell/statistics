@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE BangPatterns #-}
 -- |
 -- Module    : Statistics.Sample
 -- Copyright : (c) 2008 Don Stewart, 2009 Bryan O'Sullivan
@@ -452,8 +453,9 @@ pair va vb
 
 -- (^) operator from Prelude is just slow.
 (^) :: Double -> Int -> Double
-x ^ 1 = x
-x ^ n = x * (x ^ (n-1))
+x0 ^ n0 = go (n0-1) x0 where
+    go 0 !acc = acc
+    go n  acc = go (n-1) (acc*x0)
 {-# INLINE (^) #-}
 
 -- don't support polymorphism, as we can't get unboxed returns if we use it.
