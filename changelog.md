@@ -1,12 +1,12 @@
-## Unreleased
+## Changes in 0.16.4.0 [2025.10.23]
 
-- **New Features**:
-  - Implemented Bartlett's test (`Statistics.Test.Bartlett`) for homogeneity of variances.
-  - Implemented Levene's test (`Statistics.Test.Levene`) for homogeneity of variances.
-  - Resolves [#137](https://github.com/haskell/statistics/issues/137).
+ * Bartlett's test (`Statistics.Test.Bartlett`) and Levene's test
+   (`Statistics.Test.Levene`) for homogeneity of variances is added.
 
-- **Documentation**:
-  - Added usage examples and Haddock comments for both tests.
+ * Improved performance in calculation of moments.
+
+ * Improved precision in calculation of `logDensity` of Student T distribution.
+
 
 ## Changes in 0.16.3.0
 
