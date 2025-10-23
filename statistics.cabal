@@ -2,7 +2,7 @@ cabal-version:  3.0
 build-type:     Simple
 
 name:           statistics
-version:        0.16.3.0
+version:        0.16.4.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -137,7 +137,7 @@ library
                , binary                  >= 0.5.1.0
                , primitive               >= 0.3
                , dense-linear-algebra    >= 0.1 && <0.2
-               , parallel                >= 3.2.2.0 && <3.3
+               , parallel                >= 3.2.2.0 && <3.4
                , vector                  >= 0.10
                , vector-algorithms       >= 0.4
                , vector-th-unbox
@@ -174,6 +174,8 @@ test-suite statistics-tests
     Tests.Quantile
   ghc-options:
     -Wall -threaded -rtsopts -fsimpl-tick-factor=500
+  if impl(ghc >= 9.8)
+    ghc-options: -Wno-x-partial
   build-depends: base
                , statistics
                , dense-linear-algebra
