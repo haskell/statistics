@@ -31,12 +31,18 @@ import Data.Aeson           (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary          (Binary(..))
 import Data.Data            (Data, Typeable)
 import GHC.Generics         (Generic)
+
+import qualified System.Random.MWC.Distributions as MWC
+
 import Numeric.SpecFunctions (incompleteGamma,logFactorial)
 import Numeric.MathFunctions.Constants (m_neg_inf)
+
 
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Statistics.Internal
+import Control.Monad (liftM)
+
 
 
 
@@ -92,6 +98,12 @@ instance D.Entropy PoissonDistribution where
 
 instance D.MaybeEntropy PoissonDistribution where
   maybeEntropy = Just . D.entropy
+
+instance D.DiscreteGen PoissonDistribution where
+  genDiscreteVar (PD lambda) = MWC.poisson lambda
+
+instance D.ContGen PoissonDistribution where
+  genContVar (PD lambda) gen = fromIntegral <$> MWC.poisson lambda gen
 
 -- | Create Poisson distribution.
 poisson :: Double -> PoissonDistribution
