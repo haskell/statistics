@@ -2,7 +2,7 @@ cabal-version:  3.0
 build-type:     Simple
 
 name:           statistics
-version:        0.16.4.0
+version:        0.16.5.0
 synopsis:       A library of statistical types, data, and functions
 description:
   This library provides a number of common functions and types useful
@@ -128,7 +128,7 @@ library
   build-depends: base                    >= 4.9 && < 5
                  --
                , math-functions          >= 0.3.4.1
-               , mwc-random              >= 0.15.0.0
+               , mwc-random              >= 0.15.3.0
                , random                  >= 1.2
                  --
                , aeson                   >= 0.6.0.0
