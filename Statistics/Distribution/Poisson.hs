@@ -96,9 +96,11 @@ instance D.Entropy PoissonDistribution where
 instance D.MaybeEntropy PoissonDistribution where
   maybeEntropy = Just . D.entropy
 
+-- | @since 0.16.5.0
 instance D.DiscreteGen PoissonDistribution where
   genDiscreteVar (PD lambda) = MWC.poisson lambda
 
+-- | @since 0.16.5.0
 instance D.ContGen PoissonDistribution where
   genContVar (PD lambda) gen = fromIntegral <$> MWC.poisson lambda gen
 

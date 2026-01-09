@@ -1,3 +1,8 @@
+## Changes in 0.16.5.0 [2026.01.09]
+
+ * `ContGen` and `DiscreteGen` instances for `Poisson` distributions are added.
+
+
 ## Changes in 0.16.4.0 [2025.10.23]
 
  * Bartlett's test (`Statistics.Test.Bartlett`) and Levene's test
