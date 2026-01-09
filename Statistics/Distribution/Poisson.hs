@@ -41,9 +41,6 @@ import Numeric.MathFunctions.Constants (m_neg_inf)
 import qualified Statistics.Distribution as D
 import qualified Statistics.Distribution.Poisson.Internal as I
 import Statistics.Internal
-import Control.Monad (liftM)
-
-
 
 
 newtype PoissonDistribution = PD {
