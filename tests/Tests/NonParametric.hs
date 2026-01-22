@@ -26,6 +26,7 @@ tests = testGroup "Nonparametric tests"
                  , wilcoxonPairTests
                  , kruskalWallisRankTests
                  , kruskalWallisTests
+                 , kruskalWallisFailureTests
                  , kolmogorovSmirnovDTest
                  ]
 
@@ -161,7 +162,7 @@ kruskalWallisRankTests :: [Tst.TestTree]
 kruskalWallisRankTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b) = testCase "Kruskal-Wallis Ranking"
-                  $ assertEqual ("Kruskal-Wallis " ++ show n) (map U.fromList b) (kruskalWallisRank $ map U.fromList a)
+                  $ assertEqual ("Kruskal-Wallis " ++ show n) (Just $ map U.fromList b) (kruskalWallisRank $ map U.fromList a)
     testData :: [([[Int]],[[Double]])]
     testData = [ ( [ [68,93,123,83,108,122]
                    , [119,116,101,103,113,84]
@@ -180,7 +181,7 @@ kruskalWallisTests :: [Tst.TestTree]
 kruskalWallisTests = zipWith test [(0::Int)..] testData
   where
     test n (a, b, c) = testCase "Kruskal-Wallis" $ do
-        assertEqual ("Kruskal-Wallis " ++ show n) (round100 b) (round100 kw)
+        assertEqual ("Kruskal-Wallis " ++ show n) (Just $ round100 b) (round100 <$> kw)
         assertEqual ("Kruskal-Wallis Sig " ++ show n) c kwt
       where
         kw  = kruskalWallis $ map U.fromList a
@@ -221,6 +222,17 @@ kruskalWallisTests = zipWith test [(0::Int)..] testData
                  )
                ]
 
+kruskalWallisFailureTests :: [Tst.TestTree]
+kruskalWallisFailureTests = zipWith test [(0::Int)..] testData
+  where 
+    test n (a, b) = testCase "Kruskal-Wallis" $ do
+      assertEqual ("Kruskal-Wallis test case fails" ++ show n) a (kruskalWallisTest $ map U.fromList b)
+    testData :: [(Maybe (Test ()), [[Double]])]
+    testData = 
+      [ (Nothing, []) -- No samples were provided
+      , (Nothing, [[0, 1, 2]]) -- Only one sample
+      , (Nothing, [[2, 2, 2], [2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2]]) -- no variation
+      ]
 
 ----------------------------------------------------------------
 -- K-S test
