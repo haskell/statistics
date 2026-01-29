@@ -63,10 +63,17 @@ kruskalWallis samples = (nTot - 1) * numerator / denominator
     nTot    = fromIntegral $ sumWith rsamples U.length
     -- Average rank of all samples
     avgRank = (nTot + 1) / 2
-    --
+    -- 
     numerator = sumWith rsamples $ \sample ->
+        -- n represents the number of cases in the ith group
         let n = fromIntegral $ U.length sample
+        -- n * deviation^2
+        -- deviation is the (mean rank sum in the ith group - global mean rank sum)
         in  n * square (mean sample - avgRank)
+    -- total rank variance across groups
+    -- NOTE: if all values are the same across all samples,
+    -- then the rank is the same across all samples, and therefore
+    -- the denominator value is zero, meaning that this function outputs NaN.
     denominator = sumWith rsamples $ \sample ->
         Sample.sum $ U.map (\r -> square (r - avgRank)) sample
 
@@ -79,9 +86,11 @@ kruskalWallis samples = (nTot - 1) * numerator / denominator
 --
 -- It uses /Chi-Squared/ distribution for approximation as long as the sizes are
 -- larger than 5. Otherwise the test returns 'Nothing'.
-kruskalWallisTest :: (Ord a, U.Unbox a) => [U.Vector a] -> Maybe (Test ())
+kruskalWallisTest :: (Ord a, U.Unbox a) =>[U.Vector a] -> Maybe (Test ())
 kruskalWallisTest []      = Nothing
+kruskalWallisTest [_]     = Nothing
 kruskalWallisTest samples
+  | isNaN k     =  Nothing
   -- We use chi-squared approximation here
   | all (>4) ns = Just Test { testSignificance = mkPValue $ complCumulative d k
                             , testStatistics   = k
