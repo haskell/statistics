@@ -219,8 +219,14 @@ kruskalWallisTests = zipWith test [(0::Int)..] testData
                  , 6.10
                  , Just Significant
                  )
+               , ( [ [6, 6, 6, 6, 6]
+                   , [6, 6, 6, 6, 6, 6, 6, 6]
+                   , [6, 6, 6, 6, 6, 6]
+                   ]
+                 , 0.0 / 0.0 -- this should equal NaN as all the samples are the same.
+                 , Nothing
+                 ) 
                ]
-
 
 ----------------------------------------------------------------
 -- K-S test
