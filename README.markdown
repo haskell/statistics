@@ -22,7 +22,7 @@ Please report bugs via the
 
 Master [git mirror](https://github.com/haskell/statistics):
 
-* `git clone git://github.com/haskell/statistics.git`
+* `git clone https://github.com/haskell/statistics.git`
 
 # Authors
 
