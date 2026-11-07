@@ -64,31 +64,33 @@ instance Binary BetaDistribution where
     maybe (fail $ errMsgI a b) return $ improperBetaDistrE a b
 
 
--- | Create beta distribution. Both shape parameters must be positive.
+-- | Create beta distribution. Both shape parameters must be positive
+-- and finite.
 betaDistr :: Double             -- ^ Shape parameter alpha
           -> Double             -- ^ Shape parameter beta
           -> BetaDistribution
 betaDistr a b = maybe (error $ errMsg a b) id $ betaDistrE a b
 
--- | Create beta distribution. Both shape parameters must be positive.
+-- | Create beta distribution. Both shape parameters must be positive
+-- and finite.
 betaDistrE :: Double             -- ^ Shape parameter alpha
           -> Double             -- ^ Shape parameter beta
           -> Maybe BetaDistribution
 betaDistrE a b
-  | a > 0 && b > 0 = Just (BD a b)
-  | otherwise      = Nothing
+  | a > 0 && a < 1/0 && b > 0 && b < 1/0 = Just (BD a b)
+  | otherwise                            = Nothing
 
 errMsg :: Double -> Double -> String
 errMsg a b = "Statistics.Distribution.Beta.betaDistr: "
-          ++ "shape parameters must be positive. Got a = "
+          ++ "shape parameters must be positive and finite. Got a = "
           ++ show a
           ++ " b = "
           ++ show b
 
 
 -- | Create beta distribution. Both shape parameters must be
--- non-negative. So it allows to construct improper beta distribution
--- which could be used as improper prior.
+-- non-negative and finite. So it allows to construct improper beta
+-- distribution which could be used as improper prior.
 improperBetaDistr :: Double             -- ^ Shape parameter alpha
                   -> Double             -- ^ Shape parameter beta
                   -> BetaDistribution
@@ -96,19 +98,19 @@ improperBetaDistr a b
   = maybe (error $ errMsgI a b) id $ improperBetaDistrE a b
 
 -- | Create beta distribution. Both shape parameters must be
--- non-negative. So it allows to construct improper beta distribution
--- which could be used as improper prior.
+-- non-negative and finite. So it allows to construct improper beta
+-- distribution which could be used as improper prior.
 improperBetaDistrE :: Double             -- ^ Shape parameter alpha
                    -> Double             -- ^ Shape parameter beta
                    -> Maybe BetaDistribution
 improperBetaDistrE a b
-  | a >= 0 && b >= 0 = Just (BD a b)
-  | otherwise        = Nothing
+  | a >= 0 && a < 1/0 && b >= 0 && b < 1/0 = Just (BD a b)
+  | otherwise                              = Nothing
 
 errMsgI :: Double -> Double -> String
 errMsgI a b
   =  "Statistics.Distribution.Beta.betaDistr: "
-  ++ "shape parameters must be non-negative. Got a = " ++ show a
+  ++ "shape parameters must be non-negative and finite. Got a = " ++ show a
   ++ " b = " ++ show b
 
 

@@ -80,7 +80,7 @@ fDistributionE n m
 
 fDistributionRealE :: Double -> Double -> Maybe FDistribution
 fDistributionRealE n m
-  | n > 0 && m > 0 =
+  | n > 0 && n < 1/0 && m > 0 && m < 1/0 =
     let f' = 0.5 * (log m * m + log n * n) - logBeta (0.5*n) (0.5*m)
     in Just $ F n m f'
   | otherwise = Nothing
@@ -89,7 +89,7 @@ errMsg :: Int -> Int -> String
 errMsg _ _ = "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
 
 errMsgR :: Double -> Double -> String
-errMsgR _ _ = "Statistics.Distribution.FDistribution.fDistribution: non-positive number of degrees of freedom"
+errMsgR n m = "Statistics.Distribution.FDistribution.fDistributionReal: numbers of degrees of freedom must be positive and finite. Got " ++ show n ++ " and " ++ show m
 
 
 

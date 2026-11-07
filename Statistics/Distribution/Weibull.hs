@@ -123,13 +123,12 @@ weibullDistrErr
   :: Double            -- ^ Shape
   -> Double            -- ^ Lambda (scale)
   -> Either String WeibullDistribution
-weibullDistrErr k l | k <= 0     = Left $ errMsg k l
-                    | l <= 0     = Left $ errMsg k l
-                    | otherwise = Right $ WD k l
+weibullDistrErr k l | k > 0 && k < 1/0 && l > 0 && l < 1/0 = Right $ WD k l
+                    | otherwise                            = Left $ errMsg k l
 
 errMsg :: Double -> Double -> String
 errMsg k l =
-  "Statistics.Distribution.Weibull.weibullDistr: both shape and lambda must be positive. Got shape "
+  "Statistics.Distribution.Weibull.weibullDistr: both shape and lambda must be positive and finite. Got shape "
     ++ show k
     ++ " and lambda "
     ++ show l

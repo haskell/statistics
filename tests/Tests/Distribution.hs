@@ -3,31 +3,34 @@
 module Tests.Distribution (tests) where
 
 import qualified Control.Exception as E
+import Data.Either (isLeft, isRight)
 import Data.List (find)
+import Data.Maybe (isJust, isNothing)
 import Data.Typeable (Typeable)
 import Data.Word
 import Numeric.MathFunctions.Constants (m_tiny,m_huge,m_epsilon)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
-import Statistics.Distribution.Beta           (BetaDistribution)
+import Statistics.Distribution.Beta           (BetaDistribution, betaDistrE, improperBetaDistrE)
 import Statistics.Distribution.Binomial       (BinomialDistribution)
 import Statistics.Distribution.CauchyLorentz
 import Statistics.Distribution.ChiSquared     (ChiSquared)
-import Statistics.Distribution.Exponential    (ExponentialDistribution)
-import Statistics.Distribution.FDistribution  (FDistribution,fDistribution)
-import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr)
+import Statistics.Distribution.Exponential    (ExponentialDistribution, exponentialE)
+import Statistics.Distribution.FDistribution  (FDistribution,fDistribution,fDistributionRealE)
+import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr,gammaDistrE,improperGammaDistrE)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
 import Statistics.Distribution.Lognormal      (LognormalDistribution)
-import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution)
+import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution, negativeBinomialE)
 import Statistics.Distribution.Normal         (NormalDistribution)
-import Statistics.Distribution.Poisson        (PoissonDistribution)
+import Statistics.Distribution.Poisson        (PoissonDistribution, poissonE)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
-import Statistics.Distribution.Weibull        (WeibullDistribution)
+import Statistics.Distribution.Weibull        (WeibullDistribution, weibullDistrErr)
 import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
+import qualified Data.Vector.Unboxed as U
 import Test.Tasty                 (TestTree, testGroup)
 import Test.Tasty.QuickCheck      (testProperty)
 import Test.Tasty.ExpectedFailure (ignoreTest)
@@ -68,6 +71,7 @@ tests = testGroup "Tests for all distributions"
 
   , exactDistributionTests
   , unitTests
+  , nonFiniteParamTests
   ]
 
 ----------------------------------------------------------------
@@ -437,3 +441,77 @@ unitTests = testGroup "Unit tests"
       = testAssertion (printf "cumulative (fDistribution %i %i) %f ~ %f [got %f]" n m x exact d)
       $ eq 1e-5  exact d
       where d = cumulative (fDistribution n m) x
+
+----------------------------------------------------------------
+-- Non-finite parameters
+----------------------------------------------------------------
+
+nonFiniteParamTests :: TestTree
+nonFiniteParamTests = testGroup "Non-finite parameters"
+    -- Exponential
+  [ testAssertion "exponentialE (1/0) is rejected" $
+      isNothing (exponentialE (1/0))
+  , testAssertion "exponentialE m_huge is accepted" $
+      isJust (exponentialE m_huge)
+  , testAssertion "fromSample [5e-324] :: ExponentialDistribution is Nothing" $
+      isNothing (fromSample (U.fromList [5e-324 :: Double]) :: Maybe ExponentialDistribution)
+    -- Gamma
+  , testAssertion "gammaDistrE (1/0) 1 is rejected" $
+      isNothing (gammaDistrE (1/0) 1)
+  , testAssertion "gammaDistrE 1 (1/0) is rejected" $
+      isNothing (gammaDistrE 1 (1/0))
+  , testAssertion "gammaDistrE m_huge m_huge is accepted" $
+      isJust (gammaDistrE m_huge m_huge)
+  , testAssertion "improperGammaDistrE (1/0) 1 is rejected" $
+      isNothing (improperGammaDistrE (1/0) 1)
+  , testAssertion "improperGammaDistrE 1 (1/0) is rejected" $
+      isNothing (improperGammaDistrE 1 (1/0))
+  , testAssertion "improperGammaDistrE 0 0 is accepted" $
+      isJust (improperGammaDistrE 0 0)
+    -- Beta
+  , testAssertion "betaDistrE (1/0) 1 is rejected" $
+      isNothing (betaDistrE (1/0) 1)
+  , testAssertion "betaDistrE 1 (1/0) is rejected" $
+      isNothing (betaDistrE 1 (1/0))
+  , testAssertion "betaDistrE m_huge m_huge is accepted" $
+      isJust (betaDistrE m_huge m_huge)
+  , testAssertion "improperBetaDistrE (1/0) 1 is rejected" $
+      isNothing (improperBetaDistrE (1/0) 1)
+  , testAssertion "improperBetaDistrE 1 (1/0) is rejected" $
+      isNothing (improperBetaDistrE 1 (1/0))
+  , testAssertion "improperBetaDistrE 0 0 is accepted" $
+      isJust (improperBetaDistrE 0 0)
+    -- Poisson
+  , testAssertion "poissonE (1/0) is rejected" $
+      isNothing (poissonE (1/0))
+  , testAssertion "poissonE 0 is accepted" $
+      isJust (poissonE 0)
+    -- Negative binomial
+  , testAssertion "negativeBinomialE (1/0) 0.5 is rejected" $
+      isNothing (negativeBinomialE (1/0) 0.5)
+  , testAssertion "negativeBinomialE m_huge 0.5 is accepted" $
+      isJust (negativeBinomialE m_huge 0.5)
+    -- Student T
+  , testAssertion "studentTE (1/0) is rejected" $
+      isNothing (studentTE (1/0))
+  , testAssertion "studentTE m_huge is accepted" $
+      isJust (studentTE m_huge)
+    -- F distribution
+  , testAssertion "fDistributionRealE (1/0) 5 is rejected" $
+      isNothing (fDistributionRealE (1/0) 5)
+  , testAssertion "fDistributionRealE 5 (1/0) is rejected" $
+      isNothing (fDistributionRealE 5 (1/0))
+  , testAssertion "fDistributionRealE m_huge m_huge is accepted" $
+      isJust (fDistributionRealE m_huge m_huge)
+    -- Weibull
+  , testAssertion "weibullDistrErr (1/0) 1 is rejected" $
+      isLeft (weibullDistrErr (1/0) 1)
+  , testAssertion "weibullDistrErr 1 (1/0) is rejected" $
+      isLeft (weibullDistrErr 1 (1/0))
+  , testAssertion "weibullDistrErr (0/0) 1 is rejected" $
+      isLeft (weibullDistrErr (0/0) 1)
+  , testAssertion "weibullDistrErr 1 (0/0) is rejected" $
+      isLeft (weibullDistrErr 1 (0/0))
+  , testAssertion "weibullDistrErr m_huge m_huge is accepted" $
+      isRight (weibullDistrErr m_huge m_huge)
+  ]
