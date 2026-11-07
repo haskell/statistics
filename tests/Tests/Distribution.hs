@@ -25,7 +25,7 @@ import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
-import Statistics.Distribution.Uniform        (UniformDistribution)
+import Statistics.Distribution.Uniform        (UniformDistribution, uniformDistr)
 import Statistics.Distribution.Weibull        (WeibullDistribution)
 import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
 import Test.Tasty                 (TestTree, testGroup)
@@ -412,6 +412,57 @@ unitTests = testGroup "Unit tests"
   , testFdistrCDF  1  3   3     0.81830988618379067153 -- CDF
   , testFdistrCDF  2  2   1.2   0.545455
   , testFdistrCDF  10 12  8     0.99935509863451408041
+    -- Uniform with finite bounds so wide that b - a overflows to
+    -- Infinity. The density, log density, standard deviation and
+    -- entropy come from mpmath at the exact binary values of the
+    -- bounds, the latter three compared with tolerances from the
+    -- error bounds; the CDF and quantile values are exact by
+    -- construction (one rounding on exact operands).
+  , let d = uniformDistr (-1e308) 1e308 in testGroup "uniformDistr (-1e308) 1e308"
+    [ testAssertion "density 0" $
+        density d 0 == 5e-309
+    , testAssertion "density 1e308" $
+        density d 1e308 == 5e-309
+    , testAssertion "logDensity 0" $
+        eqRelErr 4e-16 (-709.889355822726) (logDensity d 0)
+    , testAssertion "cumulative (-1e308)" $
+        cumulative d (-1e308) == 0
+    , testAssertion "cumulative 0" $
+        cumulative d 0 == 0.5
+    , testAssertion "cumulative 1e308" $
+        cumulative d 1e308 == 1
+    , testAssertion "complCumulative 0" $
+        complCumulative d 0 == 0.5
+    , testAssertion "quantile 0" $
+        quantile d 0 == -1e308
+    , testAssertion "quantile 0.5" $
+        quantile d 0.5 == 0
+    , testAssertion "complQuantile 0.5" $
+        complQuantile d 0.5 == 0
+    , testAssertion "stdDev" $
+        eqRelErr 3e-16 5.7735026918962577e307 (stdDev d)
+    , testAssertion "entropy" $
+        eqRelErr 4e-16 709.889355822726 (entropy d)
+    ]
+    -- Asymmetric wide bounds: expected values are exact in binary
+    -- (t is a power of two, every coefficient is dyadic), so they are
+    -- the true values and no mpmath is needed.
+  , let t  = 2 ^ (1023 :: Int) :: Double
+        d2 = uniformDistr (-t) (1.5 * t)
+    in testGroup "uniformDistr (-2^1023) (1.5*2^1023)"
+    [ testAssertion "cumulative 0" $
+        cumulative d2 0 == 0.4
+    , testAssertion "quantile 0.25" $
+        quantile d2 0.25 == -0.375 * t
+    , testAssertion "quantile 1" $
+        quantile d2 1 == 1.5 * t
+    , testAssertion "complQuantile 0.25" $
+        complQuantile d2 0.25 == 0.875 * t
+    , testAssertion "complQuantile 0" $
+        complQuantile d2 0 == 1.5 * t
+    , testAssertion "complQuantile 1" $
+        complQuantile d2 1 == -t
+    ]
   ]
   where
     -- Student-T
