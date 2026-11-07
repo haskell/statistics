@@ -129,15 +129,15 @@ normalDistrErr :: Double            -- ^ Mean of distribution
                -> Double            -- ^ Standard deviation of distribution
                -> Either String NormalDistribution
 normalDistrErr m sd
-  | sd > 0    = Right $ ND { mean       = m
-                           , stdDev     = sd
-                           , ndPdfDenom = log $ m_sqrt_2_pi * sd
-                           , ndCdfDenom = m_sqrt_2 * sd
-                           }
+  | sd > 0 && sd < 1/0 && abs m < 1/0 = Right $ ND { mean       = m
+                                                   , stdDev     = sd
+                                                   , ndPdfDenom = log $ m_sqrt_2_pi * sd
+                                                   , ndCdfDenom = m_sqrt_2 * sd
+                                                   }
   | otherwise = Left $ errMsg m sd
 
 errMsg :: Double -> Double -> String
-errMsg _ sd = "Statistics.Distribution.Normal.normalDistr: standard deviation must be positive. Got " ++ show sd
+errMsg m sd = "Statistics.Distribution.Normal.normalDistr: mean must be finite and standard deviation must be positive and finite. Got " ++ show m ++ " and " ++ show sd
 
 -- | Variance is estimated using maximum likelihood method
 --   (biased estimation).

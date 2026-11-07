@@ -2,7 +2,8 @@
 -- Tests for data serialization instances
 module Tests.Serialization where
 
-import Data.Binary (Binary,decode,encode)
+import Data.Binary (Binary,get,decode,encode)
+import Data.Binary.Get (Get,runGetOrFail)
 import Data.Aeson  (FromJSON,ToJSON,Result(..),toJSON,fromJSON)
 import Data.Typeable
 
@@ -66,6 +67,7 @@ tests = testGroup "Test for data serialization"
   , serializationTests (T :: T GeometricDistribution0     )
   , serializationTests (T :: T HypergeometricDistribution )
   , serializationTests (T :: T PoissonDistribution        )
+  , invalidDecoderTests
   ]
 
 
@@ -94,3 +96,16 @@ p_showRead _ a = a == (read . show) a
 
 p_aeson :: (Eq a, ToJSON a, FromJSON a) => T a -> a -> Bool
 p_aeson _ a = Data.Aeson.Success a == (fromJSON . toJSON) a
+
+-- Decoders reject invalid parameters with a clean failure, not an exception
+invalidDecoderTests :: TestTree
+invalidDecoderTests = testGroup "Invalid parameters"
+  [ testAssertion "Binary decoder returns Left for cauchyDistribution 0 0" $
+      isLeft' (runGetOrFail (get :: Get CauchyDistribution)
+                (encode (0 :: Double) <> encode (0 :: Double)))
+  , testAssertion "Binary decoder returns Left for cauchyDistribution (1/0) 1" $
+      isLeft' (runGetOrFail (get :: Get CauchyDistribution)
+                (encode (1/0 :: Double) <> encode (1 :: Double)))
+  ]
+  where
+    isLeft' = either (const True) (const False) . fmap (\(_,_,a) -> a)

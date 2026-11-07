@@ -66,9 +66,10 @@ uniformDistr a b = maybe (error errMsg) id $ uniformDistrE a b
 -- | Create uniform distribution.
 uniformDistrE :: Double -> Double -> Maybe UniformDistribution
 uniformDistrE a b
-  | b < a     = Just $ UniformDistribution b a
-  | a < b     = Just $ UniformDistribution a b
-  | otherwise = Nothing
+  | abs a >= 1/0 || abs b >= 1/0 = Nothing
+  | b < a                        = Just $ UniformDistribution b a
+  | a < b                        = Just $ UniformDistribution a b
+  | otherwise                    = Nothing
 -- NOTE: failure is in default branch to guard against NaNs.
 
 errMsg :: String

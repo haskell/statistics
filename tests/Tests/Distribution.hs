@@ -20,14 +20,14 @@ import Statistics.Distribution.FDistribution  (FDistribution,fDistribution,fDist
 import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr,gammaDistrE,improperGammaDistrE)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
-import Statistics.Distribution.Laplace        (LaplaceDistribution)
+import Statistics.Distribution.Laplace        (LaplaceDistribution, laplaceE)
 import Statistics.Distribution.Lognormal      (LognormalDistribution)
 import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution, negativeBinomialE)
-import Statistics.Distribution.Normal         (NormalDistribution)
+import Statistics.Distribution.Normal         (NormalDistribution, normalDistrE, normalDistrErr)
 import Statistics.Distribution.Poisson        (PoissonDistribution, poissonE)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
-import Statistics.Distribution.Uniform        (UniformDistribution)
+import Statistics.Distribution.Uniform        (UniformDistribution, uniformDistrE)
 import Statistics.Distribution.Weibull        (WeibullDistribution, weibullDistrErr)
 import Statistics.Distribution.DiscreteUniform (DiscreteUniform)
 import qualified Data.Vector.Unboxed as U
@@ -514,4 +514,50 @@ nonFiniteParamTests = testGroup "Non-finite parameters"
       isLeft (weibullDistrErr 1 (0/0))
   , testAssertion "weibullDistrErr m_huge m_huge is accepted" $
       isRight (weibullDistrErr m_huge m_huge)
+    -- Normal
+  , testAssertion "normalDistrE (1/0) 1 is rejected" $
+      isNothing (normalDistrE (1/0) 1)
+  , testAssertion "normalDistrE (-1/0) 1 is rejected" $
+      isNothing (normalDistrE (-1/0) 1)
+  , testAssertion "normalDistrE 0 (1/0) is rejected" $
+      isNothing (normalDistrE 0 (1/0))
+  , testAssertion "normalDistrE (0/0) 1 is rejected" $
+      isNothing (normalDistrE (0/0) 1)
+  , testAssertion "normalDistrErr (1/0) 1 is rejected" $
+      isLeft (normalDistrErr (1/0) 1)
+  , testAssertion "normalDistrErr 0 (1/0) is rejected" $
+      isLeft (normalDistrErr 0 (1/0))
+  , testAssertion "normalDistrE m_huge 1 is accepted" $
+      isJust (normalDistrE m_huge 1)
+    -- Cauchy
+  , testAssertion "cauchyDistributionE (1/0) 1 is rejected" $
+      isNothing (cauchyDistributionE (1/0) 1)
+  , testAssertion "cauchyDistributionE (-1/0) 1 is rejected" $
+      isNothing (cauchyDistributionE (-1/0) 1)
+  , testAssertion "cauchyDistributionE 0 (1/0) is rejected" $
+      isNothing (cauchyDistributionE 0 (1/0))
+  , testAssertion "cauchyDistributionE (0/0) 1 is rejected" $
+      isNothing (cauchyDistributionE (0/0) 1)
+  , testAssertion "cauchyDistributionE m_huge 1 is accepted" $
+      isJust (cauchyDistributionE m_huge 1)
+    -- Laplace
+  , testAssertion "laplaceE (1/0) 1 is rejected" $
+      isNothing (laplaceE (1/0) 1)
+  , testAssertion "laplaceE (-1/0) 1 is rejected" $
+      isNothing (laplaceE (-1/0) 1)
+  , testAssertion "laplaceE 0 (1/0) is rejected" $
+      isNothing (laplaceE 0 (1/0))
+  , testAssertion "laplaceE (0/0) 1 is rejected" $
+      isNothing (laplaceE (0/0) 1)
+  , testAssertion "laplaceE m_huge 1 is accepted" $
+      isJust (laplaceE m_huge 1)
+  , testAssertion "fromSample [-1e308, 0, 1e308] :: LaplaceDistribution is Nothing" $
+      isNothing (fromSample (U.fromList [-1e308, 0, 1e308 :: Double]) :: Maybe LaplaceDistribution)
+    -- Uniform
+  , testAssertion "uniformDistrE (-1/0) 0 is rejected" $
+      isNothing (uniformDistrE (-1/0) 0)
+  , testAssertion "uniformDistrE 0 (1/0) is rejected" $
+      isNothing (uniformDistrE 0 (1/0))
+  , testAssertion "uniformDistrE (-m_huge) 0 is accepted" $
+      isJust (uniformDistrE (-m_huge) 0)
   ]

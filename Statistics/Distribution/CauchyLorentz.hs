@@ -63,7 +63,7 @@ instance Binary CauchyDistribution where
     get = do
       m <- get
       s <- get
-      maybe (error $ errMsg m s) return $ cauchyDistributionE m s
+      maybe (fail $ errMsg m s) return $ cauchyDistributionE m s
 
 
 -- | Cauchy distribution
@@ -80,13 +80,13 @@ cauchyDistributionE :: Double    -- ^ Central point
                     -> Double    -- ^ Scale parameter (FWHM)
                     -> Maybe CauchyDistribution
 cauchyDistributionE m s
-  | s > 0     = Just (CD m s)
-  | otherwise = Nothing
+  | s > 0 && s < 1/0 && abs m < 1/0 = Just (CD m s)
+  | otherwise                       = Nothing
 
 errMsg :: Double -> Double -> String
-errMsg _ s
-  = "Statistics.Distribution.CauchyLorentz.cauchyDistribution: FWHM must be positive. Got "
-  ++ show s
+errMsg m s
+  = "Statistics.Distribution.CauchyLorentz.cauchyDistribution: central point must be finite and FWHM must be positive and finite. Got "
+  ++ show m ++ " and " ++ show s
 
 -- | Standard Cauchy distribution. It's centered at 0 and have 1 FWHM
 standardCauchy :: CauchyDistribution

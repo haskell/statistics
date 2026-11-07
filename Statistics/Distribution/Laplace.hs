@@ -144,11 +144,11 @@ laplaceE :: Double         -- ^ Location
          -> Double        -- ^ Scale
          -> Maybe LaplaceDistribution
 laplaceE l s
-  | s >= 0    = Just (LD l s)
-  | otherwise = Nothing
+  | s >= 0 && s < 1/0 && abs l < 1/0 = Just (LD l s)
+  | otherwise                        = Nothing
 
 errMsg :: Double -> Double -> String
-errMsg _ s = "Statistics.Distribution.Laplace.laplace: scale parameter must be positive. Got " ++ show s
+errMsg l s = "Statistics.Distribution.Laplace.laplace: location must be finite and scale must be non-negative and finite. Got " ++ show l ++ " and " ++ show s
 
 
 -- | Create Laplace distribution from sample.  The location is estimated
@@ -157,7 +157,7 @@ errMsg _ s = "Statistics.Distribution.Laplace.laplace: scale parameter must be p
 instance D.FromSample LaplaceDistribution Double where
   fromSample xs
     | G.null xs = Nothing
-    | otherwise = Just $! LD s l
+    | otherwise = laplaceE s l
     where
       s = Q.median Q.medianUnbiased xs
       l = S.mean $ G.map (\x -> abs $ x - s) xs
