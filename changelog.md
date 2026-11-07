@@ -1,3 +1,13 @@
+## Unreleased
+
+ * Uniform distribution with finite bounds no longer overflows:
+   `density`, `logDensity`, `cumulative`, `complCumulative`,
+   `quantile`, `complQuantile`, `stdDev` and `entropy` are correct
+   when `b - a` overflows, `mean` is correct when `a + b` overflows,
+   and `variance` is correct when `(b - a) * (b - a)` overflows but
+   the variance is representable.
+
+
 ## Changes in 0.16.5.0 [2026.01.09]
 
  * `ContGen` and `DiscreteGen` instances for `Poisson` distributions are added.
