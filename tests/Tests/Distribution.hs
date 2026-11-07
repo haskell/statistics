@@ -463,6 +463,15 @@ unitTests = testGroup "Unit tests"
     , testAssertion "complQuantile 1" $
         complQuantile d2 1 == -t
     ]
+    -- Mean and variance overflow while the true values are
+    -- representable. With dyadic bounds the true mean is exact; the
+    -- true variance is exactly 3 * 2^1020, so the expected value is
+    -- the correctly rounded literal.
+  , let t = 2 ^ (1023 :: Int) :: Double
+    in testAssertion "mean (uniformDistr (2^1023) (1.5*2^1023))" $
+       mean (uniformDistr t (1.5 * t)) == 1.25 * t
+  , testAssertion "variance (uniformDistr 0 (1.5*2^512))" $
+      eqRelErr 1e-15 3.3706746278668423e307 (variance (uniformDistr 0 (1.5 * 2 ^ (512 :: Int))))
   ]
   where
     -- Student-T

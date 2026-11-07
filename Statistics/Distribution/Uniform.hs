@@ -111,7 +111,10 @@ instance D.ContDistr UniformDistribution where
       error $ "Statistics.Distribution.Uniform.complQuantile: p must be in [0,1] range. Got: "++show p
 
 instance D.Mean UniformDistribution where
-  mean (UniformDistribution a b) = 0.5 * (a + b)
+  mean (UniformDistribution a b)
+    -- a + b may overflow while the mean itself is representable
+    | isInfinite (a + b) = 0.5 * a + 0.5 * b
+    | otherwise          = 0.5 * (a + b)
 
 instance D.Variance UniformDistribution where
   -- NOTE: 1/sqrt 12 is not constant folded (#4101) so it's written as
@@ -121,7 +124,15 @@ instance D.Variance UniformDistribution where
     -- overflow: 0.5773502691896258 is exactly 2 * 0.2886751345948129
     | widthOverflows d = 0.5773502691896258 * halfWidth d
     | otherwise        = 0.2886751345948129 * (b - a)
-  variance (UniformDistribution a b) = d * d / 12 where d = b - a
+  variance d@(UniformDistribution a b)
+    -- d * d may overflow while the variance itself is representable.
+    -- Computed via the standard deviation it only overflows when the
+    -- variance truly does
+    | isInfinite w2      = s * s
+    | otherwise          = w2 / 12
+    where
+      s  = D.stdDev d
+      w2 = (b - a) * (b - a)
 
 instance D.MaybeMean UniformDistribution where
     maybeMean = Just . D.mean
