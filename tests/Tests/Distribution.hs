@@ -21,7 +21,7 @@ import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr,gamm
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution, laplaceE)
-import Statistics.Distribution.Lognormal      (LognormalDistribution)
+import Statistics.Distribution.Lognormal      (LognormalDistribution, lognormalDistrErr)
 import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution, negativeBinomialE)
 import Statistics.Distribution.Normal         (NormalDistribution, normalDistrE, normalDistrErr)
 import Statistics.Distribution.Poisson        (PoissonDistribution, poissonE)
@@ -560,4 +560,19 @@ nonFiniteParamTests = testGroup "Non-finite parameters"
       isNothing (uniformDistrE 0 (1/0))
   , testAssertion "uniformDistrE (-m_huge) 0 is accepted" $
       isJust (uniformDistrE (-m_huge) 0)
+    -- Lognormal
+  , testAssertion "lognormalDistrErr (1/0) 1 is rejected" $
+      isLeft (lognormalDistrErr (1/0) 1)
+  , testAssertion "lognormalDistrErr (-1/0) 1 is rejected" $
+      isLeft (lognormalDistrErr (-1/0) 1)
+  , testAssertion "lognormalDistrErr (0/0) 1 is rejected" $
+      isLeft (lognormalDistrErr (0/0) 1)
+  , testAssertion "lognormalDistrErr 400 1 is rejected" $
+      isLeft (lognormalDistrErr 400 1)
+  , testAssertion "lognormalDistrErr 355 1 is rejected" $
+      isLeft (lognormalDistrErr 355 1)
+  , testAssertion "lognormalDistrErr 354 1 is accepted" $
+      isRight (lognormalDistrErr 354 1)
+  , testAssertion "lognormalDistrErr 0 1 is accepted" $
+      isRight (lognormalDistrErr 0 1)
   ]

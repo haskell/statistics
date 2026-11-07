@@ -1,10 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- |
 -- Tests for data serialization instances
 module Tests.Serialization where
 
 import Data.Binary (Binary,get,decode,encode)
 import Data.Binary.Get (Get,runGetOrFail)
-import Data.Aeson  (FromJSON,ToJSON,Result(..),toJSON,fromJSON)
+import Data.Aeson  (FromJSON,ToJSON,Result(..),toJSON,fromJSON,object,(.=))
 import Data.Typeable
 
 import Statistics.Distribution.Beta           (BetaDistribution)
@@ -17,7 +18,7 @@ import Statistics.Distribution.Gamma          (GammaDistribution)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
-import Statistics.Distribution.Lognormal      (LognormalDistribution)
+import Statistics.Distribution.Lognormal      (LognormalDistribution, lognormalDistr)
 import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
 import Statistics.Distribution.Poisson        (PoissonDistribution)
@@ -106,6 +107,27 @@ invalidDecoderTests = testGroup "Invalid parameters"
   , testAssertion "Binary decoder returns Left for cauchyDistribution (1/0) 1" $
       isLeft' (runGetOrFail (get :: Get CauchyDistribution)
                 (encode (1/0 :: Double) <> encode (1 :: Double)))
+    -- Lognormal, mu above the sigma-bound threshold (~354.9)
+  , testAssertion "JSON round-trip for lognormalDistr 0 1" $
+      Data.Aeson.Success (lognormalDistr 0 1) == (fromJSON . toJSON) (lognormalDistr 0 1)
+  , testAssertion "JSON decoder rejects lognormalDistr 400 1" $
+      isError (fromJSON (object ["mean" .= (400 :: Double), "stdDev" .= (1 :: Double)])
+                :: Data.Aeson.Result LognormalDistribution)
+  , testAssertion "Read decoder rejects lognormalDistr 400 1" $
+      Nothing == (readMaybe' "lognormalDistr 400.0 1.0" :: Maybe LognormalDistribution)
+  , testAssertion "Binary decoder returns Left for lognormalDistr 400 1" $
+      isLeft' (runGetOrFail (get :: Get LognormalDistribution)
+                (encode (400 :: Double) <> encode (1 :: Double)))
   ]
-  where
-    isLeft' = either (const True) (const False) . fmap (\(_,_,a) -> a)
+
+isLeft' :: Either a (b, c, d) -> Bool
+isLeft' = either (const True) (const False) . fmap (\(_,_,_) -> ())
+
+isError :: Data.Aeson.Result a -> Bool
+isError (Data.Aeson.Error _)   = True
+isError (Data.Aeson.Success _) = False
+
+readMaybe' :: Read a => String -> Maybe a
+readMaybe' s = case [ x | (x,"") <- reads s ] of
+  [x] -> Just x
+  _   -> Nothing
