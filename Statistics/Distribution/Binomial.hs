@@ -101,7 +101,7 @@ instance D.MaybeEntropy BinomialDistribution where
 
 -- This could be slow for big n
 probability :: BinomialDistribution -> Int -> Double
-probability (BD n p) k
+probability d@(BD n p) k
   | k < 0 || k > n = 0
   | n == 0         = 1
     -- choose could overflow Double for n >= 1030 so we switch to
@@ -112,17 +112,19 @@ probability (BD n p) k
   | n < 1000
   , pK  >= m_tiny
   , pNK >= m_tiny = choose n k * pK * pNK
-  | otherwise     = exp $ logChoose n k + log p * k' + log1p (-p) * nk'
+  | otherwise     = exp $ logProbability d k
   where
     pK  = p^k
     pNK = (1-p)^(n-k)
-    k'  = fromIntegral k
-    nk' = fromIntegral $ n - k
 
 logProbability :: BinomialDistribution -> Int -> Double
 logProbability (BD n p) k
   | k < 0 || k > n          = (-1)/0
   | n == 0                  = 0
+    -- p = 0 and p = 1 are point masses; the formula below would
+    -- evaluate log p * 0 or log1p (-p) * 0, which is NaN
+  | p == 0                  = if k == 0 then 0 else (-1)/0
+  | p == 1                  = if k == n then 0 else (-1)/0
   | otherwise               = logChoose n k + log p * k' + log1p (-p) * nk'
   where
     k'  = fromIntegral   k

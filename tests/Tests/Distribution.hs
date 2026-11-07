@@ -10,7 +10,7 @@ import Numeric.MathFunctions.Constants (m_tiny,m_huge,m_epsilon)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
 import Statistics.Distribution.Beta           (BetaDistribution)
-import Statistics.Distribution.Binomial       (BinomialDistribution)
+import Statistics.Distribution.Binomial       (BinomialDistribution, binomial)
 import Statistics.Distribution.CauchyLorentz
 import Statistics.Distribution.ChiSquared     (ChiSquared)
 import Statistics.Distribution.Exponential    (ExponentialDistribution)
@@ -450,6 +450,21 @@ unitTests = testGroup "Unit tests"
       logDensity (lognormalDistr 0 1) (-1)
   , testEquality "density (lognormalDistr 0 1) (-1)" 0 $
       density (lognormalDistr 0 1) (-1)
+    -- Binomial at p = 0 puts all mass on 0, at p = 1 all mass on n
+  , testEquality "logProbability (binomial 5 0) 0" 0 $
+      logProbability (binomial 5 0) 0
+  , testEquality "logProbability (binomial 5 0) 3" (-1/0) $
+      logProbability (binomial 5 0) 3
+  , testEquality "logProbability (binomial 5 1) 5" 0 $
+      logProbability (binomial 5 1) 5
+  , testEquality "logProbability (binomial 5 1) 2" (-1/0) $
+      logProbability (binomial 5 1) 2
+  , testAssertion "logProbability (binomial 5 0.5) 2" $
+      eq 1e-14 (-1.1631508098056809) (logProbability (binomial 5 0.5) 2)
+  , testEquality "probability (binomial 1000 0) 0" 1 $
+      probability (binomial 1000 0) 0
+  , testEquality "probability (binomial 1000 1) 1000" 1 $
+      probability (binomial 1000 1) 1000
   ]
   where
     -- Student-T
