@@ -443,6 +443,13 @@ unitTests = testGroup "Unit tests"
       eqRelErr 1e-14 (-1.8523122207237188) (logDensity (lognormalDistr 0 1) 2)
   , testAssertion "entropy (normalDistr 0 1)" $
       eqRelErr 1e-14 1.4189385332046727 (entropy (normalDistr 0 1))
+    -- Lognormal has no mass at x <= 0
+  , testEquality "logDensity (lognormalDistr 0 1) 0" (-1/0) $
+      logDensity (lognormalDistr 0 1) 0
+  , testEquality "logDensity (lognormalDistr 0 1) (-1)" (-1/0) $
+      logDensity (lognormalDistr 0 1) (-1)
+  , testEquality "density (lognormalDistr 0 1) (-1)" 0 $
+      density (lognormalDistr 0 1) (-1)
   ]
   where
     -- Student-T

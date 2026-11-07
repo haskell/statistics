@@ -28,7 +28,7 @@ import Data.Aeson            (FromJSON, ToJSON)
 import Data.Binary           (Binary (..))
 import Data.Data             (Data, Typeable)
 import GHC.Generics          (Generic)
-import Numeric.MathFunctions.Constants (m_huge, m_sqrt_2_pi)
+import Numeric.MathFunctions.Constants (m_huge, m_neg_inf, m_sqrt_2_pi)
 import Numeric.SpecFunctions (expm1, log1p)
 import qualified Data.Vector.Generic as G
 
@@ -153,7 +153,7 @@ instance D.FromSample LognormalDistribution Double where
 logDensity :: LognormalDistribution -> Double -> Double
 logDensity (LND d) x
   | x > 0 = let lx = log x in D.logDensity d lx - lx
-  | otherwise = 0
+  | otherwise = m_neg_inf
 
 cumulative :: LognormalDistribution -> Double -> Double
 cumulative (LND d) x
