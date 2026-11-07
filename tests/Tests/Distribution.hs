@@ -19,9 +19,9 @@ import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
-import Statistics.Distribution.Lognormal      (LognormalDistribution)
+import Statistics.Distribution.Lognormal      (LognormalDistribution, lognormalDistr)
 import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution)
-import Statistics.Distribution.Normal         (NormalDistribution)
+import Statistics.Distribution.Normal         (NormalDistribution, normalDistr)
 import Statistics.Distribution.Poisson        (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
@@ -419,6 +419,30 @@ unitTests = testGroup "Unit tests"
       logProbability (poisson 0) 2
   , testAssertion "logProbability (poisson 1) 2" $
       eq 1e-14 (-1.6931471805599454) (logProbability (poisson 1) 2)
+    -- Normal and lognormal at an extreme standard deviation
+    -- eqRelErr, unlike eq, fails on an infinite result
+  , testAssertion "logDensity (normalDistr 0 1e-200) 0" $
+      eqRelErr 1e-14 459.59808006560446 (logDensity (normalDistr 0 1e-200) 0)
+  , testAssertion "density (normalDistr 0 1e-200) 0" $
+      eqRelErr 1e-12 3.989422804014327e199 (density (normalDistr 0 1e-200) 0)
+  , testAssertion "logDensity (lognormalDistr 0 1e-200) 1" $
+      eqRelErr 1e-14 459.59808006560446 (logDensity (lognormalDistr 0 1e-200) 1)
+  , testAssertion "density (lognormalDistr 0 1e-200) 1" $
+      eqRelErr 1e-12 3.989422804014327e199 (density (lognormalDistr 0 1e-200) 1)
+  , testAssertion "logDensity (normalDistr 0 1e-200) 1e-150" $
+      eqRelErr 1e-14 (-5e99) (logDensity (normalDistr 0 1e-200) 1e-150)
+  , testAssertion "logDensity (normalDistr 0 1e160) 1e160" $
+      eqRelErr 1e-14 (-369.832553412252) (logDensity (normalDistr 0 1e160) 1e160)
+  , testAssertion "entropy (normalDistr 0 1e-200)" $
+      eqRelErr 1e-14 (-459.09808006560446) (entropy (normalDistr 0 1e-200))
+  , testAssertion "entropy (normalDistr 0 1e160)" $
+      eqRelErr 1e-14 369.832553412252 (entropy (normalDistr 0 1e160))
+  , testAssertion "logDensity (normalDistr 1 2) 3" $
+      eqRelErr 1e-14 (-2.112085713764618) (logDensity (normalDistr 1 2) 3)
+  , testAssertion "logDensity (lognormalDistr 0 1) 2" $
+      eqRelErr 1e-14 (-1.8523122207237188) (logDensity (lognormalDistr 0 1) 2)
+  , testAssertion "entropy (normalDistr 0 1)" $
+      eqRelErr 1e-14 1.4189385332046727 (entropy (normalDistr 0 1))
   ]
   where
     -- Student-T
