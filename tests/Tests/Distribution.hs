@@ -22,7 +22,7 @@ import Statistics.Distribution.Laplace        (LaplaceDistribution)
 import Statistics.Distribution.Lognormal      (LognormalDistribution)
 import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution)
 import Statistics.Distribution.Normal         (NormalDistribution)
-import Statistics.Distribution.Poisson        (PoissonDistribution)
+import Statistics.Distribution.Poisson        (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
@@ -37,7 +37,7 @@ import Text.Printf (printf)
 
 import Tests.ApproxEq  (ApproxEq(..))
 import Tests.ExactDistribution (exactDistributionTests)
-import Tests.Helpers   (T(..), Double01(..), testAssertion, typeName)
+import Tests.Helpers   (T(..), Double01(..), testAssertion, testEquality, typeName)
 import Tests.Helpers   (monotonicallyIncreasesIEEE,isDenorm)
 import Tests.Orphanage ()
 
@@ -412,6 +412,13 @@ unitTests = testGroup "Unit tests"
   , testFdistrCDF  1  3   3     0.81830988618379067153 -- CDF
   , testFdistrCDF  2  2   1.2   0.545455
   , testFdistrCDF  10 12  8     0.99935509863451408041
+    -- Poisson with rate 0 is a point mass at 0
+  , testEquality "logProbability (poisson 0) 0" 0 $
+      logProbability (poisson 0) 0
+  , testEquality "logProbability (poisson 0) 2" (-1/0) $
+      logProbability (poisson 0) 2
+  , testAssertion "logProbability (poisson 1) 2" $
+      eq 1e-14 (-1.6931471805599454) (logProbability (poisson 1) 2)
   ]
   where
     -- Student-T
