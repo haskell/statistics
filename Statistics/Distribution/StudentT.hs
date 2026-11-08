@@ -55,18 +55,20 @@ instance Binary StudentT where
     ndf <- get
     maybe (fail $ errMsg ndf) return $ studentTE ndf
 
--- | Create Student-T distribution. Number of parameters must be positive.
+-- | Create Student-T distribution. Number of degrees of freedom must be
+-- positive and finite.
 studentT :: Double -> StudentT
 studentT ndf = maybe (error $ errMsg ndf) id $ studentTE ndf
 
--- | Create Student-T distribution. Number of parameters must be positive.
+-- | Create Student-T distribution. Number of degrees of freedom must be
+-- positive and finite.
 studentTE :: Double -> Maybe StudentT
 studentTE ndf
-  | ndf > 0   = Just (StudentT ndf)
-  | otherwise = Nothing
+  | ndf > 0 && ndf < 1/0 = Just (StudentT ndf)
+  | otherwise            = Nothing
 
 errMsg :: Double -> String
-errMsg _ = modErr "studentT" "non-positive number of degrees of freedom"
+errMsg ndf = modErr "studentT" $ "number of degrees of freedom must be positive and finite. Got " ++ show ndf
 
 
 instance D.Distribution StudentT where

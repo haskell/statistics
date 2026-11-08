@@ -1,3 +1,37 @@
+## Unreleased
+
+ * Safe distribution constructors now reject infinite parameters, which gave
+   distributions that are degenerate (density 0 everywhere) or whose
+   `density`, `logDensity` or `cumulative` is NaN or does not terminate:
+   `exponentialE`, `gammaDistrE`, `improperGammaDistrE`, `betaDistrE`,
+   `improperBetaDistrE`, `poissonE`, `negativeBinomialE`, `studentTE`,
+   `fDistributionRealE`, `weibullDistrErr`, `normalDistrE`, `normalDistrErr`,
+   `cauchyDistributionE`, `laplaceE` and `uniformDistrE`.
+
+ * `normalDistrE`, `normalDistrErr`, `cauchyDistributionE` and `laplaceE` now
+   also reject a NaN mean/central point/location, and `weibullDistrErr`
+   rejects NaN shape and scale.
+
+ * The unsafe wrappers (`normalDistr`, `laplace`, ...) and the `Read`,
+   `FromJSON` and `Binary` decoders of these distributions reject the same
+   values, since they go through the same checks.
+
+ * `lognormalDistrErr` rejects a non-finite mu, and any mu above about 354.9
+   (`log m_huge / 2`): there `sqrt (log m_huge - 2 * mu)`, the upper bound on
+   sigma that the check enforces, is NaN, and the check used to pass for
+   every sigma.
+
+ * `lognormalDistrMeanStddevErr` now rejects a non-positive mean, because the
+   NaN or infinite mu computed from it is rejected by `normalDistrErr`.
+
+ * `fromSample` for the exponential and Laplace distributions returns
+   `Nothing` where it used to build a distribution with an infinite or NaN
+   parameter.
+
+ * The `Binary` decoder of the Cauchy distribution fails on an invalid
+   parameter instead of throwing an exception.
+
+
 ## Changes in 0.16.5.0 [2026.01.09]
 
  * `ContGen` and `DiscreteGen` instances for `Poisson` distributions are added.

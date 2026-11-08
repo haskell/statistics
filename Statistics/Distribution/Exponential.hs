@@ -129,15 +129,15 @@ exponential l = maybe (error $ errMsg l) id $ exponentialE l
 exponentialE :: Double            -- ^ Rate parameter.
              -> Maybe ExponentialDistribution
 exponentialE l
-  | l > 0     = Just (ED l)
-  | otherwise = Nothing
+  | l > 0 && l < 1/0 = Just (ED l)
+  | otherwise        = Nothing
 
 errMsg :: Double -> String
-errMsg l = "Statistics.Distribution.Exponential.exponential: scale parameter must be positive. Got " ++ show l
+errMsg l = "Statistics.Distribution.Exponential.exponential: rate parameter must be positive and finite. Got " ++ show l
 
 -- | Create exponential distribution from sample.  Estimates the rate
 --   with the maximum likelihood estimator, which is biased. Returns
---   @Nothing@ if the sample mean does not exist or is not positive.
+--   @Nothing@ if the sample mean does not exist or is not positive,
+--   or is so small that its reciprocal overflows.
 instance D.FromSample ExponentialDistribution Double where
-  fromSample xs = let m = S.mean xs
-                  in  if m > 0 then Just (ED (1/m)) else Nothing
+  fromSample xs = exponentialE (1 / S.mean xs)

@@ -13,7 +13,7 @@
 -- distribution of the number of failures in a sequence of independent
 -- yes\/no experiments before a specified number of successes /r/.  Each
 -- Bernoulli trial has success probability /p/ in the range (0, 1].  The
--- parameter /r/ must be positive, but does not have to be integer.
+-- parameter /r/ must be positive and finite, but does not have to be integer.
 
 module Statistics.Distribution.NegativeBinomial (
       NegativeBinomialDistribution
@@ -167,22 +167,22 @@ directEntropy d =
   [ let x = probability d k in x * log x | k <- [0..]]
 
 -- | Construct negative binomial distribution. Number of successes /r/
---   must be positive and probability must be in (0,1] range
+--   must be positive and finite and probability must be in (0,1] range
 negativeBinomial :: Double              -- ^ Number of successes.
                  -> Double              -- ^ Success probability.
                  -> NegativeBinomialDistribution
 negativeBinomial r p = maybe (error $ errMsg r p) id $ negativeBinomialE r p
 
 -- | Construct negative binomial distribution. Number of successes /r/
---   must be positive and probability must be in (0,1] range
+--   must be positive and finite and probability must be in (0,1] range
 negativeBinomialE :: Double              -- ^ Number of successes.
                   -> Double              -- ^ Success probability.
                   -> Maybe NegativeBinomialDistribution
 negativeBinomialE r p
-  | r > 0 && 0 < p && p <= 1            = Just (NBD r p)
+  | r > 0 && r < 1/0 && 0 < p && p <= 1 = Just (NBD r p)
   | otherwise                           = Nothing
 
 errMsg :: Double -> Double -> String
 errMsg r p
   = "Statistics.Distribution.NegativeBinomial.negativeBinomial: r=" ++ show r
-  ++ " p=" ++ show p ++ ", but need r>0 and p in (0,1]"
+  ++ " p=" ++ show p ++ ", but need finite r>0 and p in (0,1]"

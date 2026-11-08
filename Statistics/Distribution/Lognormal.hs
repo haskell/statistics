@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 -- |
 -- Module    : Statistics.Distribution.Lognormal
@@ -24,7 +25,8 @@ module Statistics.Distribution.Lognormal
     , lognormalStandard
     ) where
 
-import Data.Aeson            (FromJSON, ToJSON)
+import Control.Applicative
+import Data.Aeson            (FromJSON(..), ToJSON, Value(..), (.:))
 import Data.Binary           (Binary (..))
 import Data.Data             (Data, Typeable)
 import GHC.Generics          (Generic)
@@ -51,7 +53,12 @@ instance Read LognormalDistribution where
     (either (const Nothing) Just .) . lognormalDistrErr
 
 instance ToJSON LognormalDistribution
-instance FromJSON LognormalDistribution
+instance FromJSON LognormalDistribution where
+  parseJSON (Object v) = do
+    m  <- v .: "mean"
+    sd <- v .: "stdDev"
+    either fail return $ lognormalDistrErr m sd
+  parseJSON _ = empty
 
 instance Binary LognormalDistribution where
   put (LND d) = put m >> put s
@@ -122,13 +129,13 @@ lognormalDistrErr
   -> Double            -- ^ Sigma
   -> Either String LognormalDistribution
 lognormalDistrErr mu sig
-  | sig >= sqrt (log m_huge - 2 * mu) = Left $ errMsg mu sig
-  | otherwise = LND <$> N.normalDistrErr mu sig
+  | abs mu < 1/0 && sig < sqrt (log m_huge - 2 * mu) = LND <$> N.normalDistrErr mu sig
+  | otherwise                                         = Left $ errMsg mu sig
 
 errMsg :: Double -> Double -> String
 errMsg mu sig =
-  "Statistics.Distribution.Lognormal.lognormalDistr: sigma must be > 0 && < "
-    ++ show lim ++ ". Got " ++ show sig
+  "Statistics.Distribution.Lognormal.lognormalDistr: need finite mu and 0 < sigma < sqrt (log m_huge - 2 * mu) (= "
+    ++ show lim ++ "). Got mu " ++ show mu ++ " and sigma " ++ show sig
   where lim = sqrt (log m_huge - 2 * mu)
 
 -- | Create log normal distribution from mean and standard deviation.

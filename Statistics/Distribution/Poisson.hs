@@ -111,11 +111,11 @@ poisson l = maybe (error $ errMsg l) id $ poissonE l
 -- | Create Poisson distribution.
 poissonE :: Double -> Maybe PoissonDistribution
 poissonE l
-  | l >=  0   = Just (PD l)
-  | otherwise = Nothing
+  | l >= 0 && l < 1/0 = Just (PD l)
+  | otherwise         = Nothing
 
 errMsg :: Double -> String
-errMsg l = "Statistics.Distribution.Poisson.poisson: lambda must be non-negative. Got "
+errMsg l = "Statistics.Distribution.Poisson.poisson: lambda must be non-negative and finite. Got "
         ++ show l
 
 

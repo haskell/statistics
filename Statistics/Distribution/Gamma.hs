@@ -72,7 +72,7 @@ instance Binary GammaDistribution where
 
 
 -- | Create gamma distribution. Both shape and scale parameters must
--- be positive.
+-- be positive and finite.
 gammaDistr :: Double            -- ^ Shape parameter. /k/
            -> Double            -- ^ Scale parameter, &#977;.
            -> GammaDistribution
@@ -83,21 +83,21 @@ errMsg :: Double -> Double -> String
 errMsg k theta
   =  "Statistics.Distribution.Gamma.gammaDistr: "
   ++ "k=" ++ show k
-  ++ "theta=" ++ show theta
-  ++ " but must be positive"
+  ++ " theta=" ++ show theta
+  ++ " but must be positive and finite"
 
 -- | Create gamma distribution. Both shape and scale parameters must
--- be positive.
+-- be positive and finite.
 gammaDistrE :: Double            -- ^ Shape parameter. /k/
             -> Double            -- ^ Scale parameter, &#977;.
             -> Maybe GammaDistribution
 gammaDistrE k theta
-  | k > 0 && theta > 0 = Just (GD k theta)
-  | otherwise          = Nothing
+  | k > 0 && k < 1/0 && theta > 0 && theta < 1/0 = Just (GD k theta)
+  | otherwise                                    = Nothing
 
 
 -- | Create gamma distribution. Both shape and scale parameters must
--- be non-negative.
+-- be non-negative and finite.
 improperGammaDistr :: Double            -- ^ Shape parameter. /k/
                    -> Double            -- ^ Scale parameter, &#977;.
                    -> GammaDistribution
@@ -108,17 +108,17 @@ errMsgI :: Double -> Double -> String
 errMsgI k theta
   =  "Statistics.Distribution.Gamma.gammaDistr: "
   ++ "k=" ++ show k
-  ++ "theta=" ++ show theta
-  ++ " but must be non-negative"
+  ++ " theta=" ++ show theta
+  ++ " but must be non-negative and finite"
 
 -- | Create gamma distribution. Both shape and scale parameters must
--- be non-negative.
+-- be non-negative and finite.
 improperGammaDistrE :: Double            -- ^ Shape parameter. /k/
                     -> Double            -- ^ Scale parameter, &#977;.
                     -> Maybe GammaDistribution
 improperGammaDistrE k theta
-  | k >= 0 && theta >= 0 = Just (GD k theta)
-  | otherwise            = Nothing
+  | k >= 0 && k < 1/0 && theta >= 0 && theta < 1/0 = Just (GD k theta)
+  | otherwise                                      = Nothing
 
 instance D.Distribution GammaDistribution where
     cumulative = cumulative
