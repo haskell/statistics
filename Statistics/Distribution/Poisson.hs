@@ -75,8 +75,9 @@ instance D.Distribution PoissonDistribution where
 instance D.DiscreteDistr PoissonDistribution where
     probability (PD lambda) x = I.probability lambda (fromIntegral x)
     logProbability (PD lambda) i
-      | i < 0     = m_neg_inf
-      | otherwise = log lambda * fromIntegral i - logFactorial i - lambda
+      | i < 0       = m_neg_inf
+      | lambda == 0 = if i == 0 then 0 else m_neg_inf
+      | otherwise   = log lambda * fromIntegral i - logFactorial i - lambda
 
 instance D.Variance PoissonDistribution where
     variance = poissonLambda

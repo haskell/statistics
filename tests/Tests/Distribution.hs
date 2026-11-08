@@ -10,7 +10,7 @@ import Numeric.MathFunctions.Constants (m_tiny,m_huge,m_epsilon)
 import Numeric.MathFunctions.Comparison
 import Statistics.Distribution
 import Statistics.Distribution.Beta           (BetaDistribution)
-import Statistics.Distribution.Binomial       (BinomialDistribution)
+import Statistics.Distribution.Binomial       (BinomialDistribution, binomial)
 import Statistics.Distribution.CauchyLorentz
 import Statistics.Distribution.ChiSquared     (ChiSquared)
 import Statistics.Distribution.Exponential    (ExponentialDistribution)
@@ -19,10 +19,10 @@ import Statistics.Distribution.Gamma          (GammaDistribution,gammaDistr)
 import Statistics.Distribution.Geometric
 import Statistics.Distribution.Hypergeometric
 import Statistics.Distribution.Laplace        (LaplaceDistribution)
-import Statistics.Distribution.Lognormal      (LognormalDistribution)
+import Statistics.Distribution.Lognormal      (LognormalDistribution, lognormalDistr)
 import Statistics.Distribution.NegativeBinomial (NegativeBinomialDistribution)
-import Statistics.Distribution.Normal         (NormalDistribution)
-import Statistics.Distribution.Poisson        (PoissonDistribution)
+import Statistics.Distribution.Normal         (NormalDistribution, normalDistr)
+import Statistics.Distribution.Poisson        (PoissonDistribution, poisson)
 import Statistics.Distribution.StudentT
 import Statistics.Distribution.Transform      (LinearTransform)
 import Statistics.Distribution.Uniform        (UniformDistribution)
@@ -37,7 +37,7 @@ import Text.Printf (printf)
 
 import Tests.ApproxEq  (ApproxEq(..))
 import Tests.ExactDistribution (exactDistributionTests)
-import Tests.Helpers   (T(..), Double01(..), testAssertion, typeName)
+import Tests.Helpers   (T(..), Double01(..), testAssertion, testEquality, typeName)
 import Tests.Helpers   (monotonicallyIncreasesIEEE,isDenorm)
 import Tests.Orphanage ()
 
@@ -412,6 +412,59 @@ unitTests = testGroup "Unit tests"
   , testFdistrCDF  1  3   3     0.81830988618379067153 -- CDF
   , testFdistrCDF  2  2   1.2   0.545455
   , testFdistrCDF  10 12  8     0.99935509863451408041
+    -- Poisson with rate 0 is a point mass at 0
+  , testEquality "logProbability (poisson 0) 0" 0 $
+      logProbability (poisson 0) 0
+  , testEquality "logProbability (poisson 0) 2" (-1/0) $
+      logProbability (poisson 0) 2
+  , testAssertion "logProbability (poisson 1) 2" $
+      eq 1e-14 (-1.6931471805599454) (logProbability (poisson 1) 2)
+    -- Normal and lognormal at an extreme standard deviation
+    -- eqRelErr, unlike eq, fails on an infinite result
+  , testAssertion "logDensity (normalDistr 0 1e-200) 0" $
+      eqRelErr 1e-14 459.59808006560446 (logDensity (normalDistr 0 1e-200) 0)
+  , testAssertion "density (normalDistr 0 1e-200) 0" $
+      eqRelErr 1e-12 3.989422804014327e199 (density (normalDistr 0 1e-200) 0)
+  , testAssertion "logDensity (lognormalDistr 0 1e-200) 1" $
+      eqRelErr 1e-14 459.59808006560446 (logDensity (lognormalDistr 0 1e-200) 1)
+  , testAssertion "density (lognormalDistr 0 1e-200) 1" $
+      eqRelErr 1e-12 3.989422804014327e199 (density (lognormalDistr 0 1e-200) 1)
+  , testAssertion "logDensity (normalDistr 0 1e-200) 1e-150" $
+      eqRelErr 1e-14 (-5e99) (logDensity (normalDistr 0 1e-200) 1e-150)
+  , testAssertion "logDensity (normalDistr 0 1e160) 1e160" $
+      eqRelErr 1e-14 (-369.832553412252) (logDensity (normalDistr 0 1e160) 1e160)
+  , testAssertion "entropy (normalDistr 0 1e-200)" $
+      eqRelErr 1e-14 (-459.09808006560446) (entropy (normalDistr 0 1e-200))
+  , testAssertion "entropy (normalDistr 0 1e160)" $
+      eqRelErr 1e-14 369.832553412252 (entropy (normalDistr 0 1e160))
+  , testAssertion "logDensity (normalDistr 1 2) 3" $
+      eqRelErr 1e-14 (-2.112085713764618) (logDensity (normalDistr 1 2) 3)
+  , testAssertion "logDensity (lognormalDistr 0 1) 2" $
+      eqRelErr 1e-14 (-1.8523122207237188) (logDensity (lognormalDistr 0 1) 2)
+  , testAssertion "entropy (normalDistr 0 1)" $
+      eqRelErr 1e-14 1.4189385332046727 (entropy (normalDistr 0 1))
+    -- Lognormal has no mass at x <= 0
+  , testEquality "logDensity (lognormalDistr 0 1) 0" (-1/0) $
+      logDensity (lognormalDistr 0 1) 0
+  , testEquality "logDensity (lognormalDistr 0 1) (-1)" (-1/0) $
+      logDensity (lognormalDistr 0 1) (-1)
+  , testEquality "density (lognormalDistr 0 1) (-1)" 0 $
+      density (lognormalDistr 0 1) (-1)
+    -- Binomial at p = 0 puts all mass on 0, at p = 1 all mass on n
+  , testEquality "logProbability (binomial 5 0) 0" 0 $
+      logProbability (binomial 5 0) 0
+  , testEquality "logProbability (binomial 5 0) 3" (-1/0) $
+      logProbability (binomial 5 0) 3
+  , testEquality "logProbability (binomial 5 1) 5" 0 $
+      logProbability (binomial 5 1) 5
+  , testEquality "logProbability (binomial 5 1) 2" (-1/0) $
+      logProbability (binomial 5 1) 2
+  , testAssertion "logProbability (binomial 5 0.5) 2" $
+      eq 1e-14 (-1.1631508098056809) (logProbability (binomial 5 0.5) 2)
+  , testEquality "probability (binomial 1000 0) 0" 1 $
+      probability (binomial 1000 0) 0
+  , testEquality "probability (binomial 1000 1) 1000" 1 $
+      probability (binomial 1000 1) 1000
   ]
   where
     -- Student-T

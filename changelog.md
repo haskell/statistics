@@ -1,3 +1,21 @@
+## Unreleased
+
+ * `logProbability` of the Poisson distribution with rate 0 returns `0`
+   at 0 instead of `NaN` (#235).
+
+ * `logDensity` and `density` of the normal and lognormal distributions
+   and `entropy` of the normal distribution no longer return `NaN` or an
+   infinity in place of a finite value when the square of the standard
+   deviation underflows or overflows, as at `1e-200` or `1e160`.
+
+ * `logDensity` of the lognormal distribution returns `-Infinity` and
+   `density` returns `0` at non-positive `x` (they used to return `0`
+   and `1`).
+
+ * `logProbability` and `probability` of the binomial distribution no
+   longer return `NaN` at `p = 0` or `p = 1`.
+
+
 ## Changes in 0.16.5.0 [2026.01.09]
 
  * `ContGen` and `DiscreteGen` instances for `Poisson` distributions are added.

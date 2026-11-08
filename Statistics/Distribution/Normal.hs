@@ -89,7 +89,7 @@ instance D.Variance NormalDistribution where
     stdDev = stdDev
 
 instance D.Entropy NormalDistribution where
-  entropy d = 0.5 * log (2 * pi * exp 1 * D.variance d)
+  entropy d = 0.5 + ndPdfDenom d
 
 instance D.MaybeEntropy NormalDistribution where
   maybeEntropy = Just . D.entropy
@@ -152,10 +152,12 @@ instance D.FromSample NormalDistribution Double where
     where
       (m,v) = S.meanVariance xs
 
+-- NOTE: Standard deviation could be arbitrarily small or large, so
+--       sd * sd may underflow or overflow.  Standardising first avoids
+--       that.
 logDensity :: NormalDistribution -> Double -> Double
-logDensity d x = (-xm * xm / (2 * sd * sd)) - ndPdfDenom d
-    where xm = x - mean d
-          sd = stdDev d
+logDensity d x = (-0.5 * z * z) - ndPdfDenom d
+    where z = (x - mean d) / stdDev d
 
 cumulative :: NormalDistribution -> Double -> Double
 cumulative d x = erfc ((mean d - x) / ndCdfDenom d) / 2
